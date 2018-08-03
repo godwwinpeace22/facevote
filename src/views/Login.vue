@@ -156,6 +156,7 @@ export default {
       try{
         this.$v.touch
         this.form['token'] = this.$store.getters.getToken
+        //console.log(this.form)
         let res = this.iHaveAnAccount ? await authService.Login(this.form) :await  authService.Register(this.form)
         console.log(res.data)
         this.$store.dispatch('setUser', {user:res.data.user,token:res.data.token})

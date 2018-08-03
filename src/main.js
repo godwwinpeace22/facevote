@@ -31,15 +31,10 @@ Vue.use(Vuetify, {
     VBreadcrumbs,
     transitions
   },
-  iconfont: 'fa4',
-  icons: {
-    'cancel': 'fas fa-ban',
-    'menu': 'fas fa-ellipsis-v',
-    'messages':'fa-comments-o',
-    'question':'fa-question'
-  },
   directives
 });
+
+Vue.use(require('vue-moment'));
 
 import Vuex from 'vuex'
 Vue.use(Vuex)

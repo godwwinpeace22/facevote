@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <v-toolbar app dark flat class="blue darken-2">
+    <v-toolbar app dark flat class="blue darken-2" scroll-toolbar-off-screen>
       <v-toolbar-side-icon></v-toolbar-side-icon>
 
       <v-toolbar-title class="white--text">FaceVote</v-toolbar-title>
@@ -49,7 +49,6 @@
       </v-menu>
     </v-toolbar>
     <v-content>
-      <router-view/>
       <HelloWorld/>
     </v-content>
     <v-footer :fixed="fixed" app>
@@ -59,6 +58,7 @@
   
 </template>
 <script>
+import io from 'socket.io-client';
 import HelloWorld from '@/components/HelloWorld.vue'
 import * as VMenu from 'vuetify/es5/components/VMenu'
 import * as VCard from 'vuetify/es5/components/VCard'
@@ -71,20 +71,31 @@ export default {
     fixed:false,
     toolbar_items: [
       'My profile', 'Settings'
-    ]
+    ],
+    news : io.connect('localhost:3000/dashboard')
   }),
   components:{
     ...VCard,
     ...VMenu,
     ...VAvatar,
     ...VDivider,
-    HelloWorld
+    HelloWorld//
   },
   methods:{
     logout(){
       this.$store.dispatch('logout')
       this.$router.push('/')
+    },
+    run(){
+      this.news.on('item', (data) =>{
+          console.log(data)
+        this.news.emit('woot');
+      });
     }
+  },
+  mounted(){
+    this.run()
   }
+  
 }
 </script>
