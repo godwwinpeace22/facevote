@@ -25,6 +25,15 @@ export default new Vuex.Store({
     },
     saveChatMessage(state, data){
       state.chat_messages = [...state.chat_messages, data]
+    },
+    updateFromDb(state,data){
+      let lastUpdateTime = state.chat_messages[state.chat_messages.length-1].timestamp // get the last chat time
+      //console.log(lastUpdateTime)
+      let newMessages = data.filter(function(each){
+        return each.timestamp > lastUpdateTime // get all the chats that were made after the last chat stored in the state
+      })
+      //console.log(newMessages)
+      state.chat_messages = [...state.chat_messages, ...newMessages] // add the newest messages to the state
     }
   },
   actions:{
@@ -39,6 +48,9 @@ export default new Vuex.Store({
     },
     saveChatMessage({commit}, data){
       commit('saveChatMessage', data)
+    },
+    updateFromDb({commit},data){
+      commit('updateFromDb',data)
     }
   },
   getters:{

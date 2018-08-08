@@ -13,6 +13,7 @@ import {
   VBottomNav,
   VBottomSheet,
   VBreadcrumbs,
+  VCard,
   transitions
 } from 'vuetify';
 import directives from 'vuetify/es5/directives';
@@ -29,6 +30,7 @@ Vue.use(Vuetify, {
     VBottomNav,
     VBottomSheet,
     VBreadcrumbs,
+    VCard,
     transitions
   },
   directives

@@ -1,9 +1,8 @@
 <template>
-<v-app>
-  <v-card>
+  <div>
     <!--v-btn flat icon @click.stop="drawer = !drawer"><v-icon>menu</v-icon></v-btn-->
   
-    <v-toolbar color="cyan" dark flat dense>
+    <v-toolbar style="background-color:#29648a;" dark flat dense>
       <v-btn dark icon v-show="toshow > 0" @click="toshow--">
         <v-icon>arrow_back</v-icon>
       </v-btn>
@@ -25,34 +24,28 @@
         </v-list>
       </v-menu>
     </v-toolbar>
-      <v-container fluid fill-height v-show="toshow == 0 || toshow == 1" style="min-height:400px" justify-start>
+      <div v-show="toshow == 0 || toshow == 1" style="min-height:400px" >
+        
         <v-layout v-if='toshow == 0'>
-          
           <v-flex xs12 >
             <p>Your connected groups</p>
             <v-list>
               <v-list-tile @click="toshow = 1; openchat(contest.electionRef)" v-for='contest in rooms' :key="contest._id">
                 <v-list-tile-title>{{contest.electionRef.title}}</v-list-tile-title>
               </v-list-tile>
-              
             </v-list>
-            
           </v-flex>
         </v-layout>
+
         <chatwindow  v-if="toshow != 0" v-show="toshow == 1" :icons='icons'></chatwindow>
-      </v-container>
+      </div>
       <v-container fluid  v-show="toshow == 2">
         <users></users>
       </v-container>
       <v-container v-show="toshow == 3">
         <settings></settings>
       </v-container>
-    <v-footer color="cyan" >
-      <v-spacer></v-spacer>
-      <span class="white--text">&copy; 2017</span>
-    </v-footer>
-    </v-card>
-  </v-app>
+  </div>
 </template>
 <script>
 export default {
@@ -114,6 +107,12 @@ export default {
         console.log(res)
       } catch (error) {
         console.log(error)
+        console.log(error.response)
+        if(error.response && error.response.status == 401){
+          // if the auth token is invalid, log user out(if possible) and redirect to login page
+          this.$store.dispatch('logout')
+          this.$router.push('/login')
+        }
       }
     },
   components:{

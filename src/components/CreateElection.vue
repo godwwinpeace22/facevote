@@ -1,4 +1,6 @@
 <template>
+  <v-layout>
+    <v-flex>
   <!--stepper -->
   <v-stepper v-model="e6" vertical>
     <v-stepper-step :complete="e6 > 1" step="1">
@@ -7,9 +9,11 @@
     </v-stepper-step>
 
     <v-stepper-content step="1">
-      <v-card class="mb-5 ma-2" hover>
-        <v-card-text>{{text}}</v-card-text>
-        <v-divider></v-divider>
+      <v-card class="mb-5 ma-2" flat>
+        <v-card-text>{{text}}
+          <v-divider></v-divider>
+        </v-card-text>
+        
         <v-layout row mx-3>
           <v-flex xs4>
             <v-subheader>Title for the election</v-subheader>
@@ -203,7 +207,7 @@
               </v-card-actions>
             </v-card>
           </v-dialog>
-          <v-chip close v-for="(role, i) in form.roles" :key="role" v-model="form.roles[i]">
+          <v-chip value v-for="(role, i) in form.roles" :key="role" v-model="form.roles[i]">
             <v-avatar><v-icon>account_circle</v-icon></v-avatar>
             {{role}}
           </v-chip>
@@ -221,6 +225,8 @@
       <v-btn color="primary" @click="createElection">Next step</v-btn>
     </v-stepper-content>
   </v-stepper>
+  </v-flex>
+  </v-layout>
 </template>
 <script>
 import api from '@/services/api'
@@ -249,7 +255,7 @@ export default {
     modal2:false,
     timed:true,
     e6:1,
-    text:'Lorem, ipsum dolo iquid laborum non nihil quasi id error, corrupti voluptatem consequatur nostrum blanditiis expedita omnis accusantium vitae veritatis aut?',
+    text:'Lo consequatur nostrum blanditiis expedita omnis accusantium vitae veritatis aut?',
     form:{
       title:'',
       type:'',

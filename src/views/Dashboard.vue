@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <v-toolbar app dark flat class="blue darken-2" scroll-toolbar-off-screen>
+    <!--v-toolbar app dark flat  >
       <v-toolbar-side-icon></v-toolbar-side-icon>
 
       <v-toolbar-title class="white--text">FaceVote</v-toolbar-title>
@@ -47,13 +47,10 @@
           </v-list-tile>
         </v-list>
       </v-menu>
-    </v-toolbar>
+    </v-toolbar-->
     <v-content>
       <HelloWorld/>
     </v-content>
-    <v-footer :fixed="fixed" app>
-      <span>&copy; 2017</span>
-    </v-footer>
   </v-app>
   
 </template>

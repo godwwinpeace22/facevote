@@ -1,20 +1,43 @@
 <template>
-  <v-layout justify-center>
-    <v-flex text-xs-right >
-      <v-container style="height:400px;overflow-y:auto;background:grey;margin-bottom:40px;">
-        <div class="speech-bubble white--text" v-for="(msg,i) in $store.getters.getChatMessages" :key="i" :class=" msg.user == $store.getters.getUser.username ? 'reposition':''">
-          <span class="small" v-if=" msg.user != $store.getters.getUser.username">
-            <a :href="'/profile/' + msg.user">~{{msg.user}}</a>
-          </span>
-          <p >{{msg.chat}}</p>
-          <span>{{msg.time}}</span>
+  <v-layout row>
+    <v-flex d-flex>
+      <v-card pa-0 id="chat_space" style="min-height:400px;overflow-y:auto;margin-bottom:1%;padding-bottom:5%;">
+        <div class="chat_rectangle " id="speech_bubble" v-for="(msg,i) in $store.getters.getChatMessages" :key="i" :class=" msg.user == $store.getters.getUser.username ? 'reposition':''">
+          <div class="chat_avartar"><img src="https://cdn.vuetifyjs.com/images/lists/1.jpg" alt="avartar"></div>
+          <div class="chat_content">
+            <div style="width:100%;margin-top:0px;margin-bottom:0px;">
+              <span class="small title" v-if="msg.user != $store.getters.getUser.username " style="margin-right:5px;">
+                <a :href="'/profile/' + msg.user">{{msg.user}}</a>
+              </span>
+              <span v-else style="margin-right:5px;"><strong>You  </strong></span>
+              <span style="font-size:.9em;color:#555;" color="grey lighten-5">  {{ msg.timestamp | moment("h:mm") }}</span>
+            </div>
+            <div style="width:100%;">{{msg.chat}}</div>
+            <!--v-speed-dial v-model="fab" top right direction="left" open-on-hover transition="scale">
+              <v-btn slot="activator"  v-model="fab" color="blue darken-2" dark fab>
+                <v-icon>account_circle</v-icon>
+                <v-icon>close</v-icon>
+              </v-btn>
+              <v-btn fab dark small color="green">
+                <v-icon>edit</v-icon>
+              </v-btn>
+              <v-btn fab  dark small color="indigo">
+                <v-icon>add</v-icon>
+              </v-btn>
+              <v-btn fab dark small color="red">
+                <v-icon>delete</v-icon>
+              </v-btn>
+            </v-speed-dial-->
+          </div>
+          
         </div>
-      </v-container>
+          
+      </v-card>
       
       
-      <v-footer height="auto" absolute>
+      <v-footer height="auto" fixed style="margin-left:250px;">
         <v-form @submit.prevent='submit'>
-          <v-container>
+          
             <v-layout row wrap>
 
               <v-flex xs12>
@@ -26,6 +49,7 @@
                   outline
                   clear-icon="mdi-close-circle"
                   clearable
+                  full-width
                   label="Message"
                   hide-details
                   type="text"
@@ -37,7 +61,6 @@
               </v-flex>
 
             </v-layout>
-          </v-container>
         </v-form>
       </v-footer>
     </v-flex>
@@ -62,6 +85,7 @@ data:()=>({
     iconIndex: 0,
     menu:false,
     chat:''
+    
 }),
 computed: {
     icon () {
@@ -94,9 +118,9 @@ computed: {
     },
     submit(){
       //console.log(this.chat)
-      this.chat.emit('chat_message', { chat:this.message,user:this.$store.getters.getUser.username,time:this.$moment().format("dddd, h:mm a"), room:this.$store.state.curRoom.electionId });
+      this.chat.emit('chat_message', { chat:this.message,user:this.$store.getters.getUser.username, timestamp:Date.now(), room:this.$store.state.curRoom.electionId });
       //this.msgs.push({chat:this.message, user:this.$store.getters.getUser.username})
-      this.$store.dispatch('saveChatMessage', {chat:this.message, user:this.$store.getters.getUser.username, time:this.$moment().format("dddd, h:mm a"), room:this.$store.state.curRoom.electionId})
+      this.$store.dispatch('saveChatMessage', {chat:this.message, user:this.$store.getters.getUser.username, timestamp:Date.now(), room:this.$store.state.curRoom.electionId})
       this.clearMessage()
     }
   },
@@ -108,17 +132,23 @@ computed: {
         console.log('connected to server successfully')
         chat.emit('join_room', this.$store.state.curRoom.electionId)
       })
-
+      chat.on('update_chat', (messagesFromDb) =>{ // update chat from db
+        //console.log('messagesFromDb... ')
+        //console.log(messagesFromDb.chat_messages)
+        this.$store.dispatch('updateFromDb', messagesFromDb.chat_messages)
+      })
       chat.on('chat_response', (data)=> {
-        console.log(data);
+        //console.log(data);
         //console.log(this.msgs)
         this.$store.dispatch('saveChatMessage', data)
       });
 
-      chat.on('a message', (data) =>{
-        console.log(data)
-      })
+      
     }
+    let chat_space = document.getElementById('chat_space')
+    let speech_bubble = document.getElementById('speech_bubble')
+    speech_bubble.scrollTop = chat_space.scrollHeight
+    //console.log(chat_space)
   },
 components:{
   'settings':Settings,
@@ -172,38 +202,43 @@ import * as VForm from 'vuetify/es5/components/VForm'
   background-position: center;
   //background-color: #00aabb;
 }
-.reposition{
-  position: relative !important;
-  left:370px !important;
+.chat_avartar{
+  width:5%;
+  height: 40px;
+  border-radius:5px;
+  //float:left;
+  //display:inline-block;
+  margin-right:1%;
+  float:left;
+  img{
+    width:100%;
+    height:100%;
+    border-radius:5px;
+  }
 }
-.reposition:after {
-	content: '' !important;
-	position: absolute !important;
-	right: 0 !important;
-	top: 50% !important;
-	width: 0 !important;
-	height: 0 !important;
-	border: 20px solid transparent !important;
-	border-left-color: #00aabb !important;
-	border-right: 0 !important;
-	border-bottom: 0 !important;
-	margin-top: -10px !important;
-	margin-right: -20px !important;
+.chat_content{
+  display:inline-block;
+  //background:yellow;
+  width:90%;
+  min-height: 40px;
 }
-.speech-bubble {
-  //height: 100px;
-  width:150px;
-  border-radius: 10px !important;
-  position:relative;
-  top: 5%;
-  left:5%;
+.chat_rectangle {
+  padding:5px 15px;
   margin-bottom: 5px;
-	position: relative;
-	background: #00aabb;
+	//position: relative;
+	//background: #00aabb;
 	text-align: left;
   text-overflow:wrap;
+  width:100%;
+  &:hover{
+    background-color:rgb(241, 241, 241);
+  }
+  a{
+    text-decoration:none;
+    color:#00aabb;
+  }
 }
-.speech-bubble:after {
+.speech-bubbl:after {
 	content: '';
 	position: absolute;
 	left: 0;
