@@ -19,6 +19,12 @@ import {
 import directives from 'vuetify/es5/directives';
 import 'font-awesome/css/font-awesome.min.css'
 import store from '@/store/store'
+import jQuery from 'jquery'
+global.jQuery = jQuery
+global.$ = jQuery
+
+//global.kairos = kairos
+
 
 Vue.use(Vuetify, {
   components: {
@@ -35,6 +41,8 @@ Vue.use(Vuetify, {
   },
   directives
 });
+
+Vue.prototype.$eventBus = new Vue();
 
 Vue.use(require('vue-moment'));
 

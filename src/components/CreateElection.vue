@@ -207,7 +207,7 @@
               </v-card-actions>
             </v-card>
           </v-dialog>
-          <v-chip value v-for="(role, i) in form.roles" :key="role" v-model="form.roles[i]">
+          <v-chip  v-for="(role, i) in form.roles" :key="role" v-model="form.roles[i]">
             <v-avatar><v-icon>account_circle</v-icon></v-avatar>
             {{role}}
           </v-chip>

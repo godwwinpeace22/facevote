@@ -13,3 +13,6 @@ export default {
   })
 }
 </script>
+<style lang="scss" src='@/assets/iconfont/material-icons.css'> // using material icons offline
+
+</style>
