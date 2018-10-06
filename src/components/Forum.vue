@@ -1,64 +1,70 @@
 <template>
-  <div>
-    <!--v-btn flat icon @click.stop="drawer = !drawer"><v-icon>menu</v-icon></v-btn-->
-  
-    <v-toolbar style="background-color:#29648a;" dark flat dense>
-      <v-btn dark icon v-show="toshow > 0" @click="toshow--">
-        <v-icon>arrow_back</v-icon>
-      </v-btn>
-      <v-toolbar-title>{{toolbarStatus}}</v-toolbar-title>
-      <v-spacer></v-spacer>
-      <!--v-toolbar-side-icon @click.stop="drawer = !drawer"></v-toolbar-side-icon-->
-      <v-menu bottom left transition="slide-y-transition">
-        <v-btn slot="activator" dark icon>
-          <v-icon>menu</v-icon>
-        </v-btn>
-
+  <div style="background:gre;height:93vh;" class="navdrawr">
+    
+    <v-navigation-drawer fixed v-model="drawerRight" right clipped app v-if="$store.state.curRoom" width="300" class='navdrawr'>
+      <v-list dense>
+        <v-list-tile @click.stop="right = !right">
+          <v-list-tile-action>
+            <v-icon>exit_to_app</v-icon>
+          </v-list-tile-action>
+          <v-list-tile-content>
+            <v-list-tile-title>Open Temporary Drawer</v-list-tile-title>
+          </v-list-tile-content>
+        </v-list-tile>
+      </v-list>
+      <router-view></router-view>
+      
+    </v-navigation-drawer>
+    <v-layout v-if='!$store.state.curRoom' style="min-height:400px">
+      <v-flex xs12 >
+        <p>Your connected groups</p>
         <v-list>
-          <v-list-tile @click="toshow = 2">
-            <v-list-tile-title>Group info</v-list-tile-title>
-          </v-list-tile>
-          <v-list-tile @click="toshow = 3">
-            <v-list-tile-title>Settings</v-list-tile-title>
+          <v-list-tile @click="setCurrRoom(election)" v-for='election in elections' :key="election._id">
+            <v-list-tile-title>{{election.title}}</v-list-tile-title>
           </v-list-tile>
         </v-list>
-      </v-menu>
-    </v-toolbar>
-      <div v-show="toshow == 0 || toshow == 1" style="min-height:400px" >
-        
-        <v-layout v-if='toshow == 0'>
-          <v-flex xs12 >
-            <p>Your connected groups</p>
-            <v-list>
-              <v-list-tile @click="toshow = 1; openchat(contest.electionRef)" v-for='contest in rooms' :key="contest._id">
-                <v-list-tile-title>{{contest.electionRef.title}}</v-list-tile-title>
-              </v-list-tile>
-            </v-list>
-          </v-flex>
-        </v-layout>
+      </v-flex>
+    </v-layout>
 
-        <chatwindow  v-if="toshow != 0" v-show="toshow == 1" :icons='icons'></chatwindow>
-      </div>
-      <v-container fluid  v-show="toshow == 2">
-        <users></users>
-      </v-container>
-      <v-container v-show="toshow == 3">
-        <settings></settings>
-      </v-container>
+    <chatwindow  v-if="$store.state.curRoom" :icons='icons'></chatwindow>
+    
+    <v-navigation-drawer v-if='$store.state.curRoom' right temporary v-model="right" fixed></v-navigation-drawer>
+  <v-container v-if='$store.state.curRoom'>
+    <div class="white--text" style='margin-left:px;position:static;width:100%;background:#fff;'>
+
+      <v-form @submit.prevent='submit' style="margin-left:px;background:;">
+        <v-textarea v-model="message" box color="deep-purple" @keypress="isTyping"
+          label="Message" outline :append-icon="message ? 'attach_file' : 'photo_camera'"
+          :append-outer-icon="message ? 'send' : 'mic'"
+          @click:append-outer="sendMessage"
+          rows="1" auto-grow
+        ></v-textarea>
+            
+      </v-form>
+    </div>
+  </v-container>
   </div>
 </template>
 <script>
 export default {
   data:()=>({
     password: 'Password',
-      drawer: null,
-      marker: true,
-      iconIndex: 0,
-      menu:false,
-      regElec:[],
-      rooms:[],
-      toshow:0,
-      icons: [
+    drawer: null,
+    drawer3:true,
+    drawerRight: true,
+    right: null,
+    left: null,
+    right_sidebar:true,
+    marker: true,
+    iconIndex: 0,
+    message:'Hey',
+    menu:false,
+    regElec:[],
+    elections:[], // all the elections user enrolled in
+    toshow:0,
+    someoneistyping:false,
+    timeDistance:0,
+    icons: [
       'mood',
       'mood_bad',
       'sentiment_satisfied',
@@ -67,44 +73,88 @@ export default {
       'sentiment_very_satisfied',
       'sentiment_neutral'
     ],
+    navmenus:[
+      {title:'Home', icon:'home', link:'/dashboard'},
+      {title:'Messages', icon:'messages', link:'/dashboard/messages'},
+      {title:'Notifications', icon:'notifications', link:'/dashboard/notifications'},
+      {title:'Forum', icon:'comment', link:'/dashboard/forum'},
+      {title:'Enroll', icon:'camera_alt', link:'/dashboard/enroll'},
+      {title:'Contest', icon:'hdr_strong', link:'/dashboard/contest'},
+    ],
+    toolbar_items: [
+      {name:'My profile', icon:'person'},
+      {name: 'Settings', icon:'settings'}
+    ],
   }),
   props:{
     source:String
   },
   computed: {
       toolbarStatus(){
-        return this.toshow == 2 ? '42 participants' : 
-        this.toshow == 3 ? 'Settings': 
-        this.toshow == 1 ? this.$store.state.curRoom.title : 'Your groups'
+        return this.$store.state.curRoom ? this.$store.state.curRoom.title :  'Your connected groups'
       }
       
     },
 
     methods: {
       // opens the chat window on select
-      openchat(room){
+      setCurrRoom(room){
         //store the roomId
         console.log(room)
-        this.$store.dispatch('curRoom', room) // roomId same as the selected election electionId
-        // then open up the chat
-        this.toshow = 1
+        this.$store.dispatch('curRoom', room)
       },
-      backbutton(){
+      toggleMarker () {
+        this.marker = !this.marker
+      },
+      sendMessage () {
+        this.resetIcon()
+        this.submit()
+      },
+      clearMessage () {
+        this.message = ''
+      },
+      resetIcon () {
+        this.iconIndex = 0
+      },
+      changeIcon () {
+        this.iconIndex === this.icons.length - 1
+          ? this.iconIndex = 0
+          : this.iconIndex++
+      },
+      submit(){
+        //console.log(this.chat)
+        this.$eventBus.$emit('Chat_Message', { chat:this.message,user:this.$store.getters.getUser.username, timestamp:Date.now(), room:this.$store.state.curRoom.electionId });
+        //this.msgs.push({chat:this.message, user:this.$store.getters.getUser.username})
+        this.$store.dispatch('saveChatMessage', {chat:this.message, user:this.$store.getters.getUser.username, timestamp:Date.now(), room:this.$store.state.curRoom.electionId})
+        this.clearMessage()
+      },
+      isTyping(){
+        // tell others that this user is typing.
+        this.$eventBus.$emit('Someone_Is_Typing',{user:this.$store.getters.getUser.username,room:this.$store.state.curRoom.electionId})
         
-      }
+      },
+      logout(){
+        this.$store.dispatch('logout')
+        this.$router.push('/')
+      },
     },
     async mounted() {
       
       
-      // get the elections the user registered for(this doesn't actually get that for now. it will be implemented when enroll is completed)
-      // its like the chat is for only those who have contested in elections before
+      // get the elections the user registered for
       try {
-        let res = await api().get(`dashboard/getElections/${this.$store.getters.getUser._id}/${this.$store.getters.getToken}`)
-        this.rooms = res.data.contested
-        //res.data.created.forEach(arr=>{
-          //this.items.push(arr.electionId)
-        //})
-        console.log(res)
+        if(!this.$store.state.curRoom){
+          let res = await api().get(`dashboard/getElections/${this.$store.getters.getUser._id}/${this.$store.getters.getToken}`)
+          this.elections = res.data.enrolled
+          console.log(res)
+           
+        }
+        else{
+
+          this.$eventBus.$emit('Change_Title', this.$store.state.curRoom.title);
+          console.log('wow')
+        }
+        
       } catch (error) {
         console.log(error)
         console.log(error.response)
@@ -114,6 +164,10 @@ export default {
           this.$router.push('/login')
         }
       }
+    },
+    destroyed(){
+      this.$eventBus.$emit('show_right_sidebar',null);
+      this.$eventBus.$emit('change_title','FaceVote');
     },
   components:{
     'chatwindow':Chatwindow,
@@ -135,7 +189,8 @@ export default {
     ...VStepper,
     ...VSlider,
     ...VChip,
-    ...VForm
+    ...VForm,
+    ...VTextarea
   }
 }
 //import io from 'socket.io-client';
@@ -161,14 +216,46 @@ import * as VStepper from 'vuetify/es5/components/VStepper'
 import * as VSlider from 'vuetify/es5/components/VSlider'
 import * as VChip from 'vuetify/es5/components/VChip'
 import * as VForm from 'vuetify/es5/components/VForm'
+import * as VTextarea from 'vuetify/es5/components/VTextarea'
 import ChatwindowVue from './Chatwindow.vue';
 </script>
 <style lang="scss" scoped>
+
+@mixin borderRadius($radius) {
+  border-radius: $radius;
+  -webkit-border-radius:$radius;
+  -moz-border-radius:$radius;
+  -o-border-radius:$radius;
+}
+$mainBgColor:#1c1f35;
+
 .chat_home{
   background-image:url('../assets/chat_wallpaper.jpg');
   background-size:cover;
   background-position: center;
   //background-color: #00aabb;
+}
+nav{
+  margin-top:48px;
+}
+
+/* --scrollbar --*/
+.navdrawr::-webkit-scrollbar {
+    width: 10px;
+    background-color: #87899c ;
+    @include borderRadius(10px)
+  }
+.navdrawr::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+  -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+  -moz-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+  -o-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+  background-color: #f5f6fa ;
+  @include borderRadius(10px)
+}
+.navdrawr::-webkit-scrollbar-thumb {
+  background-color:#87899c ;
+  @include borderRadius(10px);
 }
 </style>
 

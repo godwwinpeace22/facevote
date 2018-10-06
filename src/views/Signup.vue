@@ -1,45 +1,54 @@
 <template>
   <v-app id="cc">
     <toolbar></toolbar>
-    <v-content>
-      <v-container fluid fill-height>
-        <v-layout align-center justify-center>
-          <v-flex xs12 sm8 md4>
-            
-            <v-snackbar v-model="snackbar" color="error" :timeout="30000" top>
-              {{ message }}
-              <v-btn dark flat @click="snackbar = null"> Close</v-btn>
-            </v-snackbar>
+    <v-container>
+      <v-layout >
+        <v-flex md4 offset-md4 mt-5 style="margin-top:50%;">
 
-            <v-card >
-              <v-toolbar dark flat>
-                <v-toolbar-title>Login</v-toolbar-title>
-              </v-toolbar>
-              <v-card-text>
-                <form>
-                  <v-text-field label="Username" v-model="form.username" prepend-icon="person" required></v-text-field>
-                  <v-text-field prepend-icon="lock" required
-                  v-model="form.password" type="password" height='' label="Password" hint="At least 6 characters"></v-text-field>
-                </form>
-              </v-card-text>
-              <v-card-actions>
-                <v-btn type="submit" @click="submit" small flat style="background:#fdba1e;">
+          <v-snackbar v-model="snackbar" color="error" :timeout="30000" top>
+            {{ message }}
+            <v-btn dark flat @click="snackbar = null"> Close</v-btn>
+          </v-snackbar>
+
+          <v-card>
+            <h3 class="pt-3" style="text-align:center;">Sign Up</h3>
+            <form @submit.prevent='submit' class="pa-3 pt-3 text-xs-center">
+              <p class="text-xs-center">Lorem ipsum dolor, sit amet consectetur adi </p>
+              <v-text-field label="Full Name" v-model="form.name" prepend-icon="place" required></v-text-field>
+              <v-text-field label="Username" v-model="form.username" prepend-icon="place" required ></v-text-field>
+              <v-text-field label="Email" v-model="form.email" prepend-icon="place" required type="email" ></v-text-field>
+              <v-text-field prepend-icon="place" required
+                v-model="form.password"
+                type="password"
+                height=''
+                label="Password"
+              ></v-text-field>
+              <v-text-field required
+                v-model="form.password2"
+                prepend-icon="place"
+                type="password"
+                name="password2"
+                label="Repeat password"
+              ></v-text-field>
+              <v-flex class="form_buttons" d-flex mb-3>
+                <v-btn type="submit" small flat style="background:#fdba1e;">
                   <!-- loading spinner -->
                   <loading-bar v-if="show_spinner"></loading-bar>
                   Submit
                 </v-btn>
-                <v-spacer></v-spacer>
-                <v-btn to="/signup" small id="i_have_an_account">Or signup ?</v-btn>
-              </v-card-actions>
-            </v-card>
-          </v-flex>
-        </v-layout>
-      </v-container>
-    </v-content>
+                <v-btn to="/login" small id="i_have_an_account">Or Login </v-btn>
+              </v-flex>
+              
+            </form>
+          </v-card>
+        </v-flex>
+      </v-layout>
+    </v-container>
     
   </v-app>
 </template>
 <script>
+
 export default {
   mixins: [validationMixin],
 
@@ -52,7 +61,7 @@ export default {
   },
 
   data:()=>({
-    message:'',
+    message:'Login',
     snackbar:false,
     show_spinner:false,
     form:{
@@ -93,13 +102,14 @@ export default {
       
     },
   methods:{
+    
     async submit(){
       try{
         this.$v.touch
         this.form['token'] = this.$store.getters.getToken
         this.show_spinner = true
         //console.log(this.form)
-        let res = await authService.Login(this.form)
+        let res = await  authService.Register(this.form)
         console.log(res.data)
         this.show_spinner = false
         this.$store.dispatch('setUser', {user:res.data.user,token:res.data.token})
@@ -108,15 +118,15 @@ export default {
       catch(err){
         console.log(err)
         console.log(err.response)
-        if(err.response.status == 401){
+        if(err.response.status == 404){
           this.show_spinner = false
           this.snackbar = true
-          this.message = 'Invalid username or password'
+          this.message = 'Username is already taken'
         }
-        else if(err.response.status == 400){
+        else if(err.response.status == 401){
           this.show_spinner = false
           this.snackbar = true
-          this.message = 'Please provide username and password'
+          this.message = 'Please provide required fields'
         }
         else{
 

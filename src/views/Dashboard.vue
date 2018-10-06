@@ -1,53 +1,5 @@
 <template>
   <v-app>
-    <!--v-toolbar app dark flat  >
-      <v-toolbar-side-icon></v-toolbar-side-icon>
-
-      <v-toolbar-title class="white--text">FaceVote</v-toolbar-title>
-
-      <v-spacer></v-spacer>
-
-      <v-btn icon>
-        <v-icon>search</v-icon>
-      </v-btn>
-      
-      <v-toolbar-items>
-        <v-btn flat>Link Two</v-btn> 
-      </v-toolbar-items>
-
-      <v-menu transition="slide-y-transition" offset-y>
-        <v-toolbar-title slot="activator">
-          <v-avatar size="36" color="grey lighten-4">
-            <img src="https://avatars0.githubusercontent.com/u/9064066?v=4&s=460" alt="avatar">
-          </v-avatar>
-          <v-icon dark>arrow_drop_down</v-icon>
-        </v-toolbar-title>
-        
-        <v-list>
-          <v-list-tile
-            v-for="item in toolbar_items"
-            :key="item"
-            @click=""
-          >
-            <v-icon right color="primary">search</v-icon>
-            <v-list-tile-title v-text="item" style="margin-left:5px;"></v-list-tile-title>
-          </v-list-tile>
-
-          <v-divider></v-divider>
-
-          <v-list-tile to="#">
-            <v-icon right color="primary">search</v-icon>
-            <v-list-tile-title style="margin-left:5px;">Help</v-list-tile-title>
-          </v-list-tile>
-          <v-divider></v-divider>
-
-          <v-list-tile to="#">
-            <v-icon right color="primary" >search</v-icon>
-            <v-list-tile-title style="margin-left:5px;" @click="logout">Logout</v-list-tile-title>
-          </v-list-tile>
-        </v-list>
-      </v-menu>
-    </v-toolbar-->
     <v-content>
       <HelloWorld/>
     </v-content>
@@ -69,29 +21,22 @@ export default {
     toolbar_items: [
       'My profile', 'Settings'
     ],
-    news : io.connect('localhost:3000/dashboard')
   }),
   components:{
     ...VCard,
     ...VMenu,
     ...VAvatar,
     ...VDivider,
-    HelloWorld//
+    HelloWorld
   },
   methods:{
     logout(){
       this.$store.dispatch('logout')
       this.$router.push('/')
     },
-    run(){
-      this.news.on('item', (data) =>{
-          console.log(data)
-        this.news.emit('woot');
-      });
-    }
   },
   mounted(){
-    this.run()
+    //this.run()
   }
   
 }

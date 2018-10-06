@@ -1,53 +1,78 @@
 <template>
-  <v-layout >
-    <v-flex >
-      <v-list two-line>
-        <template v-for="(item, index) in items">
-          <v-subheader v-if="item.header" :key="item.header" >{{ item.header }}
-          </v-subheader>
+  <div>
+  <v-list subheader dense>
+    <v-subheader>Recent chat</v-subheader>
+    <v-list-tile v-for="voter in $store.state.curRoom.regVoters" :key="voter._id" avatar :to="'forum/profile/' +voter.username">
+      <v-list-tile-avatar>
+        <img :src="'https://api.adorable.io/avatars/285/' + voter.username + '@adorable.png'">
+      </v-list-tile-avatar>
 
-          <v-divider v-else-if="item.divider" :inset="item.inset" :key="index"></v-divider>
+      <v-list-tile-content>
+        <v-list-tile-title v-html="voter.name"></v-list-tile-title>
+      </v-list-tile-content>
 
-          <v-list-tile v-else :key="item.title" avatar @click="">
-            <v-list-tile-avatar>
-              <img :src="item.avatar">
-            </v-list-tile-avatar>
+      <v-list-tile-action>
+        <v-icon :color="checkIfOnline(voter._id)">chat_bubble</v-icon>
+      </v-list-tile-action>
+    </v-list-tile>
+  </v-list>
 
-            <v-list-tile-content>
-              <v-list-tile-title v-html="item.title"></v-list-tile-title>
-              <v-list-tile-sub-title v-html="item.subtitle"></v-list-tile-sub-title>
-            </v-list-tile-content>
-          </v-list-tile>
-        </template>
-      </v-list>
-    </v-flex>
-  </v-layout>
+  <v-divider></v-divider>
+
+  <v-list subheader dense>
+    <v-subheader>Previous chats</v-subheader>
+
+    <v-list-tile v-for="item in items2" :key="item.title" avatar to="/item.title">
+      <v-list-tile-avatar>
+        <img :src="'https://api.adorable.io/avatars/285/' + item.title + '@adorable.png'">
+      </v-list-tile-avatar>
+
+      <v-list-tile-content>
+        <v-list-tile-title v-html="item.title"></v-list-tile-title>
+      </v-list-tile-content>
+    </v-list-tile>
+  </v-list>
+  </div>
 </template>
 <script>
 export default{
-data:()=>({
-  items: [
-    { header: 'Today' },
-    {
-      avatar: 'https://cdn.vuetifyjs.com/images/lists/1.jpg',
-      title: 'Brunch this weekend?',
-      subtitle: "<span class='text--primary'>Ali Connors</span> &mdash; I'll be in your neighborhood doing errands this weekend. Do you want to hang out?"
+  data:()=>({
+    drawerRight: true,
+    right: null,
+    left: null,
+    right_sidebar:true,
+    items2: [
+      { title: 'Travis Howard', avatar: 'https:cdn.vuetifyjs.com/images/lists/5.jpg' }
+    ]
+  }),
+  methods:{
+    checkProfile(){
+      this.$eventBus.$emit('show_right_sidebar','profile');
     },
-    { divider: true, inset: true },
-    {
-      avatar: 'https://cdn.vuetifyjs.com/images/lists/2.jpg',
-      title: 'Summer BBQ <span class="grey--text text--lighten-1">4</span>',
-      subtitle: "<span class='text--primary'>to Alex, Scott, Jennifer</span> &mdash; Wish I could come, but I'm out of town this weekend."
-    },
-    { divider: true, inset: true },
-    {
-      avatar: 'https://cdn.vuetifyjs.com/images/lists/3.jpg',
-      title: 'Oui oui',
-      subtitle: "<span class='text--primary'>Sandra Adams</span> &mdash; Do you have Paris recommendations? Have you ever been?"
+    checkIfOnline(userId){
+      let those_online = this.$store.state.those_online
+      //console.log(this.those_online)
+      let foo = []
+      those_online.forEach(data=>{
+        if(data.user == userId){
+          foo.push(true)
+          //console.log(data.user)
+        }
+      })
+
+      // using foo[0] bcs we know that the user can only appear once 
+      // in the 'those_online' list, the only one not eventually filtered out, and therefore found at the zero
+      return foo[0] == true ? 'teal' : 'grey' 
     }
-  ]
-}),
-components:{
+  },
+  async mounted(){
+    
+  },
+
+  destroyed(){
+    //this.$eventBus.$emit('show_right_sidebar',null);
+  },
+  components:{
     ...VCard,
     ...VAvatar,
     ...VSubheader,
@@ -87,3 +112,14 @@ import * as VSlider from 'vuetify/es5/components/VSlider'
 import * as VChip from 'vuetify/es5/components/VChip'
 import * as VForm from 'vuetify/es5/components/VForm'
 </script>
+
+<style lang="scss" scoped>
+  .menu_tabs{
+    .v-tabs__div{
+      text-transform:capitalize
+    }
+    .v-list__tile{
+      font-size: 14px;
+    }
+  }
+</style>

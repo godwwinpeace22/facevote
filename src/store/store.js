@@ -1,15 +1,26 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import creatPersistedState from 'vuex-persistedstate'
+import createMutationsSharer from 'vuex-shared-mutations'
 Vue.use(Vuex)
 
 export default new Vuex.Store({
-  plugins:[creatPersistedState()],
+  plugins:[
+    creatPersistedState(),
+    createMutationsSharer({ predicate: 
+      ['logout', 'setUser', 'curRoom','saveChatMessages','updateFromDb','setCurrElection','setCurrElectionContestants','updateThoseOnline','allVotes'] })
+  ],
   state: {
     user:null,
     token:null,
     curRoom:null,
-    chat_messages:[]
+    chat_messages:[],
+    currElection:{},
+    currElectionContestants:[],
+    those_online:[],
+    allVotes:[],
+    curr_right_sidebar:null,
+    show_right_sidebar:false
   },
   mutations: {
     setUser(state,data){
@@ -34,6 +45,24 @@ export default new Vuex.Store({
       })
       //console.log(newMessages)
       state.chat_messages = [...state.chat_messages, ...newMessages] // add the newest messages to the state
+    },
+    setCurrElection(state,data){
+      state.currElection = data
+    },
+    setCurrElectionContestants(state,data){
+      state.currElectionContestants = data
+    },
+    updateThoseOnline(state,data){
+      state.those_online = data
+    },
+    showRightSidebar(state,data){
+      state.show_right_bar = true
+    },
+    setCurrRightSidebar(state, data){
+      state.curr_right_sidebar = data
+    },
+    allVotes(state,data){
+      state.allVotes = data
     }
   },
   actions:{
@@ -51,6 +80,25 @@ export default new Vuex.Store({
     },
     updateFromDb({commit},data){
       commit('updateFromDb',data)
+    },
+    setCurrElection({commit},data){
+      commit('setCurrElection', data)
+    },
+    setCurrElectionContestants({commit},data){
+      commit('setCurrElectionContestants', data)
+    },
+    updateThoseOnline({commit}, data){
+      commit('updateThoseOnline',data)
+    },
+    showRightSidebar({commit},data){
+      commit('showRightSidebar', data)
+    },
+    setCurrRightSidebar({commit}, data){
+      commit('setCurrRightSidebar', data)
+    },
+    allVotes({commit}, data){
+      commit('allVotes', data)
+      console.log('allvotes action')
     }
   },
   getters:{

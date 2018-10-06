@@ -1,70 +1,25 @@
 <template>
-  <v-layout row>
-    <v-flex d-flex>
-      <v-card pa-0 id="chat_space" style="min-height:400px;overflow-y:auto;margin-bottom:1%;padding-bottom:5%;">
+  <div>
+    <v-container style="background:yello;" class="pa-0 pt-3 chat_home">
+      <v-card flat pa-0 id="chat_space" style="height:75vh;margin-top:px;overflow-y:auto;background:ore;">
         <div class="chat_rectangle " id="speech_bubble" v-for="(msg,i) in $store.getters.getChatMessages" :key="i" :class=" msg.user == $store.getters.getUser.username ? 'reposition':''">
-          <div class="chat_avartar"><img src="https://cdn.vuetifyjs.com/images/lists/1.jpg" alt="avartar"></div>
+          <div class="chat_avartar"><img :src="'https://api.adorable.io/avatars/285/' + msg.user + '@adorable.png'" alt="avartar"></div>
           <div class="chat_content">
             <div style="width:100%;margin-top:0px;margin-bottom:0px;">
               <span class="small title" v-if="msg.user != $store.getters.getUser.username " style="margin-right:5px;">
-                <a :href="'/profile/' + msg.user">{{msg.user}}</a>
+                <a :href="'/#/dashboard/forum/profile/' + msg.user">{{msg.user}}</a>
               </span>
               <span v-else style="margin-right:5px;"><strong>You  </strong></span>
               <span style="font-size:.9em;color:#555;" color="grey lighten-5">  {{ msg.timestamp | moment("h:mm") }}</span>
             </div>
             <div style="width:100%;">{{msg.chat}}</div>
-            <!--v-speed-dial v-model="fab" top right direction="left" open-on-hover transition="scale">
-              <v-btn slot="activator"  v-model="fab" color="blue darken-2" dark fab>
-                <v-icon>account_circle</v-icon>
-                <v-icon>close</v-icon>
-              </v-btn>
-              <v-btn fab dark small color="green">
-                <v-icon>edit</v-icon>
-              </v-btn>
-              <v-btn fab  dark small color="indigo">
-                <v-icon>add</v-icon>
-              </v-btn>
-              <v-btn fab dark small color="red">
-                <v-icon>delete</v-icon>
-              </v-btn>
-            </v-speed-dial-->
           </div>
           
         </div>
           
       </v-card>
-      
-      
-      <v-footer height="auto" fixed style="margin-left:250px;">
-        <v-form @submit.prevent='submit'>
-          
-            <v-layout row wrap>
-
-              <v-flex xs12>
-                <v-text-field
-                  v-model="message"
-                  :append-icon="message ? 'attach_file' : 'photo_camera'"
-                  :append-outer-icon="message ? 'send' : 'mic'"
-                  :prepend-icon="icon"
-                  outline
-                  clear-icon="mdi-close-circle"
-                  clearable
-                  full-width
-                  label="Message"
-                  hide-details
-                  type="text"
-                  @click:append="toggleMarker"
-                  @click:append-outer="sendMessage"
-                  @click:prepend="changeIcon"
-                  @click:clear="clearMessage"
-                ></v-text-field>
-              </v-flex>
-
-            </v-layout>
-        </v-form>
-      </v-footer>
-    </v-flex>
-  </v-layout>
+    </v-container>
+  </div>
 </template>
 
 <script>
@@ -84,7 +39,8 @@ data:()=>({
     marker: true,
     iconIndex: 0,
     menu:false,
-    chat:''
+    chat:'',
+    fab:true
     
 }),
 computed: {
@@ -98,57 +54,12 @@ computed: {
     sameUser(msg){
       return msg.user == this.$store.getters.getUser.username
     },
-    toggleMarker () {
-      this.marker = !this.marker
-    },
-    sendMessage () {
-      this.resetIcon()
-      this.submit()
-    },
-    clearMessage () {
-      this.message = ''
-    },
-    resetIcon () {
-      this.iconIndex = 0
-    },
-    changeIcon () {
-      this.iconIndex === this.icons.length - 1
-        ? this.iconIndex = 0
-        : this.iconIndex++
-    },
-    submit(){
-      //console.log(this.chat)
-      this.chat.emit('chat_message', { chat:this.message,user:this.$store.getters.getUser.username, timestamp:Date.now(), room:this.$store.state.curRoom.electionId });
-      //this.msgs.push({chat:this.message, user:this.$store.getters.getUser.username})
-      this.$store.dispatch('saveChatMessage', {chat:this.message, user:this.$store.getters.getUser.username, timestamp:Date.now(), room:this.$store.state.curRoom.electionId})
-      this.clearMessage()
-    }
+    
+    
   },
   mounted() {
-    if(this.$store.state.curRoom != null){
-       let chat = io.connect('localhost:3000/chat')
-      this.chat = chat // do this in order to access chat in other methods
-      chat.on('connect', _=>{
-        console.log('connected to server successfully')
-        chat.emit('join_room', this.$store.state.curRoom.electionId)
-      })
-      chat.on('update_chat', (messagesFromDb) =>{ // update chat from db
-        //console.log('messagesFromDb... ')
-        //console.log(messagesFromDb.chat_messages)
-        this.$store.dispatch('updateFromDb', messagesFromDb.chat_messages)
-      })
-      chat.on('chat_response', (data)=> {
-        //console.log(data);
-        //console.log(this.msgs)
-        this.$store.dispatch('saveChatMessage', data)
-      });
-
+    
       
-    }
-    let chat_space = document.getElementById('chat_space')
-    let speech_bubble = document.getElementById('speech_bubble')
-    speech_bubble.scrollTop = chat_space.scrollHeight
-    //console.log(chat_space)
   },
 components:{
   'settings':Settings,
@@ -169,7 +80,9 @@ components:{
   ...VStepper,
   ...VSlider,
   ...VChip,
-  ...VForm
+  ...VForm,
+  ...VTextarea,
+  ...VSpeedDial
 }
 }
 import io from 'socket.io-client';
@@ -194,16 +107,27 @@ import * as VStepper from 'vuetify/es5/components/VStepper'
 import * as VSlider from 'vuetify/es5/components/VSlider'
 import * as VChip from 'vuetify/es5/components/VChip'
 import * as VForm from 'vuetify/es5/components/VForm'
+import * as VTextarea from 'vuetify/es5/components/VTextarea'
+import * as VSpeedDial from 'vuetify/es5/components/VSpeedDial'
 </script>
 <style lang="scss" scoped>
+
+@mixin borderRadius($radius) {
+  border-radius: $radius;
+  -webkit-border-radius:$radius;
+  -moz-border-radius:$radius;
+  -o-border-radius:$radius;
+}
+$mainBgColor:#1c1f35;
+
 .chat_home{
-  background-image:url('../assets/chat_wallpaper.jpg');
+  //background-image:url('../assets/chat_wallpaper.jpg');
   background-size:cover;
   background-position: center;
   //background-color: #00aabb;
 }
 .chat_avartar{
-  width:5%;
+  width:40px;
   height: 40px;
   border-radius:5px;
   //float:left;
@@ -230,6 +154,7 @@ import * as VForm from 'vuetify/es5/components/VForm'
 	text-align: left;
   text-overflow:wrap;
   width:100%;
+  word-wrap: break-word;
   &:hover{
     background-color:rgb(241, 241, 241);
   }
@@ -251,5 +176,24 @@ import * as VForm from 'vuetify/es5/components/VForm'
 	border-bottom: 0;
 	margin-top: -12.5px;
 	margin-left: -25px;
+}
+
+/* --scrollbar --*/
+.chat_home::-webkit-scrollbar {
+    width: 10px;
+    background-color: $mainBgColor;
+    @include borderRadius(10px)
+  }
+.chat_home::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+  -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+  -moz-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+  -o-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+  background-color: $mainBgColor;
+  @include borderRadius(10px)
+}
+.chat_home::-webkit-scrollbar-thumb {
+  background-color:#87899c ;
+  @include borderRadius(10px);
 }
 </style>

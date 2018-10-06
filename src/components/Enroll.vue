@@ -35,15 +35,19 @@
           <v-spacer></v-spacer>
           <v-container>
             <v-layout row wrap>
-              <v-flex xs6>
-                <v-text-field type="file" label="Select image" v-model="voter.image"></v-text-field>
+              <v-flex xs12>
+                <div id="video-container">
+                  <video id="camera-stream" width="500" autoplay></video>
+                </div>
+                <canvas style="display:none"></canvas>
+                <img src="" alt="" id="canvasImg">
               </v-flex>
             </v-layout>
           </v-container>
         </v-card>
 
         <v-btn flat @click="e5 = 1">Previous</v-btn>
-        <v-btn color="primary" @click="verify">Next</v-btn>
+        <v-btn color="primary" @click="enroll">Enroll</v-btn>
       </v-stepper-content>
 
       <v-stepper-content step="3">
@@ -79,6 +83,15 @@ export default {
     voter:{
       image:''
     },
+    vid:'',
+    cloudinary: {
+       uploadPreset: 'izcl0gzg',
+       cloudName: 'unplugged',
+       folder: 'securepoll',
+        transformation:[
+          {width: 400, height: 400, crop: "thumb", gravity:"face"},
+        ],
+     }, 
   }),
   methods:{
     async getId(){ // this actually gets the election instead of just the id
@@ -95,58 +108,90 @@ export default {
           console.log(id)
           this.election = id.data
           this.e5 = 2
+          this.startCamera()
         }
         
       } catch (error) {
         console.log(error.response)
       }
     },
+    async enroll(){
+      try {
+        if(this.election.regVoters.indexOf(this.$store.getters.getUser._id) != -1){
+          alert('you have already enrolled for this election');
+        }
+        else{
+          let res = await api().post(`dashboard/enroll/${this.electionId}`, {user:this.$store.getters.getUser,token:this.$store.getters.getToken})
+          console.log(res)
+          alert('enrollement successfull');
+        }
+        
+      } catch (error) {
+
+        console.log(error.response)
+        if(error.response.status = 401){
+          alert('you have already enrolled for this election')
+        }
+        
+      }
+    },
+    startCamera(){
+      if (navigator.getUserMedia) {
+          // Request the camera.
+          let $self = this
+          navigator.getUserMedia({	video: true}, function(localMediaStream) {
+              // Get a reference to the video element on the page.
+              var vid = document.getElementById('camera-stream');
+              $self.vid = vid
+              // Create an object URL for the video stream and use this to set the video source.
+              vid.srcObject = localMediaStream
+            },
+            function(err) {
+              console.log('The following error occurred when trying to use getUserMedia: ' + err);
+            }
+          );
+
+        } else {
+          alert('Sorry, your browser does not support getUserMedia');
+        }
+    },
+    makeblob(dataURL) {
+			const BASE64_MARKER = ';base64,';
+			const parts = dataURL.split(BASE64_MARKER);
+			const contentType = parts[0].split(':')[1];
+			const raw = window.atob(parts[1]);
+      const rawLength = raw.length;
+      console.log(rawLength);
+			const uInt8Array = new Uint8Array(rawLength);
+
+			for (let i = 0; i < rawLength; ++i) {
+					uInt8Array[i] = raw.charCodeAt(i);
+			}
+      
+			return new Blob([uInt8Array], { type: contentType });
+		},
+    
     async verify(){
       try {
-        // do face rec with Kairos API
-        /*let headers = {
-          "Content-type": "application/json",
-          "app_id"  : process.env.VUE_APP_APP_ID,
-          "app_key" : process.env.VUE_APP_APP_KEY
-        };
-        let payload  = {
-          "image" : this.voter,
-          "gallery_name": this.electionId
-          
-        };
-
-        const instance = axios.create({
-          baseURL: 'https://api.kairos.com/',
-          headers: headers
-        });
-
-        let yt = await instance.post('verify', payload)
-        console.log(yt)*/
-        //console.log(kairos)
-        //var kairos = new Kairos(process.env.VUE_APP_APP_ID, process.env.VUE_APP_APP_KEY);
-        //console.log(Kairos)
-        //this.e5 = 3;
-        // make request 
-
-        let headers = {
-          "Content-type": "application/json",
-          "app_id"  : process.env.VUE_APP_APP_ID,
-          "app_key" : process.env.VUE_APP_APP_KEY
-        };
-        let payload  = {
-          "image" : this.voter,
-          "gallery_name": this.electionId
-          
-        };
-
-        $.ajax('https://api.kairos.com/verify', {
-          headers  : headers,
-            type: "POST",
-            data: JSON.stringify(payload),
-            dataType: "text"
-        }).done(function(response){
-          console.log(response);
-        });
+        
+        const canvas = document.createElement('canvas'); // create a canvas
+        const ctx = canvas.getContext('2d'); // get its context
+        canvas.width = 500; // set its size to the one of the video
+        canvas.height = 500;
+        ctx.drawImage(this.vid, 0,0); // the video
+        let base64Img = canvas.toDataURL('image/png')
+        document.getElementById('canvasImg').src = base64Img
+        //console.log(base64Img)
+        
+      
+        //document.getElementById('canvasImg').src = URL.createObjectURL(blob)
+        let formData = new FormData();
+        formData.append('image',this.makeblob(base64Img));
+        formData.append('user',this.$store.getters.getUser._id)
+        let payload = {image:this.makeblob(base64Img),user:this.$store.getters.getUser._id}
+        let res = await api().post(`dashboard/recognize/${this.electionId}/${this.$store.getters.getToken}`, formData, {headers: {'Content-Type': 'multipart/form-data'}})
+        console.log(res.data)
+        
         
       } catch (err) {
         console.log(err)
@@ -154,7 +199,26 @@ export default {
         
 
       }
-    }
+    },
+
+    takeASnap(){
+        const canvas = document.createElement('canvas'); // create a canvas
+        const ctx = canvas.getContext('2d'); // get its context
+        canvas.width = this.vid.videoWidth; // set its size to the one of the video
+        canvas.height = this.vid.videoHeight;
+        ctx.drawImage(this.vid, 0,0); // the video
+        return new Promise((res, rej)=>{
+          canvas.toBlob(res, 'image/jpeg'); // request a Blob from the canvas
+        });
+      },
+    download(blob){
+        // uses the <a download> to download a Blob
+        let a = document.createElement('a'); 
+        a.href = URL.createObjectURL(blob);
+        a.download = 'screenshot.jpg';
+        document.body.appendChild(a);
+        a.click();
+      },
   },
   components:{
     ...VCard,

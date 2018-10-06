@@ -23,9 +23,6 @@ import jQuery from 'jquery'
 global.jQuery = jQuery
 global.$ = jQuery
 
-//global.kairos = kairos
-
-
 Vue.use(Vuetify, {
   components: {
     VApp,
