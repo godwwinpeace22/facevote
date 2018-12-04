@@ -1,226 +1,299 @@
 <template>
-  <div style="background:gre;height:93vh;" class="navdrawr">
-    
-    <v-navigation-drawer fixed v-model="drawerRight" right clipped app v-if="$store.state.curRoom" width="300" class='navdrawr'>
-      <v-list dense>
-        <v-list-tile @click.stop="right = !right">
-          <v-list-tile-action>
-            <v-icon>exit_to_app</v-icon>
-          </v-list-tile-action>
-          <v-list-tile-content>
-            <v-list-tile-title>Open Temporary Drawer</v-list-tile-title>
-          </v-list-tile-content>
-        </v-list-tile>
-      </v-list>
-      <router-view></router-view>
+  <div style="background:gre;height:93vh;overflow:hidden;margin-top:;" class="navdrawr">
+    <vue-headful
+      :title="title"
+    />
+      <v-toolbar color="blue-grey" dark flat v-show="$vuetify.breakpoint.smAndDown"
+        style='background-color:#29648a;' dense>
+        <v-toolbar-title>{{elections.title}}</v-toolbar-title>
+        <v-spacer></v-spacer>
+        <v-btn  @click="drawerRight = true;" large icon tile color="primary"
+          style="position:absolute;right:-5px;top:50px;">
+          <v-icon size="30">chevron_left</v-icon>
+          
+        </v-btn>
+        
+      </v-toolbar>
+    <v-navigation-drawer fixed v-model="drawerRight"  :mobile-break-point="960"
+      :disable-route-watcher='$vuetify.breakpoint.smAndDown'
+      right hide-overlay clipped app width="300" class='navdrawr'>
+      
+      <v-divider></v-divider>
+      <router-view :regVoters='elections.regVoters' :contestants='contestants'></router-view>
       
     </v-navigation-drawer>
-    <v-layout v-if='!$store.state.curRoom' style="min-height:400px">
-      <v-flex xs12 >
-        <p>Your connected groups</p>
-        <v-list>
-          <v-list-tile @click="setCurrRoom(election)" v-for='election in elections' :key="election._id">
-            <v-list-tile-title>{{election.title}}</v-list-tile-title>
-          </v-list-tile>
-        </v-list>
-      </v-flex>
-    </v-layout>
 
-    <chatwindow  v-if="$store.state.curRoom" :icons='icons'></chatwindow>
-    
-    <v-navigation-drawer v-if='$store.state.curRoom' right temporary v-model="right" fixed></v-navigation-drawer>
-  <v-container v-if='$store.state.curRoom'>
-    <div class="white--text" style='margin-left:px;position:static;width:100%;background:#fff;'>
+    <chatwindow :regVoters='elections.regVoters'></chatwindow>
+  <v-container>
+    <div class="white--text" style='margin-left:px;position:static;width:100%;background:r;z-index:0;'>
+      
 
-      <v-form @submit.prevent='submit' style="margin-left:px;background:;">
-        <v-textarea v-model="message" box color="deep-purple" @keypress="isTyping"
-          label="Message" outline :append-icon="message ? 'attach_file' : 'photo_camera'"
-          :append-outer-icon="message ? 'send' : 'mic'"
-          @click:append-outer="sendMessage"
+      <v-form @submit.prevent='submit' style="margin-left:px;background:;" >
+        <v-textarea v-model="message" color="deep-purple" @keypress="isTyping" id="form"
+          label="Type a message" outline 
           rows="1" auto-grow
-        ></v-textarea>
-            
+        >
+        <v-tooltip top slot="append">
+          <v-btn icon slot="activator" @click='triggerFileSelect'>
+            <v-icon color="success">photo_camera</v-icon>
+          </v-btn>
+          <span>Send a photo</span>
+        </v-tooltip>
+        <v-tooltip top slot="append-outer" v-if="message">
+          <v-btn icon slot="activator" @click="sendMessage">
+            <v-icon color="teal">{{message ? 'send' : '' }}</v-icon>
+          </v-btn>
+          <span>Send message</span>
+        </v-tooltip>
+
+        <v-menu max-width="300" :close-on-content-click='false'
+          slot="prepend-inner" max-height="300" top offset-y>
+
+          <v-btn slot="activator" icon >
+            <v-icon color="success">mood</v-icon>
+          </v-btn>
+          <v-card class="pa-0">
+            <v-card-text >
+              <v-btn small flat color="primary" icon v-for="(emoji,i) in emojis" :key="i" @click="appendEmoji(emoji)">
+                <span style="font-size:30px;display:block;margin-top:-7px;">{{emoji}}</span>
+              </v-btn>
+            </v-card-text>
+          </v-card>
+        </v-menu>
+        
+        </v-textarea>
+        <input id="file_input" type="file" ref="file_input" style="visibility:hidden" @change="triggerFileModal($event)" />
       </v-form>
     </div>
   </v-container>
+
+  <v-dialog v-model="file_dialog" max-width="400" hide-overlay style="">
+    <v-container style="background:#fff;">
+      <h3 class="mb-2">Upload a file</h3>
+      <v-img :src="imgSrc" max-height='200' max-width='400'></v-img>
+      <!--div style="min-height:200px;"></div-->
+      <div class="mt-4">
+        <v-textarea v-model="file_message" box color="deep-purple"
+          label="Add a message about the file" outline
+          rows="4" auto-grow
+        ></v-textarea>
+      </div>
+      <v-spacer></v-spacer>
+      <v-btn flat small color="primary" @click="uploadFile">Upload file</v-btn>
+    </v-container>
+    
+  </v-dialog>
+
+  <v-dialog v-model="progress_dialog" hide-overlay max-width="300">
+    <v-card>
+      <v-container class="mt-0">
+        <v-subheader >Uploading file</v-subheader>
+        <v-progress-linear :indeterminate="true" ></v-progress-linear>
+      </v-container>
+    </v-card>
+  </v-dialog>
   </div>
 </template>
 <script>
 export default {
   data:()=>({
+    title:'Forum | Facevote',
     password: 'Password',
-    drawer: null,
-    drawer3:true,
     drawerRight: true,
-    right: null,
     left: null,
-    right_sidebar:true,
-    marker: true,
+    emojis:[
+      '😀','😂','😁','😃','😄','😅','😆','😉','😊','😋','😎','😍','😘','😐',
+      '😶','😏','😣','😯','😪','😛','😜','😒','😲','😟',
+    ],
     iconIndex: 0,
-    message:'Hey',
+    message:"",
+    file_message:'',
+    file:null,
+    file_dialog:false,
+    progress_dialog:false,
+    imgSrc:'',
     menu:false,
     regElec:[],
     elections:[], // all the elections user enrolled in
+    contestants:[],
     toshow:0,
     someoneistyping:false,
     timeDistance:0,
-    icons: [
-      'mood',
-      'mood_bad',
-      'sentiment_satisfied',
-      'sentiment_dissatisfied',
-      'sentiment_very_dissatisfied',
-      'sentiment_very_satisfied',
-      'sentiment_neutral'
-    ],
-    navmenus:[
-      {title:'Home', icon:'home', link:'/dashboard'},
-      {title:'Messages', icon:'messages', link:'/dashboard/messages'},
-      {title:'Notifications', icon:'notifications', link:'/dashboard/notifications'},
-      {title:'Forum', icon:'comment', link:'/dashboard/forum'},
-      {title:'Enroll', icon:'camera_alt', link:'/dashboard/enroll'},
-      {title:'Contest', icon:'hdr_strong', link:'/dashboard/contest'},
-    ],
-    toolbar_items: [
-      {name:'My profile', icon:'person'},
-      {name: 'Settings', icon:'settings'}
-    ],
+    show_imojis:false,
+    cloudinary: {
+      uploadPreset: 'r9tlxvid',
+      cloudName: 'unplugged'
+    },
   }),
-  props:{
-    source:String
-  },
   computed: {
-      toolbarStatus(){
-        return this.$store.state.curRoom ? this.$store.state.curRoom.title :  'Your connected groups'
+    toolbarStatus(){
+      return 'Your connected groups'
+    }
+    
+  },
+
+  methods: {
+    // opens the chat window on select
+    async setCurrRoom(){
+      try{
+        let elections =  await api().post(`dashboard/getId/${this.$route.params.electionId}`, {token:this.$store.getters.getToken})
+        this.elections = elections.data
+        this.joinRoom();
+        this.$store.dispatch('curRoom', this.$route.params.electionId)
+        let contestants = await api().post(
+          `dashboard/getContestants/${this.elections._id}`,
+          {token:this.$store.getters.getToken}
+        )
+        this.contestants = contestants.data
+      }catch(error){
+        this.dispatchError(error)
       }
       
     },
-
-    methods: {
-      // opens the chat window on select
-      setCurrRoom(room){
-        //store the roomId
-        console.log(room)
-        this.$store.dispatch('curRoom', room)
-      },
-      toggleMarker () {
-        this.marker = !this.marker
-      },
-      sendMessage () {
-        this.resetIcon()
-        this.submit()
-      },
-      clearMessage () {
-        this.message = ''
-      },
-      resetIcon () {
-        this.iconIndex = 0
-      },
-      changeIcon () {
-        this.iconIndex === this.icons.length - 1
-          ? this.iconIndex = 0
-          : this.iconIndex++
-      },
-      submit(){
-        //console.log(this.chat)
-        this.$eventBus.$emit('Chat_Message', { chat:this.message,user:this.$store.getters.getUser.username, timestamp:Date.now(), room:this.$store.state.curRoom.electionId });
-        //this.msgs.push({chat:this.message, user:this.$store.getters.getUser.username})
-        this.$store.dispatch('saveChatMessage', {chat:this.message, user:this.$store.getters.getUser.username, timestamp:Date.now(), room:this.$store.state.curRoom.electionId})
-        this.clearMessage()
-      },
-      isTyping(){
-        // tell others that this user is typing.
-        this.$eventBus.$emit('Someone_Is_Typing',{user:this.$store.getters.getUser.username,room:this.$store.state.curRoom.electionId})
-        
-      },
-      logout(){
-        this.$store.dispatch('logout')
-        this.$router.push('/')
-      },
+    joinRoom(){
+      this.$eventBus.$emit('Join_Room', {room:this.elections.electionId, username:this.$store.getters.getUser.username})
     },
+    toggleMarker () {
+      this.marker = !this.marker
+    },
+    triggerFileSelect(){
+      //console.log('upload a file')
+      document.getElementById('file_input').click()
+      
+    },
+    triggerFileModal(e){
+      //console.log(e.target.files)
+      this.file = e.target.files[0]
+      this.imgSrc = URL.createObjectURL(e.target.files[0])
+      this.file_dialog = true
+      //console.log(e.target.files)
+      document.getElementById('file_input').value = ''
+    },
+    async uploadFile(){
+      // Make sure to restrict upload file types
+      this.file_dialog = false
+      this.progress_dialog = true
+      let formData = new FormData()
+      formData.append('file', this.file);
+      formData.append('file_message', this.file_message)
+      formData.append('upload_preset', this.cloudinary.uploadPreset);
+
+      // first upload image to cloudinary and retrieve the url
+      try{
+        let res = await api().post(`https://api.cloudinary.com/v1_1/${this.cloudinary.cloudName}/upload`, formData)
+        console.log(res.data)
+        
+        this.submit(this.file.file_message,res.data.secure_url)
+        this.progress_dialog = false
+        
+      }
+      catch(err){
+        this.dispatchError(err)
+        console.log(err)
+        this.progress_dialog = false
+        alert('Upload failed')
+        this.clearMessage()
+      }
+    },
+    sendMessage () {
+      this.resetIcon()
+      this.submit(this.message, null)
+    },
+    clearMessage () {
+      this.message = ''
+      this.file_message = ''
+      this.file = null
+      this.imgSrc = ''
+    },
+    submit(message,imgSrc){
+      //console.log(this.chat)
+      let timestamp = Date.now();
+      let msgId = Date.now() * 1 + Math.floor(Math.random() * (999999 - 999)) + 999;
+      this.$eventBus.$emit('Chat_Message', {
+        chat:message,
+        user:this.$store.getters.getUser.username,
+        name:this.$store.getters.getUser.name,
+        imgSrc:imgSrc,
+        timestamp:timestamp,
+        msgId:msgId,
+        reactions:{
+          like:[],love:[],wow:[],excited:[],haha:[],angry:[],
+        },
+        room:this.$route.params.electionId,
+        status:'unread'
+      });
+      console.log(this.$route.params.electionId)
+      //this.msgs.push({chat:this.message, user:this.$store.getters.getUser.username})
+      
+      this.$store.dispatch('saveChatMessage', {
+        chat:message,
+        user:this.$store.getters.getUser.username,
+        name:this.$store.getters.getUser.name,
+        imgSrc:imgSrc,
+        timestamp,
+        msgId,
+        reactions:{
+          like:[],love:[],wow:[],excited:[],haha:[],angry:[],
+        },
+        room:this.$route.params.electionId,
+        status:'unread'
+      })
+      this.clearMessage()
+      this.$eventBus.$emit('Scroll_Chat', 'data')
+    },
+    isTyping(){
+      // tell others that this user is typing.
+      this.$eventBus.$emit('Someone_Is_Typing',{user:this.$store.getters.getUser.username,room:this.$route.params.electionId})
+      
+    },
+    appendEmoji(emoji){
+      this.message += emoji
+    },
+    logout(){
+      this.$store.dispatch('logout')
+      this.$router.push('/')
+    },
+    dispatchError(error){
+      if(error.response && error.response.status == 401){
+        // if the auth token is invalid, log user out(if possible) and redirect to login page
+        this.$store.dispatch('logout')
+        this.$router.push('/login')
+      }
+    },
+    
+  },
     async mounted() {
       
-      
-      // get the elections the user registered for
-      try {
-        if(!this.$store.state.curRoom){
-          let res = await api().get(`dashboard/getElections/${this.$store.getters.getUser._id}/${this.$store.getters.getToken}`)
-          this.elections = res.data.enrolled
-          console.log(res)
-           
-        }
-        else{
-
-          this.$eventBus.$emit('Change_Title', this.$store.state.curRoom.title);
-          console.log('wow')
-        }
-        
-      } catch (error) {
-        console.log(error)
-        console.log(error.response)
-        if(error.response && error.response.status == 401){
-          // if the auth token is invalid, log user out(if possible) and redirect to login page
-          this.$store.dispatch('logout')
-          this.$router.push('/login')
-        }
-      }
+      this.setCurrRoom()
+      console.log(this.$vuetify.breakpoint)
+      // hide the forum_users nav onload on small screens, and also show the btn to trigger the it on the navbar
+      this.$vuetify.breakpoint.sm || this.$vuetify.breakpoint.xs ? 
+      this.$store.dispatch('showRightNav', [false,true]) : ''
     },
     destroyed(){
-      this.$eventBus.$emit('show_right_sidebar',null);
+      //this.$eventBus.$emit('show_right_sidebar',null);
+      // hide the nav, hide the btn trigger [nav,btn]
+      this.$store.dispatch('showRightNav', [false,false])
       this.$eventBus.$emit('change_title','FaceVote');
     },
   components:{
     'chatwindow':Chatwindow,
     'settings':Settings,
-    'users':Users,
-    ...VCard,
-    ...VAvatar,
-    ...VSubheader,
-    ...VDivider,
-    ...VTabs,
-    ...VTooltip,
-    ...VMenu,
-    ...VTextField,
-    ...VSelect,
-    ...VSwitch,
-    ...VDatePicker,
-    ...VTimePicker,
-    ...VDialog,
-    ...VStepper,
-    ...VSlider,
-    ...VChip,
-    ...VForm,
-    ...VTextarea
+    'users':ForumUsers,
   }
 }
 //import io from 'socket.io-client';
 import api from '@/services/api'
-import Settings from '@/components/Settings'
-import Users from '@/components/Users'
-import Chatwindow from '@/components/Chatwindow'
-import { promisfy } from "@/helpers/promisify";
-import * as VCard from 'vuetify/es5/components/VCard'
-import * as VAvatar from 'vuetify/es5/components/VAvatar'
-import * as VSubheader from 'vuetify/es5/components/VSubheader'
-import * as VDivider from 'vuetify/es5/components/VDivider'
-import * as VTabs from 'vuetify/es5/components/VTabs'
-import * as VMenu from 'vuetify/es5/components/VMenu'
-import * as VTooltip from 'vuetify/es5/components/VTooltip'
-import * as VTextField from 'vuetify/es5/components/VTextField'
-import * as VSelect from 'vuetify/es5/components/VSelect'
-import * as VSwitch from 'vuetify/es5/components/VSwitch'
-import * as VDatePicker from 'vuetify/es5/components/VDatePicker'
-import * as VTimePicker from 'vuetify/es5/components/VTimePicker'
-import * as VDialog from 'vuetify/es5/components/VDialog'
-import * as VStepper from 'vuetify/es5/components/VStepper'
-import * as VSlider from 'vuetify/es5/components/VSlider'
-import * as VChip from 'vuetify/es5/components/VChip'
-import * as VForm from 'vuetify/es5/components/VForm'
-import * as VTextarea from 'vuetify/es5/components/VTextarea'
-import ChatwindowVue from './Chatwindow.vue';
+  import Settings from '@/components/Settings'
+  import ForumUsers from '@/components/ForumUsers'
+  import Chatwindow from '@/components/Chatwindow'
+  import { promisfy } from "@/helpers/promisify";
+  import ChatwindowVue from './Chatwindow.vue';
 </script>
 <style lang="scss" scoped>
-
+.v-content{
+  padding-top:0 !important;
+}
 @mixin borderRadius($radius) {
   border-radius: $radius;
   -webkit-border-radius:$radius;
@@ -230,7 +303,7 @@ import ChatwindowVue from './Chatwindow.vue';
 $mainBgColor:#1c1f35;
 
 .chat_home{
-  background-image:url('../assets/chat_wallpaper.jpg');
+  //background-image:url('../assets/chat_wallpaper.jpg');
   background-size:cover;
   background-position: center;
   //background-color: #00aabb;

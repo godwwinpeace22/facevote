@@ -1,5 +1,8 @@
 <template>
-  <v-stepper v-model="e5" >
+  <v-stepper v-model="e5" d-flex style="min-height:100vh;">
+    <vue-headful
+      :title="title"
+    />
     <v-stepper-header>
       <v-stepper-step :complete="e5 > 1" step="1">Select election</v-stepper-step>
       <v-divider></v-divider>
@@ -22,7 +25,7 @@
           
         </v-card>
 
-        <v-btn color="primary" @click="getId">Submit</v-btn>
+        <v-btn color="success" @click="getId" :disabled="!electionId">Submit</v-btn>
       </v-stepper-content>
 
       <v-stepper-content step="2">
@@ -30,6 +33,7 @@
           <v-card-text v-if="election.length != 0">
             <span class="subheading">{{election.title}}</span>
             <v-divider></v-divider>
+            <h3 v-if="election_ended">Sorry, enrollement has ended</h3>
           </v-card-text>
           
           <v-spacer></v-spacer>
@@ -47,7 +51,7 @@
         </v-card>
 
         <v-btn flat @click="e5 = 1">Previous</v-btn>
-        <v-btn color="primary" @click="enroll">Enroll</v-btn>
+        <v-btn color="secondary" @click="enroll" :disabled="election_ended" v-if="!election_ended">Enroll</v-btn>
       </v-stepper-content>
 
       <v-stepper-content step="3">
@@ -73,6 +77,7 @@
 <script>
 export default {
   data:()=>({
+    title:'Enroll | Facevote',
     e5:1,
     electionId:null,
     election:{},
@@ -83,6 +88,7 @@ export default {
     voter:{
       image:''
     },
+    election_ended:false,
     vid:'',
     cloudinary: {
        uploadPreset: 'izcl0gzg',
@@ -104,11 +110,19 @@ export default {
           this.e5 = 2
         }
         else{
-          let id = await api().get(`dashboard/getId/${this.electionId}`)
+          let id = await api().post(`dashboard/getId/${this.electionId}`, {token:this.$store.getters.getToken})
           console.log(id)
           this.election = id.data
           this.e5 = 2
-          this.startCamera()
+          //this.startCamera()
+
+          // disable enrollment if election has started or has ended
+          // make sure to do this on the server to since the date on client machine might be behind
+          let countDownDate = new Date(this.election.startDate + ' ' + this.election.startTime).getTime();
+          //let countDownDate2 = countDownDate + this.election.duration * 1000 * 60 * 60
+          let now = Date.now()
+          
+          now > countDownDate ? this.election_ended = true : '' // election is in progress or ended
         }
         
       } catch (error) {
@@ -121,16 +135,20 @@ export default {
           alert('you have already enrolled for this election');
         }
         else{
-          let res = await api().post(`dashboard/enroll/${this.electionId}`, {user:this.$store.getters.getUser,token:this.$store.getters.getToken})
+          let res = await api().post(`dashboard/enroll/${this.electionId}`, {
+            user:this.$store.state.logged_in_user,
+            token:this.$store.getters.getToken
+          })
           console.log(res)
           alert('enrollement successfull');
         }
         
       } catch (error) {
-
+        NProgress.done()
         console.log(error.response)
         if(error.response.status = 401){
           alert('you have already enrolled for this election')
+          
         }
         
       }
@@ -221,44 +239,10 @@ export default {
       },
   },
   components:{
-    ...VCard,
-    ...VAvatar,
-    ...VSubheader,
-    ...VDivider,
-    ...VTabs,
-    ...VTooltip,
-    ...VMenu,
-    ...VTextField,
-    ...VSelect,
-    ...VSwitch,
-    ...VDatePicker,
-    ...VTimePicker,
-    ...VDialog,
-    ...VStepper,
-    ...VSlider,
-    ...VChip,
-    ...VForm
   }
 }
 import api from '@/services/api'
 import axios from 'axios'
-const Kairos =  require('@/assets/kairos.js')
-import { promisfy } from "@/helpers/promisify";
-import * as VCard from 'vuetify/es5/components/VCard'
-import * as VAvatar from 'vuetify/es5/components/VAvatar'
-import * as VSubheader from 'vuetify/es5/components/VSubheader'
-import * as VDivider from 'vuetify/es5/components/VDivider'
-import * as VTabs from 'vuetify/es5/components/VTabs'
-import * as VMenu from 'vuetify/es5/components/VMenu'
-import * as VTooltip from 'vuetify/es5/components/VTooltip'
-import * as VTextField from 'vuetify/es5/components/VTextField'
-import * as VSelect from 'vuetify/es5/components/VSelect'
-import * as VSwitch from 'vuetify/es5/components/VSwitch'
-import * as VDatePicker from 'vuetify/es5/components/VDatePicker'
-import * as VTimePicker from 'vuetify/es5/components/VTimePicker'
-import * as VDialog from 'vuetify/es5/components/VDialog'
-import * as VStepper from 'vuetify/es5/components/VStepper'
-import * as VSlider from 'vuetify/es5/components/VSlider'
-import * as VChip from 'vuetify/es5/components/VChip'
-import * as VForm from 'vuetify/es5/components/VForm'
+//const Kairos =  require('@/assets/kairos.js')
+//import { promisfy } from "@/helpers/promisify";
 </script>

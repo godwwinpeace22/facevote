@@ -1,69 +1,116 @@
 <template>
   <v-card flat>
-    <v-container v-bind="{ '[grid-list-sm]': true }">
+    <vue-headful
+      :title="title"
+    />
+    <v-container grid-list-md>
       <span class="body-2 ">Elections you created</span>
       <v-divider ></v-divider>
       <v-layout row wrap mt-3>
-        <span v-if="myCreatedElc.length == 0">You have not contested in any elections yet</span>
-        <v-flex xs4 v-for="election in myCreatedElc" px-2 :key="election._id" style="min-height:200px;">
-          <v-card hover tile >
-            <v-card-title primary-title><h4 class="subheading">{{election.title}}</h4></v-card-title>
-            <v-card-actions>
-              <v-btn flat color="orange" :to="'/dashboard/elections/watch/id/' + election.electionId">Explore</v-btn>
+        <v-subheader v-if="myCreatedElc.length == 0" class="warning--text">You have not created any election yet</v-subheader>
+        <v-flex xs12 sm6 md4 v-for="election in myCreatedElc" :key="election._id" mb-2 px-2>
+          <v-card color="" class="" height="200" hover>
+            <v-layout row>
+              <v-flex xs7>
+                <v-card-title primary-title>
+                  <div>
+                    <div class=""><strong>{{election.title}}</strong></div>
+                    <div>Registerd voters:</div>
+                    <div>({{election.regVoters.length}})</div>
+                  </div>
+                </v-card-title>
+              </v-flex>
+              <v-flex xs5>
+                <v-img
+                  :src="election.logo || 'https://cdn.vuetifyjs.com/images/cards/halcyon.png'"
+                  height="125px"
+                  contain
+                ></v-img>
+              </v-flex>
+            </v-layout>
+            <v-divider light></v-divider>
+            <v-card-actions class="pa-3">
+              <v-spacer></v-spacer>
+              <v-btn flat color="orange" :to="'/dashboard/elections/watch/' + election.electionId">Explore</v-btn>
+              <v-btn flat color="orange" :to="'/dashboard/elections/manage/' + election.electionId">Manage</v-btn>
               <v-spacer></v-spacer>
               <v-btn icon >
                 <v-icon>share</v-icon>
               </v-btn>
-              <v-btn icon @click="deleteElection(election.electionId)">
-                <v-icon >delete</v-icon>
-              </v-btn>
             </v-card-actions>
           </v-card>
-          
         </v-flex>
       </v-layout>
     </v-container>
 
     
-    <v-container v-bind="{ '[grid-list-sm]': true }">
+    <v-container grid-list-sm>
       <span class="body-2">Elections you have enrolled in</span>
       <v-divider ></v-divider>
       <v-layout row wrap mt-3>
-        <span v-if="myEnrolledElc.length == 0">You have not enrolled in any elections yet</span>
-        <v-flex xs4 v-for="election in myEnrolledElc" px-2 :key="election._id" style="min-height:200px;">
-          <v-card hover  dark >
-            <v-card-title primary-title><h4 class="subheading">{{election.title}}</h4></v-card-title>
-            <v-card-actions>
-              <v-btn flat color="orange" :to="'/dashboard/elections/watch/id/' +election.electionId">Explore</v-btn>
+        <v-subheader v-if="myEnrolledElc.length == 0">You have not enrolled in any elections yet</v-subheader>
+        <v-flex xs12 sm6 md4 v-for="election in myEnrolledElc" :key="election._id" mb-2 px-2>
+          <v-card color="" class="" height="200" hover dark>
+            <v-layout row>
+              <v-flex xs7>
+                <v-card-title primary-title>
+                  <div>
+                    <div class=""><strong>{{election.title}}</strong></div>
+                    <div>Registerd voters:</div>
+                    <div>({{election.regVoters.length}})</div>
+                  </div>
+                </v-card-title>
+              </v-flex>
+              <v-flex xs5>
+                <v-img
+                  :src="election.logo || 'https://cdn.vuetifyjs.com/images/cards/halcyon.png'"
+                  height="125px"
+                  contain
+                ></v-img>
+              </v-flex>
+            </v-layout>
+            <v-divider light></v-divider>
+            <v-card-actions class="pa-3">
+              <v-btn flat color="orange" :to="'/dashboard/elections/watch/' + election.electionId">Explore</v-btn>
               <v-spacer></v-spacer>
               <v-btn icon >
                 <v-icon>share</v-icon>
-              </v-btn>
-              <v-btn icon>
-                <v-icon >delete</v-icon>
               </v-btn>
             </v-card-actions>
           </v-card>
         </v-flex>
       </v-layout>
     </v-container>
-    <v-container v-bind="{ '[grid-list-sm]': true }">
+
+    <v-container grid-list-md>
       <span class="body-2">Elections you contested in</span>
       <v-divider ></v-divider>
       <v-layout row wrap mt-3>
-        <span v-if="myContestedElc.length == 0">You have not contested in any elections yet</span>
-        <v-flex xs4 v-for="contest in myContestedElc" px-2 :key="contest._id" v-if="contest.electionRef" style="min-height:200px;">
-          <v-card hover  dark >
-            <v-card-title primary-title><h4 class="subheading">{{contest.electionRef.title}}</h4></v-card-title>
-            <v-card-actions>
-              <v-btn flat color="orange" :to="'/dashboard/elections/watch/id/' +contest.electionRef.electionId">Explore</v-btn>
-              <v-spacer></v-spacer>
-              <v-btn icon >
-                <v-icon>share</v-icon>
-              </v-btn>
-              <v-btn icon>
-                <v-icon >delete</v-icon>
-              </v-btn>
+        <v-subheader v-if="myContestedElc.length == 0">You have not contested in any elections yet</v-subheader>
+        <v-flex xs12 sm6 md4 v-for="contest in myContestedElc" :key="contest._id" mb-2 px-2 v-if="contest.electionRef">
+          <v-card color="" class="" height="200" hover >
+            <v-layout row>
+              <v-flex xs7>
+                <v-card-title primary-title>
+                  <div>
+                    <div class=""><strong>{{contest.electionRef.title}}</strong></div>
+                    <div>Registerd voters:</div>
+                    <div>({{contest.electionRef.regVoters.length}})</div>
+                  </div>
+                </v-card-title>
+              </v-flex>
+              <v-flex xs5>
+                <v-img
+                  :src="contest.electionRef.logo || 'https://cdn.vuetifyjs.com/images/cards/halcyon.png'"
+                  height="125px"
+                  contain
+                ></v-img>
+              </v-flex>
+            </v-layout>
+            <v-divider light></v-divider>
+            <v-card-actions class="pa-3">
+              <v-btn flat color="primary" class="text-capitalize" :to="'/dashboard/elections/watch/' + contest.electionRef.electionId">Explore</v-btn>
+              <v-btn flat color="primary" class="text-capitalize" to="/dashboard/manifesto/create">Create manifesto</v-btn>
             </v-card-actions>
           </v-card>
         </v-flex>
@@ -73,15 +120,9 @@
 </template>
 <script>
 import api from '@/services/api'
-import * as VCard from 'vuetify/es5/components/VCard'
-import * as VAvatar from 'vuetify/es5/components/VAvatar'
-import * as VSubheader from 'vuetify/es5/components/VSubheader'
-import * as VDivider from 'vuetify/es5/components/VDivider'
-import * as VTabs from 'vuetify/es5/components/VTabs'
-import * as VMenu from 'vuetify/es5/components/VMenu'
-import * as VTooltip from 'vuetify/es5/components/VTooltip'
 export default {
   data:()=>({
+    title:'Manage Elections | Facevote',
     text:'Lorem, ipsum dolor sit amet consectetur adipisicing elit. Distinctio optio quidem, in aliquid laborum non nihil quasi id error, corrupti voluptatem consequatur nostrum blanditiis expedita omnis accusantium vitae veritatis aut?',
     myCreatedElc:[], // elections user created
     myContestedElc:[], // elections user contested in
@@ -102,26 +143,17 @@ export default {
     
     // get the elections the user created, contested, and voted in
     try {
-      let res = await api().get(`dashboard/getElections/${this.$store.getters.getUser._id}/${this.$store.getters.getToken}`)
+      let res = await api().post(`dashboard/getElections/${this.$store.getters.getUser.username}`, {token:this.$store.getters.getToken})
       
       this.myCreatedElc = res.data.created
       this.myContestedElc = res.data.contested
       this.myEnrolledElc = res.data.enrolled
-      // eslint-disable-next-line
       console.log(res)
     } catch (error) {
-      // eslint-disable-next-line
       console.log(error)
     }
   },
   components:{
-    ...VCard,
-    ...VAvatar,
-    ...VSubheader,
-    ...VDivider,
-    ...VTabs,
-    ...VTooltip,
-    ...VMenu
   },
 }
 </script>

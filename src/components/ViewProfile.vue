@@ -1,23 +1,48 @@
 <template>
-  <v-layout>
-      <v-flex xs12>
-        <v-card>
-          <v-img :src="'https://api.adorable.io/avatars/285/' + user.username + '@adorable.png'" height="200" aspect-ratio="2.75"></v-img>
+  <v-layout d-flex>
+      <v-flex xs12 d-flex style="max-width:300px;">
+        <v-card width="300">
+          <v-img :src="user.imgSrc || `https://ui-avatars.com/api/?name=${user.name}`" height="200" aspect-ratio="2.75"></v-img>
 
           <v-card-title primary-title>
             <div>
-              <h3 class="title mb-0 text-capitalize">{{user.name}}</h3>
+              <h3 class="title mb-0 text-capitalize d-inline">{{user.name}}</h3>
+              <v-tooltip top v-if="user.isVerified">
+                <v-icon color="success" slot="activator">verified_user</v-icon>
+                <span>Verified account</span>
+              </v-tooltip>
             </div>
           </v-card-title>
           
           <v-card-actions>
-            <v-btn flat outline small color="teal" dark @click="dialog = true" v-if='$store.getters.getUser.username == user.username ? true : false'>Edit Profile</v-btn>
-            <v-btn flat outline small color="teal" v-else>Message</v-btn>
-            <v-btn flat outline small color="teal">Explore</v-btn>
+            <v-btn flat outline small color="success" class="text-capitalize"  :to='`/users/${user.username}`'>View Profile</v-btn>
+            <template v-if='$store.getters.getUser.username != user.username'>
+              <v-btn flat outline small color="success" class="text-capitalize"  @click="openPrivateChatWindow">Message</v-btn>
+              <v-btn flat outline small color="success" class="text-capitalize" >Explore</v-btn>
+            </template>
+            <v-btn flat outline small color="success" class="text-capitalize" v-else dark @click="dialog = true" >Edit Profile</v-btn>
+            
           </v-card-actions>
           <v-list dense>
-            <v-list-tile v-for="i in 3" :key="i">
-              <v-list-tile-content>{{user.name}}</v-list-tile-content>
+            <!--v-list-tile>
+              <v-list-tile-content>School: {{user.school}}</v-list-tile-content>
+            </v-list-tile-->
+            <v-tooltip top>
+              <v-list-tile slot="activator" to="/dashboard/verify" v-if="!user.isVerified">
+                <v-list-tile-action style="">
+                  <v-icon color="error">error</v-icon>
+                </v-list-tile-action>
+                <v-list-tile-content style="color:red;">
+                  Verify your account
+                </v-list-tile-content>
+              </v-list-tile>
+              <span>Verify your account to participate in elections</span>
+            </v-tooltip>
+            <v-list-tile>
+              <v-list-tile-content>Faculty: {{user.faculty}}</v-list-tile-content>
+            </v-list-tile>
+            <v-list-tile>
+              <v-list-tile-content>Department: {{user.department}}</v-list-tile-content>
             </v-list-tile>
           </v-list>
           <v-dialog v-model="dialog" fullscreen hide-overlay transition="dialog-bottom-transition" scrollable>
@@ -34,17 +59,18 @@ export default {
     dialog:false
   }),
   props:['user'],
+  methods:{
+    openPrivateChatWindow(){
+      this.$eventBus.$emit('Open_Private_Chat_Window', {
+        username:this.user,
+        name:this.user.name,
+        imgSrc:this.user.imgSrc,
+        last_msg_status:null
+      })
+    },
+  },
   components:{
     ProfileSettings,
-    ...VCard,
-    ...VAvatar,
-    ...VSubheader,
-    ...VDivider,
-    ...VTabs,
-    ...VTooltip,
-    ...VMenu,
-    ...VImg,
-    ...VDialog
   },
   mounted(){
     this.$eventBus.$on('hide_profile_settings', _=>{
@@ -54,14 +80,5 @@ export default {
 }
 
 import ProfileSettings from '@/components/ProfileSettings'
-  import * as VCard from 'vuetify/es5/components/VCard'
-  import * as VAvatar from 'vuetify/es5/components/VAvatar'
-  import * as VSubheader from 'vuetify/es5/components/VSubheader'
-  import * as VDivider from 'vuetify/es5/components/VDivider'
-  import * as VTabs from 'vuetify/es5/components/VTabs'
-  import * as VMenu from 'vuetify/es5/components/VMenu'
-  import * as VTooltip from 'vuetify/es5/components/VTooltip'
-  import * as VImg from 'vuetify/es5/components/VImg'
-  import * as VDialog from 'vuetify/es5/components/VDialog'
 </script>
 

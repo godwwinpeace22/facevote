@@ -1,8 +1,12 @@
 <template>
-  <v-app id="cc">
-    <toolbar></toolbar>
+  <v-app class="cc">
+    <!--toolbar></toolbar-->
+    <vue-headful
+      :title="title"
+      :description="description"
+    />
     <v-content>
-      <v-container fluid fill-height>
+      <v-container fluid fill-height class="cc login">
         <v-layout align-center justify-center>
           <v-flex xs12 sm8 md4>
             
@@ -10,49 +14,42 @@
               {{ message }}
               <v-btn dark flat @click="snackbar = null"> Close</v-btn>
             </v-snackbar>
-
-            <v-card >
-              <v-toolbar dark flat>
-                <v-toolbar-title>Login</v-toolbar-title>
-              </v-toolbar>
+            <h1 class="text-xs-center white--text mb-3" >Contestr</h1>
+            <v-subheader class="white--text text-xs-center d-block">Log in to your account</v-subheader>
+            <v-card dark flat tile style="background:inherit">
+              <!--v-toolbar dark dense flat style="background:inherit;text-align:center;">
+                <v-toolbar-item class="text-xs-center">Login</v-toolbar-item>
+              </v-toolbar-->
               <v-card-text>
-                <form>
-                  <v-text-field label="Username" v-model="form.username" prepend-icon="person" required></v-text-field>
-                  <v-text-field prepend-icon="lock" required
-                  v-model="form.password" type="password" height='' label="Password" hint="At least 6 characters"></v-text-field>
-                </form>
+                
+                <v-form v-model="valid" ref="form">
+                  <v-text-field label="Username" color="teal" outline class="mb-2" v-model="form.username" :rules="nameRules" browser-autocomplete="username" prepend-inner-icon="person" required></v-text-field>
+                  <v-text-field id="text-field" color="teal" prepend-inner-icon="lock" outline  v-model="form.password" type="password" :rules="passwordRules" browser-autocomplete="password" label="Password" hint="At least 6 characters" required></v-text-field>
+                </v-form>
               </v-card-text>
-              <v-card-actions>
-                <v-btn type="submit" @click="submit" small flat style="background:#fdba1e;">
-                  <!-- loading spinner -->
-                  <loading-bar v-if="show_spinner"></loading-bar>
-                  Submit
+              <v-card-actions class="px-3">
+                <v-btn type="submit" block :dark="valid"  @click.prevent="submit" color="success" :disabled="!valid" 
+                   :loading="loading">
+                  Continue
                 </v-btn>
-                <v-spacer></v-spacer>
-                <v-btn to="/signup" small id="i_have_an_account">Or signup ?</v-btn>
+                
               </v-card-actions>
+              <v-subheader class="ml-5">Don't have an account? <router-link to="/signup" class="pl-2"> Sign up here</router-link></v-subheader>
             </v-card>
           </v-flex>
         </v-layout>
       </v-container>
     </v-content>
-    
+    <footr></footr>
   </v-app>
 </template>
 <script>
 export default {
-  mixins: [validationMixin],
-
-  validations: {
-    name: { required },
-    username:{required},
-    email: { required, email },
-    password: { required,minLength: minLength(6) },
-    checkbox: { required }
-  },
-
   data:()=>({
+    title:'Login | Facevote',
+    description:'',
     message:'',
+    loading:false,
     snackbar:false,
     show_spinner:false,
     form:{
@@ -66,28 +63,19 @@ export default {
     select: null,
     show3: false,
     show4: false,
-    rules: {
-      required: value => !!value || 'Required.',
-      min: v => v.length >= 6 || 'Min 6 characters',
-      emailMatch: () => 'The email and password you entered don\'t match'
-    },
-    checkbox: false
+    valid:true,
+    checkbox: false,
+    nameRules: [
+      v => !!v || 'Please enter your username',
+    ],
+    passwordRules: [
+      v => !!v || 'Please enter your password',
+      v => (v && v.length >= 4) || 'Password must be at least 4 characters'
+    ],
   }),
   components:{
-    ...VCard,
-    ...VAvatar,
-    ...VSubheader,
-    ...VDivider,
-    ...VTabs,
-    ...VTooltip,
-    ...VMenu,
-    ...VForm,
-    ...VCheckbox,
-    ...VSelect,
-    ...VTextField,
-    ...VSnackbar,
     'toolbar':Nav,
-    LoadingBar
+    footr:Footer
   },
   computed: {
       
@@ -95,26 +83,32 @@ export default {
   methods:{
     async submit(){
       try{
-        this.$v.touch
-        this.form['token'] = this.$store.getters.getToken
-        this.show_spinner = true
-        //console.log(this.form)
-        let res = await authService.Login(this.form)
-        console.log(res.data)
-        this.show_spinner = false
-        this.$store.dispatch('setUser', {user:res.data.user,token:res.data.token})
-        this.$router.push('/dashboard')
+        if(this.$refs.form.validate()){
+          this.form['token'] = this.$store.getters.getToken
+          this.loading = true
+          //console.log(this.form)
+          let res = await authService.Login(this.form)
+          //console.log(res.data)
+          this.$store.dispatch('setUser', {user:res.data.user,token:res.data.token})
+          this.$store.dispatch('setLoggedInUser', res.data.user)
+          this.$router.push('/dashboard')
+          this.loading = false
+        }
+        else{
+          this.snackbar = true
+          this.message = 'Please provide username and password'
+        }
       }
       catch(err){
         console.log(err)
         console.log(err.response)
-        if(err.response.status == 401){
-          this.show_spinner = false
+        if(err.response && err.response.status == 401){
+          this.loading = false
           this.snackbar = true
           this.message = 'Invalid username or password'
         }
-        else if(err.response.status == 400){
-          this.show_spinner = false
+        else if(err.response && err.response.status == 400){
+          this.loading = false
           this.snackbar = true
           this.message = 'Please provide username and password'
         }
@@ -127,44 +121,39 @@ export default {
 }
 
 import Nav from '@/components/Nav'
-  import LoadingBar from '@/spinners/LoadingBar'
-  import * as VCard from 'vuetify/es5/components/VCard'
-  import * as VAvatar from 'vuetify/es5/components/VAvatar'
-  import * as VSubheader from 'vuetify/es5/components/VSubheader'
-  import * as VDivider from 'vuetify/es5/components/VDivider'
-  import * as VTabs from 'vuetify/es5/components/VTabs'
-  import * as VMenu from 'vuetify/es5/components/VMenu'
-  import * as VTooltip from 'vuetify/es5/components/VTooltip'
-  import * as VForm from 'vuetify/es5/components/VForm'
-  import * as VSelect from 'vuetify/es5/components/VSelect'
-  import * as VTextField from 'vuetify/es5/components/VTextField'
-  import * as VCheckbox from 'vuetify/es5/components/VCheckbox'
-  import * as VSnackbar from 'vuetify/es5/components/VSnackbar'
-  import { validationMixin } from 'vuelidate'
-  import { required, minLength, email, password } from 'vuelidate/lib/validators'
+  import Footer from '@/components/Footer'
+  //import { validationMixin } from 'vuelidate'
+  //import { required, minLength, email, password } from 'vuelidate/lib/validators'
   import authService from '@/services/authService'
 </script>
-<style lang="scss" scoped>
+<style lang="scss">
   @mixin MainColor(){
     //background:#fdba1e;
     background:#042943;
     color:#fff;
   }
-  #cc{
+  .cc{
     background:#042943;
+    //background:#e8e8e8;
   }
-  .v-input{
-    margin-top:0;
+  .login{
+    .v-input{
+      margin-top:0;
+    }
+    .form_buttons button{
+      text-transform:none;
+    }
+    #i_have_an_account{
+      font-size: 12px;
+    }
+    .pad{
+      margin-top:25%;
+    }
   }
-  .form_buttons button{
-    text-transform:none;
-  }
-  #i_have_an_account{
-    font-size: 12px;
-  }
-  .pad{
-    margin-top:25%;
-  }
+    .theme--light.v-text-field--outline .v-input__slot {
+  border: 1px solid rgba(115, 114, 114, 0.54) !important;
+}
+  
 </style>
 
 
