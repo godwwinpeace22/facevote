@@ -3,7 +3,8 @@ import axios from 'axios'
 
 const instance = axios.create({
     //baseURL: 'http:/' + '/localhost:3000',//"https:/" + "/securepoll.herokuapp.com"
-    baseURL: "https:/" + "/securepoll.herokuapp.com"
+    //baseURL: "https://securepoll.herokuapp.com"
+    baseURL: "https://secure-citadel-58191.herokuapp.com/"
     //timeout:3000
 })
 
@@ -18,7 +19,7 @@ instance.interceptors.response.use(response => {
     $NProgress.done()
     return response
 })
-export default()=>{
+export default ()=>{
     return instance
 
 }
