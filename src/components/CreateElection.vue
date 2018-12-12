@@ -46,7 +46,7 @@
                 <v-subheader class="pl-0 font-weight-bold">Select your institution</v-subheader>
               </v-flex>
               <v-flex xs12 sm6>
-                <v-select required outline
+                <v-select required outline disabled
                   v-model="selected_school"
                   :items="schools" return-object
                   color="secondary"
@@ -64,12 +64,12 @@
                 </v-select>
               </v-flex>
             </v-layout>
-            <v-layout row wrap v-if="form.level == 'Faculty' || form.level == 'Department'" class="mb-3">
+            <v-layout row wrap v-if="form.type == 'School' && (form.level == 'Faculty' || form.level == 'Department')" class="mb-3">
               <v-flex xs12 sm4>
                 <v-subheader class="pl-0 font-weight-bold">Faculty name</v-subheader>
               </v-flex>
               <v-flex xs12 sm6>
-                <v-select required small v-model="selected_faculty"
+                <v-select required small v-model="selected_faculty" disabled
                   :items="selected_school.faculties"  outline return-object
                   color="secondary" label="Select faculty">
                 </v-select>
@@ -80,7 +80,7 @@
                 <v-subheader class="pl-0 font-weight-bold">Department name</v-subheader>
               </v-flex>
               <v-flex xs12 sm6>
-                <v-select required small outline
+                <v-select required small outline disabled
                   v-model="selected_department" return-object
                   :items="selected_faculty.departments"
                   color="secondary"
@@ -306,6 +306,44 @@ export default {
             ]
           }
         ]
+      },
+      {
+        text:'Funai',
+        value:'Funai',
+        faculties:[
+          {
+            text:'Pha',
+            value:'pha',
+            departments:[
+              {
+                text:'Chem',
+                value:'chem'
+              },
+              {
+                text:'Computer Science Technology',
+                value:'cst',
+              },
+              {
+                text:'Geology',
+                value:'geology'
+              },
+            ]
+          },
+          {
+            text:'Social Science',
+            value:'social_science',
+            departments:[
+              {
+                text:'Public Administration',
+                value:'palg',
+              },
+              {
+                text:'Archiology',
+                value:'archiology'
+              }
+            ]
+          }
+        ]
       }
     ],
     //schools:['Unn','Funai','Unilag','Uniuyo'],
@@ -370,6 +408,21 @@ export default {
   },
   components:{
   },
+  mounted(){
+    let this_user = this.$store.getters.getUser
+    console.log(this_user)
+    this.selected_school = this.schools.find(
+      item => item.text == this_user.school
+    )
+    
+    this.selected_faculty = this.selected_school.faculties.find(
+      item => item.text == this_user.faculty
+    )
+
+    this.selected_department = this.selected_faculty.departments.find(
+      item => item.text == this_user.department
+    )
+  }
 }
 </script>
 <style lang='scss' scoped>

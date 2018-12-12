@@ -54,7 +54,8 @@
       </v-card>
     </v-container>
     
-    <router-view :currElection='currElection' :contestants='contestants' :regVoters='regVoters' :tabledata='table_data' />
+    <router-view :currElection='currElection' :contestants='contestants' 
+      :regVoters='regVoters' :tabledata='table_data' :activities='activities' :broadcasts='broadcasts' />
 
   </div>
 </template>
@@ -67,7 +68,9 @@ export default {
     contestants:[],
     regVoters:[],
     currUser:{},
-    table_data:[]
+    table_data:[],
+    broadcasts:[],
+    activities:[],
   }),
   components:{
     EditElection,
@@ -131,10 +134,8 @@ export default {
         )
         this.currElection = res.data
         this.regVoters = res.data.regVoters
-        
         // DON'T SHOW ANYTHING IF THE USER IS NOT THE ADMIN OF THE ELECTION
-        this.currElection ? 
-        this.currElection.admin._id == this.$store.state.logged_in_user._id ? 
+        this.currElection.admin ? this.currElection.admin._id == this.$store.state.logged_in_user._id ? 
         this.show_everything = true : false : ''
         //this.show_everything = true
 
@@ -151,10 +152,11 @@ export default {
           let myObj = {
             value:false,
             name:cont.userId.name,
+            contId:cont._id, // contestant id
             role:cont.role,
             department:cont.userId.department,
             faculty:cont.userId.faculty,
-            others:'Others'
+            suspended:cont.suspended
           }
           this.table_data.push(myObj)
         })
@@ -162,9 +164,16 @@ export default {
         let activities = await api().post(`dashboard/latestActivities/${this.currElection._id}`, {
           token:this.$store.getters.getToken
         })
+        let broadcasts = await api().post(`dashboard/getbroadcasts`, {
+          token:this.$store.getters.getToken,
+          by:this.$store.state.logged_in_user._id,
+        })
+
+        this.activities = activities.data
+        this.broadcasts = broadcasts.data
         console.log(activities)
 
-        console.log(this.$store.state.logged_in_user._id,res.data.admin._id)
+        console.log(this.$store.state.logged_in_user._id,this.currElection.admin._id)
         console.log(this.currElection,this.contestants,this.regVoters)
         
       } catch (error) {

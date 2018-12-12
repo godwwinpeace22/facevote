@@ -1,7 +1,7 @@
 <template>
   <div>
     <v-container grid-list-xl>
-      <v-card flat tile>
+      <v-card flat tile style='min-height:100px'>
         <v-toolbar dense flat color="teal" dark>
           <v-subheader class="font-weight-bold white--text">Recent Posts</v-subheader>
           <v-spacer></v-spacer>
@@ -10,6 +10,7 @@
             New post</v-btn>
         </v-toolbar>
         <v-layout row wrap>
+          <v-subheader v-if="broadcasts.length == 0">No recent post</v-subheader>
           <v-flex sm6 v-for="item of broadcasts" :key="item.dateCreated">
             <v-card class=" mb-3" height="150" flat tile>
               <v-layout>
@@ -32,7 +33,7 @@
         <v-dialog
           v-model="dialog"
           scrollable 
-          persistent
+          persistent :fullscreen='$vuetify.breakpoint.xs'
           max-width="850px"
           transition="slide-y-transition">
           <v-card>
@@ -137,13 +138,10 @@ export default {
         this.dialog = false
         this.$eventBus.$emit('Create_Broadcast', {
           token:this.$store.getters.getToken,
-          user:{
-            name:this.$store.state.logged_in_user.name,
-            username:this.$store.state.logged_in_user.username,
-            id:this.$store.state.logged_in_user._id,
-          },
+          user:this.$store.getters.getUser,
           ...this.form
         })
+        console.log('emited')
       } catch (error) {
         console.log(error)
         console.log(error.response)

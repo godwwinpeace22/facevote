@@ -17,7 +17,7 @@
                   <v-divider inset vertical class="mx-2"></v-divider>
                   <v-btn flat small class="white-text">Followers</v-btn>
                   <v-btn color="success" outline small class="white-text" @click="follow_election"
-                    :disabled='!!disabled.find(id => id == $store.state.logged_in_user._id)'>
+                    :disabled='!!disabled.find(id => id == getUser._id)'>
                     {{follow_election_text}}
                   </v-btn>
                 </v-card-actions>
@@ -29,14 +29,6 @@
                     <v-flex xs12 sm12>
                       <v-card-text class="pa-0">
                         <div id="time" class="d-block">
-                          <!-- show this if there is a count-down-->
-                          <!--h3 v-if="not_started || inprogress" class="display-1">
-                            <span class="timer" id="first">{{electionTime.days}}</span>
-                            <span class="timer">{{electionTime.hours}}</span>
-                            <span class="timer">{{electionTime.minutes}}</span>
-                            <span class="timer" id="last">{{electionTime.seconds}}</span>
-                            
-                          </h3-->
                           <div class="verticalChart" v-if="not_started || inprogress">
 
                             <div class="singleBar">
@@ -76,9 +68,11 @@
                           </div>
 
                           <template v-else>
-                            <h3 class="display-1">Election Ended</h3>
-                            <small v-if="election_ended">at 
-                            {{new Date(countDownDate).toLocaleString('en-Us',date_options)}}</small>
+                            <div class="text-xs-left py-5" style="display:table;margin:auto;">
+                              <h3 class="display-1">Election Ended</h3>
+                              <small v-if="election_ended">at 
+                              {{new Date(countDownDate).toLocaleString('en-Us',date_options)}}</small>
+                            </div>
                           </template>
                         </div>
                         
@@ -110,7 +104,7 @@
           </v-flex>
           <v-flex xs12 sm4 d-flex class="mb-0">
             <v-card flat tile>
-              <v-toolbar color="teal" class="white--text" flat>
+              <v-toolbar color="teal" class="white--text" flat dense>
                 Election Details
               </v-toolbar>
               <v-list dense>
@@ -120,12 +114,6 @@
                     Admin </v-flex>
                   <v-flex xs8 class="text-capitalize"> {{currElection.admin.name}}</v-flex>
                 </v-list-tile>
-                <!--v-list-tile>
-                  <v-flex xs4>
-                    <v-icon color="teal">schedule</v-icon>
-                        Created at</v-flex>
-                  <v-flex xs8> {{currElection.dateCreated}}</v-flex>
-                </v-list-tile-->
                 <v-list-tile>
                   <v-flex xs4>
                     <v-icon color="teal">schedule</v-icon>
@@ -150,7 +138,14 @@
                     School</v-flex>
                   <v-flex xs8 class="text-capitalize"> {{currElection.school}}</v-flex>
                 </v-list-tile>
-                <v-list-tile v-if="currElection.type == 'School'">
+                <v-list-tile>
+                  <v-flex xs4>
+                    <v-icon color="teal">layers</v-icon>
+                    Level</v-flex>
+                  <v-flex xs8> {{currElection.level}} Elections</v-flex>
+                </v-list-tile>
+                <v-list-tile v-if="currElection.type == 'School' 
+                  && (currElection.level != 'General')">
                   <v-flex xs4>
                     <v-icon color="teal">domain</v-icon>
                     Faculty</v-flex>
@@ -160,12 +155,35 @@
                   <v-flex xs4>Department</v-flex>
                   <v-flex xs8 class="text-capitalize">{{currElection.department}}</v-flex>
                 </v-list-tile>
-                <v-list-tile>
-                  <v-flex xs4>{{contestants.length}} contestants</v-flex>
-                  <v-divider inset vertical class="mr-3"></v-divider>
-                  <v-flex xs6>{{regVoters.length}} registered voters</v-flex>
-                </v-list-tile>
               </v-list>
+              <v-container grid-list-xs>
+                <v-layout row wrap>
+                  <v-flex xs4 justify-center>
+                    <v-progress-circular style="display:block;margin:auto;"
+                      :value="100" 
+                      color="secondary"
+                    >{{regVoters.length}}</v-progress-circular>
+                    <div style="margin:auto;width:fit-content">Voters</div>
+                  </v-flex>
+                  <v-flex xs4 justify-center>
+                    <v-progress-circular style="display:block;margin:auto;"
+                      :value="100"
+                      color="success"
+                    >{{contestants.length}}</v-progress-circular>
+                    <div style="margin:auto;width:fit-content">Contestants</div>
+                  </v-flex>
+                  <v-flex xs4 justify-center>
+                    <v-progress-circular style="display:block;margin:auto;"
+                      :value="allVotes.length/regVoters.length * 100"
+                      color="purple">
+                      {{allVotes.length}}
+                      </v-progress-circular>
+                    <div style="margin:auto;width:fit-content">Votes</div>
+                    
+                  </v-flex>
+                </v-layout>
+              </v-container>
+              
             </v-card>
           </v-flex>
         </v-layout>
@@ -189,7 +207,8 @@
     </v-dialog>
 
 
-    <v-dialog v-model="show_results_dialog" v-if="show_results_dialog" fullscreen transition="dialog-bottom-transition" hide-overlay>
+    <v-dialog v-model="show_results_dialog" v-if="show_results_dialog" 
+      fullscreen transition="dialog-bottom-transition" hide-overlay>
       <v-card>
         <v-toolbar clipped-left flat dark color="success">
           <v-btn icon dark @click.native="show_results_dialog = false;">
@@ -203,7 +222,10 @@
           </v-toolbar-items>
         </v-toolbar>
 
-        <results :id='currElection._id' :contestants='contestants' :roles='currElection.roles' v-if="show_results_dialog"></results>
+        <results :id='currElection._id' :chartData3='chartData' :allVotes='allVotes'
+         :currElection='currElection' :contestants='contestants' :regVoters='regVoters'
+         :roles='currElection.roles' :countDownDate='countDownDate' v-if="show_results_dialog">
+        </results>
       </v-card>
     </v-dialog>
 
@@ -212,7 +234,7 @@
         <v-flex xs12 sm3 d-flex pl-1 pr-2>
           <v-card>
             <v-tabs left color="teal" dark show-arrows>
-              <v-tabs-slider color="success"></v-tabs-slider>
+              <v-tabs-slider color="orange"></v-tabs-slider>
 
               <v-tab href="#tab-1" class="text-capitalize"> Voters </v-tab>
 
@@ -223,13 +245,6 @@
               <v-tab-item value="tab-1">
                 <v-card-title class="py-2">{{currElection.regVoters.length}} Enrolled Voters</v-card-title>
                 <v-divider></v-divider>
-                
-                <!--v-toolbar flat dense color="white">
-                  <v-toolbar-title><h4>Total voters</h4></v-toolbar-title>
-                  <v-spacer></v-spacer>
-                  <v-toolbar-items><v-btn icon class="mt-3" >{{currElection.regVoters.length}}</v-btn></v-toolbar-items>
-                  
-                </v-toolbar-->
                 
                 <v-container style="max-height:320px;overflow:auto;" class="scrollbar pl-0">
                   
@@ -260,82 +275,21 @@
               <v-tab-item value="tab-2">
                 <v-subheader>Recent activities</v-subheader>
                 <v-divider></v-divider>
-                <div class="pt-2 scrollbar" style="max-height:350px;overflow:auto;">
-                  <v-timeline
-                    align-top
-                    dense
-                  >
-                    <v-timeline-item
-                      color="pink"
-                      small
-                    >
+                <div class="pt-2 scrollbar" style="max-height:350px;overflow:auto;background:#eee;">
+                  <v-timeline align-top dense>
+                    <v-timeline-item :color="getColor(activity)" small v-for="activity in activities" :key="activity._id">
                       <v-layout pt-3>
-                        <v-flex xs3>
-                          <strong>5pm</strong>
-                        </v-flex>
                         <v-flex>
-                          <strong>New Icon</strong>
-                          <div class="caption">Mobile App</div>
-                        </v-flex>
-                      </v-layout>
-                    </v-timeline-item>
-
-                    <v-timeline-item
-                      color="teal lighten-3"
-                      small
-                    >
-                      <!--v-layout wrap pt-3>
-                        <v-flex xs3>
-                          <strong>3-4pm</strong>
-                        </v-flex>
-                        <v-flex>
-                          <strong>Design Stand Up</strong>
-                          <div class="caption mb-2">Hangouts</div>
-                          <v-avatar>
-                            <v-img
-                              src="https://avataaars.io/?avatarStyle=Circle&topType=LongHairFrida&accessoriesType=Kurt&hairColor=Red&facialHairType=BeardLight&facialHairColor=BrownDark&clotheType=GraphicShirt&clotheColor=Gray01&graphicType=Skull&eyeType=Wink&eyebrowType=RaisedExcitedNatural&mouthType=Disbelief&skinColor=Brown"
-                            ></v-img>
-                          </v-avatar>
-                          <v-avatar>
-
-                            <v-img
-                              src="https://avataaars.io/?avatarStyle=Circle&topType=ShortHairFrizzle&accessoriesType=Prescription02&hairColor=Black&facialHairType=MoustacheMagnum&facialHairColor=BrownDark&clotheType=BlazerSweater&clotheColor=Black&eyeType=Default&eyebrowType=FlatNatural&mouthType=Default&skinColor=Tanned"
-                            ></v-img>
-                          </v-avatar>
-                          <v-avatar>
-                            <v-img
-                              src="https://avataaars.io/?avatarStyle=Circle&topType=LongHairMiaWallace&accessoriesType=Sunglasses&hairColor=BlondeGolden&facialHairType=Blank&clotheType=BlazerSweater&eyeType=Surprised&eyebrowType=RaisedExcited&mouthType=Smile&skinColor=Pale"
-                            ></v-img>
-                          </v-avatar>
-                        </v-flex>
-                      </v-layout-->
-                    </v-timeline-item>
-
-                    <v-timeline-item
-                      color="pink"
-                      small
-                    >
-                      <v-layout pt-3>
-                        <v-flex xs3>
-                          <strong>12pm</strong>
-                        </v-flex>
-                        <v-flex>
-                          <strong>Lunch break</strong>
-                        </v-flex>
-                      </v-layout>
-                    </v-timeline-item>
-
-                    <v-timeline-item
-                      color="teal lighten-3"
-                      small
-                    >
-                      <v-layout pt-3>
-                        <v-flex xs3>
-                          <strong>9-11am</strong>
-                        </v-flex>
-                        <v-flex>
-                          <strong>Finish Home Screen</strong>
-                          <div class="caption">Web App</div>
+                          <v-card class="mr-1" dark :color="getColor(activity)">
+                            <v-card-title class="title">
+                              title
+                            </v-card-title>
+                            <v-card-text class="white text--primary">
+                              <span>{{activity.by._id == currElection.admin._id ? 'Admin' : activity.by.name}} 
+                                {{activity.text}}</span>
+                              <div class="caption">{{new Date(activity.dateCreated).toDateString('en-Us',{day:'numeric'})}}</div>
+                            </v-card-text>
+                          </v-card>
                         </v-flex>
                       </v-layout>
                     </v-timeline-item>
@@ -388,7 +342,7 @@
         <v-card  class="mr-2 mb-1" height="280" v-for="contestant in contestants" :key="contestant._id">
           <v-tooltip top>
             <v-img @click="viewManifesto(contestant)" class="hover" slot="activator"
-              :src="contestant.userId.imgSrc || `https://ui-avatars.com/api/?name=${contestant.userId.name}`"
+              :src="contestant.userId.imgSrc || `https://ui-avatars.com/api/?name=${contestant.userId.name}&size=300`"
               height="150px"
             ></v-img>
             <span>View <span class="text-capitalize">{{contestant.userId.name}}'s</span> manifesto</span>
@@ -404,17 +358,17 @@
             For {{contestant.role}}
             <v-spacer></v-spacer>
             <v-tooltip top>
-              <v-btn color="success" slot="activator" class="text-capitalize follow" v-if="contestant.userId.username != $store.getters.getUser.username" 
+              <v-btn color="success" slot="activator" class="text-capitalize follow" v-if="contestant.userId.username != getUser.username" 
                 :disabled='!!disabled.find(id => id == contestant._id)'
                 flat outline small @click="follow($event,contestant)" :id="contestant._id">
-                {{contestant.userId.followers.length}}&nbsp;| {{isFollowing(contestant) ? 'Following' : 'Follow'}}
+                {{contestant.userId.followers.length}}&nbsp;| Followers
               </v-btn>
               
               <span :ref="contestant._id">
                 {{isFollowing(contestant) ? 'you are following ' + contestant.userId.name : 'Follow ' + contestant.userId.name}}
               </span>
             </v-tooltip>
-            <span v-if="contestant.userId.username == $store.getters.getUser.username" slot="activator">
+            <span v-if="contestant.userId.username == getUser.username" slot="activator">
               {{contestant.userId.followers.length}}&nbsp;| Followers
             </span>
           </v-card-actions>
@@ -451,6 +405,7 @@ export default {
     inprogress:false, // tells the timer whether the election is in progress or not
     election_ended:true, // tells the timer whether the election  has ended or not
     voterprofile:{},
+    activities:[],
     contestants:[], // all the contestants for this election
     votes:[], // contains all the votes made for the current election
     votingList:[], // list of people currently voting for the current election
@@ -475,9 +430,15 @@ export default {
   props:['electionId'], // this prop is from the vue-router params
   computed:{
     follow_election_text(){
-      return this.currElection.followers.find(id => id == this.$store.state.logged_in_user._id) ? 
+      return this.currElection.followers.find(id => id == this.getUser._id) ? 
       'Following' : 'Follow'
-    }
+    },
+    ...mapGetters([
+      'isAuthenticated',
+      'getToken',
+      'getUser'
+      // ...
+    ]),
   },
   methods:{
     trythis(){
@@ -489,36 +450,30 @@ export default {
     },
     async open(){
       try{
+
         let res = await api().post(
           `dashboard/getId/${this.$route.params.electionId}`,
-          {token:this.$store.getters.getToken}
+          {token:this.getToken}
         )
         this.currElection = res.data
         this.regVoters = res.data.regVoters
-        console.log(this.currElection)
+        
         let contestants = await api().post(
           `dashboard/getContestants/${this.currElection._id}`,
-          {token:this.$store.getters.getToken}
+          {token:this.getToken}
         )
-        this.contestants = contestants.data
+        // show only contestants that are not suspended. there for they can't be voted for
+        this.contestants = contestants.data.filter(item => item.suspended == false)
 
-        //this.show_when_ready = true
+        console.log(this.currElection,this.contestants)
 
-        /*api().post(`dashboard/getUser/${this.$store.getters.getUser.username}`, {token:this.$store.getters.getToken}).then(user=>{
-          if(user){
-            this.user = user.data
-            //console.log(user.data)
-          }
-        })*/
-
-        let reslt = await api().post(`dashboard/getresult/${this.currElection._id}`, {token:this.$store.getters.getToken});
+        let reslt = await api().post(`dashboard/getresult/${this.currElection._id}`, {token:this.getToken});
         this.allVotes = reslt.data.finalScores
         //console.log('yes, all votes: ', reslt.data.finalScores)
-        /*api().post(`dashboard/latestActivities/${res.data._id}`, {
-          token:this.$store.getters.getToken
-        }).then(activities=>{
-          console.log(activities)
-        }).catch(err=>{console.log(err)}) */
+        let activities = await api().post(`dashboard/latestActivities/${res.data._id}`, {
+          token:this.getToken
+        })
+        this.activities = activities.data
 
         
       
@@ -527,7 +482,7 @@ export default {
         this.getLabels()
         this.show_when_ready = true
         this.$eventBus.$emit('Update_Votes',{
-          user:this.$store.state.user.username,
+          user:this.getUser.username,
           room:this.currElection._id
         }) // after mounted, get the latest votes
       }catch(error){
@@ -609,7 +564,7 @@ export default {
     },
     isNotVoting(){
       console.log('closed voting dialog')
-      this.votingList.splice(this.votingList.indexOf(this.$store.state.logged_in_user._id), 1)
+      this.votingList.splice(this.votingList.indexOf(this.getUser._id), 1)
     },
     getLabels(){
       let labels = []
@@ -652,15 +607,49 @@ export default {
         ]
       }
     },
+    getColor(activity){
+      switch (activity.type) {
+        case 'voter_registered':
+          return 'purple'
+          break;
+        case 'election_created':
+          return 'primary'
+          break
+        case 'election_edited':
+          return 'success'
+          break
+        case 'logo_updated':
+          return 'secondary'
+          break
+        case 'new_contestant':
+          return 'teal'
+          break
+        case 'voter_registered':
+          return 'orange'
+          break
+        case 'vote_casted':
+          return 'success'
+          break
+        case 'contestant_suspended':
+          return 'black'
+          break
+        case 'contestant_restored':
+          return 'success'
+          break
+        default:
+          return 'white'
+          break;
+      }
+    },
     isFollowing(contestant){
-      return contestant.userId.followers.indexOf(this.$store.state.logged_in_user._id) == -1 ? false : true
+      return contestant.userId.followers.indexOf(this.getUser.id) == -1 ? false : true
     },
     follow(event,contestant){
-      if(contestant.userId.followers.indexOf(this.$store.state.logged_in_user._id) == -1){
+      if(contestant.userId.followers.indexOf(this.getUser.id) == -1){
         this.disabled.push(contestant._id)
-        contestant.userId.followers.push(this.$store.state.logged_in_user._id)
-        //event.target.innerText = `(${contestant.followers.length + 1})  following`
-        api().post(`dashboard/followContestant/${contestant.userId._id}/${this.$store.state.logged_in_user._id}`, {token:this.$store.getters.getToken}).then(res=>{
+        contestant.userId.followers.push(this.getUser.id)
+
+        api().post(`dashboard/followContestant/${contestant.userId._id}/${this.getUser.id}`, {token:this.getToken}).then(res=>{
           if(res){
             //this.contestants = res.data,
             this.disabled.splice(this.disabled.indexOf(contestant._id),1)
@@ -672,13 +661,11 @@ export default {
       }
       else{
         this.disabled.push(contestant._id)
-        contestant.userId.followers.splice(contestant.userId.followers.indexOf(this.$store.state.logged_in_user._id), 1)
+        contestant.userId.followers.splice(contestant.userId.followers.indexOf(this.getUser.id), 1)
         
         //event.target.innerText = `(${contestant.followers.length - 1})  follow`
-        api().post(`dashboard/unfollowContestant/${contestant.userId._id}/${this.$store.state.logged_in_user._id}`, {token:this.$store.getters.getToken}).then(res=>{
+        api().post(`dashboard/unfollowContestant/${contestant.userId._id}/${this.getUser.id}`, {token:this.getToken}).then(res=>{
           if(res){
-            //this.contestants = res.data,
-            //this.disabled.splice(this.disabled.indexOf(contestant._id),1)
             this.$refs[contestant._id][0].innerText = `Follow ${contestant.userId.name}`
             //console.log(res.data)
             this.disabled.splice(this.disabled.indexOf(contestant._id),1)
@@ -689,13 +676,14 @@ export default {
       
     },
     follow_election(){
-      let this_user = this.$store.state.logged_in_user
+      console.log(this.getUser)
+      let this_user = this.getUser
       this.disabled.push(this_user._id)
-      if(this.currElection.followers.find(data=> data == this_user._id)){
+      if(this.currElection.followers.find(data=> data == this_user.id)){
         // is following
         this.currElection.followers.splice(this.currElection.followers.indexOf(this_user),1)
-        api().post(`dashboard/unfollowElection/${this.currElection.electionId}/${this_user._id}`, {
-          token:this.$store.getters.getToken
+        api().post(`dashboard/unfollowElection/${this.currElection.electionId}/${this_user.id}`, {
+          token:this.getToken
         }).then(res=>{
           if(res){
             this.disabled.splice(this.disabled.indexOf(this_user._id),1)
@@ -705,11 +693,11 @@ export default {
       else{
         // not following
         this.currElection.followers.push(this_user._id)
-        api().post(`dashboard/followElection/${this.currElection.electionId}/${this_user._id}`, {
-          token:this.$store.getters.getToken
+        api().post(`dashboard/followElection/${this.currElection.electionId}/${this_user.id}`, {
+          token:this.getToken
         }).then(res=>{
           if(res){
-            this.disabled.splice(this.disabled.indexOf(this_user._id),1)
+            this.disabled.splice(this.disabled.indexOf(this_user.id),1)
           }
         })
       }
@@ -769,6 +757,7 @@ export default {
   },
 }
 import api from '@/services/api'
+  import {mapGetters} from 'vuex'
   import ViewProfile from '@/components/ViewProfile'
   import Results from '@/components/Results'
   import Vote from '@/components/Vote'

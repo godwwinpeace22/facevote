@@ -1,6 +1,6 @@
 <template>
   <v-card>
-    <v-toolbar color="success" dark dense >
+    <v-toolbar color="success" dark dense flat>
 
       <v-toolbar-title>
         <v-avatar size="36" color="grey lighten-4">
@@ -88,7 +88,7 @@ export default {
     },
     sendMessage(){
       //console.log(this.$store.state.chat)
-      let msgId = Date.now() * 1 + Math.floor(Math.random() * (999999 - 999)) + 999;
+      let msgId = Date.now() * 1 + 1000 * (Math.floor(Math.random() * (999999 - 999)) + 999);
       this.$eventBus.$emit('PrivateChatMsg', { 
         message:this.message,
         to:this.user.username,
@@ -122,7 +122,7 @@ export default {
     this.$eventBus.$emit('Hide_Profile', true)
 
     // on mounted, get the chat conversations with this user from server
-    this.$eventBus.$emit('Get_Conversation_History', {firstPerson:this.$store.state.user.username,secondPerson:this.user.username})
+    this.$eventBus.$emit('Get_Conversation_History', {firstPerson:this.$store.getters.getUser.username,secondPerson:this.user.username})
     this.$eventBus.$on('Conversation_History', data=>{ // server response to Get_Conversation_History
       this.myConversations = data
     })

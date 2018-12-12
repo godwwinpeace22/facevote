@@ -33,6 +33,8 @@ import Vue from 'vue'
   import Default from '@/templates/Default'
   import Users from '@/views/Users'
   import Login from '@/views/Login'
+  import ResetPassword from '@/views/ResetPassword'
+  import Reset from '@/views/Reset'
   import Signup from '@/views/Signup'
   import ConfirmRegistration from '@/views/ConfirmRegistration'
   import Verify from '@/views/Verify'
@@ -41,18 +43,20 @@ import Vue from 'vue'
 Vue.use(Router)
 
 const requireAuth = (to, from, next) => {
+  //console.log(to,from)
   if (store.getters.isAuthenticated) {  // true if user is logged in
     next()
   } else {
     next('/login') 
   }
+  
 }
 const requireLogout = (to, from, next) =>{ // if ther user is not logged in
   if(!store.getters.isAuthenticated){
     next()
   }
   else{
-    next('/dashboard')
+    next('/')
   }
 }
 
@@ -62,27 +66,11 @@ const router = new Router({
   mode:'history',
   routes: [
     {
-      path: '/',
-      name: 'home',
-      component: Home,
-      
-    },
-    {
-      path: '/about',
-      name: 'about',
-      component: About
-    },
-    {
-      path:'/dashboard',
+      path:'/',
       component:Dashboard,
-      
+      beforeEnter:requireAuth,
       children:[
-        {
-          path:'',
-          name:'dashboard',
-          component:Dashboard,
-          beforeEnter:requireAuth
-        },
+        
         {
           path:'news',
           name:'news',
@@ -185,7 +173,6 @@ const router = new Router({
         },
         {
           path:'elections/manage/:electionId',
-          name:'edit-election',
           component:ElectionManager,
           props:true,
           beforeEnter:requireAuth,
@@ -193,6 +180,7 @@ const router = new Router({
             {
               path:'',
               component:Manager__overview,
+              name:'edit-election',
             },
             {
               path:'broadcasts',
@@ -253,6 +241,18 @@ const router = new Router({
       path:'/confirm/:confirmationHash',
       name:'confirm',
       component:ConfirmRegistration,
+      beforeEnter:requireLogout
+    },
+    {
+      path:'/reset-password',
+      name:'resetpassword',
+      component:ResetPassword,
+      beforeEnter:requireLogout
+    },
+    {
+      path:'/reset',
+      name:'reset',
+      component:Reset,
       beforeEnter:requireLogout
     }
   ]

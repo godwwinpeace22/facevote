@@ -1,37 +1,73 @@
 <template>
   <div>
-    <v-container grid-list-xs>
-      <v-card >
-        <v-card-title primary-title>
-          Contestants
-          <v-spacer></v-spacer>
-          <v-text-field
-            v-model="search"
-            append-icon="search"
-            label="Search"
-            single-line
-            color="secondary"
-            hide-details
-          ></v-text-field>
-        </v-card-title>
-        
-        <v-data-table
-          :headers="headers"
-          :items="tabledata"
-          :search="search"
-          :loading='false'
-          class="elevation-1"
-        >
-        <v-progress-linear slot="progress" color="blue" indeterminate></v-progress-linear>
-          <template slot="items" slot-scope="props">
-            <td>{{ props.item.name }}</td>
-            <td class="text-xs-right">{{ props.item.role }}</td>
-            <td class="text-xs-right">{{ props.item.department }}</td>
-            <td class="text-xs-right">{{ props.item.faculty }}</td>
-            <td class="text-xs-right">{{ props.item.others }}</td>
-          </template>
-        </v-data-table>
-      </v-card>
+    <v-container grid-list-sm>
+      <v-layout row wrap>
+        <v-flex sm9 d-flex>
+          <v-card >
+            <v-card-title primary-title>
+              Contestants
+              <v-spacer></v-spacer>
+              <v-text-field
+                v-model="search"
+                append-icon="search"
+                label="Search"
+                single-line
+                color="secondary"
+                hide-details
+              ></v-text-field>
+            </v-card-title>
+            
+            <v-data-table
+              :headers="headers"
+              :items="tabledata"
+              :search="search"
+              :loading='false'
+              class="elevation-1"
+            >
+            <v-progress-linear slot="progress" color="blue" indeterminate></v-progress-linear>
+              <template slot="items" slot-scope="props" v-if="!props.item.suspended">
+                <td>{{ props.item.name | capitalize}}</td>
+                <td class="text-xs-left">{{ props.item.role }}</td>
+                <td class="text-xs-left">{{ props.item.department }}</td>
+                <td class="text-xs-left">{{ props.item.faculty }}</td>
+                <td class="justify-center layout">
+                  <v-icon class="mt-3" color="secondary" small @click="culprit = props.item; suspend_dialog = true">
+                    block
+                  </v-icon>
+                </td>
+              </template>
+            </v-data-table>
+          </v-card>
+        </v-flex>
+        <v-flex sm3 d-flex>
+          <v-card>
+            
+            <v-toolbar flat tile dense>
+              <v-icon color="error" small class="d-inline">block</v-icon>
+              <v-toolbar-title class="d-inline subtitle">Suspended</v-toolbar-title>
+            </v-toolbar>
+            <v-divider></v-divider>
+            <v-list dense>
+              <v-subheader v-if="tabledata.filter(item => item.suspended == true).length == 0">non suspended</v-subheader>
+              <template v-for="contestant in tabledata" v-if="contestant.suspended">
+                <v-list-tile :key="contestant.contId">
+                  <v-list-tile-title>{{contestant.name | capitalize}}</v-list-tile-title>
+                  <v-list-tile-action>
+                    <v-tooltip top>
+                      <v-icon slot="activator" color="secondary" 
+                        @click="restore(contestant)">
+                        cached
+                      </v-icon>
+                      <span>Restore {{contestant.name | capitalize}}</span>
+                    </v-tooltip>
+                  </v-list-tile-action>
+                </v-list-tile>
+                <v-divider :key="contestant.name"></v-divider>
+              </template>
+            </v-list>
+          </v-card>
+        </v-flex>
+      </v-layout>
     </v-container>
 
     <v-container grid-list-md class="scrollbar">
@@ -39,103 +75,70 @@
       <v-layout row wrap mb-5>
         <v-flex xs12 sm8>
           <v-layout row wrap>
-          <v-flex xs12 sm6 d-flex>
-            <v-card >
-              <v-list dense>
-                <v-list-tile avatar>
-                  Activity
-                </v-list-tile>
-              </v-list>
-              <v-divider></v-divider>
-              <div class="scrollbar my-3" style="max-height:230px;overflow-y:auto;overflow-x:hidden;">
-                <v-timeline align-top dense class="scrollbar" >
-                  <v-timeline-item color="pink" small>
-                    <v-layout pt-3>
-                      <v-flex xs3>
-                        <strong>5pm</strong>
-                      </v-flex>
-                      <v-flex>
-                        <strong>New Icon</strong>
-                        <div class="caption">Mobile App</div>
-                      </v-flex>
-                    </v-layout>
-                  </v-timeline-item>
-
-                  <v-timeline-item color="teal lighten-3" small>
-                    <v-layout pt-3>
-                      <v-flex xs3>
-                        <strong>8pm</strong>
-                      </v-flex>
-                      <v-flex>
-                        <strong>At work</strong>
-                      </v-flex>
-                    </v-layout>
-                  </v-timeline-item>
-
-                  <v-timeline-item color="pink" small >
-                    <v-layout pt-3>
-                      <v-flex xs3>
-                        <strong>12pm</strong>
-                      </v-flex>
-                      <v-flex>
-                        <strong>Lunch break</strong>
-                      </v-flex>
-                    </v-layout>
-                  </v-timeline-item>
-
-                  <v-timeline-item color="teal lighten-3" small>
-                    <v-layout pt-3>
-                      <v-flex xs3>
-                        <strong>9-11am</strong>
-                      </v-flex>
-                      <v-flex>
-                        <strong>Finish Home Screen</strong>
-                        <div class="caption">Web App</div>
-                      </v-flex>
-                    </v-layout>
-                  </v-timeline-item>
-                </v-timeline>
-              </div>
-            </v-card>
-          </v-flex>
-          <v-flex xs12 sm6 d-flex>
-            <v-card >
-              <v-list dense>
-                <v-list-tile avatar>
-
-                  Registered voters
-                  <v-spacer></v-spacer>
-                  <v-text-field hide-details v-model="search_voters"
-                    append-icon="search" color="secondary" single-line
-                    label="Search voters..."
-                  ></v-text-field>
-                </v-list-tile>
-              </v-list>
-              <v-divider></v-divider>
-              <div style="max-height:230px;overflow-y:auto;" class="scrollbar my-3">
-                <v-list two-line dense>
-                  <v-subheader v-if="regVoters.length == 0">No registered voters yet</v-subheader>
-                  <v-subheader v-if="filteredList.length == 0  && regVoters.length != 0">No results found</v-subheader>
-                  <div v-for="(voter, index) in filteredList" :key="index">
-                    <v-list-tile  :key="voter.name" avatar @click="viewprofile = true; voterprofile = voter" color="'default'">
-                      <v-list-tile-avatar>
-                        <img :src="voter.imgSrc || `https://ui-avatars.com/api/?name=${usr.name}`">
-                      </v-list-tile-avatar>
-
-                      <v-list-tile-content>
-                        <v-list-tile-title  class="text-capitalize">{{voter.name}}<!--span id="online_badge" 'v-if="checkIfOnline(voter)"'></span--></v-list-tile-title>
-                        
-                      </v-list-tile-content>
-                      <v-list-tile-action>
-                        <v-btn color="success" class="text-lowercase" v-if="isContestant(voter._id)" depressed small>contestant</v-btn>
-                      </v-list-tile-action>
-                    </v-list-tile>
-                    <v-divider  :inset="true" :key="index"></v-divider>
-                  </div>
+            <v-flex xs12 sm7 d-flex>
+              <v-card >
+                <v-list dense>
+                  <v-list-tile avatar>
+                    Activity
+                  </v-list-tile>
                 </v-list>
-              </div>
-            </v-card>
-          </v-flex>
+                <v-divider></v-divider>
+                <div class="scrollbar my-3" style="max-height:230px;overflow-y:auto;overflow-x:hidden;">
+                  <v-timeline align-top dense class="scrollbar" >
+                    <v-timeline-item :color="getColor(activity)" small v-for="activity in activities" :key="activity._id">
+                      <v-layout pt-3>
+                        <v-flex xs3>
+                          <strong>{{new Date(activity.dateCreated).toDateString('en-Us',{day:'numeric'})}}</strong>
+                        </v-flex>
+                        <v-flex>
+                          <strong>{{activity.by._id == currElection.admin._id ? 'Admin' : activity.by.name}} 
+                            {{activity.text}}</strong>
+                          <div class="caption">Mobile App</div>
+                        </v-flex>
+                      </v-layout>
+                    </v-timeline-item>
+                  </v-timeline>
+                </div>
+              </v-card>
+            </v-flex>
+            <v-flex xs12 sm5 d-flex>
+              <v-card >
+                <v-list dense>
+                  <v-list-tile avatar>
+
+                    Registered voters
+                    <v-spacer></v-spacer>
+                    <v-text-field hide-details v-model="search_voters"
+                      append-icon="search" color="secondary" single-line
+                      label="Search voters..."
+                    ></v-text-field>
+                  </v-list-tile>
+                </v-list>
+                <v-divider></v-divider>
+                <div style="max-height:230px;overflow-y:auto;" class="scrollbar my-3">
+                  <v-list two-line dense>
+                    <v-subheader v-if="regVoters.length == 0">No registered voters yet</v-subheader>
+                    <v-subheader v-if="filteredList.length == 0  && regVoters.length != 0">No results found</v-subheader>
+                    <div v-for="(voter, index) in filteredList" :key="index">
+                      <v-list-tile  :key="voter.name" avatar @click="viewprofile = true; voterprofile = voter" color="'default'">
+                        <v-list-tile-avatar>
+                          <img :src="voter.imgSrc || `https://ui-avatars.com/api/?name=${usr.name}`">
+                        </v-list-tile-avatar>
+
+                        <v-list-tile-content>
+                          <v-list-tile-title  class="text-capitalize">{{voter.name}}<!--span id="online_badge" 'v-if="checkIfOnline(voter)"'></span--></v-list-tile-title>
+                          
+                        </v-list-tile-content>
+                        <v-list-tile-action>
+                          <v-btn color="success" class="text-lowercase" v-if="isContestant(voter._id)" depressed small>contestant</v-btn>
+                        </v-list-tile-action>
+                      </v-list-tile>
+                      <v-divider  :inset="true" :key="index"></v-divider>
+                    </div>
+                  </v-list>
+                </div>
+              </v-card>
+            </v-flex>
           </v-layout>
         </v-flex>
         <v-flex xs12 sm4>
@@ -172,20 +175,26 @@
       </v-layout>
     </v-container>
 
-    <!-- logo upload dialog -->
-    <!--v-dialog v-model="logo_dialog" max-width="400" hide-overlay style="">
-      <v-container style="background:#fff;">
-        <h3 class="mb-2">Upload a file</h3>
-        <v-img :src="imgSrc" max-height='200' max-width='400'></v-img>
-        
-        <v-spacer></v-spacer>
-        <v-btn flat small color="success" @click="uploadLogo">Upload file</v-btn>
-      </v-container>
-      
-    </v-dialog-->
     <input id="logo_img" type="file" ref="logo_img" 
       style="visibility:hidden" @change="openFileModal($event)" />
+    
+    <!-- suspend contestant dialog -->
+    <v-dialog v-model="suspend_dialog" max-width="500px">
+      <v-card min-height='200'>
+        <v-card-title>
+          <span class='headline text-capitalize'>Suspend {{culprit.name | capitalize}}</span>
+        </v-card-title>
+        <v-card-text>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Blanditiis ipsa ducimus veniam quisquam voluptatum laborum voluptas deserunt aperiam fuga quasi ex unde nemo, assumenda aspernatur quia vitae ullam delectus in!
 
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn flat @click="suspend_dialog = false">Cancel</v-btn>
+          <v-btn color="success" outline @click="suspend" :loading="loading">Suspend</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <!-- election settings dialog -->
     <v-dialog v-model="settings_modal" fullscreen hide-overlay transition="dialog-bottom-transition" scrollable>
@@ -219,15 +228,29 @@ export default {
       {text:'Role', value:'role'},
       {text:'Department', value:'department'},
       {text:'Faculty', value:'faculty'},
-      {text:'Others', value:'others'},
+      {text:'Actions', value:'actions'},
     ],
+    loading:false,
+    suspend_dialog:false,
+    culprit:'',
     table_data:[],
     cloudinary: {
       uploadPreset: 'r9tlxvid',
       cloudName: 'unplugged'
     },
   }),
-  props:['currElection','regVoters','contestants','tabledata'],
+  props:['currElection','regVoters','contestants','tabledata','activities'],
+  filters: {
+    capitalize: function (value) {
+      if (!value) return ''
+      value = value.toString()
+      let arr = []
+      value.split(' ').map((item,index)=>
+        arr.push(item.charAt(0).toUpperCase() + item.slice(1))
+      )
+      return arr.toString().split(',').join(' ')
+    }
+  },
   components:{
     EditElection,
   },
@@ -241,7 +264,8 @@ export default {
     },
    followText(){
      return this.user.followers.indexOf(this.currUser._id) == -1 ? '+ Follow' : 'Following'
-   }
+   },
+   
   },
   methods:{
     async follow(){
@@ -268,16 +292,92 @@ export default {
       //console.log(id)
       return this.contestants.find(item => item.userId._id == id)
     },
+    getColor(activity){
+      switch (activity.type) {
+        case 'voter_registered':
+          return 'purple'
+          break;
+        case 'election_created':
+          return 'primary'
+          break
+        case 'election_edited':
+          return 'success'
+          break
+        case 'logo_updated':
+          return 'secondary'
+          break
+        case 'new_contestant':
+          return 'teal'
+          break
+        case 'voter_registered':
+          return 'orange'
+          break
+        case 'vote_casted':
+          return 'success'
+          break
+        case 'contestant_suspended':
+          return 'black'
+          break
+        case 'contestant_restored':
+          return 'success'
+          break
+        default:
+          return 'white'
+          break;
+      }
+    },
+    async suspend(){
+      this.loading = true
+      let foo = this.tabledata.findIndex(item =>
+        item.contId == this.culprit.contId
+      )
+      this.tabledata[foo].suspended = true
+      
+      let result = await api().post(`dashboard/suspendContestant`, {
+        token:this.$store.getters.getToken,
+        ...this.culprit,
+        electionRef:this.currElection._id,
+        admin:this.currElection.admin._id
+      })
+      this.loading = false
+      this.suspend_dialog = false
+    },
+    async restore(contestant){
+      try {
+        let index = this.tabledata.findIndex(item =>
+          item.contId == contestant.contId
+        )
+        setTimeout(() => {
+          this.tabledata[index].suspended = false
+        }, 2000);
+        
+        let result = await api().post(`dashboard/restoreContestant`,{
+          token:this.$store.getters.getToken,
+          ...contestant,
+          electionRef:this.currElection._id,
+          admin:this.currElection.admin._id
+        })
+
+      } catch (error) {
+        alert(error)
+        console.log(error)
+      }
+      
+    }
     
   },
   async mounted(){
     try {
-
+      setTimeout(
+        _=> console.log(this.tabledata),
+      4000)
+      
     } catch (error) {
       console.log(error)
     }
     
   }
 }
-import EditElection from '@/components/EditElection'
+import api from '@/services/api'
+  import EditElection from '@/components/EditElection'
 </script>

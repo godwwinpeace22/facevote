@@ -3,14 +3,17 @@ import Vuex from 'vuex'
 //import createPersistedState from 'vuex-persistedstate'
 import VuexPersist from 'vuex-persist';
 import createMutationsSharer from 'vuex-shared-mutations'
+import router from '@/router.js'
+//import jwtDecode from 'jwt-decode'
 Vue.use(Vuex)
 
 const vuexLocalStorage = new VuexPersist({
   key:'vuex',
   storage:window.localStorage,
   reducer: state =>({
-    user:state.user,
+    //user:state.user,
     token:state.token,
+    isAuthenticated:state.isAuthenticated,
     curRoom:state.curRoom,
     //chat_messages:state.chat_messages,
     //those_online:state.those_online,
@@ -32,6 +35,7 @@ export default new Vuex.Store({
     user:null, // loggedin user, persisted in localstored but with limited info for security reasons.
     logged_in_user:null, // this is the same as user but is not persisted in local storage.
     token:null,
+    isAuthenticated:false,
     timestamp:null,
     curRoom:null,
     chat_messages:[],
@@ -54,8 +58,10 @@ export default new Vuex.Store({
         name:data.user.name,
         username:data.user.username,
         imgSrc:data.user.imgSrc,
+        _id:data.user._id
       }
       state.token = data.token
+      state.isAuthenticated = true
       state.timestamp = Date.now()
     },
     setLoggedInUser(state,data){
@@ -64,7 +70,10 @@ export default new Vuex.Store({
     logout(state){
       state.user = null
       state.token = null
+      state.isAuthenticated = false
       state.logged_in_user = null
+      router.push('/login')
+      window.location.reload()
     },
     setChat(state,data){
       state.chat = data
@@ -137,6 +146,7 @@ export default new Vuex.Store({
       let filtd = state.recent_private_messages.filter(
         msg => msg.status == 'unread'
       )
+      console.log('filtd: ', filtd)
       setTimeout(()=>{
         state.no_of_unread_msgs = filtd.length
       }, 2000)
@@ -198,9 +208,12 @@ export default new Vuex.Store({
     }
   },
   getters:{
-    isAuthenticated: state => !!state.token,
+    isAuthenticated: state => state.isAuthenticated,
     getToken:state => state.token,
-    getUser:state => state.user,
+    getUser:state => {
+      //console.log(state.token)
+      return state.token ? JSON.parse(atob(state.token.split('.')[1])) : ''
+    },
     getChatMessages:(state)=>{
      return state.chat_messages.filter(
         msg => msg.room == state.curRoom

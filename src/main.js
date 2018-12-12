@@ -25,8 +25,30 @@ import 'es6-promise/auto'
 import router from './router'
 import './registerServiceWorker'
 import vueHeadful from 'vue-headful';
+import Nprogress from 'nprogress'
+global.$NProgress = Nprogress
+/*import VueSocketIO from 'vue-socket.io'
+Vue.use(new VueSocketIO({
+  debug: true,
+  connection: 'http://localhost:3000',
+  vuex: {
+      store,
+      actionPrefix: 'SOCKET_',
+      mutationPrefix: 'SOCKET_'
+  }
+}))*/
+//import VueSocketio from 'vue-socket.io-extended';
+//import io from 'socket.io-client';
 
 Vue.component('vue-headful', vueHeadful);
+/*const socket = io('http://localhost:3000', {
+   autoConnect: false
+});
+
+Vue.use(VueSocketio, socket);
+*/
+
+
 Vue.config.productionTip = false
 
 

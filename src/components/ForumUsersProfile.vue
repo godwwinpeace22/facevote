@@ -1,7 +1,7 @@
 <template>
   <div>
     <v-toolbar dense flat>
-      <v-btn icon :to="'/dashboard/forum/' + $route.params.electionId">
+      <v-btn icon :to="'/forum/' + $route.params.electionId">
         <v-icon>chevron_left</v-icon>
       </v-btn>
       <v-spacer></v-spacer>
@@ -34,7 +34,7 @@
               :disabled='disabled.indexOf(user._id) != -1 ? true : false'
               v-if="user.username != $store.getters.getUser.username">
               {{user.followers.length}}&nbsp; | &nbsp;<span id="follow">
-                {{user.followers.indexOf(currUser._id) == -1 ? ' Follow' : ' Following'}}</span>
+                {{user.followers.indexOf(currUser.id) == -1 ? ' Follow' : ' Following'}}</span>
             </v-btn>
           </v-card-actions>
           <v-container ma-0 pa-2>
@@ -65,13 +65,13 @@ export default {
     currUser:{}, // this is the logged in user, used here primarily for convenience
     dialog:false,
     disabled:[],
-    regVoters2:null, //just to avoid directly mutating the regVoters prop
+    regVoters2:'', //just to avoid directly mutating the regVoters prop
   }),
   props:['username','regVoters', 'contestants'],
   methods:{
     extractUser(username){ // lets the get this user from the list of regVoters
       this.user = this.regVoters2.find(item=> item.username == this.username)
-      this.currUser = this.$store.state.logged_in_user
+      this.currUser = this.$store.getters.getUser
       this.show_profile = true // open up this view since enough data is available
     },
     isAccOwner(){
@@ -93,12 +93,12 @@ export default {
       return found ? {contesting:'Yes', role:found.role} : false
     },
     follow(event){
-      if(this.user.followers.indexOf(this.currUser._id) == -1){
+      if(this.user.followers.indexOf(this.currUser.id) == -1){
         this.disabled.push(this.user._id)
         //console.log(event)
-        this.user.followers.push(this.currUser._id)
+        this.user.followers.push(this.currUser.id)
         document.getElementById('follow').innerText = 'following'
-        api().post(`dashboard/followContestant/${this.user._id}/${this.currUser._id}`, {token:this.$store.getters.getToken}).then(res=>{
+        api().post(`dashboard/followContestant/${this.user._id}/${this.currUser.id}`, {token:this.$store.getters.getToken}).then(res=>{
           if(res){
             this.disabled.splice(this.disabled.indexOf(this.user._id),1)
             //this.$refs[contestant._id][0].innerText = `you are following ${contestant.userId.name}`
@@ -108,10 +108,10 @@ export default {
       }
       else{
         this.disabled.push(this.user._id)
-        this.user.followers.splice(this.user.followers.indexOf(this.currUser._id), 1)
+        this.user.followers.splice(this.user.followers.indexOf(this.currUser.id), 1)
         
         document.getElementById('follow').innerText = 'follow'
-        api().post(`dashboard/unfollowContestant/${this.user._id}/${this.currUser._id}`, {token:this.$store.getters.getToken}).then(res=>{
+        api().post(`dashboard/unfollowContestant/${this.user._id}/${this.currUser.id}`, {token:this.$store.getters.getToken}).then(res=>{
           if(res){
             this.disabled.splice(this.disabled.indexOf(this.user._id),1)
             //this.$refs[contestant._id][0].innerText = `Follow ${contestant.userId.name}`

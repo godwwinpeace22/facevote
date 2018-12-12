@@ -33,7 +33,7 @@
           <v-card-text v-if="election.length != 0">
             <span class="subheading">{{election.title}}</span>
             <v-divider></v-divider>
-            <h3 v-if="election_ended">Sorry, enrollement has ended</h3>
+            <h3 v-if="hide">{{error_msg}}</h3>
           </v-card-text>
           
           <v-spacer></v-spacer>
@@ -51,7 +51,7 @@
         </v-card>
 
         <v-btn flat @click="e5 = 1">Previous</v-btn>
-        <v-btn color="secondary" @click="enroll" :disabled="election_ended" v-if="!election_ended">Enroll</v-btn>
+        <v-btn color="secondary" @click="enroll" :disabled="hide" v-if="!hide">Enroll</v-btn>
       </v-stepper-content>
 
       <v-stepper-content step="3">
@@ -88,7 +88,8 @@ export default {
     voter:{
       image:''
     },
-    election_ended:false,
+    error_msg:'',
+    hide:false,
     vid:'',
     cloudinary: {
        uploadPreset: 'izcl0gzg',
@@ -102,6 +103,8 @@ export default {
   methods:{
     async getId(){ // this actually gets the election instead of just the id
       try {
+        let user = this.$store.state.logged_in_user
+
         // prevent making unneccessary api calls
         if(!this.electionId){
           alert('Id is required') 
@@ -112,21 +115,58 @@ export default {
         else{
           let id = await api().post(`dashboard/getId/${this.electionId}`, {token:this.$store.getters.getToken})
           console.log(id)
-          this.election = id.data
-          this.e5 = 2
-          //this.startCamera()
+          if(!id){
+            alert('Sorry, election not found')
+          }
+          else{
+            this.election = id.data
+            this.e5 = 2
+            //this.startCamera()
 
-          // disable enrollment if election has started or has ended
-          // make sure to do this on the server to since the date on client machine might be behind
-          let countDownDate = new Date(this.election.startDate + ' ' + this.election.startTime).getTime();
-          //let countDownDate2 = countDownDate + this.election.duration * 1000 * 60 * 60
-          let now = Date.now()
-          
-          now > countDownDate ? this.election_ended = true : '' // election is in progress or ended
+            // disable enrollment if election has started or has ended
+            // make sure to do this on the server to since the date on client machine might be behind
+            let countDownDate = new Date(this.election.startDate + ' ' + this.election.startTime).getTime();
+            //let countDownDate2 = countDownDate + this.election.duration * 1000 * 60 * 60
+            let now = Date.now()
+            
+            if(now > countDownDate){
+              this.hide = true; this.error_msg = 'Sorry, enrollment has ended'
+            } // election is in progress or ended
+
+            else if(this.election.regVoters.find(item=> item == user._id)){
+              console.log(this.election.regVoters.find(item=> item == user._id))
+              this.error_msg = 'Sorry, you have already enrolled for this election'
+              this.hide = true
+            }
+            else{
+              if(this.election.type == 'School' && user.school == this.election.school){
+                if(this.election.level == 'Department' && user.department != this.election.department){
+                  this.error_msg = 'Sorry, you can only vote in your department'
+                  this.hide = true
+                }
+                else if(this.election.level == 'Faculty' && user.faculty != this.election.faculty){
+                  this.error_msg = 'Sorry, you can only vote in your faculty'
+                  this.hide = true
+                }
+                else{
+                  this.hide = false
+                }
+              }
+              else if(this.election.type == 'School' && user.school != this.election.school){
+                this.error_msg = 'Sorry, you can only vote in your school'
+                this.hide = true
+              }
+              else{
+                this.hide = false
+              }
+            }
+          }
         }
         
       } catch (error) {
+        console.log(error)
         console.log(error.response)
+        error.response.status == 404 ? alert(error.response.data.message) : ''
       }
     },
     async enroll(){
@@ -147,7 +187,7 @@ export default {
         NProgress.done()
         console.log(error.response)
         if(error.response.status = 401){
-          alert('you have already enrolled for this election')
+          alert(error.response.data.message)
           
         }
         
@@ -243,6 +283,7 @@ export default {
 }
 import api from '@/services/api'
 import axios from 'axios'
+//import Nprogress from 'nprogress'
 //const Kairos =  require('@/assets/kairos.js')
 //import { promisfy } from "@/helpers/promisify";
 </script>

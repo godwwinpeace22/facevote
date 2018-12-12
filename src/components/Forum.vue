@@ -125,6 +125,7 @@ export default {
       cloudName: 'unplugged'
     },
   }),
+  props:['chat'],
   computed: {
     toolbarStatus(){
       return 'Your connected groups'
@@ -196,7 +197,6 @@ export default {
       }
     },
     sendMessage () {
-      this.resetIcon()
       this.submit(this.message, null)
     },
     clearMessage () {
@@ -269,6 +269,8 @@ export default {
       // hide the forum_users nav onload on small screens, and also show the btn to trigger the it on the navbar
       this.$vuetify.breakpoint.sm || this.$vuetify.breakpoint.xs ? 
       this.$store.dispatch('showRightNav', [false,true]) : ''
+      console.log(this.chat)
+      
     },
     destroyed(){
       //this.$eventBus.$emit('show_right_sidebar',null);

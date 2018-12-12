@@ -59,7 +59,7 @@
             <v-tab class="text-capitalize" href="#following">Following</v-tab>
             <v-tab-item value="followers" style="max-height:250px;overflow-y:auto;" class="scrollbar">
               <v-list two-line dense>
-                <v-subheader v-if="user.followers.length <= 0">No followers yet</v-subheader>
+                <v-subheader v-if="user ? user.followers.length <= 0 : ''">No followers yet</v-subheader>
                 <div v-for="(follower, index) in user.followers" :key="index">
                   <v-list-tile  :key="follower.name" avatar>
                     <v-list-tile-avatar>
@@ -99,7 +99,7 @@
     </v-container>
     <v-container grid-list-xl>
       <v-card flat>
-        <v-toolbar dense>
+        <v-toolbar dense flat>
           <v-subheader class="font-weight-bold">Recent Posts</v-subheader>
           <v-spacer></v-spacer>
           <v-btn color="success" right small outline>
@@ -107,6 +107,7 @@
             New post</v-btn>
         </v-toolbar>
         <v-layout row wrap>
+          <v-subheader v-if="broadcasts.length == 0">No recent post</v-subheader>
           <v-flex sm6 v-for="item of broadcasts" :key="item.dateCreated">
             <v-card class=" mb-3" height="150" flat>
               <v-layout>

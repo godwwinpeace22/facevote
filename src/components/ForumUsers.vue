@@ -4,8 +4,8 @@
       <v-list-tile @click.stop="'a'">
         <v-list-tile-content>
           <v-text-field hide-details v-model="search"
-            prepend-icon="search"
-            label="Search users..."
+            prepend-icon="search" color="secondary"
+            label="Search members..."
           ></v-text-field>
         </v-list-tile-content>
       </v-list-tile>
@@ -13,8 +13,9 @@
     <v-divider></v-divider>
     <div style="height:calc(100% - 50px);overflow-y:auto;" class="navdrawr">
       <v-list subheader dense two-line>
-        <!--v-subheader>Recent chat</v-subheader-->
+        <v-subheader v-show="filteredList.length == 0">No results found</v-subheader>
         <v-list-tile v-for="voter in filteredList" :key="voter._id" avatar :to="$route.params.electionId + '/profile/' + voter.username">
+          
           <v-list-tile-avatar>
             <!-- prefer to user loggedin user's info rather than his info from voters list -->
             <img :src="getSrc(voter)">
@@ -49,12 +50,20 @@ export default {
   props:['regVoters', 'contestants'],
   computed: {
     filteredList() {
-      if(this.regVoters){
-      return this.regVoters.filter(voter => {
-        return voter.name.toLowerCase().includes(this.search.toLowerCase())
-      })
-    }
-    }
+      console.log(this.regVoters)
+      if(this.regVoters && this.regVoters.length > 0){
+        console.log(this.regVoters)
+        return this.regVoters.filter(voter => {
+          return voter.name.toLowerCase().includes(this.search.toLowerCase())
+        })
+      }
+    },
+    // Mix your getter(s) into computed with the object spread operator
+    ...mapGetters([
+      'isAuthenticated',
+      'token',
+      'getUser'
+    ]),
   },
   methods:{
     checkProfile(){
@@ -62,12 +71,12 @@ export default {
     },
     getSrc(voter){
       // doing this so that when there is a profile update, the reactive user data will be updated here
-      return voter.username == this.$store.getters.getUser.username ? this.$store.getters.getUser.imgSrc : 
+      return voter.username == this.getUser.username ? this.getUser.imgSrc : 
       voter.imgSrc || `https://ui-avatars.com/api/?name=${voter.name}`
     },
     getName(voter){
       // doing this so that when there is a profile update, the reactive user data will be updated here
-      let me = this.$store.getters.getUser
+      let me = this.getUser
       return voter.username == me.username ? me.name : voter.name
     },
     getRole(voter){ // return the role a user is contesting for
@@ -99,6 +108,7 @@ export default {
   }
 }
 import api from '@/services/api'
+import {mapGetters} from 'vuex'
 </script>
 
 <style lang="scss" scoped>

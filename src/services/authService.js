@@ -4,6 +4,6 @@ export default {
         return api().post('users/login', credentials)
     },
     Register(credentials){
-        return api().post('users/preregister',credentials)
+        return api().post('users/register',credentials)
     }
 }

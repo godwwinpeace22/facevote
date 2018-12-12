@@ -1,5 +1,125 @@
 <template>
   <div>
+    <!-- summary of results -->
+    <v-container grid-list-sm class="grey lighten-3">
+      <v-card flat class="grey lighten-5">
+        <v-subheader class="font-weight-bold">Summary Of Results</v-subheader>
+        <v-layout row wrap>
+
+          <!-- ==== OVERVIEW ===== -->
+          <v-flex xs12 sm4 d-flex class="pt-0">
+            <v-card class="dflex">
+              <v-subheader class="font-weight-bold">Overview</v-subheader>
+              <v-list dense>
+                <v-list-tile>
+                  <v-layout row wrap>
+                    <v-flex xs4>
+                      <v-list-tile-title>Start time</v-list-tile-title>
+                    </v-flex>
+                    <v-flex xs8> 
+                      {{startTime}}
+                    </v-flex>
+                  </v-layout>
+                </v-list-tile>
+                <v-list-tile>
+                  <v-layout row wrap>
+                    <v-flex xs4>
+                      <v-list-tile-title>End time</v-list-tile-title>
+                    </v-flex>
+                    <v-flex xs8>{{endTime}}</v-flex>
+                  </v-layout>
+                </v-list-tile>
+                <v-list-tile>
+                  <v-layout row wrap>
+                    <v-flex xs4>
+                      <v-list-tile-title>Duration</v-list-tile-title>
+                    </v-flex>
+                    <v-flex xs8>{{currElection.duration}}hrs</v-flex>
+                  </v-layout>
+                </v-list-tile>
+                <v-list-tile>
+                  <v-layout row wrap>
+                    <v-flex xs4>
+                      <v-list-tile-title># of voters</v-list-tile-title>
+                    </v-flex>
+                    <v-flex xs8>{{currElection.regVoters.length}}</v-flex>
+                  </v-layout>
+                </v-list-tile>
+                <v-list-tile>
+                  <v-layout row wrap>
+                    <v-flex xs4>
+                      <v-list-tile-title># of contestants</v-list-tile-title>
+                    </v-flex>
+                    <v-flex xs8>{{contestants.length}}</v-flex>
+                  </v-layout>
+                </v-list-tile>
+              </v-list>
+              <v-container grid-list-xs>
+                <v-layout row wrap class="text-xs-center">
+                  <v-flex xs4 justify-center>
+                    <v-progress-circular style="display:block;margin:auto;"
+                      :value="100" :size="$vuetify.breakpoint.sm ? 55 : 95"
+                      color="teal"
+                    >{{no_of_voters}}</v-progress-circular>
+                    <div style="margin:auto;width:fit-content">Voters</div>
+                  </v-flex>
+                  <v-flex xs4 justify-center>
+                    <v-progress-circular style="display:block;margin:auto;"
+                      :value="100" :size="$vuetify.breakpoint.sm ? 55 : 95"
+                      color="success"
+                    >{{no_of_contestant}}</v-progress-circular>
+                    <div style="margin:auto;width:fit-content">Contestants</div>
+                  </v-flex>
+                  <v-flex xs4 justify-center>
+                    <v-progress-circular style="display:block;margin:auto;"
+                      :value="allVotes || regVotes ? allVotes.length/regVoters.length * 100 : ''"
+                      color="purple" :size="$vuetify.breakpoint.sm ? 55 : 95">
+                      {{no_of_votes}}
+                      </v-progress-circular>
+                    <div style="margin:auto;width:fit-content">Votes</div>
+                    
+                  </v-flex>
+                </v-layout>
+              </v-container>
+            </v-card>
+          </v-flex>
+
+          <!-- ==== WINNERS ===== -->
+          <v-flex xs12 sm4 d-flex class="pt-0">
+            <v-card class="dflex">
+              <v-subheader class='font-weight-bold'>Winners</v-subheader>
+              <v-list dense two-line>
+                <div v-for="winner in winners" :key="`${winner.id}${winner.score}`">
+                  <v-list-tile avatar>
+                    <v-list-tile-avatar>
+                      <img :src="winner.imgSrc || `https://ui-avatars.com/api/?name=${winner.name}`">
+                    </v-list-tile-avatar>
+                    <v-list-tile-content class='font-weight-bold'>
+                      {{winner.name}}
+                      <v-list-tile-sub-title>{{winner.score}} votes</v-list-tile-sub-title>
+                    </v-list-tile-content>
+                      
+                      <v-list-tile-action class='font-weight-bold'> {{winner.role}}</v-list-tile-action>
+                    
+                  </v-list-tile>
+                  <v-divider></v-divider>
+                </div>
+              </v-list>
+            </v-card>
+          </v-flex>
+
+          <!-- ==== VOTER TURNOUT ===== -->
+          <v-flex xs12 sm4 d-flex class="pt-0">
+            <v-card class="dflex">
+              <v-subheader class='font-weight-bold'>Voter turnout</v-subheader>
+              <bar-chart :chart-data="chartData4" :options="chartOptions"></bar-chart>
+            </v-card>
+          </v-flex>
+
+        </v-layout>
+      </v-card>
+    </v-container>
+
     <v-container grid-list-xl>
       <v-subheader>All results</v-subheader>
       <v-layout row wrap>
@@ -26,7 +146,7 @@
                   {{i+1}}
                 </v-list-tile-avatar>
                 <v-list-tile-avatar>
-                  <img :src="contestant.imgSrc">
+                  <img :src="contestant.imgSrc || `https://ui-avatars.com/api/?name=${contestant.name}`">
                 </v-list-tile-avatar>
                 <v-list-tile-content>{{contestant.name}}
                   <v-progress-linear color="secondary" :value="percentage_score(contestant,result.role)"></v-progress-linear>
@@ -39,43 +159,6 @@
         </v-flex>
       </v-layout>
     </v-container>
-
-
-    <!--v-container>
-      <v-layout>
-        <v-flex>
-          
-          <div v-for=" role in roles" :key="role +2">
-            <h4 style='text-transform:capitalize;'>{{role}}</h4>
-            <v-card color="grey lighten-3" class="mb-5" style="min-height:300px;">
-              <v-layout row wrap mt-3>
-                <v-flex xs2 v-for="(contestant,i) in results" :key="i" v-if="contestant.role == role" style="min-height:200px;">
-                  <v-card  class=" mt-4 mx-4" hover >
-                    <v-card-media
-                      :src="'https://cdn.vuetifyjs.com/images/lists/' + (i*1 + 1) + '.jpg'"
-                      height="140px"
-                    ></v-card-media>
-
-                    <v-card-title primary-title>
-                      <div>
-                        <h4 class=" mb-0" style='text-transform:capitalize;'>{{getName(contestant.id)}}</h4>
-                        <h4 class=" mb-0" style='text-transform:capitalize;'>{{getPosition(contestant.role,contestant.score)}}</h4>
-                        <h4 class=" mb-0" style='text-transform:capitalize;'>Number of votes: {{contestant.score}}</h4>
-                      </div>
-                    </v-card-title>
-
-                    <v-card-actions>
-                      <v-btn flat color="orange">Select</v-btn>
-                    </v-card-actions>
-                  </v-card>
-                </v-flex>
-              </v-layout>
-            </v-card>
-            <v-divider></v-divider>
-          </div>
-        </v-flex>
-      </v-layout>
-    </v-container-->
 
     <v-container grid-list-xl>
       <v-subheader>Charts</v-subheader>
@@ -123,9 +206,18 @@ export default {
     title:'Results | Facevote',
     results:[],
     model:'tab-1',
+    date_options:{
+      weekday: 'short', 
+      year: 'numeric', 
+      month: 'short',
+      day:'numeric',
+      hour:'numeric', 
+      minute:'numeric'
+    },
     valueDeterminate:50,
     items:[],
     sortedResults:[],
+    winners:[],
     chartData:{},
     chartOptions:{
       responsive: true, maintainAspectRatio: true,
@@ -146,12 +238,92 @@ export default {
       responsive: true, maintainAspectRatio: true,
       
     },
+    chartData4:{
+      datasets: [{
+        label:'# of stuff',
+        data: [10, 20, 30],
+        backgroundColor:['teal','yellow','purple'],
+      }],
+      labels: [
+        'Red',
+        'Yellow',
+        'Blue'
+      ]
+    }
   }),
-  props:['id','roles','contestants'],
+  props:['id','roles','currElection','allVotes',
+    'regVoters','contestants', 'charDate3','countDownDate'
+  ],
+  computed:{
+    endTime(){
+      let a = this.currElection
+      let enddate = new Date(a.startDate + ' ' + a.startTime)
+      enddate.setHours(enddate.getHours() + a.duration)
+      return enddate.toLocaleString('en-Us',
+        this.date_options
+      )
+    },
+    startTime(){
+      let a = this.currElection
+      let start_time = new Date(a.startDate + ' ' + a.startTime)
+      return start_time.toLocaleString('en-Us',this.date_options)
+    },
+    no_of_voters(){
+      if(this.regVoters){
+        let len = 20000000
+        
+        switch (true){
+          case len > 1000000:
+            return len / 1000000 + 'M +'
+            break;
+          case len > 1000:
+            return len / 1000 + 'K + '
+            break;
+          default:
+            return len
+        }
+      }
+    },
+    // purposely duplicated this instead of merging
+    // it with above as a method bcs it should be reactive
+    no_of_contestant(){
+      if(this.contestants){
+        let len = 200
+        
+        switch (true){
+          case len > 1000000:
+            return len / 1000000 + 'M +'
+            break;
+          case len > 1000:
+            return len / 1000 + 'K + '
+            break;
+          default:
+            return len
+        }
+      }
+    },
+    no_of_votes(){
+      if(this.allVotes){
+        let len = 2000000
+        
+        switch (true){
+          case len > 1000000:
+            return len / 1000000 + 'M +'
+            break;
+          case len > 1000:
+            return len / 1000 + 'K + '
+            break;
+          default:
+            return len
+        }
+      }
+    },
+  },
   components:{
     'pie-chart':piechart,
     //'horizontal-bar':horizontalbar,
-    'bar-chart':barchart
+    'bar-chart':barchart,
+    
   },
   methods:{
     getName(id){ // return the name of each contestant
@@ -159,6 +331,12 @@ export default {
         item => item._id == id
       )
       return user[0].userId.name
+    },
+    getDetail(id){ // return the name of each contestant
+      let user = this.contestants.filter(
+        item => item._id == id
+      )
+      return user[0].userId
     },
     getPosition(role,score){
       let rl = this.results.filter( // filter out other roles
@@ -174,6 +352,14 @@ export default {
         scoreArr.sort((a,b)=>b - a).indexOf(score) == 1 ? '2nd' :
         scoreArr.sort((a,b)=>b - a).indexOf(score) == 2 ? '3rd' : 
         score + 'th'
+    },
+    getWinner(role){
+      let rl = this.results.filter(
+        item => item.role == role
+      ); // filter out other roles
+      return rl.sort((a,b)=>{
+        return b.score - a.score
+      })[0] // this guy is the winner
     },
     percentage_score(contestant,role){
       let total_score_for_role = this.sortedResults.find(a=> a.role == role)
@@ -237,7 +423,23 @@ export default {
 
       })
       
-    }, 
+    },
+    allWinners(){
+      this.sortedResults.forEach(result => {
+        let theWinner = this.getWinner(result.role)
+        let him = this.getDetail(theWinner.id)
+        this.winners.push({
+          role:theWinner.role,
+          name:him.name,
+          imgSrc:him.imgSrc,
+          id:theWinner.id,
+          score:theWinner.score
+        }
+          
+        )
+        
+      });
+    }
   },
   async mounted(){
     let res = await api().post(`dashboard/getresult/${this.id}`, {token:this.$store.getters.getToken});
@@ -249,6 +451,7 @@ export default {
     )
     this.sortResults()
     this.getLabels()
+    this.allWinners()
     console.log(this.contestants)
   },
   destroyed(){
@@ -259,7 +462,7 @@ export default {
 import api from '@/services/api'
 import piechart from '@/charts/piechart'
 import barchart from '@/charts/barchart'
-import horizontalbar from '@/charts/horizontalbar'
+//import polararea from '@/charts/polararea'
 </script>
 
 <style lang="scss" scoped>

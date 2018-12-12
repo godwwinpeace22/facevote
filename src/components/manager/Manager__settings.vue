@@ -79,6 +79,7 @@ export default {
       cloudName: 'unplugged'
     },
   }),
+  props:['currElection','regVoters','contestants'],
   methods:{
     triggerFileSelect(){
       //console.log('upload a file')
@@ -104,11 +105,14 @@ export default {
         console.log(res.data)
         
         //this.submit(this.file.file_message,res.data.secure_url)
-        await api().post(`dashboard/updateLogo/${this.currElection.electoinId}`, {
+        await api().post(`dashboard/updateLogo/${this.currElection.electionId}`, {
           token:this.$store.getters.getToken,
-          imgSrc:res.data.secure_url
+          imgSrc:res.data.secure_url,
+          admin:this.$store.state.logged_in_user._id,
+          electionRef:this.currElection._id
         })
         this.loading = false
+        this.logo_dialog = false
 
         // TODO
         // LIMIT UPLOAD SIZE; HANDLE ERRORS
@@ -118,6 +122,7 @@ export default {
         console.log(err)
         alert('Upload failed')
         this.loading = false
+        NProgress.end()
         //this.clearMessage()
       }
     }

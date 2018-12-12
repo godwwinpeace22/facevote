@@ -83,7 +83,7 @@ export default {
     PrivateChatWindow,
   },
   mounted(){
-    //console.log(this.sortMsg())
+    console.log(this.$store.state.recent_private_messages)
     this.items = this.sortMsg()
     console.log(this.items)
   }

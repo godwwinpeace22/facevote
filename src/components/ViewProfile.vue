@@ -24,10 +24,7 @@
             
           </v-card-actions>
           <v-list dense>
-            <!--v-list-tile>
-              <v-list-tile-content>School: {{user.school}}</v-list-tile-content>
-            </v-list-tile-->
-            <v-tooltip top>
+            <!--v-tooltip top>
               <v-list-tile slot="activator" to="/dashboard/verify" v-if="!user.isVerified">
                 <v-list-tile-action style="">
                   <v-icon color="error">error</v-icon>
@@ -37,12 +34,22 @@
                 </v-list-tile-content>
               </v-list-tile>
               <span>Verify your account to participate in elections</span>
-            </v-tooltip>
-            <v-list-tile>
+            </v-tooltip-->
+            <v-list-tile @click="''">
+              <v-icon color="teal" class="pr-3">email</v-icon>
+              <v-list-tile-content>{{user.email}}</v-list-tile-content>
+            </v-list-tile>
+            <v-list-tile @click="''">
+              <v-icon color="teal" class="pr-3">phone</v-icon>
+              <v-list-tile-content>{{user.phone || '(650) 555-1234'}}</v-list-tile-content>
+            </v-list-tile>
+            <v-list-tile @click="''">
+              <v-icon color="teal" class="pr-3">domain</v-icon>
               <v-list-tile-content>Faculty: {{user.faculty}}</v-list-tile-content>
             </v-list-tile>
-            <v-list-tile>
-              <v-list-tile-content>Department: {{user.department}}</v-list-tile-content>
+            <v-list-tile @click="''" exact>
+              <v-icon color="teal" class="pr-3">layers</v-icon>
+              <v-list-tile-content>Dept.: {{user.department}}</v-list-tile-content>
             </v-list-tile>
           </v-list>
           <v-dialog v-model="dialog" fullscreen hide-overlay transition="dialog-bottom-transition" scrollable>

@@ -14,7 +14,7 @@
         </v-card>
       </v-flex-->
       <v-flex xs6 sm4 d-flex v-for='election in elections' :key="election._id" mb-2>
-        <v-card color="" class="" :to="'/dashboard/forum/' + election.electionId">
+        <v-card color="" class="" :to="'/forum/' + election.electionId">
           <v-layout row>
             <v-flex xs7>
               <v-card-title primary-title>

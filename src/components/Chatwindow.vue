@@ -1,16 +1,16 @@
 <template>
     <div style="background:#fff;" class="pa-0 pt-3 chat_home" id="chat_home">
       <div flat pa-0 id="chat_space" style="height:75vh;margin-top:px;overflow-y:auto;background:ore;">
-        <div v-for="(msg,i) in $store.getters.getChatMessages" :key="i">
-          <div v-if="divide(msg.timestamp, $store.getters.getChatMessages[i-1])" style="background:oldlace;font-weight:bold;text-align:center;">
-            {{divide(msg.timestamp, $store.getters.getChatMessages[i-1])}}
+        <div v-for="(msg,i) in getChatMessages" :key="i">
+          <div v-if="divide(msg.timestamp, getChatMessages[i-1])" style="background:oldlace;font-weight:bold;text-align:center;">
+            {{divide(msg.timestamp, getChatMessages[i-1])}}
           </div>
-          <div class="chat_rectangle " id="speech_bubble" :class=" msg.user == $store.getters.getUser.username ? 'reposition':''">
+          <div class="chat_rectangle " id="speech_bubble" :class=" msg.user == getUser.username ? 'reposition':''">
             <div class="chat_avartar"><img :src="Img(msg.user)" alt="avartar"></div>
             
             <div class="chat_content">
               <div style="width:100%;margin-top:0px;margin-bottom:0px;">
-                <span class="text-capitalize" v-if="msg.user != $store.getters.getUser.username " style="font-size:15px;margin-right:5px;">
+                <span class="text-capitalize" v-if="msg.user != getUser.username " style="font-size:15px;margin-right:5px;">
                   <a class="subheading" @click.prevent="$router.push(`/dashboard/forum/${msg.room}/profile/${msg.user}`)">{{msg.name || msg.user}}</a>
                 </span>
                 <span v-else style="margin-right:5px;"><strong>You  </strong></span>
@@ -108,12 +108,16 @@ data:()=>({
     icon () {
       return this.icons[this.iconIndex]
     },
-    
+    ...mapGetters([
+      'isAuthenticated',
+      'token',
+      'getUser'
+    ]),
   },
 
   methods: {
     sameUser(msg){
-      return msg.user == this.$store.getters.getUser.username
+      return msg.user == this.getUser.username
     },
     
     Img(user){
@@ -153,7 +157,7 @@ data:()=>({
       try {
         console.log(msg,reaction)
         let a_reaction = msg.reactions[reaction]
-        let me = this.$store.getters.getUser.username
+        let me = this.getUser.username
 
         if(a_reaction.indexOf(me) != -1){ // if user has reacted same way before
           
@@ -164,7 +168,7 @@ data:()=>({
           })
         }
         else if(a_reaction.indexOf(me) == -1){ // if user hasn't reacted same way before
-          a_reaction.push(this.$store.getters.getUser.username) // this is reactive, so view are updated immediately
+          a_reaction.push(this.getUser.username) // this is reactive, so view are updated immediately
           this.$eventBus.$emit('Add_Reaction',{
             msgId:msg.msgId,reactions:msg.reactions,room:msg.room
           })
@@ -178,7 +182,7 @@ data:()=>({
     },
     scrollChat(){
        let doc = document.getElementById('chat_space')
-      doc.scrollTop = doc.scrollHeight - doc.clientHeight
+      doc ? doc.scrollTop = doc.scrollHeight - doc.clientHeight : ''
       console.log(doc.scrollTop)
     }
   },
@@ -199,6 +203,7 @@ data:()=>({
   }
 }
 import io from 'socket.io-client';
+  import {mapGetters} from 'vuex'
   import api from '@/services/api'
   import Settings from '@/components/Settings'
   //import Users from '@/components/Users'

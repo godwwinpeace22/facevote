@@ -6,7 +6,7 @@
     <v-subheader>Select an election to watch</v-subheader>
     <v-layout row wrap >
       <v-flex xs6 sm4 d-flex v-for='election in elections' :key="election._id" >
-        <v-card color="" class="" height="" :to="'/dashboard/elections/watch/' + election.electionId">
+        <v-card color="" class="" height="" :to="'/elections/watch/' + election.electionId">
           <v-layout row>
             <v-flex xs7>
               <v-card-title primary-title>
@@ -43,7 +43,7 @@
 <script>
 export default {
   data:()=>({
-    title:'Select election | Facevote',
+    title:'Select Election | Facevote',
     elections:[],
   }),
   methods:{

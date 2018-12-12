@@ -19,7 +19,7 @@
               <v-flex xs6>
                 <v-select required small v-model="selectedElection"
                   :items="elections" color="pink"
-                  item-text="title" item-value="electionId"
+                  item-text="title"
                   return-object hint='you can contest in only elections you have enrolled in'
                   persistent-hint
                   label="select election"
@@ -30,7 +30,7 @@
           
         </v-card>
 
-        <v-btn color="primary" @click="e5 = 2">Next</v-btn>
+        <v-btn color="primary" @click="e5 = 2" :disabled="!this.selectedElection._id">Next</v-btn>
       </v-stepper-content>
 
       <v-stepper-content step="2">
@@ -44,16 +44,18 @@
           <v-container>
             <v-layout row wrap>
               <v-flex xs6>
-                <v-select :items="selectedElection.roles" label="Select role" v-model="contestant.role"></v-select>
+                <v-select :items="selectedElection.roles" label="Select role" 
+                  v-model="contestant.role" item-text="title" return-object>
+                </v-select>
                 <span>If you are authorized to contest, you will be given a token, provide the token below</span>
-                <v-text-field label="token"></v-text-field>
+                <v-text-field label="token" v-model="contestant.acstoken"></v-text-field>
               </v-flex>
             </v-layout>
           </v-container>
         </v-card>
 
         <v-btn flat @click="e5 = 1">Previous</v-btn>
-        <v-btn color="primary" @click="e5 = 3">Next</v-btn>
+        <v-btn color="primary" @click="e5 = 3" :disabled="disabled">Next</v-btn>
       </v-stepper-content>
 
       <v-stepper-content step="3">
@@ -64,7 +66,7 @@
             </v-card-text>
             <v-spacer></v-spacer>
           <v-card-text>
-            <p>You are applying to contest for the position of the <strong> {{contestant.role}} </strong>in this election</p>
+            <p>You are applying to contest for the position of the <strong> {{contestant.role.title}} </strong>in this election</p>
             <p>Make sure you complete your profile info as this will be used to complete your application</p>
           
           </v-card-text>
@@ -90,6 +92,12 @@ export default {
       role:''
     }
   }),
+  computed:{
+    
+    disabled(){
+      return !this.contestant.acstoken  || !this.contestant.role || !this.selectedElection
+    }
+  },
   methods:{
     async getEnrolled(){ // this actually gets the election instead of just the id
       try {
@@ -97,20 +105,29 @@ export default {
           token:this.$store.getters.getToken
         })
         this.elections = elec.data.enrolled
+        console.log(this.elections)
       } catch (error) {
         console.log(error.response)
       }
     },
     async contest(){
       try {
-        let contestant = {
-          ...this.contestant, username:this.$store.getters.getUser.username,
-          electionRef:this.selectedElection._id,token:this.$store.getters.getToken}
-        console.log(contestant)
-        let res =await api().post(`dashboard/addcontestant/${this.selectedElection.electionId}`, contestant)
-        console.log(res)
-        alert('Success!')
-        
+        if(this.contestant.acstoken != this.contestant.role.value){
+          alert('Sorry, the token your provided is invalid')
+        }
+        else{
+          this.contestant.role = this.contestant.role.title
+          let contestant = {
+            ...this.contestant, 
+            userId:this.$store.state.logged_in_user._id,
+            electionRef:this.selectedElection._id,token:this.$store.getters.getToken}
+          console.log(contestant)
+
+          
+          let res =await api().post(`dashboard/addcontestant/${this.selectedElection.electionId}`, contestant)
+          console.log(res)
+          alert('Success!')
+        }
       } catch (err) {
         console.log(err.response)
         if(err.response && err.response.data.success == false){
@@ -125,7 +142,6 @@ export default {
   }
 }
 import api from '@/services/api'
-import { promisfy } from "@/helpers/promisify";
 </script>
 <style lang="scss" scoped>
   .v-stepper{

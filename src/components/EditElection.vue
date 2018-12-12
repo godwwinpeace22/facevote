@@ -78,7 +78,7 @@
                 <v-flex xs12 sm6>
                   <v-select required small outline
                     v-model="selected_department" return-object
-                    :items="selected_faculty.departments"
+                    :items="selected_faculty ? selected_faculty.departments : []"
                     color="secondary"
                     label="Select department"
                   ></v-select>
@@ -238,7 +238,7 @@ export default {
     ],
     selected_school:'',
     selected_faculty:'',
-    selected_department:null,
+    selected_department:'',
     schools:[
       {
         text:'UNN',
@@ -361,8 +361,9 @@ export default {
     found ? this.selected_school = found : ''
     if(found){
       this.selected_faculty = this.selected_school.faculties.find(item => item.text == this.election.faculty)
-      //console.log(this.selected_faculty)
-      this.selected_department = this.selected_faculty.departments.find(item => item.text == this.election.department)
+      console.log(this.selected_faculty)
+      this.selected_faculty ? 
+      this.selected_department = this.selected_faculty.departments.find(item => item.text == this.election.department) : ''
     }
 
     //console.log(this.form,res.data)

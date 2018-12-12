@@ -1,7 +1,7 @@
 <template>
   <div>
     <v-container grid-list-md>
-      <v-card flat dark class="pt-3" style="background:#1c1f35;">
+      <v-card flat dark class="py-5" style="background:#1c1f35;">
         <v-layout align-center justify-center >
           <v-flex xs2 d-block style="background:yello;">
             <v-avatar :size="$vuetify.breakpoint.xs ? 50 : 100" color="grey lighten-4"  >
@@ -14,7 +14,7 @@
               <v-btn color="succes" class="text-capita" small flat :to="`/users/${user.username}/followers`">
                 <strong>{{user ? user.followers.length : ''}}</strong> &nbsp;Followers</v-btn>
               <v-btn color="succes" class="text-capita" small flat :to="`/users/${user.username}/following`">0 Following </v-btn>
-              <v-tooltip top v-if="user.username != currUser.username">
+              <v-tooltip top v-if="user.username != getUser.username">
                 <v-btn slot="activator" color="success" class="text-capita ml-2" small outlin @click="follow" :disabled="disabled">{{followText}}</v-btn>
                 <span>{{followText == 'Following' ? 'You are following'  : 'Follow'}} {{user.name | capitalize}}</span>
               </v-tooltip>
@@ -23,7 +23,7 @@
           </v-flex>
         </v-layout>
         <v-layout mt-4 row wrap>
-          <v-flex xs12>
+          <v-flex xs12 light style="background:#f7f7f7;">
             <v-toolbar flat color="white"  tabs dense light>
               <v-btn small flat depressed class="text-capitalize" exact :to="`/users/${user.username}`" 
                 >
@@ -44,7 +44,7 @@
               
               <v-spacer class="hidden-xs-and-down"></v-spacer>
               <v-btn color="secondary" v-show="$vuetify.breakpoint.smAndUp" @click.native="$eventBus.$emit('show_profile_settings', {})" 
-                v-if="user.username == $store.getters.getUser.username" 
+                v-if="user.username == getUser.username" 
                 depressed >Edit profile
               </v-btn>
 
@@ -79,7 +79,6 @@ export default {
     about_user:[
       'name','email','phone','school','faculty','department'
     ],
-    currUser:'', // the curr loggedin user
     followers_id_list:[],
     myElections:[],
     myContests:[],
@@ -112,40 +111,46 @@ export default {
   },
   computed:{
    followText(){
-     return this.followers_id_list.indexOf(this.currUser._id) == -1 ? '+ Follow' : 'Following'
+     return this.followers_id_list.indexOf(
+       this.getUser._id) == -1 ? '+ Follow' : 'Following'
    },
    lowercase(val){
      return val.toUpperCase
-   }
+   },
+   ...mapGetters([
+     'getUser',
+     'getToken',
+     'isAuthenticated'
+   ])
   },
   methods:{
     async follow(){
-      if(this.followers_id_list.indexOf(this.currUser._id) == -1){
+      if(this.followers_id_list.indexOf(this.getUser._id) == -1){
         // not following user, follow this user
         this.disabled = true
-        this.followers_id_list.push(this.currUser)
-        this.user.followers.push(this.currUser)
-        await api().post(`dashboard/followContestant/${this.user._id}/${this.currUser._id}`, {
-          token:this.$store.getters.getToken
+        this.followers_id_list.push(this.getUser)
+        this.user.followers.push(this.getUser)
+        await api().post(`dashboard/followContestant/${this.user._id}/${this.getUser._id}`, {
+          token:this.getToken
         })
         this.disabled = false
       }
       else{
         // is following the user, unfollow
         this.disabled = true
-        await api().post(`dashboard/unfollowContestant/${this.user._id}/${this.currUser._id}`, {
-          token:this.$store.getters.getToken
+        await api().post(`dashboard/unfollowContestant/${this.user._id}/${this.getUser._id}`, {
+          token:this.getToken
         })
-        this.followers_id_list.splice(this.user.followers.indexOf(this.currUser._id),1)
-        this.user.followers.splice(this.user.followers.indexOf(this.currUser._id),1)
+        this.followers_id_list.splice(this.user.followers.indexOf(this.getUser._id),1)
+        this.user.followers.splice(this.user.followers.indexOf(this.getUser._id),1)
         this.disabled = false
       }
     },
     async setUp(){
       try {
-        let user,currUser,elections,broadcasts;
+        let user,elections,broadcasts;
         api().post(`dashboard/getPopUser/${this.username}`, {
-          token:this.$store.getters.getToken
+          token:this.getToken
         }).then(user=>{
           this.user = user.data
           user.data.followers.forEach(fol=>{
@@ -154,20 +159,19 @@ export default {
         })
 
         elections = await api().post(`dashboard/getElections/${this.username}`, {
-          token:this.$store.getters.getToken
+          token:this.getToken
         })
 
         broadcasts = await api().post(`dashboard/getbroadcasts`, {
-          token:this.$store.getters.getToken,
-          by:this.$store.state.logged_in_user._id,
+          token:this.getToken,
+          by:this.getUser._id,
         })
 
-        this.currUser = this.$store.state.logged_in_user
         //this.user = user.data
         this.myElections = elections.data
         this.myContests = elections.data.contested
         this.broadcasts = broadcasts.data
-        console.log(this.myElections,this.currUser,this.user,broadcasts)
+        console.log(this.myElections,this.getUser,this.user,broadcasts)
       } catch (error) {
         console.log(error)
         if(error){}
@@ -188,6 +192,7 @@ export default {
   }
 }
 import api from '@/services/api'
+import {mapGetters} from 'vuex'
 </script>
 
 <style lang="scss" >
