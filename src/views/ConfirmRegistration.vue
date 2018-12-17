@@ -20,8 +20,8 @@ export default {
       console.log(res)
       this.message = 'Account activation successfull. You can now login'
       this.$store.dispatch('setUser', {user:res.data.user,token:res.data.token})
-      this.$store.dispatch('setLoggedInUser', res.data.user)
-      this.$router.push('/dashboard')
+      //this.$store.dispatch('setLoggedInUser', res.data.user)
+      this.$router.push('/')
     } catch (error) {
       //alert(error)
       this.message = 'Invalid confirmation link'

@@ -17,7 +17,7 @@
           <v-toolbar-title slot="activator">
             <template v-if="$vuetify.breakpoint.width > 350">
               <v-avatar size="36" color="grey lighten-4">
-                <img :src="getUser.imgSrc || `https://ui-avatars.com/api/?name=${getUser.name}`" alt="avatar">
+                <img :src="getUser.imgThumb || `https://ui-avatars.com/api/?name=${getUser.name}`" alt="avatar">
               </v-avatar>
               <v-icon dark>arrow_drop_down</v-icon>
             </template>
@@ -65,7 +65,7 @@
               <v-list-group no-action class="mb-5 pt-1">
                 <v-list-tile slot="activator">
                   <v-list-tile-avatar color="grey lighten-4">
-                    <img :src="getUser.imgSrc || `https://ui-avatars.com/api/?name=${getUser.name}`">
+                    <img :src="getUser.imgThumb || `https://ui-avatars.com/api/?name=${getUser.name}`">
                   </v-list-tile-avatar>
                   <v-list-tile-title class="text-capitalize">{{getUser.name}}</v-list-tile-title>
                 </v-list-tile>
@@ -95,7 +95,7 @@
                 </v-tooltip-->
               </v-list-group>
 
-              <v-menu v-model="menu" :position-x="40" :position-y="50">
+              <v-menu v-model="menu" v-if="menu" :position-x="40" :position-y="50">
                 <view-profile :user='getUser'></view-profile>
               </v-menu>
 
@@ -219,7 +219,7 @@
             <v-btn dark flat @click="snackbar.show = false"> Close</v-btn>
           </v-snackbar>
 
-          <v-dialog v-model="settings_dialog" fullscreen hide-overlay transition="dialog-bottom-transition" scrollable>
+          <v-dialog v-model="settings_dialog" v-if="settings_dialog" fullscreen hide-overlay transition="dialog-bottom-transition" scrollable>
             <profile-settings :dialog='settings_dialog'></profile-settings>
           </v-dialog>
 
@@ -333,7 +333,6 @@ export default {
 
 
     // if loggedin user
-    console.log(this.$store.state.logged_in_user)
     if(this.$store.getters.getToken){
 
       let chat = io.connect('localhost:3000/chat')

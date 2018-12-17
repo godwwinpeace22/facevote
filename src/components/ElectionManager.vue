@@ -31,18 +31,18 @@
           <v-flex xs12>
             <v-toolbar flat color="grey" style="background:#1c1f35;" dense dark>
               
-                <v-btn flat small exact depressed :to="`/dashboard/elections/manage/${electionId}`" color="default">Overview</v-btn>
-                <v-btn flat small depressed :to="`/dashboard/elections/manage/${electionId}/broadcasts`">Broadcasts</v-btn>
-                <v-btn flat small depressed :to="`/dashboard/elections/manage/${electionId}/payments`" v-if="!$vuetify.breakpoint.xs">Payments</v-btn>
-                <v-btn flat small depressed :to="`/dashboard/elections/manage/${electionId}/settings`" v-if="!$vuetify.breakpoint.xs">Settings</v-btn>
+                <v-btn flat small exact depressed :to="`/elections/manage/${electionId}`" color="default">Overview</v-btn>
+                <v-btn flat small depressed :to="`/elections/manage/${electionId}/broadcasts`">Broadcasts</v-btn>
+                <v-btn flat small depressed :to="`/elections/manage/${electionId}/payments`" v-if="!$vuetify.breakpoint.xs">Payments</v-btn>
+                <v-btn flat small depressed :to="`/elections/manage/${electionId}/settings`" v-if="!$vuetify.breakpoint.xs">Settings</v-btn>
            
               <v-spacer></v-spacer>
-              <v-btn color="secondary" :to="`/dashboard/elections/watch/${currElection.electionId}`" v-if="!$vuetify.breakpoint.xs">Vote</v-btn>
+              <v-btn color="secondary" :to="`/elections/watch/${currElection.electionId}`" v-if="!$vuetify.breakpoint.xs">Vote</v-btn>
               
               <v-menu offset-y v-if="$vuetify.breakpoint.xs">
                 <v-btn slot="activator" icon><v-icon>menu</v-icon></v-btn>
                 <v-list>
-                  <v-list-tile class='text-capitalize' :to="`/dashboard/elections/manage/${electionId}/${item}`" v-for="item in ['payments','settings']" :key="item">
+                  <v-list-tile class='text-capitalize' :to="`/elections/manage/${electionId}/${item}`" v-for="item in ['payments','settings']" :key="item">
                     
                       {{ item }}
                   </v-list-tile>
@@ -171,10 +171,10 @@ export default {
 
         this.activities = activities.data
         this.broadcasts = broadcasts.data
-        console.log(activities)
+        //console.log(activities)
 
-        console.log(this.$store.state.logged_in_user._id,this.currElection.admin._id)
-        console.log(this.currElection,this.contestants,this.regVoters)
+        //console.log(this.$store.state.logged_in_user._id,this.currElection.admin._id)
+        //console.log(this.currElection,this.contestants,this.regVoters)
         
       } catch (error) {
         console.log(error)

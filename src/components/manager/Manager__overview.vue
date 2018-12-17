@@ -197,7 +197,7 @@
     </v-dialog>
 
     <!-- election settings dialog -->
-    <v-dialog v-model="settings_modal" fullscreen hide-overlay transition="dialog-bottom-transition" scrollable>
+    <v-dialog v-model="settings_modal" v-if="settings_modal" fullscreen hide-overlay transition="dialog-bottom-transition" scrollable>
       <v-card>
         <v-toolbar color="success">
           <v-toolbar-title class="white--text">Edit Election</v-toolbar-title>

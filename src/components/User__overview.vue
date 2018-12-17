@@ -29,7 +29,7 @@
               <div v-for="(contest, index) in myContests" :key="index">
                 <v-list-tile  :key="contest._id" avatar>
                   <v-list-tile-avatar>
-                    <img :src="contest.electionRef ? contest.electionRef.logo : '' || `https://ui-avatars.com/api/?name=${contest.electionRef ? contest.electionRef.title : 'a+b'}`">
+                    <img :src="contest.electionRef ? contest.electionRef.logo : '' || `https://ui-avatars.com/api/?name=el+s}`">
                   </v-list-tile-avatar>
 
                   <v-list-tile-content>

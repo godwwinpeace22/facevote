@@ -334,7 +334,8 @@ export default {
         e.target.files[0].type == 'image/png'
         
       ){
-        if(e.target.files[0].size < 1000){
+        let one_mb = 1000000
+        if(e.target.files[0].size < one_mb){
           this.blob_url = URL.createObjectURL(e.target.files[0])
           this.selected_file = e.target.files[0]
           this.disabled_file_btn = false
@@ -353,10 +354,17 @@ export default {
       this.upload_text = 'Updating photo...'
       let formData = new FormData()
       formData.append('file', this.selected_file)
-      formData.append('upload_preset', this.cloudinary.upload_preset)
-      formData.append('public_id', this.getUser.username + Date.now())
+      formData.append('username', this.getUser.username)
       try {
-        let res = await api().post(`https://api.cloudinary.com/v1_1/${this.cloudinary.cloud_name}/upload`, formData)
+        let response = await api().post( 'dashboard/updateProfile/photo',
+          formData,
+          {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+          }
+        )
+       /* let res = await api().post(`https://api.cloudinary.com/v1_1/${this.cloudinary.cloud_name}/upload`, formData)
         console.log(res.data)
         console.log(this.getToken)
         let res2 = await api().post('dashboard/updateProfile/photo', {
@@ -365,17 +373,21 @@ export default {
           token:this.getToken
         })
         
-        console.log(res2.data)
-        this.$store.dispatch('setUser', {user:res2.data.user,token:res2.data.token})
+        console.log(res2.data)*/
+        this.$store.dispatch('setUser', {user:response.data.user,token:response.data.token})
         this.upload_text = 'Update photo'
         this.selected_file = null
+        this.blob_url = null
         this.show_progress = false
       } catch (error) {
+        console.log(error)
         console.log(error.response)
         alert('something went wrong. Please try again')
         this.upload_text = 'Update photo'
         this.selected_file = null
+        this.blob_url = null
         this.show_progress = false
+        //$NProgress.end()
       }
     },
     async save(){
@@ -391,10 +403,10 @@ export default {
         })
 
         // preferences saved successfully
-        this.$store.dispatch('setUser', {user:saved.data,token:this.getToken})
-        this.$store.dispatch('setLoggedInUser', saved.data)
+        this.$store.dispatch('setUser', {user:saved.data.user,token:saved.data.token})
+        this.$store.dispatch('setLoggedInUser', saved.data.user)
         console.log(saved.data)
-        this.setCurrSettings(saved.data)
+        this.setCurrSettings(this.getUser)
         this.saving = false
         this.disabled_btn = false
         //this.$eventBus.$emit('hide_profile_settings', {})
@@ -404,8 +416,18 @@ export default {
         alert('something went wrong. Please try again')
         this.saving = false
         this.disabled_btn = false
+        $NProgress.end()
       }
       
+    },
+    async getSchools(){
+      try {
+        let schls = await api().post('dashboard/getSchools')
+        console.log(schls)
+        this.schools = schls.data
+      } catch (error) {
+        console.log(error)
+      }
     },
     setCurrSettings(data){
       /*let res = await api().post(`dashboard/getUser/${this.$store.getters.getUser.username}`, {
@@ -438,7 +460,8 @@ export default {
       //console.log(this.form)
     }
   },
-  mounted(){
+  async mounted(){
+    await this.getSchools()
     this.setCurrSettings(this.getUser)
   },
   components:{

@@ -291,6 +291,15 @@ export default {
     next(){
       this.step == 2 ? this.submit() : this.step++
     },
+    async getSchools(){
+      try {
+        let schls = await api().post('dashboard/getSchools')
+        console.log(schls)
+        this.schools = schls.data
+      } catch (error) {
+        console.log(error)
+      }
+    },
     submit(){
       try{
         // check if forms are valid before submit
@@ -326,6 +335,7 @@ export default {
           let res = await authService.Register(this.form)
           console.log(res.data)
           this.loading = false
+          this.step = 3
         }
       }catch(err){
         console.log(err)
@@ -338,10 +348,14 @@ export default {
         }
       }
     }
+  },
+  mounted(){
+    this.getSchools()
   }
 }
 
 import Nav from '@/components/Nav'
+  import api from '@/services/api'
   import Footer from '@/components/Footer'
   //import { validationMixin } from 'vuelidate'
   //import { required, minLength, email, password } from 'vuelidate/lib/validators'

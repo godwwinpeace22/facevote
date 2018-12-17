@@ -2,9 +2,9 @@ import axios from 'axios'
 //import NProgress from 'nprogress'
 
 const instance = axios.create({
-    //baseURL: 'http:/' + '/localhost:3000',//"https:/" + "/securepoll.herokuapp.com"
-    //baseURL: "https://securepoll.herokuapp.com"
-    baseURL: "https://secure-citadel-58191.herokuapp.com/"
+    //baseURL: 'http://localhost:3000',//"https:/" + "/securepoll.herokuapp.com"
+    baseURL: "https://securepoll.herokuapp.com"
+    //baseURL: "https://secure-citadel-58191.herokuapp.com/"
     //timeout:3000
 })
 

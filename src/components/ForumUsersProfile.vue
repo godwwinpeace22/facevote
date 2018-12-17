@@ -34,7 +34,7 @@
               :disabled='disabled.indexOf(user._id) != -1 ? true : false'
               v-if="user.username != $store.getters.getUser.username">
               {{user.followers.length}}&nbsp; | &nbsp;<span id="follow">
-                {{user.followers.indexOf(currUser.id) == -1 ? ' Follow' : ' Following'}}</span>
+                {{user.followers.indexOf(currUser._id) == -1 ? ' Follow' : ' Following'}}</span>
             </v-btn>
           </v-card-actions>
           <v-container ma-0 pa-2>
@@ -44,7 +44,7 @@
             <v-subheader class="ma-0 pa-0" style="height:30px;" v-if="getRole(user)"><strong>Role:&nbsp;</strong>{{getRole().role}}</v-subheader>
             
           </v-container>
-          <v-dialog v-model="dialog" fullscreen hide-overlay transition="dialog-bottom-transition" scrollable>
+          <v-dialog v-model="dialog" v-if="dialog" fullscreen hide-overlay transition="dialog-bottom-transition" scrollable>
             <profile-settings :dialog='dialog'></profile-settings>
           </v-dialog>
           <v-divider></v-divider>
@@ -93,12 +93,12 @@ export default {
       return found ? {contesting:'Yes', role:found.role} : false
     },
     follow(event){
-      if(this.user.followers.indexOf(this.currUser.id) == -1){
+      if(this.user.followers.indexOf(this.currUser._id) == -1){
         this.disabled.push(this.user._id)
         //console.log(event)
-        this.user.followers.push(this.currUser.id)
+        this.user.followers.push(this.currUser._id)
         document.getElementById('follow').innerText = 'following'
-        api().post(`dashboard/followContestant/${this.user._id}/${this.currUser.id}`, {token:this.$store.getters.getToken}).then(res=>{
+        api().post(`dashboard/followContestant/${this.user._id}/${this.currUser._id}`, {token:this.$store.getters.getToken}).then(res=>{
           if(res){
             this.disabled.splice(this.disabled.indexOf(this.user._id),1)
             //this.$refs[contestant._id][0].innerText = `you are following ${contestant.userId.name}`
@@ -108,10 +108,10 @@ export default {
       }
       else{
         this.disabled.push(this.user._id)
-        this.user.followers.splice(this.user.followers.indexOf(this.currUser.id), 1)
+        this.user.followers.splice(this.user.followers.indexOf(this.currUser._id), 1)
         
         document.getElementById('follow').innerText = 'follow'
-        api().post(`dashboard/unfollowContestant/${this.user._id}/${this.currUser.id}`, {token:this.$store.getters.getToken}).then(res=>{
+        api().post(`dashboard/unfollowContestant/${this.user._id}/${this.currUser._id}`, {token:this.$store.getters.getToken}).then(res=>{
           if(res){
             this.disabled.splice(this.disabled.indexOf(this.user._id),1)
             //this.$refs[contestant._id][0].innerText = `Follow ${contestant.userId.name}`

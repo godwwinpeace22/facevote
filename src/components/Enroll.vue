@@ -3,6 +3,11 @@
     <vue-headful
       :title="title"
     />
+
+    <v-snackbar v-model="snackbar.show" :timeout="5000" :color="snackbar.color" top>
+      {{snackbar.message}} 
+      <v-btn dark flat @click="snackbar.show = false"> Close</v-btn>
+    </v-snackbar>
     <v-stepper-header>
       <v-stepper-step :complete="e5 > 1" step="1">Select election</v-stepper-step>
       <v-divider></v-divider>
@@ -17,7 +22,9 @@
           <v-container>
             <v-layout row>
               <v-flex xs6>
-                <v-text-field label="Election Id" :value="electionId" hint="e.g gray-fighter-2187" v-model="electionId"></v-text-field>
+                <v-text-field label="Election Id" name="electionId" :value="electionId" 
+                  hint="e.g gray-fighter-2187" v-model="electionId" browser-autocomplete="electionId">
+                </v-text-field>
                 
               </v-flex>
             </v-layout>
@@ -79,6 +86,7 @@ export default {
   data:()=>({
     title:'Enroll | Facevote',
     e5:1,
+    snackbar:{},
     electionId:null,
     election:{},
     contestant:{
@@ -116,7 +124,9 @@ export default {
           let id = await api().post(`dashboard/getId/${this.electionId}`, {token:this.$store.getters.getToken})
           console.log(id)
           if(!id){
-            alert('Sorry, election not found')
+            this.snackbar = {
+              show:true,message:'Sorry, election not found', color:'error'
+            }
           }
           else{
             this.election = id.data
@@ -166,29 +176,40 @@ export default {
       } catch (error) {
         console.log(error)
         console.log(error.response)
-        error.response.status == 404 ? alert(error.response.data.message) : ''
+        error.response.status == 404 ? this.snackbar = {
+          show:true,message:error.response.data.message, color:'error'
+        } : ''
       }
     },
     async enroll(){
       try {
-        if(this.election.regVoters.indexOf(this.$store.getters.getUser._id) != -1){
-          alert('you have already enrolled for this election');
+        if(this.election.regVoters.indexOf(this.$store.getters.getUser.id) != -1){
+          
+          this.snackbar = {
+            show:true,message:'Sorry, you are already enrolled for this election', color:'error'
+          }
         }
         else{
           let res = await api().post(`dashboard/enroll/${this.electionId}`, {
-            user:this.$store.state.logged_in_user,
+            user:this.$store.getters.getUser,
             token:this.$store.getters.getToken
           })
           console.log(res)
-          alert('enrollement successfull');
+          //alert('enrollement successfull');
+          this.snackbar = {
+            show:true,message:'Enrollement successfull!', color:'success'
+          }
         }
         
       } catch (error) {
-        NProgress.done()
+        $NProgress.done()
         console.log(error.response)
-        if(error.response.status = 401){
-          alert(error.response.data.message)
-          
+
+        if(error.response){
+          //alert(error.response.data.message)
+          this.snackbar = {
+            show:true,message:error.response.data.message, color:'error'
+          }
         }
         
       }

@@ -6,8 +6,9 @@
     <v-container grid-list-md>
       <span class="body-2 ">Elections you created</span>
       <v-divider ></v-divider>
-      <v-layout row wrap mt-3>
-        <v-subheader v-if="myCreatedElc.length == 0" class="warning--text">You have not created any election yet</v-subheader>
+      <v-layout row wrap mt-3 :justify-center='!data_available'>
+        <v-subheader v-if="myCreatedElc.length == 0 && data_available" class="warning--text">You have not created any election yet</v-subheader>
+        <v-progress-circular class="mt-3" v-if="!data_available" indeterminate color="grey lighten-1"></v-progress-circular>
         <v-flex xs12 sm6 md4 v-for="election in myCreatedElc" :key="election._id" mb-2 px-2>
           <v-card color="" class="" height="200" hover>
             <v-layout row>
@@ -31,8 +32,8 @@
             <v-divider light></v-divider>
             <v-card-actions class="pa-3">
               <v-spacer></v-spacer>
-              <v-btn flat color="orange" :to="'/dashboard/elections/watch/' + election.electionId">Explore</v-btn>
-              <v-btn flat color="orange" :to="'/dashboard/elections/manage/' + election.electionId">Manage</v-btn>
+              <v-btn flat color="orange" :to="'/elections/watch/' + election.electionId">Explore</v-btn>
+              <v-btn flat color="orange" :to="'/elections/manage/' + election.electionId">Manage</v-btn>
               <v-spacer></v-spacer>
               <v-btn icon >
                 <v-icon>share</v-icon>
@@ -47,8 +48,10 @@
     <v-container grid-list-sm>
       <span class="body-2">Elections you have enrolled in</span>
       <v-divider ></v-divider>
-      <v-layout row wrap mt-3>
-        <v-subheader v-if="myEnrolledElc.length == 0">You have not enrolled in any elections yet</v-subheader>
+      <v-layout row wrap mt-3 :justify-center='!data_available'>
+        <v-subheader v-if="myEnrolledElc.length == 0 && data_available">You have not enrolled in any elections yet</v-subheader>
+        <v-progress-circular class="mt-3" v-if="!data_available" indeterminate color="grey lighten-1"></v-progress-circular>
+
         <v-flex xs12 sm6 md4 v-for="election in myEnrolledElc" :key="election._id" mb-2 px-2>
           <v-card color="" class="" height="200" hover dark>
             <v-layout row>
@@ -71,7 +74,7 @@
             </v-layout>
             <v-divider light></v-divider>
             <v-card-actions class="pa-3">
-              <v-btn flat color="orange" :to="'/dashboard/elections/watch/' + election.electionId">Explore</v-btn>
+              <v-btn flat color="orange" :to="'/elections/watch/' + election.electionId">Explore</v-btn>
               <v-spacer></v-spacer>
               <v-btn icon >
                 <v-icon>share</v-icon>
@@ -85,8 +88,10 @@
     <v-container grid-list-md>
       <span class="body-2">Elections you contested in</span>
       <v-divider ></v-divider>
-      <v-layout row wrap mt-3>
-        <v-subheader v-if="myContestedElc.length == 0">You have not contested in any elections yet</v-subheader>
+      <v-layout row wrap mt-3 :justify-center='!data_available'>
+        <v-subheader v-if="myContestedElc.length == 0 && data_available">You have not contested in any elections yet</v-subheader>
+        <v-progress-circular class="mt-3" v-if="!data_available" indeterminate color="grey lighten-1"></v-progress-circular>
+
         <v-flex xs12 sm6 md4 v-for="contest in myContestedElc" :key="contest._id" mb-2 px-2 v-if="contest.electionRef">
           <v-card color="" class="" height="200" hover >
             <v-layout row>
@@ -109,8 +114,8 @@
             </v-layout>
             <v-divider light></v-divider>
             <v-card-actions class="pa-3">
-              <v-btn flat color="primary" class="text-capitalize" :to="'/dashboard/elections/watch/' + contest.electionRef.electionId">Explore</v-btn>
-              <v-btn flat color="primary" class="text-capitalize" to="/dashboard/manifesto/create">Create manifesto</v-btn>
+              <v-btn flat color="primary" class="text-capitalize" :to="'/elections/watch/' + contest.electionRef.electionId">Explore</v-btn>
+              <v-btn flat color="primary" class="text-capitalize" to="/manifesto/create">Create manifesto</v-btn>
             </v-card-actions>
           </v-card>
         </v-flex>
@@ -127,6 +132,7 @@ export default {
     myCreatedElc:[], // elections user created
     myContestedElc:[], // elections user contested in
     myEnrolledElc:[], // elections user enrolled in
+    data_available:false,
   }),
   methods:{
     async deleteElection(electionId){
@@ -148,6 +154,7 @@ export default {
       this.myCreatedElc = res.data.created
       this.myContestedElc = res.data.contested
       this.myEnrolledElc = res.data.enrolled
+      this.data_available = true
       console.log(res)
     } catch (error) {
       console.log(error)

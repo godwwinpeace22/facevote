@@ -25,11 +25,12 @@
 
     <chatwindow :regVoters='elections.regVoters'></chatwindow>
   <v-container>
-    <div class="white--text" style='margin-left:px;position:static;width:100%;background:r;z-index:0;'>
+    <div class="chat_input white--text" id="chat_input" style='margin-left:px;position:static;width:100%;background:r;z-index:0;'>
       
 
       <v-form @submit.prevent='submit' style="margin-left:px;background:;" >
-        <v-textarea v-model="message" color="deep-purple" @keypress="isTyping" id="form"
+        <v-textarea v-model="message" color="deep-purple" @keyup.shift.50="mention_dialog = true" 
+          @keypress="isTyping" id="form"
           label="Type a message" outline 
           rows="1" auto-grow
         >
@@ -39,9 +40,15 @@
           </v-btn>
           <span>Send a photo</span>
         </v-tooltip>
-        <v-tooltip top slot="append-outer" v-if="message">
+        <v-tooltip top slot="append">
+          <v-btn icon slot="activator" @click='mention_dialog = true'>
+            <span color="success" style="color:green;margin-top:-3px;font-size:18px;">@</span>
+          </v-btn>
+          <span>Mention someone</span>
+        </v-tooltip>
+        <v-tooltip top slot="append-outer" v-if="message.trim()">
           <v-btn icon slot="activator" @click="sendMessage">
-            <v-icon color="teal">{{message ? 'send' : '' }}</v-icon>
+            <v-icon color="teal">{{message.trim() ? 'send' : '' }}</v-icon>
           </v-btn>
           <span>Send message</span>
         </v-tooltip>
@@ -58,6 +65,35 @@
                 <span style="font-size:30px;display:block;margin-top:-7px;">{{emoji}}</span>
               </v-btn>
             </v-card-text>
+          </v-card>
+        </v-menu>
+
+        <v-menu width="500"  :close-on-content-click='false' 
+           attach="chat_input"
+          slot="append" max-height="500" left top offset-y v-model="mention_dialog">
+          <!--v-btn slot="activator" icon class="nudgeup">
+            <span  style="margin-top:-3px;color:green;font-size:18px;">@</span>
+          </v-btn-->
+          <v-card class="pa-0" flat>
+            <v-toolbar flat dense></v-toolbar>
+            <div style="height:200px;overflow-y:auto;width:400px;" class="navdrawr">
+              <v-list subheader dense>
+                <v-subheader v-show="elections.regVoters.length == 0">No results found</v-subheader>
+                <v-list-tile v-for="voter in regVoters" :key="voter._id" avatar @click="appendUser(voter)">
+                  
+                  <v-list-tile-avatar>
+                    <!-- prefer to use loggedin user's info rather than his info from voters list -->
+                    <img :src="getSrc(voter)">
+                  </v-list-tile-avatar>
+
+                  <v-list-tile-content>
+                    <v-list-tile-title class="text-capitalize">{{getName(voter)}}</v-list-tile-title>
+                  </v-list-tile-content>
+                </v-list-tile>
+              </v-list>
+
+              <v-divider></v-divider>
+            </div>
           </v-card>
         </v-menu>
         
@@ -105,31 +141,38 @@ export default {
       '😀','😂','😁','😃','😄','😅','😆','😉','😊','😋','😎','😍','😘','😐',
       '😶','😏','😣','😯','😪','😛','😜','😒','😲','😟',
     ],
-    iconIndex: 0,
     message:"",
     file_message:'',
     file:null,
+    mention_dialog:false,
     file_dialog:false,
     progress_dialog:false,
     imgSrc:'',
     menu:false,
     regElec:[],
+    regVoters:[],
     elections:[], // all the elections user enrolled in
     contestants:[],
     toshow:0,
     someoneistyping:false,
     timeDistance:0,
     show_imojis:false,
+    members_dialog:false,
     cloudinary: {
       uploadPreset: 'r9tlxvid',
       cloudName: 'unplugged'
     },
   }),
-  props:['chat'],
   computed: {
     toolbarStatus(){
       return 'Your connected groups'
-    }
+    },
+    // Mix your getter(s) into computed with the object spread operator
+    ...mapGetters([
+      'isAuthenticated',
+      'token',
+      'getUser'
+    ]),
     
   },
 
@@ -139,8 +182,9 @@ export default {
       try{
         let elections =  await api().post(`dashboard/getId/${this.$route.params.electionId}`, {token:this.$store.getters.getToken})
         this.elections = elections.data
-        this.joinRoom();
-        this.$store.dispatch('curRoom', this.$route.params.electionId)
+        this.regVoters = elections.data.regVoters
+        //this.joinRoom();
+        //this.$store.dispatch('curRoom', this.$route.params.electionId)
         let contestants = await api().post(
           `dashboard/getContestants/${this.elections._id}`,
           {token:this.$store.getters.getToken}
@@ -151,16 +195,9 @@ export default {
       }
       
     },
-    joinRoom(){
-      this.$eventBus.$emit('Join_Room', {room:this.elections.electionId, username:this.$store.getters.getUser.username})
-    },
-    toggleMarker () {
-      this.marker = !this.marker
-    },
     triggerFileSelect(){
       //console.log('upload a file')
       document.getElementById('file_input').click()
-      
     },
     triggerFileModal(e){
       //console.log(e.target.files)
@@ -196,6 +233,16 @@ export default {
         this.clearMessage()
       }
     },
+    getSrc(voter){
+      // doing this so that when there is a profile update, the reactive user data will be updated here
+      return voter.username == this.getUser.username ? this.getUser.imgSrc : 
+      voter.imgSrc || `https://ui-avatars.com/api/?name=${voter.name}`
+    },
+    getName(voter){
+      // doing this so that when there is a profile update, the reactive user data will be updated here
+      let me = this.getUser
+      return voter.username == me.username ? me.name : voter.name
+    },
     sendMessage () {
       this.submit(this.message, null)
     },
@@ -208,12 +255,12 @@ export default {
     submit(message,imgSrc){
       //console.log(this.chat)
       let timestamp = Date.now();
-      let msgId = Date.now() * 1 + Math.floor(Math.random() * (999999 - 999)) + 999;
+      let msgId = Date.now() * 1 + 1000 * Math.floor(Math.random() * (999999 - 999)) + 999;
       this.$eventBus.$emit('Chat_Message', {
-        chat:message,
+        chat:message.trim(),
         user:this.$store.getters.getUser.username,
         name:this.$store.getters.getUser.name,
-        imgSrc:imgSrc,
+        imgSrc:imgSrc, // this is for the uploaded image
         timestamp:timestamp,
         msgId:msgId,
         reactions:{
@@ -225,7 +272,7 @@ export default {
       console.log(this.$route.params.electionId)
       //this.msgs.push({chat:this.message, user:this.$store.getters.getUser.username})
       
-      this.$store.dispatch('saveChatMessage', {
+      /*this.$store.dispatch('saveChatMessage', {
         chat:message,
         user:this.$store.getters.getUser.username,
         name:this.$store.getters.getUser.name,
@@ -237,7 +284,7 @@ export default {
         },
         room:this.$route.params.electionId,
         status:'unread'
-      })
+      })*/
       this.clearMessage()
       this.$eventBus.$emit('Scroll_Chat', 'data')
     },
@@ -245,6 +292,9 @@ export default {
       // tell others that this user is typing.
       this.$eventBus.$emit('Someone_Is_Typing',{user:this.$store.getters.getUser.username,room:this.$route.params.electionId})
       
+    },
+    appendUser(voter){
+      this.message += ' @' + voter.username + ' '
     },
     appendEmoji(emoji){
       this.message += emoji
@@ -286,6 +336,7 @@ export default {
 }
 //import io from 'socket.io-client';
 import api from '@/services/api'
+  import {mapGetters} from 'vuex'
   import Settings from '@/components/Settings'
   import ForumUsers from '@/components/ForumUsers'
   import Chatwindow from '@/components/Chatwindow'
@@ -312,6 +363,10 @@ $mainBgColor:#1c1f35;
 }
 nav{
   margin-top:48px;
+}
+
+.nudgeup .v-btn__content{
+  margin-top:-12px;
 }
 
 /* --scrollbar --*/

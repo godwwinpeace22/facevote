@@ -89,15 +89,22 @@
                   View results
                 </v-btn>
                 <v-btn  color="pink" dark @click="show_voting_dialog = true" 
-                  v-show="show_btn"  v-if="inprogress">
+                  v-show="show_btn"  v-if="inprogress" :disabled="voterdOrNot(getUser._id) == 'voted'">
                   Vote
                 </v-btn>
                 <v-tooltip top v-if="not_started">
-                  <v-btn  color="success" slot="activator" small dark :to="`/dashboard/enroll`" 
-                    v-show="show_btn"  v-if="not_started">
+                  <v-btn  color="success" slot="activator" small dark :to="`/enroll`" 
+                    v-show="show_btn"  v-if="not_started" :disabled="hasEnrolled">
                     Enroll
                   </v-btn>
                   <span>Enroll to vote</span>
+                </v-tooltip>
+                <v-tooltip top class="ml-3">
+                  <v-btn  color="success" slot="activator" small dark 
+                    :to="`/forum/${currElection.electionId}`" depressed>
+                    Forum
+                  </v-btn>
+                  <span>Join the conversation for this election</span>
                 </v-tooltip>
               </v-card-actions>
             </v-card>
@@ -266,7 +273,7 @@
                       <v-divider  :inset="true" :key="index"></v-divider>
                     </div>
                   </v-list>
-                  <v-dialog v-model="viewprofile" width="300" hide-overlay>
+                  <v-dialog v-model="viewprofile" v-if="viewprofile" width="300" hide-overlay>
                     <view-profile :user='voterprofile'></view-profile>
                   </v-dialog>
                 </v-container>
@@ -300,13 +307,13 @@
                 <v-container class="pa-0">
                   <v-subheader>Actions</v-subheader>
                   <v-list dense>
-                    <v-list-tile avatar to="/dashboard/contest">
+                    <v-list-tile avatar to="/contest">
                         <span>Contest</span>
                     </v-list-tile>
-                    <v-list-tile avatar to="/dashboard/manifesto/create">
+                    <v-list-tile avatar to="/manifesto/create">
                         <span>Create manifesto</span>
                     </v-list-tile>
-                    <v-list-tile avatar to="/dashboard/enroll">
+                    <v-list-tile avatar to="/enroll">
                         <span>Enroll</span>
                     </v-list-tile>
                   </v-list>
@@ -355,7 +362,7 @@
             </span>
           </v-card-text>
           <v-card-actions class="pa-3" style="cursor:-webkit-grab;cursor:grab;">
-            For {{contestant.role}}
+            <span class='text-capitalize'>For {{contestant.role}}</span>
             <v-spacer></v-spacer>
             <v-tooltip top>
               <v-btn color="success" slot="activator" class="text-capitalize follow" v-if="contestant.userId.username != getUser.username" 
@@ -429,6 +436,10 @@ export default {
   }),
   props:['electionId'], // this prop is from the vue-router params
   computed:{
+    hasEnrolled(){
+      console.log(this.regVoters)
+      return this.regVoters.find(voter => voter._id == this.getUser._id) ? true : false
+    },
     follow_election_text(){
       return this.currElection.followers.find(id => id == this.getUser._id) ? 
       'Following' : 'Follow'
@@ -642,14 +653,14 @@ export default {
       }
     },
     isFollowing(contestant){
-      return contestant.userId.followers.indexOf(this.getUser.id) == -1 ? false : true
+      return contestant.userId.followers.indexOf(this.getUser._id) == -1 ? false : true
     },
     follow(event,contestant){
-      if(contestant.userId.followers.indexOf(this.getUser.id) == -1){
+      if(contestant.userId.followers.indexOf(this.getUser._id) == -1){
         this.disabled.push(contestant._id)
-        contestant.userId.followers.push(this.getUser.id)
+        contestant.userId.followers.push(this.getUser._id)
 
-        api().post(`dashboard/followContestant/${contestant.userId._id}/${this.getUser.id}`, {token:this.getToken}).then(res=>{
+        api().post(`dashboard/followContestant/${contestant.userId._id}/${this.getUser._id}`, {token:this.getToken}).then(res=>{
           if(res){
             //this.contestants = res.data,
             this.disabled.splice(this.disabled.indexOf(contestant._id),1)
@@ -661,10 +672,10 @@ export default {
       }
       else{
         this.disabled.push(contestant._id)
-        contestant.userId.followers.splice(contestant.userId.followers.indexOf(this.getUser.id), 1)
+        contestant.userId.followers.splice(contestant.userId.followers.indexOf(this.getUser._id), 1)
         
         //event.target.innerText = `(${contestant.followers.length - 1})  follow`
-        api().post(`dashboard/unfollowContestant/${contestant.userId._id}/${this.getUser.id}`, {token:this.getToken}).then(res=>{
+        api().post(`dashboard/unfollowContestant/${contestant.userId._id}/${this.getUser._id}`, {token:this.getToken}).then(res=>{
           if(res){
             this.$refs[contestant._id][0].innerText = `Follow ${contestant.userId.name}`
             //console.log(res.data)
@@ -679,10 +690,10 @@ export default {
       console.log(this.getUser)
       let this_user = this.getUser
       this.disabled.push(this_user._id)
-      if(this.currElection.followers.find(data=> data == this_user.id)){
+      if(this.currElection.followers.find(data=> data == this_user._id)){
         // is following
         this.currElection.followers.splice(this.currElection.followers.indexOf(this_user),1)
-        api().post(`dashboard/unfollowElection/${this.currElection.electionId}/${this_user.id}`, {
+        api().post(`dashboard/unfollowElection/${this.currElection.electionId}/${this_user._id}`, {
           token:this.getToken
         }).then(res=>{
           if(res){
@@ -693,11 +704,11 @@ export default {
       else{
         // not following
         this.currElection.followers.push(this_user._id)
-        api().post(`dashboard/followElection/${this.currElection.electionId}/${this_user.id}`, {
+        api().post(`dashboard/followElection/${this.currElection.electionId}/${this_user._id}`, {
           token:this.getToken
         }).then(res=>{
           if(res){
-            this.disabled.splice(this.disabled.indexOf(this_user.id),1)
+            this.disabled.splice(this.disabled.indexOf(this_user._id),1)
           }
         })
       }
@@ -713,7 +724,7 @@ export default {
     },
     viewManifesto(contestant){
       //console.log('manifestor: ', contestant)
-      this.$router.push(`/dashboard/manifesto/view?username=${contestant.userId.username}&manifesto=foo`)
+      this.$router.push(`/manifesto/view?username=${contestant.userId.username}&manifesto=foo`)
     },
   },
   async mounted(){

@@ -101,7 +101,7 @@ export default {
           this.loading = true
           //console.log(this.form)
           let res = await authService.Login(this.form)
-          //console.log(res.data)
+          console.log(res.data)
           this.$store.dispatch('setUser', {user:res.data.user,token:res.data.token})
           //this.$store.dispatch('setLoggedInUser', res.data.user)
           this.$router.push('/')

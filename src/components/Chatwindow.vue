@@ -11,12 +11,32 @@
             <div class="chat_content">
               <div style="width:100%;margin-top:0px;margin-bottom:0px;">
                 <span class="text-capitalize" v-if="msg.user != getUser.username " style="font-size:15px;margin-right:5px;">
-                  <a class="subheading" @click.prevent="$router.push(`/dashboard/forum/${msg.room}/profile/${msg.user}`)">{{msg.name || msg.user}}</a>
+                  <a class="subheading" @click.prevent="$router.push(`/forum/${msg.room}/profile/${msg.user}`)">
+                  {{msg.name}}</a>
                 </span>
                 <span v-else style="margin-right:5px;"><strong>You  </strong></span>
                 <span style="font-size:.9em;color:#555;" color="grey lighten-5">  {{parseDate(msg.timestamp)}}</span>
               </div>
-              <div style="width:100%;" v-if="!msg.imgSrc">{{msg.chat}}</div>
+              
+              <div style="width:100%;" v-if="!msg.imgSrc">
+
+                <!-- the spice of life -->
+                <template v-for="item in msg.chat.split(' ')">
+                  
+                  <router-link event="" @click.native.prevent="goto(item,msg.room)" 
+                    v-if="item.charAt(0) == '@'" 
+                    :to="'/forum/' + msg.room + '/profile/' + item.slice(1)" :key="item">
+                    {{item.slice(1)}} 
+                  </router-link>
+
+                  <router-link v-else-if="item.charAt(0) == '#'" :to="item" append :key="item">{{item}} </router-link>
+
+                  <template v-else>{{item}} </template>
+
+                </template>
+                
+                
+              </div>
               <div v-else>
                 <div style="width:100%;">{{msg.chat}}</div>
                 <v-img :src="msg.imgSrc" max-width="300" max-height="300"></v-img>
@@ -82,6 +102,10 @@
 </template>
 
 <script>
+function goto(msg){
+  router.push('/' + msg)
+}
+
 export default {
   props:{
     icons:{
@@ -89,7 +113,7 @@ export default {
     },
     source:String
   },
-data:()=>({
+  data:()=>({
     password: 'Password',
     show_reactions:false,
     drawer: null,
@@ -111,7 +135,8 @@ data:()=>({
     ...mapGetters([
       'isAuthenticated',
       'token',
-      'getUser'
+      'getUser',
+      'getChatMessages'
     ]),
   },
 
@@ -119,7 +144,9 @@ data:()=>({
     sameUser(msg){
       return msg.user == this.getUser.username
     },
-    
+    getName(username){
+      return this.regVoters.find(voter => voter.username == username).name
+    },
     Img(user){
       //console.log('regvoters!: ', this.regVoters)
       return this.regVoters ? this.regVoters.find(voter=> voter.username == user).imgSrc : null
@@ -129,7 +156,20 @@ data:()=>({
       let options = {hour:'numeric', minute:'numeric' };
       return d.toLocaleString("en-US",options)
     },
-
+    getRep(chat){
+      return chat.replace(/@([\w]+)/g,'<router-link to="/tag/$1">#$1</router-link>')
+    },
+    goto(item,room){
+      console.log(item,room)
+      if(this.regVoters.find(voter => voter.username == item.slice(1))){
+        this.$router.push(`/forum/${room}/profile/${item.slice(1)}`)
+      }
+      else{}
+      
+    },
+    doSomething(){
+      alert('Do something!')
+    },
     divide(timestamp,prev){
       let options = {year: 'numeric', month: 'numeric', day: 'numeric' };
       let then = new Date(timestamp)
@@ -145,7 +185,14 @@ data:()=>({
         }
         else{
           // else return true (the previous date is different from the cur date, hence its another day)
-          return that_day2
+          let today = new Date()
+          if((new Date()).toLocaleString('en-Us',options) == that_day2){
+            return 'Today'
+          }else{
+            return that_day2
+          }
+          
+          
         }
       }
       else{ // for the very first msg
@@ -195,7 +242,7 @@ data:()=>({
       //this.scrollChat()
       console.log(data)
     })
-      
+      console.log(this.regVoters)
   },
   components:{
     'settings':Settings,
@@ -219,6 +266,11 @@ import io from 'socket.io-client';
   -o-border-radius:$radius;
 }
 $mainBgColor:#1c1f35;
+$secondary:#1867c0;
+
+a{
+  color:$secondary;
+}
 
 .chat_home{
   //background-image:url('../assets/chat_wallpaper.jpg');

@@ -5,6 +5,11 @@
         :title="title"
         :description="description"
       />
+
+      <v-snackbar v-model="snackbar.show" :timeout="3000" :color="snackbar.color" top>
+        {{snackbar.message}} 
+        <v-btn dark flat @click="snackbar.show = false"> Close</v-btn>
+      </v-snackbar>
   <!--stepper -->
   <v-stepper v-model="e6" vertical>
     <v-stepper-step :complete="e6 > 1" step="1">
@@ -36,6 +41,9 @@
                 <v-select required
                   v-model="form.type" outline
                   :items="electionTypes"
+                  item-text="text"
+                  item-value="text"
+                  :disabled="electionTypes.disabled"
                   color="secondary"
                   label="Election type"
                 ></v-select>
@@ -47,7 +55,7 @@
               </v-flex>
               <v-flex xs12 sm6>
                 <v-select required outline disabled
-                  v-model="selected_school"
+                  v-model="form.school"
                   :items="schools" return-object
                   color="secondary"
                   label="School or College"
@@ -69,8 +77,8 @@
                 <v-subheader class="pl-0 font-weight-bold">Faculty name</v-subheader>
               </v-flex>
               <v-flex xs12 sm6>
-                <v-select required small v-model="selected_faculty" disabled
-                  :items="selected_school.faculties"  outline return-object
+                <v-select required small v-model="form.faculty" disabled
+                  :items="form.school.faculties"  outline return-object
                   color="secondary" label="Select faculty">
                 </v-select>
               </v-flex>
@@ -81,8 +89,8 @@
               </v-flex>
               <v-flex xs12 sm6>
                 <v-select required small outline disabled
-                  v-model="selected_department" return-object
-                  :items="selected_faculty.departments"
+                  v-model="form.department" return-object
+                  :items="form.faculty.departments"
                   color="secondary"
                   label="Select department"
                 ></v-select>
@@ -214,7 +222,7 @@
     <v-stepper-content step="4">
       <v-card color="grey lighten-1" class="mb-5" height="200px"></v-card>
       <v-btn flat @click="e6 = 3">Previous</v-btn>
-      <v-btn color="success" @click="createElection" >Next step <v-icon>chevron_right</v-icon></v-btn>
+      <v-btn color="success" @click="createElection" :loading="loading">Next step <v-icon>chevron_right</v-icon></v-btn>
     </v-stepper-content>
   </v-stepper>
   </v-flex>
@@ -227,6 +235,8 @@ export default {
   data:()=>({
     title:'Create new election',
     description:'',
+    snackbar:{},
+    loading:false,
     dialog:false,
     role_input:null,
     role_input_desc:null,
@@ -238,10 +248,10 @@ export default {
     form:{
       title:null,
       type:null,
-      school:null,
+      school:'',
       level:null,
-      faculty:null,
-      department:null,
+      faculty:'',
+      department:'',
       date:null,
       time:null,
       electionDuration:5,
@@ -256,10 +266,12 @@ export default {
         {title:'director of socials', value:'director or socials', description:''}
       ]
     },
-    electionTypes:['School','Governement','Organizations','Others'],
-    selected_school:'',
-    selected_faculty:'',
-    selected_department:'',
+    electionTypes:[
+      {text:'School',disabled:false},
+      {text:'Governement - comming soon',disabled:true},
+      {text:'Organizations - comming soon',disabled:true},
+      {text:'Others - comming soon',disabled:true}
+    ],
     schools:[
       {
         text:'UNN',
@@ -357,9 +369,9 @@ export default {
 
     disabled_step_one(){
       return !this.form.title || !this.form.type || !this.form.level || 
-      (this.form.type == 'School' && !this.selected_school) ||
-      (this.form.level == 'Faculty' && !this.selected_faculty) ||
-      (this.form.level == 'Department' && !this.selected_department)
+      (this.form.type == 'School' && !this.form.school) ||
+      (this.form.level == 'Faculty' && !this.form.faculty) ||
+      (this.form.level == 'Department' && !this.form.department)
     },
 
     disabled_step_two(){
@@ -375,7 +387,15 @@ export default {
     },
   },
   methods:{
-    
+    async getSchools(){
+      try {
+        let schls = await api().post('dashboard/getSchools')
+        //console.log(schls)
+        this.schools = schls.data
+      } catch (error) {
+        console.log(error)
+      }
+    },
     addrole(){
       if(this.role_input.length == 0){
         alert("Add a role")
@@ -391,37 +411,53 @@ export default {
       this.role_input_desc = ''
     },
     async createElection(event){
-      // when a role is deleted the value becomes 'false'. Trim all those 'false' items from the form
-      //this.form.roles = this.form.roles.filter(role => role != false)
 
-      this.form.school = this.selected_school.text
-      this.form.faculty = this.selected_faculty.text
-      this.form.department = this.selected_department.text
+      this.loading = !this.loading
+      this.form.school = this.form.school.text
+      this.form.faculty = this.form.faculty.text
+      this.form.department = this.form.department.text
       console.log(this.form)
-      let res = await api().post(`dashboard/newelection/${this.$store.getters.getUser.username}`,
-       {token:this.$store.getters.getToken, ...this.form}
+      try {
+        let res = await api().post(`dashboard/newelection/${this.$store.getters.getUser.username}`,
+          {token:this.$store.getters.getToken, ...this.form}
+        )
+        this.loading = !this.loading
+        this.snackbar = {
+          show:true,
+          message:'Election created successfully',
+          color:'success'
+        }
+        this.e6 = 1
+      } catch (error) {
+        this.snackbar = {
+          show:true,
+          message:'Something went wrong, try again',
+          color:'error'
+        }
+      }
+      
+    },
+    setThingsUp(){
+      let this_user = this.$store.getters.getUser
+      //console.log(this_user)
+      this.form.school = this.schools.find(
+        item => item.text == this_user.school
       )
-      console.log(res)
-      console.log(res.data)
-      alert('Election created successfully')
-    }
+      
+      this.form.faculty = this.form.school.faculties.find(
+        item => item.text == this_user.faculty
+      )
+
+      this.form.department = this.form.faculty.departments.find(
+        item => item.text == this_user.department
+      )
+    },
   },
   components:{
   },
-  mounted(){
-    let this_user = this.$store.getters.getUser
-    console.log(this_user)
-    this.selected_school = this.schools.find(
-      item => item.text == this_user.school
-    )
-    
-    this.selected_faculty = this.selected_school.faculties.find(
-      item => item.text == this_user.faculty
-    )
-
-    this.selected_department = this.selected_faculty.departments.find(
-      item => item.text == this_user.department
-    )
+  async created(){
+    await this.getSchools()
+    this.setThingsUp()
   }
 }
 </script>

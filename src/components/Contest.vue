@@ -3,6 +3,12 @@
     <vue-headful
       :title="title"
     />
+
+    <v-snackbar v-model="snackbar.show" :timeout="5000" :color="snackbar.color" top>
+      {{snackbar.message}} 
+      <v-btn dark flat @click="snackbar.show = false"> Close</v-btn>
+    </v-snackbar>
+
     <v-stepper-header>
       <v-stepper-step :complete="e5 > 1" step="1">Select election</v-stepper-step>
       <v-divider></v-divider>
@@ -30,7 +36,7 @@
           
         </v-card>
 
-        <v-btn color="primary" @click="e5 = 2" :disabled="!this.selectedElection._id">Next</v-btn>
+        <v-btn color="secondary" depressed @click="e5 = 2" :disabled="!this.selectedElection._id">Next</v-btn>
       </v-stepper-content>
 
       <v-stepper-content step="2">
@@ -45,7 +51,7 @@
             <v-layout row wrap>
               <v-flex xs6>
                 <v-select :items="selectedElection.roles" label="Select role" 
-                  v-model="contestant.role" item-text="title" return-object>
+                  v-model="selectedRole" item-text="title" return-object>
                 </v-select>
                 <span>If you are authorized to contest, you will be given a token, provide the token below</span>
                 <v-text-field label="token" v-model="contestant.acstoken"></v-text-field>
@@ -55,7 +61,7 @@
         </v-card>
 
         <v-btn flat @click="e5 = 1">Previous</v-btn>
-        <v-btn color="primary" @click="e5 = 3" :disabled="disabled">Next</v-btn>
+        <v-btn color="secondary" depressed @click="e5 = 3" :disabled="disabled">Next</v-btn>
       </v-stepper-content>
 
       <v-stepper-content step="3">
@@ -66,14 +72,14 @@
             </v-card-text>
             <v-spacer></v-spacer>
           <v-card-text>
-            <p>You are applying to contest for the position of the <strong> {{contestant.role.title}} </strong>in this election</p>
+            <p>You are applying to contest for the position of the <strong> {{selectedRole.title}} </strong>in this election</p>
             <p>Make sure you complete your profile info as this will be used to complete your application</p>
           
           </v-card-text>
         </v-card>
 
         <v-btn flat @click="e5 = 2">Previous</v-btn>
-        <v-btn color="primary" @click="contest"> Finish</v-btn>
+        <v-btn color="secondary" depressed @click="contest" :loading="loading"> Finish</v-btn>
       </v-stepper-content>
     </v-stepper-items>
   </v-stepper>
@@ -83,8 +89,11 @@ export default {
   data:()=>({
     title:'Contest | Facevote',
     e5:1,
+    snackbar:false,
+    loading:false,
     electionId:null,
     selectedElection:{},
+    selectedRole:{},
     elections:[],
     election:{},
     contestant:{
@@ -95,7 +104,7 @@ export default {
   computed:{
     
     disabled(){
-      return !this.contestant.acstoken  || !this.contestant.role || !this.selectedElection
+      return !this.contestant.acstoken  || !this.selectedRole || !this.selectedElection
     }
   },
   methods:{
@@ -112,26 +121,39 @@ export default {
     },
     async contest(){
       try {
-        if(this.contestant.acstoken != this.contestant.role.value){
-          alert('Sorry, the token your provided is invalid')
+        if(this.contestant.acstoken != this.selectedRole.value){
+          
+          this.snackbar = {
+            show:true,message:'Sorry, the token your provided is invalid',color:'error'
+          }
         }
         else{
-          this.contestant.role = this.contestant.role.title
+          this.loading = true
+          this.contestant.role = this.selectedRole.title
           let contestant = {
             ...this.contestant, 
-            userId:this.$store.state.logged_in_user._id,
+            userId:this.$store.getters.getUser._id,
             electionRef:this.selectedElection._id,token:this.$store.getters.getToken}
           console.log(contestant)
 
           
           let res =await api().post(`dashboard/addcontestant/${this.selectedElection.electionId}`, contestant)
           console.log(res)
-          alert('Success!')
+          this.snackbar = {
+            show:true,message:'Success! You are now a contestant in this election',color:'success'
+          }
+          this.loading = false
+          this.e5 = 1
         }
       } catch (err) {
+        console.log(err)
         console.log(err.response)
-        if(err.response && err.response.data.success == false){
-          alert('You have already contested for this election')
+        if(err.response){
+          this.snackbar = {
+            show:true,message:err.response.data.message,color:'error'
+          }
+          this.loading = false
+          $NProgress.done()
         }
 
       }

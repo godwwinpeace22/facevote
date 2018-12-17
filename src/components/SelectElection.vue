@@ -4,8 +4,13 @@
       :title="title"
     />
     <v-subheader>Select an election to watch</v-subheader>
-    <v-layout row wrap >
+
+    <v-layout row wrap :justify-center='!data_available'>
+      <v-subheader v-if="elections.length == 0 && data_available">Nothing here. To watch an election, either create one, contest or enroll to vote</v-subheader>
+      <v-progress-circular class="mt-3" v-if="!data_available" indeterminate color="grey lighten-1"></v-progress-circular>
+
       <v-flex xs6 sm4 d-flex v-for='election in elections' :key="election._id" >
+        
         <v-card color="" class="" height="" :to="'/elections/watch/' + election.electionId">
           <v-layout row>
             <v-flex xs7>
@@ -45,6 +50,7 @@ export default {
   data:()=>({
     title:'Select Election | Facevote',
     elections:[],
+    data_available:false,
   }),
   methods:{
     setCurElection(election){
@@ -55,11 +61,21 @@ export default {
   async mounted(){
     try {
         
-      let res = await api().post(`dashboard/getMyEnrolled/${this.$store.getters.getUser.username}`, {token:this.$store.getters.getToken})
-      this.elections = res.data
-      console.log(res)
-      //this.$eventBus.$emit('Change_Title', this.$store.state.curRoom.title);
-      //console.log('wow')
+      let res = await api().post(`dashboard/getElections/${this.$store.getters.getUser.username}`, {token:this.$store.getters.getToken})
+      this.elections = [...res.data.created, ...res.data.enrolled]
+      
+      // since 'created' and 'enrolled' might contain same election
+      // its best to filter them to prevent duplicates
+      let myArr = []
+      this.elections.forEach(election =>{
+        
+        if(!myArr.find(item => item._id == election._id)){
+          myArr.push(election)
+        }
+        this.elections = myArr
+      })
+      this.data_available = true
+      
       
     } catch (error) {
       console.log(error)
