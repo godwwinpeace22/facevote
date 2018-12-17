@@ -63,7 +63,7 @@ const requireLogout = (to, from, next) =>{ // if ther user is not logged in
 // The route guard is intentionally put in each component instead of the root to allow non-loggedin users
 // to be able to see others profile
 const router = new Router({
-  mode:'history',
+  //mode:'history',
   routes: [
     {
       path:'/',

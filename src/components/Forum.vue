@@ -3,7 +3,7 @@
     <vue-headful
       :title="title"
     />
-      <v-toolbar color="blue-grey" dark flat v-show="$vuetify.breakpoint.smAndDown"
+      <v-toolbar color="teal" dark flat v-show="$vuetify.breakpoint.smAndDown"
         style='background-color:#29648a;' dense>
         <v-toolbar-title>{{elections.title}}</v-toolbar-title>
         <v-spacer></v-spacer>

@@ -13,7 +13,7 @@
           </v-card-title>
         </v-card>
       </v-flex-->
-      <v-flex xs6 sm4 d-flex v-for='election in elections' :key="election._id" mb-2>
+      <v-flex xs12 sm6 md4 d-flex v-for='election in elections' :key="election._id" mb-2>
         <v-card color="" class="" :to="'/forum/' + election.electionId">
           <v-layout row>
             <v-flex xs7>
@@ -37,11 +37,7 @@
           <v-card-actions class="pa-3">
             Follow this election
             <v-spacer></v-spacer>
-            <v-icon>star_border</v-icon>
-            <v-icon>star_border</v-icon>
-            <v-icon>star_border</v-icon>
-            <v-icon>star_border</v-icon>
-            <v-icon>star_border</v-icon>
+            {{election.followers.length}} | Followers
           </v-card-actions>
         </v-card>
       </v-flex>

@@ -293,7 +293,7 @@ export default {
   computed:{
 
     disabled_step_one(){
-      return !this.form.title || !this.form.type || !this.form.level || 
+      return !this.form.title.trim() || !this.form.type || !this.form.level || 
       (this.form.type == 'School' && !this.selected_school) ||
       (this.form.level == 'Faculty' && !this.selected_faculty) ||
       (this.form.level == 'Department' && !this.selected_department)

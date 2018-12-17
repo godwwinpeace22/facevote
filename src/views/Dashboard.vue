@@ -15,7 +15,7 @@
 
         <v-menu transition="slide-y-transition" offset-y v-if="isAuthenticated">
           <v-toolbar-title slot="activator">
-            <template v-if="$vuetify.breakpoint.width > 350">
+            <template v-if="$vuetify.breakpoint.smAndUp">
               <v-avatar size="36" color="grey lighten-4">
                 <img :src="getUser.imgThumb || `https://ui-avatars.com/api/?name=${getUser.name}`" alt="avatar">
               </v-avatar>
@@ -335,7 +335,8 @@ export default {
     // if loggedin user
     if(this.$store.getters.getToken){
 
-      let chat = io.connect('localhost:3000/chat')
+      //let chat = io.connect('localhost:3000/chat')
+      let chat = io.connect('securepoll.herokuapp.com/chat')
       this.chat = chat // do this in order to access chat in other methods
       //this.$store.dispatch('setChat', chat);
       chat.once('connect', _=>{

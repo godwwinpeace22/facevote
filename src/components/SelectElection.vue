@@ -9,7 +9,7 @@
       <v-subheader v-if="elections.length == 0 && data_available">Nothing here. To watch an election, either create one, contest or enroll to vote</v-subheader>
       <v-progress-circular class="mt-3" v-if="!data_available" indeterminate color="grey lighten-1"></v-progress-circular>
 
-      <v-flex xs6 sm4 d-flex v-for='election in elections' :key="election._id" >
+      <v-flex xs12 sm6 md4 d-flex v-for='election in elections' :key="election._id" >
         
         <v-card color="" class="" height="" :to="'/elections/watch/' + election.electionId">
           <v-layout row>
@@ -34,11 +34,7 @@
           <v-card-actions class="pa-3">
             Follow this election
             <v-spacer></v-spacer>
-            <v-icon>star_border</v-icon>
-            <v-icon>star_border</v-icon>
-            <v-icon>star_border</v-icon>
-            <v-icon>star_border</v-icon>
-            <v-icon>star_border</v-icon>
+            {{election.followers.length}} | Followers
           </v-card-actions>
         </v-card>
       </v-flex>

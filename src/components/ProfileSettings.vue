@@ -1,14 +1,15 @@
 <template>
   <v-card tile color="grey lighten-3">
     <v-toolbar card dark color="teal">
-      <v-btn icon dark @click.native="$eventBus.$emit('hide_profile_settings', {})">
+      <v-btn icon dark v-show="$vuetify.breakpoint.smAndUp"
+        @click.native="$eventBus.$emit('hide_profile_settings', {})">
         <v-icon>close</v-icon>
       </v-btn>
       <v-toolbar-title>Settings</v-toolbar-title>
       <v-spacer></v-spacer>
       
-        <v-btn dark tile color="grey lighten-1" outline @click.native="$eventBus.$emit('hide_profile_settings', {})">Cancel</v-btn>
-        <v-btn dark tile  outline @click.native="save" :disabled="disabled_btn" :loading="saving">Save</v-btn>
+        <v-btn dark :small="$vuetify.breakpoint.xs" tile color="grey lighten-1" outline @click.native="$eventBus.$emit('hide_profile_settings', {})">Cancel</v-btn>
+        <v-btn dark :small="$vuetify.breakpoint.xs" tile  outline @click.native="save" :disabled="disabled_btn" :loading="saving">Save</v-btn>
       
       <!--v-menu bottom right offset-y>
         <v-btn slot="activator" dark icon>
