@@ -236,6 +236,21 @@
       </v-card>
     </v-dialog>
 
+    <v-dialog v-model="viewprofile" v-if="viewprofile" :style="styleObj"
+      :fullscreen="$vuetify.breakpoint.smAndDown" width="300" hide-overlay>
+      
+      <v-toolbar color="secondary" dense dark scroll-target="vprofile">
+        <v-toolbar-title>Profile</v-toolbar-title>
+        <v-spacer></v-spacer>
+        <v-btn icon dark @click="viewprofile = false">
+          <v-icon>close</v-icon>
+        </v-btn>
+      </v-toolbar>
+
+      <view-profile :user='voterprofile'  id="vprofile"></view-profile>
+    </v-dialog>
+
+
     <v-container class='election_details' v-if="show_when_ready">
       <v-layout row wrap>
         <v-flex xs12 sm3 d-flex pl-1 pr-2>
@@ -273,9 +288,6 @@
                       <v-divider  :inset="true" :key="index"></v-divider>
                     </div>
                   </v-list>
-                  <v-dialog v-model="viewprofile" v-if="viewprofile" width="300" hide-overlay>
-                    <view-profile :user='voterprofile'></view-profile>
-                  </v-dialog>
                 </v-container>
               </v-tab-item>
               
@@ -330,8 +342,8 @@
                 <v-toolbar-title><h5><v-icon>equalizer</v-icon> Stats</h5></v-toolbar-title>
                 <v-spacer></v-spacer>
                 <!--v-toolbar-items class="hidden-sm-and-down"-->
-                <v-btn color="success" small outline flat @click="trythis">Add data</v-btn>
-                  <v-btn small flat color="success" outline  @click="show_results_dialog = true" :disabled="electionTime != 'Election ended'"> more charts</v-btn>
+                <!--v-btn color="success" small outline flat @click="trythis">Add data</v-btn-->
+                <v-btn small flat color="success" outline  @click="show_results_dialog = true" :disabled="!inprogress || !election_ended"> more charts</v-btn>
                 <!--/v-toolbar-items-->
                 
               </v-toolbar>
@@ -436,6 +448,14 @@ export default {
   }),
   props:['electionId'], // this prop is from the vue-router params
   computed:{
+    styleObj(){
+      if(this.$vuetify.breakpoint.smAndDown){
+        return {
+          height:'100vh',
+          backgroundColor:'#fff'
+        }
+      }
+    },
     hasEnrolled(){
       console.log(this.regVoters)
       return this.regVoters.find(voter => voter._id == this.getUser._id) ? true : false
@@ -475,8 +495,8 @@ export default {
         )
         // show only contestants that are not suspended. there for they can't be voted for
         this.contestants = contestants.data.filter(item => item.suspended == false)
-
-        console.log(this.currElection,this.contestants)
+        //console.log(this.contestants)
+        //console.log(this.currElection,this.contestants)
 
         let reslt = await api().post(`dashboard/getresult/${this.currElection._id}`, {token:this.getToken});
         this.allVotes = reslt.data.finalScores

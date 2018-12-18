@@ -56,7 +56,8 @@
             :title="title"
           />
 
-          <v-navigation-drawer fixed v-model="drawer" app dark width="220" class='navdrawr' style="background-color:#1c1f35;color:bfbbbb;">
+          <v-navigation-drawer fixed v-model="drawer" app dark width="220" class='navdrawr' 
+            style="background-color:#1c1f35;color:bfbbbb;" >
             <v-toolbar flat tile style="background-color:#1c1f35;color:#fff;">
               <v-toolbar-title>Contestr</v-toolbar-title>
             </v-toolbar>
@@ -121,11 +122,20 @@
               </v-list-tile>
 
 
-              <v-menu v-model="show_private_msg_list" max-width="300" min-width="300" :position-x="450" :position-y="150" left>
+              <v-dialog v-model="show_private_msg_list" max-width="500" min-width="300" 
+                :fullscreen="$vuetify.breakpoint.smAndDown">
+                <v-toolbar color="teal" dark dense>
+                  <v-toolbar-title>Inbox</v-toolbar-title>
+                  <v-spacer></v-spacer>
+                  <v-btn icon @click="show_private_msg_list = !show_private_msg_list">
+                    <v-icon>close</v-icon>
+                  </v-btn>
+                </v-toolbar>
                 <private-msg-list v-if="show_private_msg_list" style="min-height:300px;background:#fff;"></private-msg-list>
-              </v-menu>
+              </v-dialog>
 
-              <v-dialog v-model="show_private_chat_window" hide-overlay max-width="300">
+              <v-dialog v-model="show_private_chat_window" hide-overlay max-width="300" 
+                :fullscreen="$vuetify.breakpoint.smAndDown">
                 <private-chat-window v-if="show_private_chat_window" :user='chat_user'></private-chat-window>
               </v-dialog>
 
@@ -224,10 +234,9 @@
           </v-dialog>
 
 
-          <v-speed-dial v-model="fab" fixed bottom
+          <!--v-speed-dial v-model="fab" fixed bottom
             right direction="top" open-on-hover
-            transition="slide-y-reverse-transition"
-          >
+            transition="slide-y-reverse-transition">
             <v-btn slot="activator" v-model="fab"
               color="blue darken-2" dark fab>
               <v-icon>account_circle</v-icon>
@@ -242,7 +251,8 @@
             <v-btn fab dark small color="red">
               <v-icon>delete</v-icon>
             </v-btn>
-          </v-speed-dial>
+          </v-speed-dial-->
+
           <router-view v-show="!show_loading_bar" :chat='chat'></router-view>
           <loading-bar v-show="show_loading_bar"></loading-bar>
         </v-flex>
@@ -315,6 +325,7 @@ export default {
     },
   },
   async mounted(){
+
     //this.$store.state.logged_in_user ? this.$socket.open() : ''
     console.log(this.getUser)
     this.$eventBus.$on('hide_profile_settings', ()=>{
@@ -324,6 +335,9 @@ export default {
       this.settings_dialog = true
     })
     
+    this.$eventBus.$on('Close_Private_Chat_Window', ()=>{
+      this.show_private_chat_window = false
+    })
     
     
     // show loading animation for some seconds
@@ -497,6 +511,8 @@ export default {
     } // ==> end if
   },
   async created(){
+    this.$vuetify.breakpoint.smAndDown ? this.drawer = false : this.drawer = true
+    console.log(this.$vuetify.breakpoint.smAndDown)
     this.$eventBus.$on('Change_Title', (data)=>{
       //console.log('changing the title')
       this.title = data

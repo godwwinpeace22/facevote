@@ -5,8 +5,8 @@
         <v-icon>chevron_left</v-icon>
       </v-btn>
       <v-spacer></v-spacer>
-      <v-btn icon>
-        <v-icon>more_vert</v-icon>
+      <v-btn v-show="$vuetify.breakpoint.smAndDown" icon @click="$eventBus.$emit('Toggle_drawerRight', false)">
+        <v-icon>close</v-icon>
       </v-btn>
     </v-toolbar>
     <v-layout>

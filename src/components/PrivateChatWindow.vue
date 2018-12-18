@@ -1,15 +1,19 @@
 <template>
   <v-card>
-    <v-toolbar color="success" dark dense flat>
+    <v-toolbar color="teal" dark dense flat>
+      <v-avatar size="36" color="grey lighten-4">
+        <img :src="user.imgSrc || `https://ui-avatars.com/api/?name=${user.name}`" alt="avatar">
+      </v-avatar>
 
-      <v-toolbar-title>
-        <v-avatar size="36" color="grey lighten-4">
-          <img :src="user.imgSrc || `https://ui-avatars.com/api/?name=${user.name}`" alt="avatar">
-        </v-avatar>
-        {{user.name}} 
-      </v-toolbar-title>
+      <v-toolbar-title>{{user.name}}</v-toolbar-title>
+      <v-spacer></v-spacer>
+
+      <v-btn flat icon @click="$eventBus.$emit('Close_Private_Chat_Window', '')">
+        <v-icon>close</v-icon>
+      </v-btn>
     </v-toolbar>
-    <v-container style="background:yello;" class="pa-0 pt-3 private_chat_home">
+    
+    <v-container class="pa-0 pt-3 private_chat_home">
       <v-card flat pa-0 id="chat_space" style="height:30vh;margin-top:px;overflow-y:auto;background:ore;">
         <div v-for="(msg,i) in myConversations" :key="i">
           <div v-if="divide(msg.timestamp, myConversations[i-1])" style="background:oldlace;font-weight:bold;text-align:center;">
@@ -34,7 +38,7 @@
           
       </v-card>
     </v-container>
-    <div class="white--text pb-0 px-1" style='margin-left:px;position:static;width:100%;background:#fee;'>
+    <div class="white--text pb-0 px-1" style='position:fixed;bottom:0;width:100%;background:#fee;'>
       
         <v-textarea v-model="message" box color="deep-purple" @keypress="isTyping"
           label="Type a message" outline
@@ -53,6 +57,15 @@ export default {
     myConversations:[],
 
   }),
+  computed:{
+    styleObj(){
+      if(this.$vuetify.breakpoint.smAndDown){
+        return {
+          height:'100vh'
+        }
+      }
+    }
+  },
   props:['user'],
   methods:{
     parseDate(timestamp){

@@ -11,7 +11,8 @@
             <div class="chat_content">
               <div style="width:100%;margin-top:0px;margin-bottom:0px;">
                 <span class="text-capitalize" v-if="msg.user != getUser.username " style="font-size:15px;margin-right:5px;">
-                  <a class="subheading" @click.prevent="$router.push(`/forum/${msg.room}/profile/${msg.user}`)">
+                  <a class="subheading" @click.prevent="$router.push(`/forum/${msg.room}/profile/${msg.user}`); 
+                    $eventBus.$emit('Toggle_drawerRight', true)">
                   {{msg.name}}</a>
                 </span>
                 <span v-else style="margin-right:5px;"><strong>You  </strong></span>
@@ -163,6 +164,7 @@ export default {
       console.log(item,room)
       if(this.regVoters.find(voter => voter.username == item.slice(1))){
         this.$router.push(`/forum/${room}/profile/${item.slice(1)}`)
+        this.$eventBus.$emit('Toggle_drawerRight', true)
       }
       else{}
       

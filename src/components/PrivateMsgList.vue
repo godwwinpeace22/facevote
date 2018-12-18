@@ -1,16 +1,6 @@
 <template>
-  <v-card flat tile>
-    <v-toolbar color="cyan" dark dense>
-      <!--v-toolbar-side-icon></v-toolbar-side-icon-->
-
-      <v-toolbar-title>Inbox</v-toolbar-title>
-
-      <v-spacer></v-spacer>
-
-      <v-btn icon>
-        <v-icon>search</v-icon>
-      </v-btn>
-    </v-toolbar>
+  <v-card flat tile :style="styleObj">
+    
 
     <v-list two-line dense>
         <!--v-divider inset></v-divider-->
@@ -44,6 +34,15 @@ export default {
   data:()=>({
     items: [],
   }),
+  computed:{
+    styleObj(){
+      if(this.$vuetify.breakpoint.smAndDown){
+        return {
+          height:'100vh'
+        }
+      }
+    }
+  },
   methods:{
     openPrivateChatWindow(user){
       this.$eventBus.$emit('Open_Private_Chat_Window', {
@@ -79,8 +78,8 @@ export default {
     }
   },
   components:{
-    LoadingBar,
-    PrivateChatWindow,
+    //LoadingBar,
+    //PrivateChatWindow,
   },
   mounted(){
     console.log(this.$store.state.recent_private_messages)
@@ -88,6 +87,6 @@ export default {
     console.log(this.items)
   }
 }
-import LoadingBar from '@/spinners/LoadingBar'
-import PrivateChatWindow from '@/components/PrivateChatWindow'
+//import LoadingBar from '@/spinners/LoadingBar'
+//import PrivateChatWindow from '@/components/PrivateChatWindow'
 </script>

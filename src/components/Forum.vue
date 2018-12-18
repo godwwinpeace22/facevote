@@ -7,12 +7,11 @@
         style='background-color:#29648a;' dense>
         <v-toolbar-title>{{elections.title}}</v-toolbar-title>
         <v-spacer></v-spacer>
-        <v-btn  @click="drawerRight = true;" large icon tile color="primary"
-          style="position:absolute;right:-5px;top:50px;">
-          <v-icon size="30">chevron_left</v-icon>
-          
-        </v-btn>
         
+        <v-btn @click="drawerRight = true;" large icon tile
+          style="">
+          <v-icon size="30">menu</v-icon>
+        </v-btn>
       </v-toolbar>
     <v-navigation-drawer fixed v-model="drawerRight"  :mobile-break-point="960"
       :disable-route-watcher='$vuetify.breakpoint.smAndDown'
@@ -24,17 +23,18 @@
     </v-navigation-drawer>
 
     <chatwindow :regVoters='elections.regVoters'></chatwindow>
-  <v-container>
-    <div class="chat_input white--text" id="chat_input" style='margin-left:px;position:static;width:100%;background:r;z-index:0;'>
+
+  <div>
+    <div class="chat_input white--text" id="chat_input" style='margin-left:px;position:static;width:100%;background:#fff;z-index:0;'>
       
 
-      <v-form @submit.prevent='submit' style="margin-left:px;background:;" >
+      <v-form @submit.prevent='submit' style="margin-left:px;background:#fff;" class="px-2">
         <v-textarea v-model="message" color="deep-purple" @keyup.shift.50="mention_dialog = true" 
           @keypress="isTyping" id="form"
           label="Type a message" outline 
           rows="1" auto-grow
         >
-        <v-tooltip top slot="append">
+        <v-tooltip top slot="append" v-show="!message.trim()">
           <v-btn icon slot="activator" @click='triggerFileSelect'>
             <v-icon color="success">photo_camera</v-icon>
           </v-btn>
@@ -101,7 +101,7 @@
         <input id="file_input" type="file" ref="file_input" style="visibility:hidden" @change="triggerFileModal($event)" />
       </v-form>
     </div>
-  </v-container>
+  </div>
 
   <v-dialog v-model="file_dialog" max-width="400" hide-overlay style="">
     <v-container style="background:#fff;">
@@ -163,6 +163,12 @@ export default {
       cloudName: 'unplugged'
     },
   }),
+  watch: {
+    '$route' (to, from) {
+      // react to route changes...
+      this.drawerRight = true
+    }
+  },
   computed: {
     toolbarStatus(){
       return 'Your connected groups'
@@ -321,6 +327,9 @@ export default {
       this.$store.dispatch('showRightNav', [false,true]) : ''
       console.log(this.chat)
       
+      this.$eventBus.$on('Toggle_drawerRight', data=>{
+        this.drawerRight = data
+      })
     },
     destroyed(){
       //this.$eventBus.$emit('show_right_sidebar',null);

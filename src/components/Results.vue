@@ -128,7 +128,7 @@
         />
         <v-flex xs12 sm6 md4 v-for="result in sortedResults" :key="result.role" mb-3>
           <v-card>
-            <v-card-text class="title">
+            <v-card-text class="title text-capitalize">
               {{result.role}}
             </v-card-text>
             <v-divider></v-divider>
@@ -167,7 +167,7 @@
           <v-card class="d-flex">
             <v-container>
               <v-toolbar flat dense color="white" tabs>
-                <v-toolbar-title><h5>{{role.title}}</h5></v-toolbar-title>
+                <v-toolbar-title><h5 class="text-capitalize">{{role.title}}</h5></v-toolbar-title>
                 <v-spacer></v-spacer>
                 <!--v-btn color="success" small flat class="text-capitalize">switch chart</v-btn-->
                 <v-tabs slot="extension"

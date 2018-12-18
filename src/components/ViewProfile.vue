@@ -1,7 +1,7 @@
 <template>
   <v-layout d-flex>
-      <v-flex xs12 d-flex style="max-width:300px;">
-        <v-card width="300">
+      <v-flex xs12 d-flex>
+        <v-card :flat="$vuetify.breakpoint.smAndDown">
           <v-img :src="user.imgSrc || `https://ui-avatars.com/api/?name=${user.name}`" height="200" aspect-ratio="2.75"></v-img>
 
           <v-card-title primary-title>
