@@ -98,15 +98,21 @@
         </v-menu>
         
         </v-textarea>
-        <input id="file_input" type="file" ref="file_input" style="visibility:hidden" @change="triggerFileModal($event)" />
+        <input id="file_input" accept="image/jpeg,image/png" type="file" ref="file_input" style="visibility:hidden" @change="triggerFileModal($event)" />
       </v-form>
     </div>
   </div>
 
-  <v-dialog v-model="file_dialog" max-width="400" hide-overlay style="">
+  <v-dialog v-model="file_dialog" style="background:#fff;" max-width="400" hide-overlay :fullscreen="$vuetify.breakpoint.smAndDown">
+    <v-toolbar dense>
+      <v-toolbar-title>Upload a file</v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-btn flat icon @click="file_dialog = false">
+        <v-icon>close</v-icon>
+      </v-btn>
+    </v-toolbar>
     <v-container style="background:#fff;">
-      <h3 class="mb-2">Upload a file</h3>
-      <v-img :src="imgSrc" max-height='200' max-width='400'></v-img>
+      <v-img :src="imgSrc" max-height='200' max-width='400' ></v-img>
       <!--div style="min-height:200px;"></div-->
       <div class="mt-4">
         <v-textarea v-model="file_message" box color="deep-purple"
@@ -115,7 +121,7 @@
         ></v-textarea>
       </div>
       <v-spacer></v-spacer>
-      <v-btn flat small color="primary" @click="uploadFile">Upload file</v-btn>
+      <v-btn depressed small color="secondary" @click="uploadFile">Upload file</v-btn>
     </v-container>
     
   </v-dialog>
@@ -364,6 +370,9 @@ import api from '@/services/api'
 }
 $mainBgColor:#1c1f35;
 
+.v-dialog--fullscreen{
+  background:#fff !important;
+}
 .chat_home{
   //background-image:url('../assets/chat_wallpaper.jpg');
   background-size:cover;

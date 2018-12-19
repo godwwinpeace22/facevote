@@ -56,7 +56,7 @@
               <v-flex xs12 sm6>
                 <v-select required outline disabled
                   v-model="form.school"
-                  :items="schools" return-object
+                  :items="getSchools" return-object
                   color="secondary"
                   label="School or College"
                 ></v-select>
@@ -230,6 +230,7 @@
 </template>
 <script>
 import api from '@/services/api'
+import { mapGetters } from 'vuex'
 //import { promisfy } from "@/helpers/promisify";
 export default {
   data:()=>({
@@ -246,14 +247,14 @@ export default {
     e6:1,
     text:'Lo consequatur nostrum blanditiis expedita omnis accusantium vitae veritatis aut?',
     form:{
-      title:null,
-      type:null,
+      title:'',
+      type:'',
       school:'',
-      level:null,
+      level:'',
       faculty:'',
       department:'',
-      date:null,
-      time:null,
+      date:'',
+      time:'',
       electionDuration:5,
       roles:[
         {title:'president', value:'president', description:''},
@@ -272,93 +273,6 @@ export default {
       {text:'Organizations - comming soon',disabled:true},
       {text:'Others - comming soon',disabled:true}
     ],
-    schools:[
-      {
-        text:'UNN',
-        value:'Unn',
-        faculties:[
-          {
-            text:'Physical science',
-            value:'Physical_science',
-            departments:[
-              {
-                text:'Physics and Astronomy',
-                value:'phy'
-              },
-              {
-                text:'Computer Science',
-                value:'cs',
-              },
-              {
-                text:'Geology',
-                value:'geology'
-              },
-              {
-                text:'Chemistry',
-                value:'chemistry'
-              },
-              {
-                text:'Statistics',
-                value:'statistics'
-              }
-            ]
-          },
-          {
-            text:'Biological Sciences',
-            value:'biological_sciences',
-            departments:[
-              {
-                text:'Biochemistry',
-                value:'biochemistry',
-              },
-              {
-                text:'Microbiology',
-                value:'microbiology'
-              }
-            ]
-          }
-        ]
-      },
-      {
-        text:'Funai',
-        value:'Funai',
-        faculties:[
-          {
-            text:'Pha',
-            value:'pha',
-            departments:[
-              {
-                text:'Chem',
-                value:'chem'
-              },
-              {
-                text:'Computer Science Technology',
-                value:'cst',
-              },
-              {
-                text:'Geology',
-                value:'geology'
-              },
-            ]
-          },
-          {
-            text:'Social Science',
-            value:'social_science',
-            departments:[
-              {
-                text:'Public Administration',
-                value:'palg',
-              },
-              {
-                text:'Archiology',
-                value:'archiology'
-              }
-            ]
-          }
-        ]
-      }
-    ],
-    //schools:['Unn','Funai','Unilag','Uniuyo'],
     levels:[
       ['General', 'Faculty','Department'],
       ['Federal', 'State','Local governement']
@@ -385,13 +299,21 @@ export default {
     disabled_step_four(){
       return true
     },
+    ...mapGetters([
+      'isAuthenticated',
+      'getToken',
+      'getUser',
+      'getSchools'
+      // ...
+    ]),
   },
   methods:{
-    async getSchools(){
+    async allSchools(){
       try {
         let schls = await api().post('dashboard/getSchools')
-        //console.log(schls)
-        this.schools = schls.data
+        this.$store.dispatch('setSchools', schls.data)
+        //this.schools = schls.data
+        this.setThingsUp()
       } catch (error) {
         console.log(error)
       }
@@ -418,8 +340,8 @@ export default {
       this.form.department = this.form.department.text
       console.log(this.form)
       try {
-        let res = await api().post(`dashboard/newelection/${this.$store.getters.getUser.username}`,
-          {token:this.$store.getters.getToken, ...this.form}
+        let res = await api().post(`dashboard/newelection/${this.getUser.username}`,
+          {token:this.getToken, ...this.form}
         )
         this.loading = !this.loading
         this.snackbar = {
@@ -438,12 +360,12 @@ export default {
       
     },
     setThingsUp(){
-      let this_user = this.$store.getters.getUser
-      //console.log(this_user)
-      this.form.school = this.schools.find(
+      let this_user = this.getUser
+      
+      this.form.school = this.getSchools.find(
         item => item.text == this_user.school
       )
-      
+      console.log(this.form.school.text.toLowerCase())
       this.form.faculty = this.form.school.faculties.find(
         item => item.text == this_user.faculty
       )
@@ -456,8 +378,13 @@ export default {
   components:{
   },
   async created(){
-    await this.getSchools()
-    this.setThingsUp()
+    
+    if(this.getSchools.length > 0){
+      this.setThingsUp()
+    }
+    else{
+      await this.allSchools()
+    }
   }
 }
 </script>

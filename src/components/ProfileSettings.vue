@@ -10,17 +10,7 @@
       
         <v-btn dark :small="$vuetify.breakpoint.xs" tile color="grey lighten-1" outline @click.native="$eventBus.$emit('hide_profile_settings', {})">Cancel</v-btn>
         <v-btn dark :small="$vuetify.breakpoint.xs" tile  outline @click.native="save" :disabled="disabled_btn" :loading="saving">Save</v-btn>
-      
-      <!--v-menu bottom right offset-y>
-        <v-btn slot="activator" dark icon>
-          <v-icon>more_vert</v-icon>
-        </v-btn>
-        <v-list>
-          <v-list-tile v-for="(item, i) in 4" :key="i" to="">
-            <v-list-tile-title>Click Me</v-list-tile-title>
-          </v-list-tile>
-        </v-list>
-      </v-menu-->
+    
     </v-toolbar>
 
     <v-card-text>
@@ -62,7 +52,7 @@
                     <v-layout column>
                       <v-flex xs10 d-flex>
                         <v-select required small :disabled="disabled_fields" 
-                          v-model="form.school" :items="schools" item-text="text" color="pink" 
+                          v-model="form.school" :items="getSchools" item-text="text" color="pink" 
                           label="School" >
                         </v-select>
                       </v-flex>
@@ -318,7 +308,8 @@ export default {
     ...mapGetters([
       'isAuthenticated',
       'getToken',
-      'getUser'
+      'getUser',
+      'getSchools'
       // ...
     ]),
   },
@@ -405,7 +396,7 @@ export default {
 
         // preferences saved successfully
         this.$store.dispatch('setUser', {user:saved.data.user,token:saved.data.token})
-        this.$store.dispatch('setLoggedInUser', saved.data.user)
+        //this.$store.dispatch('setLoggedInUser', saved.data.user)
         console.log(saved.data)
         this.setCurrSettings(this.getUser)
         this.saving = false
@@ -421,11 +412,13 @@ export default {
       }
       
     },
-    async getSchools(){
+    async allSchools(){
       try {
         let schls = await api().post('dashboard/getSchools')
         console.log(schls)
-        this.schools = schls.data
+        //this.schools = schls.data
+        this.$store.dispatch('setSchools', schls.data)
+        this.setCurrSettings(this.getUser)
       } catch (error) {
         console.log(error)
       }
@@ -439,7 +432,7 @@ export default {
       if(this.me){
         this.form.notifications = this.me.notifications
         this.form.is_student = this.me.is_student
-        this.form.school = this.schools.find(school => school.text == this.me.school)
+        this.form.school = this.getSchools.find(school => school.text == this.me.school)
         this.form.faculty = this.form.school.faculties.find(
           faculty => faculty.text == this.me.faculty
         )
@@ -462,8 +455,14 @@ export default {
     }
   },
   async mounted(){
-    await this.getSchools()
-    this.setCurrSettings(this.getUser)
+    if(this.getSchools.length > 0){
+      this.setCurrSettings(this.getUser)
+    }
+    else{
+      await this.allSchools()
+    }
+    
+    
   },
   components:{
   }

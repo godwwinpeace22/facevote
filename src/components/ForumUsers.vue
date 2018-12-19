@@ -50,9 +50,9 @@ export default {
   props:['regVoters', 'contestants'],
   computed: {
     filteredList() {
-      console.log(this.regVoters)
+      //console.log(this.regVoters)
       if(this.regVoters && this.regVoters.length > 0){
-        console.log(this.regVoters)
+        //console.log(this.regVoters)
         return this.regVoters.filter(voter => {
           return voter.name.toLowerCase().includes(this.search.toLowerCase())
         })

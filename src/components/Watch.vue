@@ -407,7 +407,7 @@ export default {
     user:{}, // currently logged in user
     allVotes:[],
     myEnrolledElc:[], 
-    currElection:{}, // contains the current election
+    //currElection:{}, // contains the current election
     regVoters:[], // contains registered voters for the current election
     startDate:'',
     countDownDate:'',
@@ -467,48 +467,51 @@ export default {
     ...mapGetters([
       'isAuthenticated',
       'getToken',
-      'getUser'
+      'getUser',
+      'getSchools',
+      'getContestants',
+      'getCurElection',
+      'getCurElectionResults',
+      'getCurElectionActivities'
       // ...
     ]),
+    currElection(){
+      return this.getCurElection
+    }
   },
   methods:{
-    trythis(){
-      
-      this.data.push(3)
-      this.labels.push('Vwarhe')
-      this.bgdColor.push('rgba(200,250,111,.5')
-      this.renderChart()
+    async setup(){
+      let res = await api().post(
+        `dashboard/getId/${this.$route.params.electionId}`,
+        {token:this.getToken}
+      )
+      this.curElection = res.data
+      this.regVoters = res.data.regVoters
+      this.$store.dispatch('setCurElection', res.data)
+
+      let contestants = await api().post(
+        `dashboard/getContestants/${this.currElection._id}`,
+        {token:this.getToken}
+      )
+      // show only contestants that are not suspended. there for they can't be voted for
+      contestants = contestants.data.filter(item => item.suspended == false)
+      this.contestants = contestants
+      this.$store.dispatch('setCurElectionContestants', contestants)
+
+      let reslt = await api().post(`dashboard/getresult/${this.currElection._id}`, {token:this.getToken});
+      this.allVotes = reslt.data.finalScores
+      this.$store.dispatch('setCurElectionResults', reslt.data.finalScores)
+
+      let activities = await api().post(`dashboard/latestActivities/${res.data._id}`, {
+        token:this.getToken
+      })
+      this.activities = activities.data
+      this.$store.dispatch('setCurElectionActivities', activities.data)
+
+      this.open()
     },
     async open(){
       try{
-
-        let res = await api().post(
-          `dashboard/getId/${this.$route.params.electionId}`,
-          {token:this.getToken}
-        )
-        this.currElection = res.data
-        this.regVoters = res.data.regVoters
-        
-        let contestants = await api().post(
-          `dashboard/getContestants/${this.currElection._id}`,
-          {token:this.getToken}
-        )
-        // show only contestants that are not suspended. there for they can't be voted for
-        this.contestants = contestants.data.filter(item => item.suspended == false)
-        //console.log(this.contestants)
-        //console.log(this.currElection,this.contestants)
-
-        let reslt = await api().post(`dashboard/getresult/${this.currElection._id}`, {token:this.getToken});
-        this.allVotes = reslt.data.finalScores
-        //console.log('yes, all votes: ', reslt.data.finalScores)
-        let activities = await api().post(`dashboard/latestActivities/${res.data._id}`, {
-          token:this.getToken
-        })
-        this.activities = activities.data
-
-        
-      
-        
         this.countDownTimer()
         this.getLabels()
         this.show_when_ready = true
@@ -751,7 +754,11 @@ export default {
     // get the elections the user enrolled in
     try {
       
-      this.open()
+      if(this.getCurElection.electionId == this.$route.params.electionId){
+        this.open()
+      }
+      
+      this.setup()
       
       //console.log(this.$store.state.allVotes)
 

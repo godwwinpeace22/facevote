@@ -129,11 +129,22 @@ export default {
   data:()=>({
     title:'Manage Elections | Facevote',
     text:'Lorem, ipsum dolor sit amet consectetur adipisicing elit. Distinctio optio quidem, in aliquid laborum non nihil quasi id error, corrupti voluptatem consequatur nostrum blanditiis expedita omnis accusantium vitae veritatis aut?',
-    myCreatedElc:[], // elections user created
-    myContestedElc:[], // elections user contested in
-    myEnrolledElc:[], // elections user enrolled in
+    //myCreatedElc:[], // elections user created
+    //myContestedElc:[], // elections user contested in
+    //myEnrolledElc:[], // elections user enrolled in
     data_available:false,
   }),
+  computed:{
+    myEnrolledElc(){
+      return this.$store.getters.getMyEnrolled
+    },
+    myCreatedElc(){
+      return this.$store.getters.getMyCreated
+    },
+    myContestedElc(){
+      return this.$store.getters.getMyContested
+    },
+  },
   methods:{
     async deleteElection(electionId){
       try {
@@ -149,12 +160,15 @@ export default {
     
     // get the elections the user created, contested, and voted in
     try {
+      this.$store.getters.getMyCreated && this.$store.getters.getMyEnrolled && 
+      this.$store.getters.getMyContested ? 
+      this.data_available = true : ''
       let res = await api().post(`dashboard/getElections/${this.$store.getters.getUser.username}`, {token:this.$store.getters.getToken})
       
-      this.myCreatedElc = res.data.created
-      this.myContestedElc = res.data.contested
-      this.myEnrolledElc = res.data.enrolled
-      this.data_available = true
+      this.$store.dispatch('setMyEnrolled', res.data.enrolled)
+      this.$store.dispatch('setMyCreated', res.data.created)
+      this.$store.dispatch('setMyContested', res.data.contested)
+      
       console.log(res)
     } catch (error) {
       console.log(error)

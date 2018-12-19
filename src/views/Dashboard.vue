@@ -9,7 +9,7 @@
         <v-toolbar-items v-if="isAuthenticated && $vuetify.breakpoint.width > 350">
            
         </v-toolbar-items>
-        <v-btn flat outline to="/elections/watch">Vote</v-btn>
+        <v-btn outline to="/elections/watch" dark>Vote</v-btn>
 
         <v-divider inset vertical class="mr-2"></v-divider>
 
@@ -541,6 +541,10 @@ import io from 'socket.io-client';
   -o-border-radius:$radius;
 }
 $mainBgColor:#1c1f35;
+
+.v-dialog--fullscreen{
+  background:#fff !important;
+}
 
 h3 {
   margin: 40px 0 0;

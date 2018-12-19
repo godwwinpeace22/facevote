@@ -13,7 +13,7 @@
           </v-card-title>
         </v-card>
       </v-flex-->
-      <v-flex xs12 sm6 md4 d-flex v-for='election in elections' :key="election._id" mb-2>
+      <v-flex xs12 sm6 md4 d-flex v-for='election in $store.getters.getMyEnrolled' :key="election._id" mb-2>
         <v-card color="" class="" :to="'/forum/' + election.electionId">
           <v-layout row>
             <v-flex xs7>
@@ -57,7 +57,8 @@ export default {
     try {
         
       let res = await api().post(`dashboard/getMyEnrolled/${this.$store.getters.getUser.username}`, {token:this.$store.getters.getToken})
-      this.elections = res.data
+      //this.elections = res.data
+      this.$store.dispatch('setMyEnrolled', res.data)
       console.log(res)
       //this.$eventBus.$emit('Change_Title', this.$store.state.curRoom.title);
       //console.log('wow')

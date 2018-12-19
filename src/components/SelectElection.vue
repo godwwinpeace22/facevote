@@ -45,9 +45,22 @@
 export default {
   data:()=>({
     title:'Select Election | Facevote',
-    elections:[],
+    //elections:[],
     data_available:false,
   }),
+  computed:{
+    elections(){
+      let elect = [...this.$store.getters.getMyCreated, ...this.$store.getters.getMyEnrolled]
+      let myArr = []
+      elect.forEach(election =>{
+        
+        if(!myArr.find(item => item._id == election._id)){
+          myArr.push(election)
+        }
+      })
+      return myArr
+    }
+  },
   methods:{
     setCurElection(election){
       this.$router.push()
@@ -56,21 +69,18 @@ export default {
   },
   async mounted(){
     try {
-        
+      this.$store.getters.getMyCreated && this.$store.getters.getMyEnrolled ? this.data_available = true : ''
       let res = await api().post(`dashboard/getElections/${this.$store.getters.getUser.username}`, {token:this.$store.getters.getToken})
-      this.elections = [...res.data.created, ...res.data.enrolled]
       
+      
+      this.$store.dispatch('setMyEnrolled', res.data.enrolled)
+      this.$store.dispatch('setMyCreated', res.data.created)
+      this.$store.dispatch('setMyContested', res.data.contested)
       // since 'created' and 'enrolled' might contain same election
       // its best to filter them to prevent duplicates
-      let myArr = []
-      this.elections.forEach(election =>{
-        
-        if(!myArr.find(item => item._id == election._id)){
-          myArr.push(election)
-        }
-        this.elections = myArr
-      })
-      this.data_available = true
+      
+      
+      
       
       
     } catch (error) {

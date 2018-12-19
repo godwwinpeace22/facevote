@@ -39,8 +39,10 @@ export default new Vuex.Store({
     timestamp:null,
     curRoom:null,
     chat_messages:[],
-    currElection:{},
-    currElectionContestants:[],
+    curElection:{},
+    curElectionContestants:[],
+    curElectionResults:[],
+    curElectionActivities:[],
     those_online:[],
     allVotes:[],
     curr_right_sidebar:null,
@@ -50,7 +52,11 @@ export default new Vuex.Store({
     recent_private_messages:[],
     no_of_unread_msgs:'',
     show_right_nav:true,
-    show_right_nav_btn:false
+    show_right_nav_btn:false,
+    schools:[],
+    myEnrolled:[],
+    myCreated:[],
+    myContested:[],
   },
   mutations: {
     setUser(state,data){
@@ -118,11 +124,11 @@ export default new Vuex.Store({
         state.chat_messages = [...state.private_chat_messages, ...newPMessages] // add the newest messages to the state
       }
     },
-    setCurrElection(state,data){
-      state.currElection = data
+    setCurElection(state,data){
+      state.curElection = data
     },
-    setCurrElectionContestants(state,data){
-      state.currElectionContestants = data
+    setCurElectionContestants(state,data){
+      state.curElectionContestants = data
     },
     updateThoseOnline(state,data){
       state.those_online = data
@@ -150,6 +156,24 @@ export default new Vuex.Store({
       setTimeout(()=>{
         state.no_of_unread_msgs = filtd.length
       }, 2000)
+    },
+    setSchools(state,data){
+      state.schools = data
+    },
+    setCurElectionActivities(state,data){
+      state.curElectionActivities = data
+    },
+    setCurElectionResults(state,data){
+      state.curElectionResults = data
+    },
+    setMyEnrolled(state,data){
+      state.myEnrolled = data
+    },
+    setMyCreated(state,data){
+      state.myCreated = data
+    },
+    setMyContested(state,data){
+      state.myContested = data
     }
   },
   actions:{
@@ -180,11 +204,11 @@ export default new Vuex.Store({
     UpdatePrivateMsgFromDb({commit},data){
       commit('UpdatePrivateMsgFromDb',data)
     },
-    setCurrElection({commit},data){
-      commit('setCurrElection', data)
+    setCurElection({commit},data){
+      commit('setCurElection', data)
     },
-    setCurrElectionContestants({commit},data){
-      commit('setCurrElectionContestants', data)
+    setCurElectionContestants({commit},data){
+      commit('setCurElectionContestants', data)
     },
     updateThoseOnline({commit}, data){
       commit('updateThoseOnline',data)
@@ -205,6 +229,24 @@ export default new Vuex.Store({
     },
     recentPrivateMsgs({commit},data){
       commit('recentPrivateMsgs', data)
+    },
+    setSchools({commit},data){
+      commit('setSchools', data)
+    },
+    setCurElectionResults({commit},data){
+      commit('setCurElectionResults',data)
+    },
+    setCurElectionActivities({commit},data){
+      commit('setCurElectionActivities',data)
+    },
+    setMyEnrolled({commit}, data){
+      commit('setMyEnrolled', data)
+    },
+    setMyCreated({commit}, data){
+      commit('setMyCreated', data)
+    },
+    setMyContested({commit}, data){
+      commit('setMyContested', data)
     }
   },
   getters:{
@@ -218,7 +260,15 @@ export default new Vuex.Store({
      return state.chat_messages.filter(
         msg => msg.room == state.curRoom
       )
-    }
+    },
+    getSchools: state => state.schools,
+    getContestants:state => state.curElectionContestants,
+    getCurElection: state => state.curElection,
+    getCurElectionResults: state => state.curElectionResults,
+    getCurElectionActivities: state => state.curElectionActivities,
+    getMyEnrolled: state => state.myEnrolled,
+    getMyCreated: state => state.myCreated,
+    getMyContested: state => state.myContested,
   }
 })
 
