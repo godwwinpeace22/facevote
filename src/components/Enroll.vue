@@ -1,85 +1,104 @@
 <template>
-  <v-stepper v-model="e5" d-flex style="min-height:100vh;">
-    <vue-headful
-      :title="title"
-    />
+  <div>
+    <vue-headful :title="title"/>
 
-    <v-snackbar v-model="snackbar.show" :timeout="5000" :color="snackbar.color" top>
-      {{snackbar.message}} 
-      <v-btn dark flat @click="snackbar.show = false"> Close</v-btn>
-    </v-snackbar>
-    <v-stepper-header>
-      <v-stepper-step :complete="e5 > 1" step="1">Select election</v-stepper-step>
-      <v-divider></v-divider>
-      <v-stepper-step :complete="e5 > 2" step="2">Face Recognition</v-stepper-step>
-      <v-divider></v-divider>
-      <v-stepper-step step="3">Finish</v-stepper-step>
-    </v-stepper-header>
-    <v-stepper-items>
-      <v-stepper-content step="1">
-        <v-card class="mb-5" color="grey lighten-5" style="min-height:200px;"  flat tile>
-          <v-card-text>Insert the Id of the election you want to contest for below</v-card-text>
-          <v-container>
-            <v-layout row>
-              <v-flex xs6>
-                <v-text-field label="Election Id" name="electionId" :value="electionId" 
-                  hint="e.g gray-fighter-2187" v-model="electionId" browser-autocomplete="electionId">
-                </v-text-field>
+    <navigation>
+      <span slot="title">Dashboard</span>
+      <h1 slot="extended_nav">Enroll</h1>
+    </navigation>
+    <v-container grid-list-xl dark>
+      <v-card class="round black--text">
+        <v-stepper v-model="e5" dark class="white" style="min-height:300px;">
+          <v-stepper-header class="grey" dark style="color:#fff;">
+            <v-stepper-step :complete="e5 > 1" step="1">Enroll</v-stepper-step>
+            <v-divider></v-divider>
+            <v-stepper-step :complete="e5 > 2" step="2">Select election</v-stepper-step>
+            <v-divider></v-divider>
+            <v-stepper-step :complete="e5 > 3" step="3">Choose</v-stepper-step>
+            <v-divider></v-divider>
+            <v-stepper-step step="3">Finish</v-stepper-step>
+          </v-stepper-header>
+          <v-stepper-items>
+            <v-stepper-content step="1">
+              <v-card light>
+                <v-card-text>
+                  <p>{{lorem}}</p>
+                  <p>{{lorem}}</p>
+                </v-card-text>
+                <v-card-actions>
+                  <v-btn color="success" depressed @click="e5 = 2">Next</v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-stepper-content>
+            <v-stepper-content step="2">
+              <v-card class="mb-5" light color="grey lighten-5" style="min-height:200px;"  flat tile>
+                <v-card-text>Insert the Id of the election you want to contest for below</v-card-text>
+                <v-container>
+                  <v-layout row>
+                    <v-flex xs6>
+                      <v-text-field label="Election Id" name="electionId" :value="electionId" 
+                        hint="e.g gray-fighter-2187" v-model="electionId" browser-autocomplete="electionId">
+                      </v-text-field>
+                      
+                    </v-flex>
+                  </v-layout>
+                </v-container>
+                <v-card-actions>
+                  <v-btn depressed @click="e5 = 1">Previous</v-btn>
+                  <v-btn color="success" @click="getElection" :disabled="!electionId">Submit</v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-stepper-content>
+
+            <v-stepper-content step="3">
+              <v-card class="mb-5" light color="grey lighten-5"  style="min-height:200px;" flat tile>
+                <v-card-text v-if="election.length != 0">
+                  <span class="subheading">{{election.title}}</span>
+                  <v-divider></v-divider>
+                  <h3 v-if="hide">{{error_msg}}</h3>
+                </v-card-text>
                 
-              </v-flex>
-            </v-layout>
-          </v-container>
-          
-        </v-card>
+                <v-spacer></v-spacer>
+                <v-container>
+                  <v-layout row wrap>
+                    <v-flex xs12>
+                      <div id="video-container">
+                        <video id="camera-stream" width="500" autoplay></video>
+                      </div>
+                      <canvas style="display:none"></canvas>
+                      <img src="" alt="" id="canvasImg">
+                    </v-flex>
+                  </v-layout>
+                </v-container>
+              </v-card>
 
-        <v-btn color="success" @click="getId" :disabled="!electionId">Submit</v-btn>
-      </v-stepper-content>
+              <v-btn flat @click="e5 = 2">Previous</v-btn>
+              <v-btn color="secondary" @click="enroll" :disabled="hide" v-if="!hide">Enroll</v-btn>
+            </v-stepper-content>
 
-      <v-stepper-content step="2">
-        <v-card class="mb-5" color="grey lighten-5"  style="min-height:200px;" flat tile>
-          <v-card-text v-if="election.length != 0">
-            <span class="subheading">{{election.title}}</span>
-            <v-divider></v-divider>
-            <h3 v-if="hide">{{error_msg}}</h3>
-          </v-card-text>
-          
-          <v-spacer></v-spacer>
-          <v-container>
-            <v-layout row wrap>
-              <v-flex xs12>
-                <div id="video-container">
-                  <video id="camera-stream" width="500" autoplay></video>
-                </div>
-                <canvas style="display:none"></canvas>
-                <img src="" alt="" id="canvasImg">
-              </v-flex>
-            </v-layout>
-          </v-container>
-        </v-card>
+            <v-stepper-content step="4">
+              <v-card class="mb-5" color="grey lighten-5" style="min-height:200px;" flat tile>
+                <v-card-text v-if="election.length != 0">
+                  <span class="subheading">{{election.title}}</span>
+                  <v-divider></v-divider>
+                  </v-card-text>
+                  <v-spacer></v-spacer>
+                <v-card-text>
+                  <p>Tells us more about you</p>
+                  
+                  
+                </v-card-text>
+              </v-card>
 
-        <v-btn flat @click="e5 = 1">Previous</v-btn>
-        <v-btn color="secondary" @click="enroll" :disabled="hide" v-if="!hide">Enroll</v-btn>
-      </v-stepper-content>
-
-      <v-stepper-content step="3">
-        <v-card class="mb-5" color="grey lighten-5" style="min-height:200px;" flat tile>
-          <v-card-text v-if="election.length != 0">
-            <span class="subheading">{{election.title}}</span>
-            <v-divider></v-divider>
-            </v-card-text>
-            <v-spacer></v-spacer>
-          <v-card-text>
-            <p>Tells us more about you</p>
-            
-            
-          </v-card-text>
-        </v-card>
-
-        <v-btn flat @click="e5 = 2">Previous</v-btn>
-        <v-btn color="primary" @click="e5 = 2"> Finish</v-btn>
-      </v-stepper-content>
-    </v-stepper-items>
-  </v-stepper>
+              <v-btn flat @click="e5 = 3">Previous</v-btn>
+              <v-btn color="primary" @click="e5 = 1"> Finish</v-btn>
+            </v-stepper-content>
+          </v-stepper-items>
+        </v-stepper>
+      </v-card>
+    </v-container>
+    
+  </div>
 </template>
 <script>
 export default {
@@ -93,6 +112,7 @@ export default {
       acstoken:'',
       role:''
     },
+    lorem:'Lorem ipsum dolor sit amet consectetur adipisicing elit. Quibusdam, temporibus! Ex, eligendi! Blanditiis repellendus dolorum dolor excepturi sed reprehenderit iusto, incidunt tempora, ad aliquid quas, aut inventore nobis ratione eaque.',
     voter:{
       image:''
     },
@@ -109,27 +129,28 @@ export default {
      }, 
   }),
   methods:{
-    async getId(){ // this actually gets the election instead of just the id
+    async getElection(){
       try {
-        let user = this.$store.state.logged_in_user
+        let details = db.collection('moreUserInfo').doc(this.$store.getters.getUser.email);
 
+        let doc = await details.get()
+        let user = doc.data()
+        console.log(user)
         // prevent making unneccessary api calls
         if(!this.electionId){
           alert('Id is required') 
         }
-        else if(this.election.electionId == this.electionId){
-          this.e5 = 2
-        }
         else{
-          let id = await api().post(`dashboard/getId/${this.electionId}`, {token:this.$store.getters.getToken})
-          console.log(id)
-          if(!id){
+          let electionRef = db.collection('elections').doc(this.electionId)
+          let id = await electionRef.get()
+          console.log(id.data())
+          if(!id.data()){
             this.snackbar = {
               show:true,message:'Sorry, election not found', color:'error'
             }
           }
           else{
-            this.election = id.data
+            this.election = id.data()
             this.e5 = 2
             //this.startCamera()
 
@@ -143,8 +164,8 @@ export default {
               this.hide = true; this.error_msg = 'Sorry, enrollment has ended'
             } // election is in progress or ended
 
-            else if(this.election.regVoters.find(item=> item == user._id)){
-              console.log(this.election.regVoters.find(item=> item == user._id))
+            else if(this.election.regVoters.find(item=> item == this.$store.getters.getUser.uid)){
+              console.log(this.election.regVoters.find(item=> item == this.$store.getters.getUser.uid))
               this.error_msg = 'Sorry, you have already enrolled for this election'
               this.hide = true
             }
@@ -163,6 +184,7 @@ export default {
                 }
               }
               else if(this.election.type == 'School' && user.school != this.election.school){
+                console.log(user, this.election)
                 this.error_msg = 'Sorry, you can only vote in your school'
                 this.hide = true
               }
@@ -183,19 +205,35 @@ export default {
     },
     async enroll(){
       try {
-        if(this.election.regVoters.indexOf(this.$store.getters.getUser.id) != -1){
+        if(this.election.regVoters.indexOf(this.$store.getters.getUser.uid) != -1){
           
           this.snackbar = {
             show:true,message:'Sorry, you are already enrolled for this election', color:'error'
           }
         }
         else{
-          let res = await api().post(`dashboard/enroll/${this.electionId}`, {
-            user:this.$store.getters.getUser,
-            token:this.$store.getters.getToken
+          // Update election
+          var electionRef = db.collection('elections').doc(this.election.electionId);
+          var arrUnion = await electionRef.update({
+            regVoters: firebase.firestore.FieldValue.arrayUnion(this.$store.getters.getUser.uid)
+          });
+
+          //update User details
+          let userRef = db.collection('moreUserInfo')
+          .doc(this.$store.getters.getUser.email);
+          await userRef.update({
+            enrolled:firebase.firestore.FieldValue.arrayUnion(this.election.electionId)
+          });
+
+          // create new activity
+          await db.collection('activities').add({
+            type:'voter_registered',
+            by:this.$store.getters.getUser.uid,
+            dateCreated:Date.now(),
+            text:'enrolled for this election',
+            electionRef:this.selectedElection.electionId
           })
-          console.log(res)
-          //alert('enrollement successfull');
+
           this.snackbar = {
             show:true,message:'Enrollement successfull!', color:'success'
           }
@@ -300,11 +338,22 @@ export default {
       },
   },
   components:{
+    Navigation
   }
 }
 import api from '@/services/api'
 import axios from 'axios'
-//import Nprogress from 'nprogress'
-//const Kairos =  require('@/assets/kairos.js')
-//import { promisfy } from "@/helpers/promisify";
+import Navigation from '@/components/Navigation'
 </script>
+<style lang="scss">
+  @mixin borderRadius($radius) {
+    border-radius: $radius;
+    -webkit-border-radius:$radius;
+    -moz-border-radius:$radius;
+    -o-border-radius:$radius;
+  }
+  .round{
+    @include borderRadius(15px)
+  }
+</style>
+

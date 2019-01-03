@@ -2,12 +2,12 @@
   <div>
     <v-container grid-list-xl>
       <v-card flat tile style='min-height:100px'>
-        <v-toolbar dense flat color="teal" dark>
-          <v-subheader class="font-weight-bold white--text">Recent Posts</v-subheader>
+        <v-toolbar dense flat color="grey lighten-1" dark>
+          <v-subheader class="font-weight-bold white--text">Recent Broadcasts</v-subheader>
           <v-spacer></v-spacer>
-          <v-btn color="" right small outline @click="dialog = true">
+          <v-btn color="success" right small outline @click="dialog = true">
             <v-icon>add</v-icon>
-            New post</v-btn>
+            New broadcast</v-btn>
         </v-toolbar>
         <v-layout row wrap>
           <v-subheader v-if="broadcasts.length == 0">No recent post</v-subheader>
@@ -65,27 +65,18 @@
                   <v-card flat class="mb-5" min-height="200px">
                     <v-layout row wrap>
                       <v-flex xs8>
-                        <p>Lorem ipsum dolor lorem sipus idf lsf lsfdfd fdkklsuer ioijsdfhp isf adfiopi  adf ip jadf sadf.</p>
+                        
+                        <p class="mt-5">Choose the audience for your broadcast message</p>
                         <v-select class="mt-3" outline color="secondary"
-                          label="Choose broadcast scope" v-model="form.audience"
-                          :items="['Everyone','Voters only', 'Contestants only']"
-                        ></v-select>
-                        <p class="mt-5">Lorem ipsum dolor lorem sipus idf lsf lsfdfd fdkklsuer ioijsdfhp isf adfiopi  adf ip jadf sadf.</p>
-                        <v-select class="mt-3" outline color="secondary"
-                          label="Select group" v-model="group"
-                          :items="getContests" return-object
+                          label="Select group" v-model="form.group"
+                          :items="myContests" item-value="electionId"
                           item-text="title"
                         ></v-select>
-                        <p class="mt-5">Lorem ipsum dolor lorem sipus idf lsf lsfdfd fdkklsuer ioijsdfhp isf adfiopi  adf ip jadf sadf.</p>
-                        <v-radio-group v-model="form.type">
-                          <v-radio label="Post" color="success" value="post"></v-radio>
-                          <v-radio label="send as private message" color="secondary" value="pmsg"></v-radio>
-                        </v-radio-group>
                       </v-flex>
                     </v-layout>
                   </v-card>
                   <v-btn flat @click="e13 = 1">Previous</v-btn>
-                  <v-btn color="success" outline :disabled="b_audience_rules" flat @click="submit">Finish</v-btn>
+                  <v-btn color="success" outline :disabled="b_group_rules" flat @click="submit">Publish Message</v-btn>
                 </v-stepper-content>
                 <v-divider inset vertical></v-divider>
               </v-stepper>
@@ -103,9 +94,7 @@ export default {
     e13: 1,
     form:{
       message:'',
-      type:'',
-      audience:'everyone',
-      togroup:'',
+      group:'',
     },
     radio:null,
     group:[],
@@ -113,35 +102,34 @@ export default {
   }),
   props:['myContests','user','broadcasts'],
   computed:{
-    getContests(){
-      return this.groups
-    },
     b_msg_rules(){
-      return !this.form.message
+      return !this.form.message.trim()
     },
-    b_audience_rules(){
-      return !this.form.audience || !this.group || !this.form.type
+    b_group_rules(){
+      return !this.form.group.trim()
     },
   },
   methods:{
     async submit(){
       try {
-        
-        this.form.togroup = this.group._id
-        this.form['electionId'] = this.group.electionId
-        console.log(this.form)
-        /*let res = await api().post(`dashboard/broadcast`, {
-          
-        })
-        console.log(res)*/
-        
-        this.dialog = false
-        this.$eventBus.$emit('Create_Broadcast', {
-          token:this.$store.getters.getToken,
-          user:this.$store.getters.getUser,
-          ...this.form
-        })
-        console.log('emited')
+        let msgId = btoa(Math.random()).substring(0,12) + Date.now()
+        let post = {
+          message:this.form.message,
+          type:'broadcast',
+          group:this.form.group,
+          timestamp:Date.now(),
+          msgId:msgId,
+          seenBy:[],
+          department:this.user.department,
+          faculty:this.user.faculty,
+          school:this.user.school,
+          sender:this.user.uid,
+          name:this.user.name,
+          imgSrc:this.user.photoURL,
+          reciever:'everyone'
+        }
+
+        db.collection('broadcasts').doc(post.msgId).set(post)
       } catch (error) {
         console.log(error)
         console.log(error.response)

@@ -13,7 +13,7 @@ const vuexLocalStorage = new VuexPersist({
   reducer: state =>({
     //user:state.user,
     token:state.token,
-    isAuthenticated:state.isAuthenticated,
+    //isAuthenticated:state.isAuthenticated,
     curRoom:state.curRoom,
     //chat_messages:state.chat_messages,
     //those_online:state.those_online,
@@ -21,8 +21,6 @@ const vuexLocalStorage = new VuexPersist({
     curr_right_sidebar:state.curr_right_sidebar,
     show_right_bar:state.show_right_bar,
     private_chat_window:state.private_chat_window,
-    //private_chat_messages:state.private_chat_messages,
-    //recent_private_messages:state.recent_private_messages
   })
 })
 export default new Vuex.Store({
@@ -39,6 +37,8 @@ export default new Vuex.Store({
     timestamp:null,
     curRoom:null,
     chat_messages:[],
+    pUnreadMsgs:[],
+    private_conversations:[],
     curElection:{},
     curElectionContestants:[],
     curElectionResults:[],
@@ -48,8 +48,6 @@ export default new Vuex.Store({
     curr_right_sidebar:null,
     show_right_sidebar:false,
     private_chat_window:{},
-    private_chat_messages:[],
-    recent_private_messages:[],
     no_of_unread_msgs:'',
     show_right_nav:true,
     show_right_nav_btn:false,
@@ -57,32 +55,23 @@ export default new Vuex.Store({
     myEnrolled:[],
     myCreated:[],
     myContested:[],
+    votes:[],
   },
   mutations: {
     setUser(state,data){
-      state.user = {
-        name:data.user.name,
-        username:data.user.username,
-        imgSrc:data.user.imgSrc,
-        _id:data.user._id
-      }
       state.token = data.token
-      state.isAuthenticated = true
+      state.isAuthenticated = data
       state.timestamp = Date.now()
     },
-    setLoggedInUser(state,data){
-      state.logged_in_user = data
-    },
     logout(state){
-      state.user = null
-      state.token = null
-      state.isAuthenticated = false
-      state.logged_in_user = null
-      router.push('/login')
-      window.location.reload()
-    },
-    setChat(state,data){
-      state.chat = data
+      firebase.auth().signOut().then(function() {
+        // Sign-out successful.
+        state.isAuthenticated = false
+        router.push('/login')
+        //window.location.reload()
+      }).catch(function(error) {
+        console.log(error)
+      });
     },
     curRoom(state,data){
       state.curRoom = data
@@ -90,14 +79,8 @@ export default new Vuex.Store({
     saveChatMessage(state, data){
       state.chat_messages = [...state.chat_messages, data]
     },
-    savePrivateChatMessage(state, data){
-      state.recent_private_messages = data
-      let filtd = state.recent_private_messages.filter(
-        msg => msg.status == 'unread'
-      )
-      setTimeout(()=>{
-        state.no_of_unread_msgs = filtd.length
-      }, 2000)
+    pUnreadMsgs(state,data){
+      state.pUnreadMsgs = data
     },
     updateFromDb(state,data){
       //if(state.chat_messages.length != 0){
@@ -112,17 +95,6 @@ export default new Vuex.Store({
         state.chat_messages = data
       //}
       
-    },
-    UpdatePrivateMsgFromDb(state,data){
-      if(state.private_chat_messages.length != 0){
-        let lastUpdate = state.private_chat_messages[state.private_chat_messages.length-1].timestamp // get the last chat time
-        //console.log(lastUpdate)
-        let newPMessages = data.filter(function(each){
-          return each.timestamp > lastUpdate // get all the chats that were made after the last chat stored in the state
-        })
-        //console.log(newMessages)
-        state.chat_messages = [...state.private_chat_messages, ...newPMessages] // add the newest messages to the state
-      }
     },
     setCurElection(state,data){
       state.curElection = data
@@ -147,15 +119,8 @@ export default new Vuex.Store({
       //console.log('dispatched')
       state.private_chat_window = data
     },
-    recentPrivateMsgs(state,data){
-      state.recent_private_messages = [...state.recent_private_messages, ...data]
-      let filtd = state.recent_private_messages.filter(
-        msg => msg.status == 'unread'
-      )
-      console.log('filtd: ', filtd)
-      setTimeout(()=>{
-        state.no_of_unread_msgs = filtd.length
-      }, 2000)
+    private_conversations(state,data){
+      state.private_conversations = data
     },
     setSchools(state,data){
       state.schools = data
@@ -174,6 +139,9 @@ export default new Vuex.Store({
     },
     setMyContested(state,data){
       state.myContested = data
+    },
+    setVotes(state,data){
+      state.votes = data
     }
   },
   actions:{
@@ -189,29 +157,23 @@ export default new Vuex.Store({
     curRoom({commit}, data){
       commit('curRoom', data)
     },
-    setChat({commit},data){
-      commit('setChat', data)
+    pUnreadMsgs({commit},data){
+      commit('pUnreadMsgs',data)
     },
     saveChatMessage({commit}, data){
       commit('saveChatMessage', data)
     },
-    savePrivateChatMessage({commit}, data){
-      commit('savePrivateChatMessage', data)
+    private_conversations({commit}, data){
+      commit('private_conversations', data)
     },
     updateFromDb({commit},data){
       commit('updateFromDb',data)
-    },
-    UpdatePrivateMsgFromDb({commit},data){
-      commit('UpdatePrivateMsgFromDb',data)
     },
     setCurElection({commit},data){
       commit('setCurElection', data)
     },
     setCurElectionContestants({commit},data){
       commit('setCurElectionContestants', data)
-    },
-    updateThoseOnline({commit}, data){
-      commit('updateThoseOnline',data)
     },
     showRightNav({commit},data){
       commit('showRightNav', data)
@@ -221,14 +183,15 @@ export default new Vuex.Store({
     },
     allVotes({commit}, data){
       commit('allVotes', data)
-      console.log('allvotes action')
+      //console.log('allvotes action')
+    },
+    setVotes({commit}, data){
+      commit('setVotes', data)
+      //console.log('allvotes action')
     },
     openPrivateChatWindow({commit},data){
-      console.log('dispatched')
+      //console.log('dispatched')
       commit('openPrivateChatWindow', data)
-    },
-    recentPrivateMsgs({commit},data){
-      commit('recentPrivateMsgs', data)
     },
     setSchools({commit},data){
       commit('setSchools', data)
@@ -250,16 +213,41 @@ export default new Vuex.Store({
     }
   },
   getters:{
-    isAuthenticated: state => state.isAuthenticated,
-    getToken:state => state.token,
-    getUser:state => {
-      //console.log(state.token)
-      return state.token ? JSON.parse(atob(state.token.split('.')[1])) : ''
+    //isAuthenticated: state => state.isAuthenticated,
+    isLoggedIn:() => firebase.auth().currentUser,
+    isAuthenticated:state => state.isAuthenticated,
+    getToken: state => state.token,
+    getUnreadPMsgs: state => {
+      let sorted = state.pUnreadMsgs.sort((a,b)=>a.timestamp - b.timestamp)
+      let myArr = []
+      let track = []
+
+      // get the unread private messages from the store and map each user to all his messages
+      for(let item of sorted){
+        // all the messages from the sender
+        let msgs = sorted.filter(msg=>{
+          return msg.sender == item.sender
+        })
+        
+        // if user has seen the last msg then he has seen all others
+        let last_msg = msgs.sort((a,b)=> a.timestamp - b.timestamp)[msgs.length -1]
+        track.indexOf(item.sender) == -1 && last_msg.status == 'unread' ? myArr.push({
+          user:item.sender,
+          name:item.name,
+          imgSrc:item.imgSrc,
+          msgs:msgs
+        }) : ''
+        track.push(item.sender)
+      }
+      
+      return myArr
     },
+    getPrivateConversations: state => state.private_conversations
+    .sort((a,b)=>a.timestamp - b.timestamp),
+    
+    getUser: state => state.isAuthenticated,
     getChatMessages:(state)=>{
-     return state.chat_messages.filter(
-        msg => msg.room == state.curRoom
-      )
+     return state.chat_messages.sort((a,b) => a.timestamp - b.timestamp)
     },
     getSchools: state => state.schools,
     getContestants:state => state.curElectionContestants,
@@ -269,6 +257,17 @@ export default new Vuex.Store({
     getMyEnrolled: state => state.myEnrolled,
     getMyCreated: state => state.myCreated,
     getMyContested: state => state.myContested,
+    getVotes: state => state.votes,
+    getChatMedia: state => {
+      let arr = []
+      state.chat_messages.forEach(item=>{
+        if(item.images){
+          arr.push(...item.images)
+        }
+        
+      })
+      return arr
+    }
   }
 })
 

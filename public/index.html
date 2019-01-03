@@ -6,6 +6,48 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <link rel="icon" href="<%= BASE_URL %>favicon.ico">
     <link rel="stylesheet" href="https://unpkg.com/nprogress@0.2.0/nprogress.css">
+    <script src="https://www.gstatic.com/firebasejs/5.7.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.7.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.7.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.7.0/firebase-functions.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.7.0/firebase-database.js"></script>
+    <script>
+      // Initialize Firebase
+      var config = {
+        apiKey: "AIzaSyA6kjTtvPaK5co3cqG2WZob9e7WdEineFA",
+        authDomain: "facevote-eb748.firebaseapp.com",
+        databaseURL: "https://facevote-eb748.firebaseio.com",
+        projectId: "facevote-eb748",
+        storageBucket: "facevote-eb748.appspot.com",
+        messagingSenderId: "742556427936"
+      };
+      firebase.initializeApp(config);
+
+      var db = firebase.firestore();
+      var database = firebase.database();
+
+      db.settings({
+        timestampsInSnapshots: true
+      });
+
+      firebase.firestore().enablePersistence()
+      .catch(function(err) {
+          if (err.code == 'failed-precondition') {
+              // Multiple tabs open, persistence can only be enabled
+              // in one tab at a a time.
+              // ...
+              console.log(err)
+          } else if (err.code == 'unimplemented') {
+              // The current browser does not support all of the
+              // features required to enable persistence
+              // ...
+              console.log(err)
+          }
+      });
+      // Disable deprecated features
+      
+    </script>
+    
     <!--script src="https://unpkg.com/nprogress@0.2.0/nprogress.js"></script-->
     <!--link href="https://fonts.googleapis.com/css?family=Roboto:100:300,400,500,700,900|Material+Icons" rel="stylesheet"-->
     <!--link href="https://fonts.googleapis.com/css?family=Roboto:100:300,400,500,700,900|Material+Icons" rel="stylesheet"-->

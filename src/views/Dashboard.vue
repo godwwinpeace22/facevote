@@ -1,63 +1,12 @@
 <template>
   <v-app id="inspire">
     <v-content>
-      <v-toolbar color="teal" dark flat fixed app clipped-right style='background-color:#29648a;'>
-        <v-toolbar-side-icon @click.stop="drawer = !drawer"></v-toolbar-side-icon>
-        <v-toolbar-title v-show="$vuetify.breakpoint.width > 344">Dashboard</v-toolbar-title>
-        <v-spacer></v-spacer>
-        
-        <v-toolbar-items v-if="isAuthenticated && $vuetify.breakpoint.width > 350">
-           
-        </v-toolbar-items>
-        <v-btn outline to="/elections/watch" dark>Vote</v-btn>
-
-        <v-divider inset vertical class="mr-2"></v-divider>
-
-        <v-menu transition="slide-y-transition" offset-y v-if="isAuthenticated">
-          <v-toolbar-title slot="activator">
-            <template v-if="$vuetify.breakpoint.smAndUp">
-              <v-avatar size="36" color="grey lighten-4">
-                <img :src="getUser.imgThumb || `https://ui-avatars.com/api/?name=${getUser.name}`" alt="avatar">
-              </v-avatar>
-              <v-icon dark>arrow_drop_down</v-icon>
-            </template>
-            <v-icon v-else>more_vert</v-icon>
-          </v-toolbar-title>
-          
-          <v-list dense>
-            <v-list-tile :to="`/users/${getUser.username}`" >
-              <v-icon color="success">person</v-icon>
-              <v-list-tile-title style="margin-left:5px;">My Profile</v-list-tile-title>
-            </v-list-tile>
-            <v-list-tile @click="settings_dialog = !settings_dialog" >
-              <v-icon color="success">settings</v-icon>
-              <v-list-tile-title style="margin-left:5px;">Settings</v-list-tile-title>
-            </v-list-tile>
-
-            <v-divider></v-divider>
-
-            <v-list-tile to="#">
-              <v-icon color="primary">help</v-icon>
-              <v-list-tile-title style="margin-left:5px;">Help</v-list-tile-title>
-            </v-list-tile>
-            <v-divider></v-divider>
-
-            <v-list-tile @click="logout">
-                <v-icon color="error">exit_to_app</v-icon>
-              <v-list-tile-title style="margin-left:5px;">Logout</v-list-tile-title>
-            </v-list-tile>
-          </v-list>
-        </v-menu>
-      </v-toolbar>
-
       <v-layout>
         <v-flex>
-          <vue-headful
-            :title="title"
-          />
+          <vue-headful :title="title"/>
 
           <v-navigation-drawer fixed v-model="drawer" app dark width="220" class='navdrawr' 
-            style="background-color:#1c1f35;color:bfbbbb;" >
+            style="background-color:#1c1f35;color:bfbbbb;z-index:20" >
             <v-toolbar flat tile style="background-color:#1c1f35;color:#fff;">
               <v-toolbar-title>Contestr</v-toolbar-title>
             </v-toolbar>
@@ -66,11 +15,11 @@
               <v-list-group no-action class="mb-5 pt-1">
                 <v-list-tile slot="activator">
                   <v-list-tile-avatar color="grey lighten-4">
-                    <img :src="getUser.imgThumb || `https://ui-avatars.com/api/?name=${getUser.name}`">
+                    <img :src="getUser.photoURL || `https://ui-avatars.com/api/?name=${getUser.displayName}`">
                   </v-list-tile-avatar>
-                  <v-list-tile-title class="text-capitalize">{{getUser.name}}</v-list-tile-title>
+                  <v-list-tile-title class="text-capitalize">{{getUser.displayName}}</v-list-tile-title>
                 </v-list-tile>
-                <v-list-tile  :to="`/users/${getUser.username}`">
+                <v-list-tile  :to="`/users/${getUser.email}`">
                   <v-list-tile-action>
                     <v-icon color="success">account_box</v-icon>
                   </v-list-tile-action>
@@ -114,9 +63,9 @@
                 <v-list-tile-title>
                   Messages
                 </v-list-tile-title>
-                <v-list-tile-action v-if="$store.state.no_of_unread_msgs > 0">
+                <v-list-tile-action v-if="getUnreadPMsgs.length > 0">
                   <v-badge right color="success">
-                    <span class="caption" slot="badge">{{$store.state.no_of_unread_msgs}}</span>
+                    <span class="caption" slot="badge">{{getUnreadPMsgs.length}}</span>
                   </v-badge>
                 </v-list-tile-action>
               </v-list-tile>
@@ -134,7 +83,7 @@
                 <private-msg-list v-if="show_private_msg_list" style="min-height:300px;background:#fff;"></private-msg-list>
               </v-dialog>
 
-              <v-dialog v-model="show_private_chat_window" hide-overlay max-width="300" 
+              <v-dialog v-model="show_private_chat_window" hide-overlay max-width="400" 
                 :fullscreen="$vuetify.breakpoint.smAndDown">
                 <private-chat-window v-if="show_private_chat_window" :user='chat_user'></private-chat-window>
               </v-dialog>
@@ -258,7 +207,7 @@
         </v-flex>
       </v-layout>
 
-      <v-navigation-drawer right temporary v-model="right" fixed></v-navigation-drawer>
+      <!--v-navigation-drawer right temporary v-model="right" fixed></v-navigation-drawer-->
     </v-content>
   </v-app>
 </template>
@@ -299,13 +248,15 @@ export default {
     LoadingBar,
     PrivateMsgList,
     PrivateChatWindow,
+    Navigation
   },
   computed: {
     // Mix your getter(s) into computed with the object spread operator
     ...mapGetters([
       'isAuthenticated',
       'getToken',
-      'getUser'
+      'getUser',
+      'getUnreadPMsgs',
     ]),
   },
   
@@ -319,15 +270,110 @@ export default {
       }
     },
     logout(){
-      //this.chat.disconnect()
-      //this.$router.push('/login')
       this.$store.dispatch('logout')
     },
+    presenceWatcher(){
+      // Fetch the current user's ID from Firebase Authentication.
+      var uid = firebase.auth().currentUser.uid;
+
+      // Create a reference to this user's specific status node.
+      // This is where we will store data about being online/offline.
+      var userStatusDatabaseRef = firebase.database().ref('/status/' + uid);
+
+      // We'll create two constants which we will write to 
+      // the Realtime database when this device is offline
+      // or online.
+      var isOfflineForDatabase = {
+          state: 'offline',
+          last_changed: firebase.database.ServerValue.TIMESTAMP,
+      };
+
+      var isOnlineForDatabase = {
+          state: 'online',
+          last_changed: firebase.database.ServerValue.TIMESTAMP,
+      };
+
+      // Create a reference to the special '.info/connected' path in 
+      // Realtime Database. This path returns `true` when connected
+      // and `false` when disconnected.
+      firebase.database().ref('.info/connected').on('value', function(snapshot) {
+          // If we're not currently connected, don't do anything.
+          if (snapshot.val() == false) {
+              return;
+          };
+
+          // If we are currently connected, then use the 'onDisconnect()' 
+          // method to add a set which will only trigger once this 
+          // client has disconnected by closing the app, 
+          // losing internet, or any other means.
+          userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function() {
+            // The promise returned from .onDisconnect().set() will
+            // resolve as soon as the server acknowledges the onDisconnect() 
+            // request, NOT once we've actually disconnected:
+            // https://firebase.google.com/docs/reference/js/firebase.database.OnDisconnect
+
+            // We can now safely set ourselves as 'online' knowing that the
+            // server will mark us as offline once we lose connection.
+            userStatusDatabaseRef.set(isOnlineForDatabase);
+          });
+      });
+
+      var userStatusFirestoreRef = firebase.firestore().doc('/status/' + uid);
+
+      // Firestore uses a different server timestamp value, so we'll 
+      // create two more constants for Firestore state.
+      var isOfflineForFirestore = {
+          state: 'offline',
+          last_changed: firebase.firestore.FieldValue.serverTimestamp(),
+      };
+
+      var isOnlineForFirestore = {
+          state: 'online',
+          last_changed: firebase.firestore.FieldValue.serverTimestamp(),
+      };
+
+      firebase.database().ref('.info/connected').on('value', function(snapshot) {
+          if (snapshot.val() == false) {
+              // Instead of simply returning, we'll also set Firestore's state
+              // to 'offline'. This ensures that our Firestore cache is aware
+              // of the switch to 'offline.'
+              userStatusFirestoreRef.set(isOfflineForFirestore);
+              return;
+          };
+
+          userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function() {
+              userStatusDatabaseRef.set(isOnlineForDatabase);
+
+              // We'll also add Firestore set here for when we come online.
+              userStatusFirestoreRef.set(isOnlineForFirestore);
+          });
+      });
+
+      userStatusFirestoreRef.onSnapshot(function(doc) {
+          var isOnline = doc.data().state == 'online';
+          // ... use isOnline
+          console.log(doc.data())
+      });
+    },
+    pUnreadMsgs(){
+      db.collection('private_conversations')
+      .where('reciever','==',this.getUser.uid).where('status','==','unread')
+      .onSnapshot(snapshot=>{
+        let msgs = []
+        snapshot.forEach(doc=>{
+          msgs.push(doc.data())
+        })
+      
+        this.$store.dispatch('pUnreadMsgs', msgs)
+        console.log(msgs)
+      })
+    }
   },
   async mounted(){
 
-    //this.$store.state.logged_in_user ? this.$socket.open() : ''
-    console.log(this.getUser)
+    this.$eventBus.$on('Toggle_Left_Drawer', data=>{
+      this.drawer = !this.drawer
+    })
     this.$eventBus.$on('hide_profile_settings', ()=>{
       this.settings_dialog = false
     })
@@ -335,6 +381,11 @@ export default {
       this.settings_dialog = true
     })
     
+    this.$eventBus.$on('Open_Private_Chat_Window', (data)=>{
+      this.chat_user = data
+      this.show_private_chat_window = true
+      this.show_private_msg_list = false
+    })
     this.$eventBus.$on('Close_Private_Chat_Window', ()=>{
       this.show_private_chat_window = false
     })
@@ -345,9 +396,9 @@ export default {
       this.show_loading_bar = false
     }, 2500);
 
-
+   
     // if loggedin user
-    if(this.$store.getters.getToken){
+    /*if(this.$store.getters.getToken){
 
       //let chat = io.connect('localhost:3000/chat')
       let chat = io.connect('securepoll.herokuapp.com/chat')
@@ -367,18 +418,18 @@ export default {
       chat.on('update_chat', (messagesFromDb) =>{ // update chat from db
         // Don't update on empty mesages
         messagesFromDb.length != 0 ? this.$store.dispatch('updateFromDb', messagesFromDb) : ''
-        console.log('messagesFromDb: ', messagesFromDb)
+        //console.log('messagesFromDb: ', messagesFromDb)
       })
       
       chat.on('recent_private_msg', data=>{ // client recieves recent private msgs when he just connected
         this.$store.dispatch('savePrivateChatMessage', data) // save this msgs temporarily in the store
-        console.log('recentPmsgs: ', data)
+        //console.log('recentPmsgs: ', data)
       })
       
       
       
       chat.on('chat_response', (data)=> { // the chat emitted by server
-        console.log('chat resp1: ', data)
+        //console.log('chat resp1: ', data)
         this.$store.dispatch('saveChatMessage', data)
         console.log('chat resp2: ', data)
       });
@@ -397,7 +448,7 @@ export default {
 
       //listen when server broadcasts that some one is online
       chat.on('those_online', (data)=>{
-        console.log(data)
+        //console.log(data)
         this.$store.dispatch('updateThoseOnline',data)
       })
 
@@ -472,6 +523,7 @@ export default {
       })
       chat.on('submit_vote_resp', data=>{
         this.$store.dispatch('allVotes', data.results.finalScores) // update after voting
+        this.$store.dispatch('setVotes', data.results.votes) // update after voting
         this.$eventBus.$emit('All_Votes', data.results.votes)
 
         // show this alert to only the person that just voted
@@ -486,6 +538,8 @@ export default {
       })
       chat.on('vote_updates', data=>{ // initial update when in the /watch view
         this.$store.dispatch('allVotes', data.results.finalScores)
+        this.$store.dispatch('setVotes', data.results.votes)
+
         this.$eventBus.$emit('All_Votes', data.results.votes)
         console.log(data.results.finalScores)
         console.log('vote updates')
@@ -509,10 +563,34 @@ export default {
         this.snackbar = data
       })
     } // ==> end if
+    */
+
+
   },
   async created(){
+
+    console.log(firebase.auth().currentUser)
+    firebase.auth().onAuthStateChanged((user)=>{
+      if (user) {
+        // User is signed in.
+        this.$store.dispatch('setUser', user)
+        this.presenceWatcher()
+        this.pUnreadMsgs()
+      } else {
+        console.log('No user is signed in.')
+      }
+    });
+
+    firebase.auth().currentUser.getIdTokenResult()
+    .then((idTokenResult) => {
+      
+      console.log(idTokenResult.claims)
+    })
+    .catch((error) => {
+      console.log(error);
+    });
     this.$vuetify.breakpoint.smAndDown ? this.drawer = false : this.drawer = true
-    console.log(this.$vuetify.breakpoint.smAndDown)
+    
     this.$eventBus.$on('Change_Title', (data)=>{
       //console.log('changing the title')
       this.title = data
@@ -529,6 +607,7 @@ import io from 'socket.io-client';
   import LoadingBar from '@/spinners/LoadingBar'
   import PrivateMsgList from '@/components/PrivateMsgList'
   import PrivateChatWindow from '@/components/PrivateChatWindow'
+  import Navigation from '@/components/Navigation'
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->

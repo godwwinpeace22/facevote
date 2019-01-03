@@ -36,7 +36,7 @@
           
         </v-card>
 
-        <v-btn color="secondary" depressed @click="e5 = 2" :disabled="!this.selectedElection._id">Next</v-btn>
+        <v-btn color="secondary" depressed @click="e5 = 2" :disabled="!selectedElection.admin">Next</v-btn>
       </v-stepper-content>
 
       <v-stepper-content step="2">
@@ -108,16 +108,22 @@ export default {
     }
   },
   methods:{
-    async getEnrolled(){ // this actually gets the election instead of just the id
-      try {
-        let elec = await api().post(`dashboard/getElections/${this.$store.getters.getUser.username}`, {
-          token:this.$store.getters.getToken
-        })
-        this.elections = elec.data.enrolled
-        console.log(this.elections)
-      } catch (error) {
-        console.log(error.response)
-      }
+    getEnrolled(user){
+      
+      db.collection("elections").where('regVoters', 'array-contains',user.uid)
+      .get()
+      .then(querySnapshot=>{
+        let myArr = []
+          querySnapshot.forEach((doc)=>{
+              // doc.data() is never undefined for query doc snapshots
+              console.log(doc.id, " => ", doc.data());
+              myArr.push(doc.data())
+          });
+          this.elections = myArr
+      })
+      .catch(function(error) {
+          console.log("Error getting documents: ", error);
+      });
     },
     async contest(){
       try {
@@ -129,16 +135,37 @@ export default {
         }
         else{
           this.loading = true
-          this.contestant.role = this.selectedRole.title
-          let contestant = {
-            ...this.contestant, 
-            userId:this.$store.getters.getUser._id,
-            electionRef:this.selectedElection._id,token:this.$store.getters.getToken}
-          console.log(contestant)
+          let user = this.$store.getters.getUser
 
+          // Update the election with new contestant
+          let electionRef = db.collection('elections').doc(this.selectedElection.electionId)
+          await electionRef.update({
+            contestants:firebase.firestore.FieldValue.arrayUnion(user.uid)
+          })
+
+          // Update the user Details with new contest
+          let userRef = db.collection('moreUserInfo').doc(user.email)
+          await userRef.update({
+            contests:firebase.firestore.FieldValue.arrayUnion(this.selectedElection.electionId),
+            contestsRef:firebase.firestore.FieldValue.arrayUnion({
+              electionRef:this.selectedElection.electionId,
+              role:this.selectedRole.value
+            })
+          })
           
-          let res =await api().post(`dashboard/addcontestant/${this.selectedElection.electionId}`, contestant)
-          console.log(res)
+          // Create a new Contestant
+          // Nope, no need. Contestants will be fished out from the regVoters
+
+          // create new activity
+          await db.collection('activities').add({
+            type:'new_contestant',
+            by:user.uid,
+            dateCreated:Date.now(),
+            text:'registered as contestant',
+            role:this.selectedRole.value,
+            electionRef:this.selectedElection.electionId
+          })
+
           this.snackbar = {
             show:true,message:'Success! You are now a contestant in this election',color:'success'
           }
@@ -146,11 +173,11 @@ export default {
           this.e5 = 1
         }
       } catch (err) {
+
         console.log(err)
-        console.log(err.response)
-        if(err.response){
+        if(err){
           this.snackbar = {
-            show:true,message:err.response.data.message,color:'error'
+            show:true,message:err.message,color:'error'
           }
           this.loading = false
           $NProgress.done()
@@ -160,7 +187,16 @@ export default {
     }
   },
   mounted(){
-    this.getEnrolled()
+    firebase.auth().onAuthStateChanged((user)=>{
+      if (user) {
+        // User is signed in.
+        console.log(user)
+        this.getEnrolled(user)
+        
+      } else {
+        console.log('No user is signed in.')
+      }
+    })
   }
 }
 import api from '@/services/api'

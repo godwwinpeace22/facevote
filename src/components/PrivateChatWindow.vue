@@ -2,7 +2,7 @@
   <v-card>
     <v-toolbar color="teal" dark dense flat>
       <v-avatar size="36" color="grey lighten-4">
-        <img :src="user.imgSrc || `https://ui-avatars.com/api/?name=${user.name}`" alt="avatar">
+        <img :src="user.imgSrc || user.photoURL || `https://ui-avatars.com/api/?name=${user.name}`" alt="avatar">
       </v-avatar>
 
       <v-toolbar-title>{{user.name}}</v-toolbar-title>
@@ -16,20 +16,32 @@
     <v-container class="pa-0 pt-3 private_chat_home">
       <v-card flat pa-0 id="chat_space" style="height:30vh;margin-top:px;overflow-y:auto;background:ore;">
         <div v-for="(msg,i) in myConversations" :key="i">
-          <div v-if="divide(msg.timestamp, myConversations[i-1])" style="background:oldlace;font-weight:bold;text-align:center;">
+          <div v-if="divide(msg.timestamp, myConversations[i-1])" class="time_divider">
             {{divide(msg.timestamp, myConversations[i-1])}}
           </div>
-          <div class="private_chat_rectangle " id="speech_bubble" :class=" msg.from == $store.getters.getUser.username ? 'reposition':''">
+          <div class="private_chat_rectangle " id="speech_bubble">
             <!--div class="private_chat_avartar"><img :src="'https://api.adorable.io/avatars/285/' + msg.user + '@adorable.png'" alt="avartar"></div-->
-            <div class="private_chat_content">
-              <div style="width:100%;margin-top:0px;margin-bottom:0px;">
-                <v-subheader class="small text" v-if="msg.from != $store.getters.getUser.username" style="margin-right:5px;">
-                  <a :href="'/#/dashboard/forum/profile/' + msg.from">{{msg.name || msg.from}}</a>
-                </v-subheader>
-                <span v-else style="margin-right:5px;"><strong>You  </strong></span>
-                <span style="font-size:.9em;color:#555;" color="grey lighten-5">  {{parseDate(msg.timestamp)}}</span>
+            <div class="private_chat_content" style="background:beige;" v-if="msg.sender != getUser.uid">
+              <div style="float:left;margin-right:10px;margin-top:0px;margin-bottom:0px;">
+                <v-avatar size="36" color="grey lighten-4">
+                  <img :src="user.imgSrc || user.photoURL || `https://ui-avatars.com/api/?name=${user.name}`" alt="avatar">
+                </v-avatar>
               </div>
-              <div style="width:100%;" >{{msg.message}}</div>
+              <div style="" >
+                <small class="d-block" color="teal" style="color:teal;">  {{parseDate(msg.timestamp)}}</small>
+                {{msg.message}}
+              </div>
+            </div>
+            <div class="private_chat_content" style="background:#9E9E9E;color:#fff;" v-else>
+              <div style="margin-top:0px;margin-bottom:0px;float:right;">
+                <v-avatar size="36" color="grey lighten-4">
+                  <img :src="getUser.photoURL  || `https://ui-avatars.com/api/?name=${getUser.displayName}`" alt="avatar">
+                </v-avatar>
+              </div>
+              <div style="" >
+                <small class="d-block" style="">  {{parseDate(msg.timestamp)}}</small>
+                {{msg.message}}
+              </div>
             </div>
             
           </div>
@@ -38,14 +50,14 @@
           
       </v-card>
     </v-container>
-    <div class="white--text pb-0 px-1" style='position:fixed;bottom:0;width:100%;background:#fee;'>
+    <div class="white--text pb-0 px-1" style='padding-top:10px;width:100%;'>
       
-        <v-textarea v-model="message" box color="deep-purple" @keypress="isTyping"
-          label="Type a message" outline
-          :append-outer-icon="message ? 'send' : ''"
-          @click:append-outer="sendMessage"
-          rows="1" auto-grow
-        ></v-textarea>
+      <v-textarea v-model="message" box color="deep-purple" @keypress="isTyping"
+        label="Type a message" outline
+        :append-outer-icon="message.trim() ? 'send' : ''"
+        @click:append-outer="sendMessage"
+        rows="1" auto-grow
+      ></v-textarea>
     </div>
   </v-card>
 </template>
@@ -53,9 +65,7 @@
 export default {
   data:()=>({
     data:true,
-    message:'Hello',
-    myConversations:[],
-
+    message:'',
   }),
   computed:{
     styleObj(){
@@ -64,7 +74,16 @@ export default {
           height:'100vh'
         }
       }
-    }
+    },
+    myConversations(){
+      return this.getPrivateConversations
+    },
+    ...mapGetters([
+      'isAuthenticated',
+      'getToken',
+      'getUser',
+      'getPrivateConversations',
+    ]),
   },
   props:['user'],
   methods:{
@@ -99,22 +118,44 @@ export default {
     clearMessage () {
       this.message = ''
     },
+    async markMsgsAsRead(){
+      let msgs = this.getPrivateConversations
+      msgs.forEach(async msg=>{
+        if(msg.type == 'broadcast'){
+          await db.collection('broadcasts').doc(msg.msgId).update({
+            seenBy:firebase.firestore.FieldValue.arrayUnion(this.getUser.uid)
+          })
+        }
+        else{
+          if(msg.status == 'unread' && msg.reciever == this.getUser.uid){
+            await db.collection('private_conversations').doc(msg.msgId).update({
+              status:'read'
+            })
+          }
+        }
+        
+      })
+      
+    },
     sendMessage(){
       //console.log(this.$store.state.chat)
-      let msgId = Date.now() * 1 + 1000 * (Math.floor(Math.random() * (999999 - 999)) + 999);
-      this.$eventBus.$emit('PrivateChatMsg', { 
-        message:this.message,
-        to:this.user.username,
-        from:this.$store.getters.getUser.username,
-        name:this.$store.getters.getUser.name,
-        imgSrc:this.$store.getters.getUser.imgSrc,
+      let msgId = btoa(Math.random()).substring(0,12) + Date.now()
+      let data = {
+        message:this.message.trim(),
+        type:'default', // message can be 'default' or 'broadcast'
+        reciever:this.user.uid,
+        sender:this.getUser.uid,
+        parties:[this.getUser.uid,this.user.uid].sort().join('-'),
+        name:this.getUser.displayName,
+        imgSrc:this.getUser.photoURL,
         timestamp:Date.now(),
         msgId:msgId,
-        room:this.$store.state.curRoom.electionId,
         status:'unread'
-      });
-      
+      }
+
+      db.collection('private_conversations').doc(data.msgId).set(data)
       this.clearMessage()
+  
     },
     isTyping(){
 
@@ -125,22 +166,24 @@ export default {
     //LoadingBar,
   },
   mounted(){
-    this.$eventBus.$on('PrivateChatMsgResp', data=>{
-      
-      this.myConversations.push(data)
-      console.log(this.myConversations)
-    })
+    
+    db.collection('private_conversations')
+      .where('parties','==',[this.getUser.uid,this.user.uid].sort().join('-'))
+      .onSnapshot(async snapshot=>{
+        let msgs = []
+        snapshot.forEach(doc=>{
+          //console.log(doc.data())
+          msgs.push(doc.data())
+        })
 
-    // == hides profile dialog on election watch page
-    this.$eventBus.$emit('Hide_Profile', true)
-
-    // on mounted, get the chat conversations with this user from server
-    this.$eventBus.$emit('Get_Conversation_History', {firstPerson:this.$store.getters.getUser.username,secondPerson:this.user.username})
-    this.$eventBus.$on('Conversation_History', data=>{ // server response to Get_Conversation_History
-      this.myConversations = data
-    })
+        //console.log(msgs)
+        this.$store.dispatch('private_conversations', msgs)
+        
+        await this.markMsgsAsRead()
+      })
   }
 }
+import { mapGetters } from 'vuex'
 </script>
 
 <style lang="scss">
@@ -162,6 +205,14 @@ $mainBgColor:#1c1f35;
   background-position: center;
   //background-color: #00aabb;
 }
+
+.time_divider{
+  background:oldlace;
+  font-weight:bold;
+  text-align:center;
+  padding:0px 15px;
+  @include borderRadius(10px);
+}
 .private_chat_avartar{
   width:40px;
   height: 40px;
@@ -177,9 +228,12 @@ $mainBgColor:#1c1f35;
   }
 }
 .private_chat_content{
-  display:inline-block;
+  //display:inline-block;
   //background:yellow;
-  width:90%;
+  //width:90%;
+  padding:12px;
+  @include borderRadius(5px);
+  overflow:auto;
   min-height: 40px;
 }
 .private_chat_rectangle {
@@ -198,20 +252,6 @@ $mainBgColor:#1c1f35;
     text-decoration:none;
     color:#00aabb;
   }
-}
-.speech-bubbl:after {
-	content: '';
-	position: absolute;
-	left: 0;
-	top: 50%;
-	width: 0;
-	height: 0;
-	border: 25px solid transparent;
-	border-right-color: #00aabb;
-	border-left: 0;
-	border-bottom: 0;
-	margin-top: -12.5px;
-	margin-left: -25px;
 }
 
 /* --scrollbar --*/

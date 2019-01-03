@@ -165,6 +165,7 @@ export default {
     mySchool:'',
     myFaculty:'',
     myDepartment:'',
+    schools:[],
     select: null,
     show3: false,
     show4: false,
@@ -249,7 +250,19 @@ export default {
           let res = await authService.Register(this.form)
           console.log(res.data)
           this.loading = false
-          this.step = 3
+
+          firebase.auth().signInWithCustomToken(res.data)
+          .then((result)=>{
+             console.log(result.user)
+          })
+          .catch(function(error) {
+            // Handle Errors here.
+            console.log(error)
+            var errorCode = error.code;
+            var errorMessage = error.message;
+            // ...
+          });
+          //this.step = 3
         }
       }catch(err){
         console.log(err)

@@ -44,7 +44,7 @@ import {
   VRadioGroup,
   VAutocomplete,
   VDataTable,
-  VExpansionPanel
+  VExpansionPanel,
 } from 'vuetify'
 import api from '@/services/api'
 import 'vuetify/src/stylus/app.styl'

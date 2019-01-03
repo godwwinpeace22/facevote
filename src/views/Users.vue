@@ -1,72 +1,36 @@
 <template>
   <div>
-    <v-container grid-list-md>
-      <v-card flat dark class="py-5" style="background:#1c1f35;">
-        <v-layout align-center justify-center >
-          <v-flex xs2 d-block style="background:yello;">
-            <v-avatar :size="$vuetify.breakpoint.xs ? 50 : 100" color="grey lighten-4"  >
-              <img :src="user.imgSrc || `https://ui-avatars.com/api/?size=250&name=${user.name}`" alt="avatar">
-            </v-avatar>
-          </v-flex>
-          <v-flex xs9 d-block>
-            <h2 class="ml-3 mt-2 title text-capitalize">~ {{user.name}}</h2>
-            <v-card-actions>
-              <v-btn color="succes" class="text-capita" small flat :to="`/users/${user.username}/followers`">
-                <strong>{{user ? user.followers.length : ''}}</strong> &nbsp;Followers</v-btn>
-              <v-btn color="succes" class="text-capita" small flat :to="`/users/${user.username}/following`">0 Following </v-btn>
-              <v-tooltip top v-if="user.username != getUser.username">
-                <v-btn slot="activator" color="success" class="text-capita ml-2" small outlin @click="follow" :disabled="disabled">{{followText}}</v-btn>
-                <span>{{followText == 'Following' ? 'You are following'  : 'Follow'}} {{user.name | capitalize}}</span>
-              </v-tooltip>
-            </v-card-actions>
-            
-          </v-flex>
-        </v-layout>
-        <v-layout mt-4 row wrap>
-          <v-flex xs12 light style="background:#f7f7f7;">
-            <v-toolbar flat color="white"  tabs dense light>
-              <v-btn small flat depressed class="text-capitalize" exact :to="`/users/${user.username}`" 
-                >
-                Overview
-              </v-btn>
+    <navigation>
+      <span slot="title">Profile</span>
+      <v-tabs slot="extended_nav" v-model="model"
+        color="teal" slider-color="yellow">
+        <v-tab ripple
+          v-for="item in ['Overview','Manifesto','Posts','Payments','Preferences']"
+          :key="item"
+          :href="`#${item}`"
+        >
+          {{ item }}
+        </v-tab>
+      </v-tabs>
+    </navigation>
 
-              <v-btn small flat depressed class='text-capitalize'
-                :to="`/users/${user.username}/manifesto`">
-                Manifesto
-              </v-btn>
-
-              <v-btn small flat depressed class='text-capitalize ' v-show="$vuetify.breakpoint.smAndUp" :to="`/users/${user.username}/${item}`" 
-                v-for="item in 
-                ['broadcasts','payments','preferences']" :key='item'>
-                {{item}}
-              </v-btn>
-              
-              
-              <v-spacer class="hidden-xs-and-down"></v-spacer>
-              <v-btn color="secondary" v-show="$vuetify.breakpoint.smAndUp" @click.native="$eventBus.$emit('show_profile_settings', {})" 
-                v-if="user.username == getUser.username" 
-                depressed >Edit profile
-              </v-btn>
-
-              <v-menu offset-y v-show="$vuetify.breakpoint.xsOnly">
-                <v-btn slot="activator" icon><v-icon>menu</v-icon></v-btn>
-                <v-list>
-                  <v-list-tile class='text-capitalize' :to="`/users/${user.username}/${item}`" v-for="item in ['broadcasts','payments','preferences']" :key="item">
-                    
-                      {{ item }}
-                  </v-list-tile>
-                </v-list>
-              </v-menu>
-              
-              
-            </v-toolbar>
-          </v-flex>
-        </v-layout>
-      </v-card>
-    </v-container>
-    
-    <!-- views -->
-    <router-view :myContests='myContests' :user='user' :broadcasts='broadcasts' />
+    <v-tabs-items v-model="model">
+      <v-tab-item value="Overview">
+        <overview :myContests='myContests' :user='user'></overview>
+      </v-tab-item>
+      <v-tab-item value="Manifesto">
+        <manifesto :myContests='myContests' :user='user'></manifesto>
+      </v-tab-item>
+      <v-tab-item value="Posts">
+        <posts :myContests='myContests' :user='user' :posts='posts'></posts>
+      </v-tab-item>
+      <v-tab-item value="Payments">
+        <payments :myContests='myContests' :user='user'></payments>
+      </v-tab-item>
+      <v-tab-item value="Preferences">
+        <preferences :myContests='myContests' :user='user'></preferences>
+      </v-tab-item>
+    </v-tabs-items>
     
   </div>
 </template>
@@ -74,6 +38,7 @@
 export default {
   data:()=>({
     hide:true,
+    model:'Overview',
     follower_tab:1,
     user:'', // users profile
     about_user:[
@@ -83,6 +48,7 @@ export default {
     myElections:[],
     myContests:[],
     broadcasts:[],
+    posts:[],
     disabled:false, // disables the follow btn
     user_tabs_model:'overview'
   }),
@@ -92,6 +58,15 @@ export default {
       // react to route changes...
       this.setUp()
     }
+  },
+  components:{
+    Navigation,
+    Overview,
+    Broadcasts,
+    Posts,
+    Payments,
+    Preferences,
+    Manifesto
   },
   filters: {
     capitalize: function (value) {
@@ -111,8 +86,8 @@ export default {
   },
   computed:{
    followText(){
-     return this.followers_id_list.indexOf(
-       this.getUser._id) == -1 ? '+ Follow' : 'Following'
+     return this.user ? this.user.followers.indexOf(
+       this.getUser.uid) == -1 ? '+ Follow' : 'Following' : ''
    },
    lowercase(val){
      return val.toUpperCase
@@ -125,53 +100,67 @@ export default {
   },
   methods:{
     async follow(){
-      if(this.followers_id_list.indexOf(this.getUser._id) == -1){
+      if(this.user.followers.indexOf(this.getUser.uid) == -1){
         // not following user, follow this user
         this.disabled = true
-        this.followers_id_list.push(this.getUser)
-        this.user.followers.push(this.getUser)
-        await api().post(`dashboard/followContestant/${this.user._id}/${this.getUser._id}`, {
-          token:this.getToken
+        this.user.followers.push(this.getUser.uid)
+
+        db.collection('moreUserInfo').doc(this.user.uid).update({
+          followers:firebase.firestore.FieldValue.arrayUnion(this.getUser.uid)
+        }).then(async res=>{
+          await db.collection('moreUserInfo').doc(this.getUser.email).update({
+            following:firebase.firestore.FieldValue.arrayUnion(this.user.uid)
+          })
+          this.disabled = false
         })
-        this.disabled = false
       }
       else{
         // is following the user, unfollow
         this.disabled = true
-        await api().post(`dashboard/unfollowContestant/${this.user._id}/${this.getUser._id}`, {
-          token:this.getToken
+        this.user.followers.splice(this.user.followers.indexOf(this.getUser.uid),1)
+        db.collection('moreUserInfo').doc(this.user.uid).update({
+          followers:firebase.firestore.FieldValue.arrayRemove(this.getUser.uid)
+        }).then(async res=>{
+          await db.collection('moreUserInfo').doc(this.getUser.email).update({
+            following:firebase.firestore.FieldValue.arrayRemove(this.user.uid)
+          })
+          this.disabled = false
         })
-        this.followers_id_list.splice(this.user.followers.indexOf(this.getUser._id),1)
-        this.user.followers.splice(this.user.followers.indexOf(this.getUser._id),1)
-        this.disabled = false
       }
     },
     async setUp(){
       try {
-        let user,elections,broadcasts;
-        api().post(`dashboard/getPopUser/${this.username}`, {
-          token:this.getToken
-        }).then(user=>{
-          this.user = user.data
-          user.data.followers.forEach(fol=>{
-            this.followers_id_list.push(fol._id)
+        
+        let user
+        let userRef = db.collection('moreUserInfo')
+        .doc(this.$route.params.email)
+        user = await userRef.get()
+        this.user = user.data()
+        console.log(user)
+        
+
+        let elecRef = db.collection('elections')
+        let myArr = []
+        elecRef.where('contestants','array-contains',this.user.uid).get().then(doc=>{
+          myArr = []
+          doc.forEach(item=>{
+            console.log(item.id, " => ", item.data());
+            myArr.push(item.data())
           })
+          this.myContests = myArr
         })
 
-        elections = await api().post(`dashboard/getElections/${this.username}`, {
-          token:this.getToken
+        
+        db.collection('posts').where('createdBy','==',this.user.uid)
+        .get().then(querySnapshot=>{
+          this.posts = []
+          querySnapshot.forEach(doc => {
+            this.posts.push(doc.data())
+          });
+        }).catch(err=>{
+          console.log(err)
         })
 
-        broadcasts = await api().post(`dashboard/getbroadcasts`, {
-          token:this.getToken,
-          by:this.getUser._id,
-        })
-
-        //this.user = user.data
-        this.myElections = elections.data
-        this.myContests = elections.data.contested
-        this.broadcasts = broadcasts.data
-        console.log(this.myElections,this.getUser,this.user,broadcasts)
       } catch (error) {
         console.log(error)
         if(error){}
@@ -193,6 +182,13 @@ export default {
 }
 import api from '@/services/api'
 import {mapGetters} from 'vuex'
+import Navigation from '@/components/Navigation'
+import Overview from '@/components/User__overview'
+import Broadcasts from '@/components/profile/User__broadcasts'
+import Payments from '@/components/User__payments'
+import Preferences from '@/components/User__preferences'
+import Posts from '@/components/profile/User__posts'
+import Manifesto from '@/components/User__manifesto'
 </script>
 
 <style lang="scss" >

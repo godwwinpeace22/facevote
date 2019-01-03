@@ -2,7 +2,7 @@
   <v-layout d-flex>
       <v-flex xs12 d-flex>
         <v-card :flat="$vuetify.breakpoint.smAndDown">
-          <v-img :src="user.imgSrc || `https://ui-avatars.com/api/?name=${user.name}`" height="200" aspect-ratio="2.75"></v-img>
+          <v-img :src="user.photoURL || `https://ui-avatars.com/api/?name=${user.name}&size=300`" height="200" aspect-ratio="2.75"></v-img>
 
           <v-card-title primary-title>
             <div>
@@ -15,8 +15,8 @@
           </v-card-title>
           
           <v-card-actions>
-            <v-btn flat outline small color="success" class="text-capitalize"  :to='`/users/${user.username}`'>View Profile</v-btn>
-            <template v-if='$store.getters.getUser.username != user.username'>
+            <v-btn flat outline small color="success" class="text-capitalize"  :to='`/users/${user.email}`'>View Profile</v-btn>
+            <template v-if='$store.getters.getUser.email != user.email'>
               <v-btn flat outline small color="success" class="text-capitalize"  @click="openPrivateChatWindow">Message</v-btn>
               <v-btn flat outline small color="success" class="text-capitalize" >Explore</v-btn>
             </template>

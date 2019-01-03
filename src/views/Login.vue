@@ -25,9 +25,9 @@
               <v-card-text>
                 
                 <v-form v-model="valid" ref="form">
-                  <v-text-field label="Username" color="teal" outline class="mb-2" 
-                    v-model="form.username" :rules="nameRules" browser-autocomplete="username"
-                    prepend-inner-icon="person" required>
+                  <v-text-field label="Email" color="teal" outline class="mb-2" 
+                    v-model="form.email" :rules="nameRules" browser-autocomplete="email"
+                    prepend-inner-icon="mail" required>
                   </v-text-field>
                   <v-text-field id="text-field" color="teal" prepend-inner-icon="lock" 
                     outline  v-model="form.password" type="password" :rules="passwordRules"
@@ -68,8 +68,6 @@ export default {
     snackbar:false,
     show_spinner:false,
     form:{
-      name: '',
-      username:'',
       email: '',
       password:'',
       password2:'',
@@ -100,12 +98,33 @@ export default {
         if(this.$refs.form.validate()){
           this.loading = true
           //console.log(this.form)
-          let res = await authService.Login(this.form)
-          console.log(res.data)
-          this.$store.dispatch('setUser', {user:res.data.user,token:res.data.token})
+          //let res = await authService.Login(this.form)
+          //console.log(res.data)
+          //this.$store.dispatch('setUser', {user:res.data.user,token:res.data.token})
+
+          firebase.auth().signInWithEmailAndPassword(this.form.email, this.form.password).then((result)=>{
+            console.log(result.user)
+            
+            firebase.auth().onAuthStateChanged((user)=>{
+              if (user) {
+                // User is signed in.
+                this.$store.dispatch('setUser', result.user)
+                this.$router.push('/')
+                this.loading = false
+              } else {
+                // No user is signed in.
+              }
+            });
+            
+          }).catch(function(error) {
+            // Handle Errors here.
+            var errorCode = error.code;
+            var errorMessage = error.message;
+            // ...
+          });
+
           //this.$store.dispatch('setLoggedInUser', res.data.user)
-          this.$router.push('/')
-          this.loading = false
+          
         }
         else{
           this.snackbar = true
@@ -128,6 +147,9 @@ export default {
         }
       }
     }
+  },
+  mounted(){
+    
   }
 }
 

@@ -18,20 +18,25 @@
         ></v-divider>
 
         <v-stepper-content :step="i">
-          <v-card color="grey lighten-3" class="mb-5" style="min-height:200px;">
+          <v-subheader v-if="contestants && contestants.length == 0">No contestants</v-subheader>
+          <v-card color="grey lighten-3" class="mb-5" style="min-height:200px;" 
+            v-if="contestants && contestants.find(cont=>getRole(cont) == roles[i-1].title)">
             <v-layout row wrap mt-3>
-              <v-subheader v-if="contestants && contestants.length == 0">No contestants</v-subheader>
-              <v-flex sm4 md3 v-for="contestant in contestants" @click.stop="vote(contestant,$event)" :class="roles[i-1].title" :ref="contestant.userId.username" :key="contestant._id" v-if="contestant.role == roles[i-1].title" style="min-height:200px;">
+              <v-flex sm4 md3 v-for="contestant in contestants" 
+                @click.stop="vote(contestant,$event,roles[i-1].title)" :class="roles[i-1].title" 
+                :ref="contestant.uid" :key="contestant.uid" 
+                v-if="getRole(contestant) == roles[i-1].title" style="min-height:200px;">
+                
                 <v-tooltip top>
-                  <v-card  class=" mt-4 mx-4" hover :id="contestant.userId.username" slot="activator">
+                  <v-card  class=" mt-4 mx-4" hover :id="contestant.name" slot="activator">
                     <v-img
-                      :src="contestant.userId.imgSrc || `https://ui-avatars.com/api/?size=300&name=${contestant.userId.name}`"
+                      :src="contestant.photoURL || `https://ui-avatars.com/api/?size=300&name=${contestant.name}`"
                       height="140px"
                     ></v-img>
 
                     <v-card-title primary-title>
                       <div>
-                        <h4 class=" mb-0" style='text-transform:capitalize;'>{{contestant.userId.name}}</h4>
+                        <h4 class=" mb-0" style='text-transform:capitalize;'>{{contestant.name}}</h4>
                       </div>
                     </v-card-title>
                   </v-card>
@@ -40,6 +45,7 @@
               </v-flex>
             </v-layout>
           </v-card>
+          <v-subheader v-else class="title">No contestant for this role</v-subheader>
           <v-btn flat color="primary" @click="previousStep(i)" v-if="i > 1">Previous</v-btn>
           <v-btn color="primary" @click="nextStep(i)" v-if="i < steps">Next</v-btn>
           <v-btn color="primary" @click="submit" :loading="loading" 
@@ -89,36 +95,57 @@ export default {
         this.e6 = n - 1
       }
     },
-    vote(contestant,event){
+    getRole(contestant){
+      let ref = contestant.contestsRef
+      .find(item=>item.electionRef == this.currElection.electionId)
+      return this.currElection.roles.find(role=>role.value = ref.role).title
+    },
+    vote(contestant,event,role){
       
-      console.log(this.$refs[contestant.userId.username][0])
-      let elems = document.getElementsByClassName(contestant.role)
-      if(this.$refs[contestant.userId.username][0].style.backgroundColor == 'yellow'){
+      console.log(this.$refs[contestant.uid][0])
+      let elems = document.getElementsByClassName(role)
+      if(this.$refs[contestant.uid][0].style.backgroundColor == 'yellow'){
         
         // remove the vote
-        delete this.myVote[contestant.role]
+        delete this.myVote[role]
         
         for(var i= 0; i<elems.length;i++){
           elems[i].style.backgroundColor = ''
           elems[i].style.paddingBottom = ''
         }
-        this.disabled = Object.keys(this.myVote).length < this.roles.length ? true : false
 
-        this.$refs[contestant.userId.username][0].style.backgroundColor = ''
-        this.$refs[contestant.userId.username][0].style.paddingBottom = '23px'
+        // disable vote submissin if voter has not voted for contestant
+        // but first, filter out the roles that don't have contestants
+        let arr = []
+        this.roles.forEach(role=>{
+          this.contestants.find(cont=>this.getRole(cont) == role.title) ?
+          arr.push(role) : ''
+        })
+        this.disabled = Object.keys(this.myVote).length < arr.length ? true : false
+        
+
+        this.$refs[contestant.uid][0].style.backgroundColor = ''
+        this.$refs[contestant.uid][0].style.paddingBottom = '23px'
       }
       else{
         for(var i= 0; i<elems.length;i++){
           elems[i].style.backgroundColor = ''
           elems[i].style.paddingBottom = ''
         }
-        this.$refs[contestant.userId.username][0].style.backgroundColor = 'yellow'
-        this.$refs[contestant.userId.username][0].style.paddingBottom = '23px'
+        this.$refs[contestant.uid][0].style.backgroundColor = 'yellow'
+        this.$refs[contestant.uid][0].style.paddingBottom = '23px'
 
-        this.myVote[contestant.role] = contestant._id
-        this.$eventBus.$emit('Someone_Is_Voting', {user:this.$store.getters.getUser, room:this.currElection.electionId})
+        this.myVote[role] = contestant.uid
+        //this.$eventBus.$emit('Someone_Is_Voting', {user:this.$store.getters.getUser, room:this.currElection.electionId})
 
-        this.disabled = Object.keys(this.myVote).length < this.roles.length ? true : false
+        // disable vote submissin if voter has not voted for contestant
+        // but first, filter the roles that have contestants
+        let arr = []
+        this.roles.forEach(role=>{
+          this.contestants.find(cont=>this.getRole(cont) == role.title) ?
+          arr.push(role) : ''
+        })
+        this.disabled = Object.keys(this.myVote).length < arr.length ? true : false
       }
       console.log(this.myVote);
       console.log(Object.keys(this.myVote).length);
@@ -127,9 +154,17 @@ export default {
       try {
         this.loading = true
 
-        this.$eventBus.$emit('Submit_Vote', {myVote:this.myVote,user:this.$store.getters.getUser, room:this.currElection})
-        
+        // vote
+        await db.collection('votes').add({
+          electionRef:this.currElection.electionId,
+          choices:this.myVote,
+          voterId:this.$store.getters.getUser.uid
+        })
+        await db.collection('elections').doc(this.currElection.electionId).update({
+          voted:firebase.firestore.FieldValue.arrayUnion(this.$store.getters.getUser.uid)
+        })
         this.loading = false
+        alert('You have voted successfully')
       } catch (error) {
         console.log(error.response)
         alert('Sorry, an error occured')
@@ -137,7 +172,7 @@ export default {
     },
   },
   mounted(){
-    //console.log(this.$store.state.currElection)
+    console.log(this.currElection.roles)
     this.roles = this.currElection.roles
     this.steps = this.currElection.roles.length
     //console.log(this.$store.state.currElectionContestants)

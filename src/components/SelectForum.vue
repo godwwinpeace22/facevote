@@ -1,48 +1,40 @@
 <template>
-  <v-container grid-list-xl>
-    <vue-headful
-      :title="title"
-    />
-    <v-subheader>Your connected groups</v-subheader>
-    <v-layout row wrap>
-      <!--v-flex xs3 v-for='election in elections' :key="election._id" mb-2 px-2>
-        <p>Your connected groups</p>
-        <v-card :to="'/dashboard/forum/' + election.electionId" height="200" hover>
-          <v-card-title>
-            {{election.title}}
-          </v-card-title>
-        </v-card>
-      </v-flex-->
-      <v-flex xs12 sm6 md4 d-flex v-for='election in $store.getters.getMyEnrolled' :key="election._id" mb-2>
-        <v-card color="" class="" :to="'/forum/' + election.electionId">
-          <v-layout row>
-            <v-flex xs7>
-              <v-card-title primary-title>
-                <div>
-                  <div class=""><strong>{{election.title}}</strong></div>
-                  <div>Registerd voters:</div>
-                  <div>({{election.regVoters.length}})</div>
-                </div>
-              </v-card-title>
-            </v-flex>
-            <v-flex xs5>
-              <v-img
-                src="https://cdn.vuetifyjs.com/images/cards/halcyon.png"
-                height="125px"
-                contain
-              ></v-img>
-            </v-flex>
-          </v-layout>
-          <v-divider light></v-divider>
-          <v-card-actions class="pa-3">
-            Follow this election
-            <v-spacer></v-spacer>
-            {{election.followers.length}} | Followers
-          </v-card-actions>
-        </v-card>
-      </v-flex>
-    </v-layout>
-  </v-container>
+  <div>
+    <navigation>
+      <span slot="title">Dashboard</span>
+      <h1 slot="extended_nav">Your groups</h1>
+    </navigation>
+    
+    <v-container grid-list-xl pa-5>
+      <vue-headful
+        :title="title"
+      />
+      <v-subheader>Your connected groups</v-subheader>
+      <v-card class="round pa-5 elevation-2">
+        <v-layout row wrap>
+          <v-flex xs12 sm6 md4 d-flex v-for='election in $store.getters.getMyEnrolled' :key="election._id" mb-2>
+            <v-card color="randomColor" dark class="py-3" :to="'/forum/' + election.electionId">
+              <v-layout row>
+                <v-flex xs12>
+                  <v-card-title primary-title>
+                    <div>
+                      <div class=""><strong>{{election.title}}</strong></div>
+                    </div>
+                  </v-card-title>
+                </v-flex>
+              </v-layout>
+              <v-divider light></v-divider>
+              <v-card-actions class="pa-3">
+                {{election.regVoters.length}} | Registerd voters
+                <v-spacer></v-spacer>
+                {{election.followers.length}} | Followers
+              </v-card-actions>
+            </v-card>
+          </v-flex>
+        </v-layout>
+      </v-card>
+    </v-container>
+  </div>
 </template>
 <script>
 export default {
@@ -50,32 +42,86 @@ export default {
     title:'Your connected groups | Facevote',
     elections:[],
   }),
+  computed:{
+    randomColor(){
+      let random = Math.floor(Math.random() * 10)
+      let colors = [
+      'cyan','success','secondary','primary','purple'
+      ]
+      return colors[random]
+    }
+  },
   methods:{
+    async getMyCreated(user){
+      let elecRef = db.collection('elections')
+      let myArr = []
+      elecRef.where('admin','==',user.email).get().then(doc=>{
+        myArr = []
+        doc.forEach(item=>{
+          console.log(item.id, " => ", item.data());
+          myArr.push(item.data())
+        })
+        this.$store.dispatch('setMyCreated', myArr)
+        return myArr
+      })
+      
+    },
+    async getMyEnrolled(user){
+      let elecRef = db.collection('elections')
+      let myArr = []
+      elecRef.where('regVoters','array-contains',user.uid).get().then(doc=>{
+        myArr = []
+        doc.forEach(item=>{
+          console.log(item.id, " => ", item.data());
+          myArr.push(item.data())
+        })
 
+        this.$store.dispatch('setMyEnrolled', myArr)
+        return myArr
+      })
+      
+    },
   },
   async mounted(){
     try {
-        
-      let res = await api().post(`dashboard/getMyEnrolled/${this.$store.getters.getUser.username}`, {token:this.$store.getters.getToken})
-      //this.elections = res.data
-      this.$store.dispatch('setMyEnrolled', res.data)
-      console.log(res)
-      //this.$eventBus.$emit('Change_Title', this.$store.state.curRoom.title);
-      //console.log('wow')
-      
+       firebase.auth().onAuthStateChanged(async (user)=>{
+        if (user) { 
+          
+          this.$store.getters.getMyEnrolled ? 
+          this.data_available = true : ''
+
+          // get election user created
+          //await this.getMyCreated(user)
+          // get elections user enrolled in
+          await this.getMyEnrolled(user)
+          
+          this.data_available = true
+          
+        } else {
+          console.log('No user is signed in.')
+        }
+      });
     } catch (error) {
       console.log(error)
-      console.log(error.response)
-      if(error.response && error.response.status == 401){
-        // if the auth token is invalid, log user out(if possible) and redirect to login page
-        this.$store.dispatch('logout')
-        this.$router.push('/login')
-      }
+      
     }
   },
   components:{
-  }
+    Navigation
+  },
 }
 
 import api from '@/services/api'
+import Navigation from '@/components/Navigation'
 </script>
+<style lang="scss">
+  @mixin borderRadius($radius) {
+    border-radius: $radius;
+    -webkit-border-radius:$radius;
+    -moz-border-radius:$radius;
+    -o-border-radius:$radius;
+  }
+  .round{
+    @include borderRadius(15px)
+  }
+</style>

@@ -23,6 +23,7 @@ import Vue from 'vue'
   import SelectElection from '@/components/SelectElection'
   import User__overview from '@/components/User__overview'
   import User__broadcasts from '@/components/profile/User__broadcasts'
+  import User__posts from '@/components/profile/User__posts'
   import User__manifesto from '@/components/User__manifesto'
   import User__payments from '@/components/User__payments'
   import User__preferences from '@/components/User__preferences'
@@ -42,22 +43,38 @@ import Vue from 'vue'
   import NProgress from 'nprogress'
 Vue.use(Router)
 
-const requireAuth = (to, from, next) => {
-  //console.log(to,from)
-  if (store.getters.isAuthenticated) {  // true if user is logged in
-    next()
-  } else {
-    next('/login') 
-  }
-  
-}
-const requireLogout = (to, from, next) =>{ // if ther user is not logged in
-  if(!store.getters.isAuthenticated){
-    next()
+console.log(firebase.auth().currentUser)
+let isLoggedIn = firebase.auth().onAuthStateChanged((user)=>{
+  if(user){
+    return true
   }
   else{
-    next('/')
+    return null
   }
+});
+
+const requireAuth = async (to, from, next) => {
+
+  firebase.auth().onAuthStateChanged((user)=>{
+    if(user){
+      next()
+    }
+    else{
+      next('/login')
+    }
+  });
+  
+}
+const requireLogout = async (to, from, next) =>{ // if ther user is not logged in
+  console.log('islgdin: ', await isLoggedIn)
+  firebase.auth().onAuthStateChanged((user)=>{
+    if(user){
+      next('/')
+    }
+    else{
+      next()
+    }
+  });
 }
 
 // The route guard is intentionally put in each component instead of the root to allow non-loggedin users
@@ -72,9 +89,9 @@ const router = new Router({
       children:[
         
         {
-          path:'news',
-          name:'news',
-          component:News
+          path:'',
+          name:'feed',
+          component:Feed
         },
         {
           path:'enroll',
@@ -96,7 +113,7 @@ const router = new Router({
           beforeEnter:requireAuth,
         },
         {
-          path:'/users/:username',
+          path:'/users/:email',
           component:Users,
           props:true,
           children:[
@@ -107,6 +124,10 @@ const router = new Router({
             {
               path:'broadcasts',
               component:User__broadcasts
+            },
+            {
+              path:'posts',
+              component:User__posts
             },
             {
               path:'manifesto',
@@ -135,11 +156,11 @@ const router = new Router({
             },
             {
               path:'profile',
-              name:'profile2', // this is so that something will display when its just '/prfile', without the dynamic route
+              name:'profile2', // this is so that something will display when its just '/profile', without the dynamic route
               component:ForumUsers
             },
             {
-              path:'profile/:username',
+              path:'profile/:email',
               name:'profile',
               component:ForumUsersProfile,
               props:true

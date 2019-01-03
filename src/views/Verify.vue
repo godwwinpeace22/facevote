@@ -1,88 +1,84 @@
 <template>
-  <v-stepper v-model="e5" d-flex style="min-height:100vh;">
-    <v-stepper-header>
-      <v-stepper-step :complete="e5 > 1" step="1">Verify your account</v-stepper-step>
-      <v-divider></v-divider>
-      <v-stepper-step :complete="e5 > 2" step="2">Face Recognition</v-stepper-step>
-      <v-divider></v-divider>
-      <v-stepper-step step="3">Finish</v-stepper-step>
-    </v-stepper-header>
-    <v-stepper-items>
-      <v-stepper-content step="1">
-        <v-card class="mb-5" color="grey lighten-5" style="min-height:200px;"  flat tile>
-          <v-card-text>Insert the Id of the election you want to contest for below</v-card-text>
-          <v-container>
-            <v-layout row>
-              <v-flex xs6>
-                <v-text-field label="Election Id" :value="electionId" hint="e.g gray-fighter-2187" v-model="electionId"></v-text-field>
-                
-              </v-flex>
-            </v-layout>
-          </v-container>
-          
-        </v-card>
+  <div>
+    <navigation>
+      <span>Dashboard</span>
+    </navigation>
+    <v-stepper v-model="e5" d-flex style="">
+      <v-stepper-header class="teal">
+        <v-stepper-step :complete="e5 > 1" step="1">Verify your account</v-stepper-step>
+        <v-divider></v-divider>
+        <v-stepper-step :complete="e5 > 2" step="2">Face Recognition</v-stepper-step>
+        <v-divider></v-divider>
+        <v-stepper-step step="3">Finish</v-stepper-step>
+      </v-stepper-header>
+      <v-stepper-items>
 
-        <v-btn color="success" @click="getId" :disabled="!electionId">Submit</v-btn>
-      </v-stepper-content>
-
-      <v-stepper-content step="2">
-        <v-card class="mb-5" color="grey lighten-5"  style="min-height:200px;" flat tile>
-          <v-card-text v-if="election.length != 0">
-            <span class="subheading">{{election.title}}</span>
-            <v-divider></v-divider>
-          </v-card-text>
-          
-          <v-spacer></v-spacer>
-          <v-container>
-            <v-layout row wrap>
-              <v-flex xs12>
-                <div id="video-container">
-                  <video id="camera-stream" width="500" autoplay></video>
-                </div>
-                <canvas style="display:none"></canvas>
-                <img src="" alt="" id="canvasImg">
-              </v-flex>
-            </v-layout>
-          </v-container>
-        </v-card>
-
-        <v-btn flat @click="e5 = 1">Previous</v-btn>
-        <v-btn color="primary" @click="enroll">Enroll</v-btn>
-      </v-stepper-content>
-
-      <v-stepper-content step="3">
-        <v-card class="mb-5" color="grey lighten-5" style="min-height:200px;" flat tile>
-          <v-card-text v-if="election.length != 0">
-            <span class="subheading">{{election.title}}</span>
-            <v-divider></v-divider>
+        <v-stepper-content step="1">
+          <v-card class="mb-5" color="grey lighten-5" style="min-height:200px;"  flat tile>
+            <v-card-text>
+              <div v-if="$store.getters.getUser.isVerified">Your account is verified</div>
+              <template v-else>
+                Lorem, ipsum dolor sit amet consectetur adipisicing elit. Temporibus animi quibusdam ad consequuntur laborum qui eaque ducimus aut alias id tenetur commodi, recusandae quos pariatur magni cupiditate sint perferendis eius!
+                You will need to do this only once
+              </template>
             </v-card-text>
-            <v-spacer></v-spacer>
-          <v-card-text>
-            <p>Tells us more about you</p>
-            
-            
-          </v-card-text>
-        </v-card>
+            <v-card-actions>
+              <v-btn color="secondary" @click="e5 = 2">Next</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-stepper-content>
 
-        <v-btn flat @click="e5 = 2">Previous</v-btn>
-        <v-btn color="primary" @click="e5 = 2"> Finish</v-btn>
-      </v-stepper-content>
-    </v-stepper-items>
-  </v-stepper>
+        <v-stepper-content step="2">
+          <v-card class="mb-5" color="grey lighten-5"  style="min-height:200px;" flat tile>
+            <v-card-text>
+              <!--v-subheader>Face Recognition</v-subheader-->
+              <!--div>Position your face in the oval then press capture</div-->
+            </v-card-text>
+            <v-container grid-list-xs>
+              <v-layout row wrap justify-center justify-space-around>
+                <v-flex xs12 sm6>
+                  <v-card>
+                    <div id="video-container">
+                      <video id="camera-stream" autoplay width="450"></video>
+                    </div>
+                    <canvas style="display:none"></canvas>
+                    <img src="" alt="" id="canvasImg">
+                  </v-card>
+                </v-flex>
+              </v-layout>
+            </v-container>
+          </v-card>
+
+          <v-btn flat @click="e5 = 1">Previous</v-btn>
+          <v-btn color="primary" @click="verify" :loading="loading">Capture</v-btn>
+        </v-stepper-content>
+
+        <v-stepper-content step="3">
+          <v-card class="mb-5" color="grey lighten-5" style="min-height:200px;" flat tile>
+            <v-card-text >
+              <span class="subheading"></span>
+              <v-divider></v-divider>
+              </v-card-text>
+              <v-spacer></v-spacer>
+            <v-card-text>
+              <p>Tells us more about you</p>
+              
+              
+            </v-card-text>
+          </v-card>
+
+          <v-btn flat @click="e5 = 2">Previous</v-btn>
+          <v-btn color="primary" @click="e5 = 2"> Finish</v-btn>
+        </v-stepper-content>
+      </v-stepper-items>
+    </v-stepper>
+  </div>
 </template>
 <script>
 export default {
   data:()=>({
     e5:1,
-    electionId:null,
-    election:{},
-    contestant:{
-      acstoken:'',
-      role:''
-    },
-    voter:{
-      image:''
-    },
+    loading:false,
     vid:'',
     cloudinary: {
        uploadPreset: 'izcl0gzg',
@@ -94,27 +90,6 @@ export default {
      }, 
   }),
   methods:{
-    async getId(){ // this actually gets the election instead of just the id
-      try {
-        // prevent making unneccessary api calls
-        if(!this.electionId){
-          alert('Id is required') 
-        }
-        else if(this.election.electionId == this.electionId){
-          this.e5 = 2
-        }
-        else{
-          let id = await api().post(`dashboard/getId/${this.electionId}`, {token:this.$store.getters.getToken})
-          console.log(id)
-          this.election = id.data
-          this.e5 = 2
-          this.startCamera()
-        }
-        
-      } catch (error) {
-        console.log(error.response)
-      }
-    },
     async enroll(){
       try {
         if(this.election.regVoters.indexOf(this.$store.getters.getUser._id) != -1){
@@ -173,19 +148,23 @@ export default {
     
     async verify(){
       try {
-        
+        this.loading = true
         const canvas = document.createElement('canvas'); // create a canvas
         const ctx = canvas.getContext('2d'); // get its context
-        canvas.width = 500; // set its size to the one of the video
-        canvas.height = 500;
+        canvas.width = 200; // set its size to the one of the video
+        canvas.height = 200;
         ctx.drawImage(this.vid, 0,0); // the video
         let base64Img = canvas.toDataURL('image/png')
         document.getElementById('canvasImg').src = base64Img
         //console.log(base64Img)
         
-      
+        
+        this.processImage(base64Img)
+        //let result = await api().post(`dashboard/verify/${this.$store.getters.getUser.uid}`)
+        //console.log(result)
+        //this.loading = false
         //document.getElementById('canvasImg').src = URL.createObjectURL(blob)
-        let formData = new FormData();
+        /*let formData = new FormData();
         formData.append('image',this.makeblob(base64Img));
         formData.append('user',this.$store.getters.getUser._id)
         let payload = {image:this.makeblob(base64Img),user:this.$store.getters.getUser._id}
@@ -193,14 +172,105 @@ export default {
         console.log(res.data)
         
         
+
+       */
+       /*let requestUrl = 'http://api.kairos.com/detect'
+       var payload  = { "image" : "https://media.kairos.com/liz.jpg" };
+
+        let res = await api().post(requestUrl, 
+          JSON.stringify(payload),
+          {
+            headers: {
+              "Content-Type": "application/json",
+              "app_id":"",
+              "api_key":"",
+            }
+        })
+          
+       console.log(res)*/
       } catch (err) {
         console.log(err)
         console.log(err.response)
-        
+        this.loading = false
 
       }
     },
 
+    processImage(sourceImageUrl) {
+        
+        var subscriptionKey = "731fce7df5e245a692f8077a774b1023";
+
+        var uriBase =
+            "https://westcentralus.api.cognitive.microsoft.com/face/v1.0/detect";
+
+        // Request parameters.
+        var params = {
+            "returnFaceId": "true",
+            "returnFaceLandmarks": "false",
+            "returnFaceAttributes":
+                "age,gender,headPose,smile,facialHair,glasses,emotion," +
+                "hair,makeup,occlusion,accessories,blur,exposure,noise"
+        };
+
+        fetch(sourceImageUrl)
+          .then(res => res.blob())
+          .then(blobData => {
+            // attach blobData as the data for the post request
+            api().post(uriBase + "?" + $.param(params),
+            '{"url": ' + '"' + blobData + '"}', {
+                headers: {
+                  "Content-Type":"application/octet-stream",
+                  "Ocp-Apim-Subscription-Key":subscriptionKey
+                }
+            }).then(rf=>{
+              console.log(rf)
+              this.loading = false
+            }).catch(err=>{
+              console.log(err)
+              console.log(err.response)
+              this.loading = false
+            })
+          })
+        // Display the image.
+        //var sourceImageUrl = document.getElementById("inputImage").value;
+        //document.querySelector("#sourceImage").src = sourceImageUrl;
+        //var sourceImageUrl = 'https://www.eurekalert.org/multimedia/pub/web/169764_web.jpg'
+
+        
+        // Perform the REST API call.
+        
+        /*
+        $.ajax({
+            url: uriBase + "?" + $.param(params),
+
+            // Request headers.
+            beforeSend: function(xhrObj){
+                xhrObj.setRequestHeader("Content-Type","application/octet-stream");
+                xhrObj.setRequestHeader("Ocp-Apim-Subscription-Key", subscriptionKey);
+            },
+
+            type: "POST",
+
+            // Request body.
+            data: '{"url": ' + '"' + sourceImageUrl + '"}',
+        })
+
+        .done(function(data) {
+            // Show formatted JSON on webpage.
+            console.log(JSON.stringify(data, null, 2));
+        })
+
+        .fail(function(jqXHR, textStatus, errorThrown) {
+            // Display error message.
+            var errorString = (errorThrown === "") ?
+                "Error. " : errorThrown + " (" + jqXHR.status + "): ";
+            errorString += (jqXHR.responseText === "") ?
+                "" : (jQuery.parseJSON(jqXHR.responseText).message) ?
+                    jQuery.parseJSON(jqXHR.responseText).message :
+                        jQuery.parseJSON(jqXHR.responseText).error.message;
+            alert(errorString);
+        });*/
+    },
     takeASnap(){
         const canvas = document.createElement('canvas'); // create a canvas
         const ctx = canvas.getContext('2d'); // get its context
@@ -220,11 +290,17 @@ export default {
         a.click();
       },
   },
+  mounted(){
+    this.startCamera()
+  },
   components:{
+    Navigation
   }
 }
 import api from '@/services/api'
 import axios from 'axios'
+import Navigation from '@/components/Navigation'
+import unirest from 'unirest'
 //const Kairos =  require('@/assets/kairos.js')
 //import { promisfy } from "@/helpers/promisify";
 </script>

@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- summary of results -->
-    <v-container grid-list-sm class="grey lighten-3">
+    <v-container grid-list-sm class="mt-3 round grey lighten-3">
       <v-card flat class="grey lighten-5">
         <v-subheader class="font-weight-bold">Summary Of Results</v-subheader>
         <v-layout row wrap>
@@ -88,14 +88,35 @@
           <v-flex xs12 sm4 d-flex class="pt-0">
             <v-card class="dflex">
               <v-subheader class='font-weight-bold'>Winners</v-subheader>
+              
               <v-list dense two-line>
-                <div v-for="winner in winners" :key="`${winner.id}${winner.score}`">
-                  <v-list-tile avatar>
+                <!-- if there are ties in the scores -->
+                <div v-for="winner in winners" :key="`${winner.id}${winner.score}`"
+                  v-if="typeof winner[0] == 'object'">
+                  
+                  <v-list-tile avatar v-for="winner2 in winner" :key="winner2.id">
                     <v-list-tile-avatar>
-                      <img :src="winner.imgSrc || `https://ui-avatars.com/api/?name=${winner.name}`">
+                      <img :src="getDetail(winner2.id).photoURL || `https://ui-avatars.com/api/?name=${getName(winner2.id)}`">
                     </v-list-tile-avatar>
                     <v-list-tile-content class='font-weight-bold'>
-                      {{winner.name}}
+                      {{getName(winner2.id)}}
+                      <v-list-tile-sub-title>{{winner2.score}} votes</v-list-tile-sub-title>
+                    </v-list-tile-content>
+                      
+                      <v-list-tile-action class='font-weight-bold'> {{winner2.role}}</v-list-tile-action>
+                    
+                  </v-list-tile>
+                  <v-divider></v-divider>
+                </div>
+                <!-- no ties -->
+                <div v-for="winner in winners" :key="`${winner.id}${winner.score}`"
+                  v-else>
+                  <v-list-tile avatar v-for="winner in winner" :key="winner.id">
+                    <v-list-tile-avatar>
+                      <img :src="getDetail(winner.id).photoURL || `https://ui-avatars.com/api/?name=${getName(winner.id)}`">
+                    </v-list-tile-avatar>
+                    <v-list-tile-content class='font-weight-bold'>
+                      {{getName(winner.id)}}
                       <v-list-tile-sub-title>{{winner.score}} votes</v-list-tile-sub-title>
                     </v-list-tile-content>
                       
@@ -119,84 +140,95 @@
         </v-layout>
       </v-card>
     </v-container>
-
-    <v-container grid-list-xl>
+    <!-- All Results -->
+    <v-container grid-list-xl class="px-0">
       <v-subheader>All results</v-subheader>
-      <v-layout row wrap>
-        <vue-headful
-          :title="title"
-        />
-        <v-flex xs12 sm6 md4 v-for="result in sortedResults" :key="result.role" mb-3>
-          <v-card>
-            <v-card-text class="title text-capitalize">
-              {{result.role}}
-            </v-card-text>
-            <v-divider></v-divider>
-            <v-list dense>
-              <v-list-tile>
-                <v-list-tile-content>Rank</v-list-tile-content>
-                <v-list-tile-content class="align-end"># of votes</v-list-tile-content>
-              </v-list-tile>
-            </v-list>
-            <v-divider></v-divider>
-            <v-list>
-              <v-list-tile avatar v-for="(contestant,i) in result.contestants" :key="contestant.id">
-                <v-list-tile-avatar>
-                  <!--img :src="contestant.imgSrc"-->
-                  {{i+1}}
-                </v-list-tile-avatar>
-                <v-list-tile-avatar>
-                  <img :src="contestant.imgSrc || `https://ui-avatars.com/api/?name=${contestant.name}`">
-                </v-list-tile-avatar>
-                <v-list-tile-content>{{contestant.name}}
-                  <v-progress-linear color="secondary" :value="percentage_score(contestant,result.role)"></v-progress-linear>
-                </v-list-tile-content>
-                <span class="align-end mr-3" style="font-size:15px;"> {{contestant.position  }}  </span>
-                <span class="align-end">{{ contestant.score}}{{percentage_score(contestant)}}</span>
-              </v-list-tile>
-            </v-list>
-          </v-card>
-        </v-flex>
-      </v-layout>
+      <v-card class="round pa-4 grey lighten-3">
+        <v-layout row wrap>
+          <vue-headful
+            :title="title"
+          />
+          <v-flex xs12 sm6 md4 v-for="result in sortedResults" :key="result.role" mb-3>
+            <v-card>
+              <v-card-text class="title text-capitalize">
+                {{result.role}}
+              </v-card-text>
+              <v-divider></v-divider>
+              <v-list dense>
+                <v-list-tile>
+                  <v-list-tile-content>Rank</v-list-tile-content>
+                  <v-list-tile-content class="align-end"># of votes</v-list-tile-content>
+                </v-list-tile>
+              </v-list>
+              <v-divider></v-divider>
+              <v-list>
+                
+                <v-list-tile avatar v-for="(contestant,i) in result.contestants" :key="contestant.id">
+                  
+                  <v-list-tile-avatar>
+                    <!--accomodate for ties in result-->
+                    <template v-if="i == 0">{{i+1}}</template>
+                    <template v-if="i != 0">
+                      <template v-if="i != 0 && result.contestants[i].score == result.contestants[i-1].score">{{i}}</template>
+                      <template v-if="i != 0 && result.contestants[i].score != result.contestants[i-1].score">{{i+1}}</template>
+                    </template>
+                  </v-list-tile-avatar>
+                  <v-list-tile-avatar>
+                    <img :src="contestant.photoURL || `https://ui-avatars.com/api/?name=${contestant.name}`">
+                  </v-list-tile-avatar>
+                  <v-list-tile-content>{{contestant.name}}
+                    <v-progress-linear color="secondary" :value="percentage_score(contestant,result.role)"></v-progress-linear>
+                  </v-list-tile-content>
+                  <span class="align-end mr-3" style="font-size:15px;"> {{contestant.position  }}  </span>
+                  <span class="align-end">{{ contestant.score}}{{percentage_score(contestant)}}</span>
+                </v-list-tile>
+              </v-list>
+            </v-card>
+          </v-flex>
+        </v-layout>
+      </v-card>
     </v-container>
 
-    <v-container grid-list-xl>
-      <v-subheader>Charts</v-subheader>
-      <v-layout row wrap>
-        <v-flex xs12 sm4 md4 mb-3 v-for="role in roles" :key="role.title">
-          <v-card class="d-flex">
-            <v-container>
-              <v-toolbar flat dense color="white" tabs>
-                <v-toolbar-title><h5 class="text-capitalize">{{role.title}}</h5></v-toolbar-title>
-                <v-spacer></v-spacer>
-                <!--v-btn color="success" small flat class="text-capitalize">switch chart</v-btn-->
-                <v-tabs slot="extension"
-                  v-model="model" right
-                  color="" slider-color="yellow"
-                >
-                  <v-tab href="#tab-1">Bar</v-tab>
-                  <v-tab href="#tab-2"> Pie</v-tab>
-                </v-tabs>
-              </v-toolbar>
-              
-              <v-tabs-items v-model="model">
+    <!-- Charts -->
+    <v-container grid-list-xl class="px-0">
+      <v-subheader class="font-weight-bold">Charts</v-subheader>
+      <v-card class="round pa-4 pt-5 grey lighten-3">
+        <v-layout row wrap>
+          <v-flex xs12 sm4 md4 mb-3 v-for="role in roles" :key="role.title">
+            <v-card class="d-flex">
+              <v-container>
+                <v-toolbar flat dense color="white" tabs>
+                  <v-toolbar-title><h5 class="text-capitalize">{{role.title}}</h5></v-toolbar-title>
+                  <v-spacer></v-spacer>
+                  <!--v-btn color="success" small flat class="text-capitalize">switch chart</v-btn-->
+                  <v-tabs slot="extension"
+                    v-model="model" right
+                    color="" slider-color="yellow"
+                  >
+                    <v-tab href="#tab-1">Bar</v-tab>
+                    <v-tab href="#tab-2"> Pie</v-tab>
+                  </v-tabs>
+                </v-toolbar>
                 
-                <v-tab-item value="tab-2">
-                  <v-card flat>
-                    <pie-chart :chart-data="chartData[role.title]" :options="chartOptions2"></pie-chart>
-                  </v-card>
-                </v-tab-item>
-                <v-tab-item value="tab-1" >
-                  <v-card flat>
-                    <bar-chart :chart-data="chartData[role.title]" :options="chartOptions"></bar-chart>
-                  </v-card>
-                </v-tab-item>
-              </v-tabs-items>
-              
-            </v-container>
-          </v-card>
-        </v-flex>
-      </v-layout>
+                <v-tabs-items v-model="model">
+                  
+                  <v-tab-item value="tab-2">
+                    <v-card flat>
+                      <pie-chart :chart-data="chartData[role.title]" :options="chartOptions2"></pie-chart>
+                    </v-card>
+                  </v-tab-item>
+                  <v-tab-item value="tab-1" >
+                    <v-card flat>
+                      <bar-chart :chart-data="chartData[role.title]" :options="chartOptions"></bar-chart>
+                    </v-card>
+                  </v-tab-item>
+                </v-tabs-items>
+                
+              </v-container>
+            </v-card>
+          </v-flex>
+        </v-layout>
+      </v-card>
     </v-container>
   </div>
 </template>
@@ -275,10 +307,8 @@ export default {
         switch (true){
           case len > 1000000:
             return len / 1000000 + 'M +'
-            break;
           case len > 1000:
             return len / 1000 + 'K + '
-            break;
           default:
             return len
         }
@@ -293,10 +323,8 @@ export default {
         switch (true){
           case len > 1000000:
             return len / 1000000 + 'M +'
-            break;
           case len > 1000:
             return len / 1000 + 'K + '
-            break;
           default:
             return len
         }
@@ -309,15 +337,24 @@ export default {
         switch (true){
           case len > 1000000:
             return len / 1000000 + 'M +'
-            break;
           case len > 1000:
             return len / 1000 + 'K + '
-            break;
           default:
             return len
         }
       }
     },
+    ...mapGetters([
+      'isAuthenticated',
+      'getToken',
+      'getUser',
+      'getSchools',
+      'getContestants',
+      'getCurElection',
+      'getCurElectionResults',
+      'getCurElectionActivities'
+      // ...
+    ]),
   },
   components:{
     'pie-chart':piechart,
@@ -328,15 +365,15 @@ export default {
   methods:{
     getName(id){ // return the name of each contestant
       let user = this.contestants.filter(
-        item => item._id == id
+        item => item.uid == id
       )
-      return user[0].userId.name
+      return user[0].name
     },
     getDetail(id){ // return the name of each contestant
       let user = this.contestants.filter(
-        item => item._id == id
+        item => item.uid == id
       )
-      return user[0].userId
+      return user[0]
     },
     getPosition(role,score){
       let rl = this.results.filter( // filter out other roles
@@ -357,9 +394,24 @@ export default {
       let rl = this.results.filter(
         item => item.role == role
       ); // filter out other roles
-      return rl.sort((a,b)=>{
+      
+      // check if there is a tie
+      let sorted = rl.sort((a,b)=>{
         return b.score - a.score
-      })[0] // this guy is the winner
+      })
+      let scoreArr = []
+      let winners = []
+      console.log(typeof winners)
+      sorted.forEach(item=>{
+        winners.push(item)
+        if(scoreArr.indexOf(item.score) != -1 &&
+          !winners.find(winner=> winner.id == item.id)){
+          winners.push(item)
+        }
+        scoreArr.push(item.score)
+      })
+      
+      return winners
     },
     percentage_score(contestant,role){
       let total_score_for_role = this.sortedResults.find(a=> a.role == role)
@@ -368,7 +420,7 @@ export default {
       return total_score_for_role ?  contestant.score/total_score_for_role * 100 : ''
     },
     getImgSrc(id){
-      return this.contestants.filter(item=> item._id == id)[0].userId.imgSrc
+      return this.contestants.filter(item=> item.uid == id)[0].photoURL
     },
     sortResults(){
       this.roles.forEach(role=>{
@@ -378,7 +430,7 @@ export default {
           role.title == result.role ? cont.push({
             name:this.getName(result.id),
             score:result.score,
-            imgSrc:this.getImgSrc(result.id),
+            photoURL:this.getImgSrc(result.id),
             position:this.getPosition(role.title,result.score)
           }) : ''
           role.title == result.role ? total_score = total_score + result.score : ''
@@ -393,21 +445,27 @@ export default {
     getLabels(){
       
       this.roles.forEach(role=>{
+        //console.log(this.allVotes)
         let mylabels = []
         let mydata = []
         let mybgdColor = []
         this.contestants.map(d=>{
-          let bar = this.$store.state.allVotes.filter(item=> {
-            return d._id == item.id && item.role == role.title
+          
+          let bar = this.allVotes.filter(item=> {
+            return d.uid == item.id && item.role == role.title
           })
-          if(d.role == role.title){
-            mylabels.push(d.userId.name)
+          
+          if(d.contestsRef.find(elec => elec.electionRef == this.currElection.electionId)
+            .role == role.value){
+            mylabels.push(d.name)
           }
           bar[0] ? mydata.push(bar[0].score) : ''
           let random1 = Math.floor(Math.random() * Math.floor(255))
           let random2 = Math.floor(Math.random() * Math.floor(255))
           let random3 = Math.floor(Math.random() * Math.floor(255))
-          d.role == role.title ? mybgdColor.push(`rgba(${random1}, ${random2},  ${random3}, 0.5)`) : ''
+          d.contestsRef.find(elec => elec.electionRef == this.currElection.electionId)
+            .role == role.value ? 
+            mybgdColor.push(`rgba(${random1}, ${random2},  ${random3}, 0.5)`) : ''
         })
         this.chartData[role.title] = {
           labels:mylabels,
@@ -419,40 +477,47 @@ export default {
             }
           ]
         }
-        console.log(this.chartData[role.title])
+        //console.log(this.chartData[role.title])
 
       })
       
     },
     allWinners(){
       this.sortedResults.forEach(result => {
-        let theWinner = this.getWinner(result.role)
-        let him = this.getDetail(theWinner.id)
-        this.winners.push({
-          role:theWinner.role,
-          name:him.name,
-          imgSrc:him.imgSrc,
-          id:theWinner.id,
-          score:theWinner.score
+        //console.log(result)
+        if(result.contestants.length > 0){
+          let theWinners = this.getWinner(result.role)
+          //console.log(theWinners)
+          if(theWinners){
+            this.winners.push(theWinners)
+          }
         }
-          
-        )
-        
       });
+      //console.log(this.winners)
     }
   },
   async mounted(){
-    let res = await api().post(`dashboard/getresult/${this.id}`, {token:this.$store.getters.getToken});
-    console.log(res.data.finalScores);
-    console.log(res.data)
-    //console.log(res.data.election.contestants);
-    this.results = (res.data.finalScores).sort(
+    if(this.getCurElection.electionId == this.id){
+      this.results = this.getCurElectionResults
+
+      this.results = (res.data.finalScores).sort(
+        (a,b) => b.score - a.score
+      )
+
+      this.sortResults()
+      this.getLabels()
+      this.allWinners()
+    }
+    
+    
+    this.results = (this.allVotes).sort(
       (a,b) => b.score - a.score
     )
+    //console.log(this.results)
     this.sortResults()
     this.getLabels()
     this.allWinners()
-    console.log(this.contestants)
+    //console.log(this.contestants)
   },
   destroyed(){
     document.title = 'Vote | Facevote'
@@ -460,6 +525,7 @@ export default {
 }
 
 import api from '@/services/api'
+import {mapGetters} from 'vuex'
 import piechart from '@/charts/piechart'
 import barchart from '@/charts/barchart'
 //import polararea from '@/charts/polararea'

@@ -14,23 +14,23 @@
     <div style="height:calc(100% - 50px);overflow-y:auto;" class="navdrawr">
       <v-list subheader dense two-line>
         <v-subheader v-show="filteredList.length == 0">No results found</v-subheader>
-        <v-list-tile v-for="voter in filteredList" :key="voter._id" avatar :to="$route.params.electionId + '/profile/' + voter.username">
+        <v-list-tile v-for="member in filteredList" :key="member.uid" avatar :to="$route.params.electionId + '/profile/' + member.email">
           
           <v-list-tile-avatar>
             <!-- prefer to user loggedin user's info rather than his info from voters list -->
-            <img :src="getSrc(voter)">
+            <img :src="member.photoURL">
           </v-list-tile-avatar>
 
           <v-list-tile-content>
-            <v-list-tile-title class="text-capitalize">{{getName(voter)}}</v-list-tile-title>
-            <v-list-tile-sub-title v-if="getRole(voter)"><i>for</i> {{getRole(voter)}}</v-list-tile-sub-title>
+            <v-list-tile-title class="text-capitalize">{{member.name}}</v-list-tile-title>
+            <v-list-tile-sub-title v-if="getRole(member)"><i>for</i> {{getRole(member)}}</v-list-tile-sub-title>
           </v-list-tile-content>
           <v-list-tile-action>
-            <v-icon :color="checkIfOnline(voter.username)">lens</v-icon>
+            <v-icon :color="isOnline(member.uid) ? 'success' : 'grey'">lens</v-icon>
           </v-list-tile-action>
         </v-list-tile>
       </v-list>
-
+      <v-btn color="teal" dark small depressed @click="nextDocs(members[members.length -1])" v-if="members.length >= 25">See more..</v-btn>
       <v-divider></v-divider>
     </div>
   </div>
@@ -39,6 +39,7 @@
 export default {
   data:()=>({
     search:'',
+    onlineMembers:[],
     drawerRight: true,
     right: null,
     left: null,
@@ -47,16 +48,17 @@ export default {
       { title: 'Travis Howard', avatar: 'https:cdn.vuetifyjs.com/images/lists/5.jpg' }
     ]
   }),
-  props:['regVoters', 'contestants'],
+  props:['members', 'thisGroup'],
   computed: {
     filteredList() {
-      //console.log(this.regVoters)
-      if(this.regVoters && this.regVoters.length > 0){
-        //console.log(this.regVoters)
-        return this.regVoters.filter(voter => {
-          return voter.name.toLowerCase().includes(this.search.toLowerCase())
+      console.log(this.members)
+      if(this.members && this.members.length > 0){
+        //console.log(this.members)
+        return this.members.filter(member => {
+          return member.name.toLowerCase().includes(this.search.toLowerCase())
         })
       }
+      else{return []}
     },
     // Mix your getter(s) into computed with the object spread operator
     ...mapGetters([
@@ -66,27 +68,32 @@ export default {
     ]),
   },
   methods:{
+    nextDocs(lastVisible){
+      db.collection("moreUserInfo")
+        .where('enrolled','array-contains', this.$route.params.electionId)
+        .startAfter(lastVisible)
+        .limit(25).get().then(querySnapshot=>{
+          querySnapshot.forEach(doc=>{
+            //console.log(doc.id, " => ", doc.data());
+            this.members.push(doc.data())
+          })
+        }).catch(err=>{
+          console.log(err)
+        })
+    },
     checkProfile(){
       this.$eventBus.$emit('show_right_sidebar','profile');
     },
-    getSrc(voter){
-      // doing this so that when there is a profile update, the reactive user data will be updated here
-      return voter.username == this.getUser.username ? this.getUser.imgSrc : 
-      voter.imgSrc || `https://ui-avatars.com/api/?name=${voter.name}`
+    isOnline(userId){
+      console.log(userId,this.onlineMembers)
+      return this.onlineMembers.find(memberId => memberId == userId) ? 
+      true : false
     },
-    getName(voter){
-      // doing this so that when there is a profile update, the reactive user data will be updated here
-      let me = this.getUser
-      return voter.username == me.username ? me.name : voter.name
-    },
-    getRole(voter){ // return the role a user is contesting for
-      for(let cont of this.contestants){
-        if(cont.userId.username == voter.username){
-          return cont.role
-          break;
-        }
-        //else return null
-      }
+    getRole(member){ // return the role a user is contesting for
+      
+      let res = member.contestsRef.find(contest=>contest.electionRef == this.thisGroup.electionId)
+      //console.log(res)
+      return this.thisGroup.roles.find(role => role.value == res.role).title
     },
     checkIfOnline(username){
       let those_online = this.$store.state.those_online
@@ -95,10 +102,26 @@ export default {
     },
   },
   async mounted(){
-    //console.log(this.regVoters)
-    //setInterval(function(){
-    //  this.filteredList()
-    //}, 4000)
+    firebase.firestore().collection('status')
+      .where('state', '==', 'online')
+      .onSnapshot((snapshot)=>{
+        
+        snapshot.docChanges().forEach((change)=>{
+          
+          if (change.type === 'added') {
+            this.onlineMembers.push(change.doc.id)
+            var msg = 'User ' + change.doc.id + ' is online.';
+            console.log(msg);
+            // ...
+          }
+          if (change.type === 'removed') {
+            this.onlineMembers.splice(this.onlineMembers.indexOf(change.doc.id),1)
+            var msg = 'User ' + change.doc.id + ' is offline.';
+            console.log(msg);
+            // ...
+          }
+        });
+      });
   },
 
   destroyed(){

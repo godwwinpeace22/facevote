@@ -5,13 +5,13 @@
           <div v-if="divide(msg.timestamp, getChatMessages[i-1])" style="background:oldlace;font-weight:bold;text-align:center;">
             {{divide(msg.timestamp, getChatMessages[i-1])}}
           </div>
-          <div class="chat_rectangle " id="speech_bubble" :class=" msg.user == getUser.username ? 'reposition':''">
-            <div class="chat_avartar"><img :src="Img(msg.user)" alt="avartar"></div>
+          <div class="chat_rectangle " id="speech_bubble">
+            <div class="chat_avartar"><img :src="Img(msg.sender)" alt="avartar"></div>
             
             <div class="chat_content">
               <div style="width:100%;margin-top:0px;margin-bottom:0px;">
-                <span class="text-capitalize" v-if="msg.user != getUser.username " style="font-size:15px;margin-right:5px;">
-                  <a class="subheading" @click.prevent="$router.push(`/forum/${msg.room}/profile/${msg.user}`); 
+                <span class="text-capitalize" v-if="msg.sender != getUser.uid " style="font-size:15px;margin-right:5px;">
+                  <a class="subheading" @click.prevent="$router.push(`/forum/${msg.room}/profile/${getSender(msg.sender).email}`); 
                     $eventBus.$emit('Toggle_drawerRight', true)">
                   {{msg.name}}</a>
                 </span>
@@ -19,7 +19,7 @@
                 <span style="font-size:.9em;color:#555;" color="grey lighten-5">  {{parseDate(msg.timestamp)}}</span>
               </div>
               
-              <div style="width:100%;" v-if="!msg.imgSrc">
+              <div style="width:100%;">
 
                 <!-- the spice of life -->
                 <template v-for="item in msg.chat.split(' ')">
@@ -35,14 +35,15 @@
                   <template v-else>{{item}} </template>
 
                 </template>
-                
-                
-              </div>
-              <div v-else>
-                <div style="width:100%;">{{msg.chat}}</div>
-                <v-img :src="msg.imgSrc" max-width="300" max-height="300"></v-img>
-                
-                
+                <v-container grid-list-md>
+                  <v-layout row wrap>
+                    <v-flex xs12 sm4 v-for="(image,i) in msg.images" :key="i">
+                      <v-card height="150" class="mb-1" flat>
+                        <v-img :src='image' height="150" @click="carouselDialog(msg.images,i)"></v-img>
+                      </v-card>
+                    </v-flex>
+                  </v-layout>
+                </v-container>
               </div>
               
               <div class="show_reactions">
@@ -99,6 +100,66 @@
         </div>
           
       </div>
+
+      <!-- carousel dialog -->
+      <v-dialog v-model="carousel_dialog"
+        fullscreen transition="dialog-transition">
+        <v-toolbar dense flat color="grey" tile>
+          <v-toolbar-title class="white--text">Media files</v-toolbar-title>
+          <v-spacer></v-spacer>
+          <v-btn color="" dark icon @click="carousel_dialog = false">
+            <v-icon>close</v-icon>
+          </v-btn>
+        </v-toolbar>
+        <template>
+          <v-card color="" dark
+            flat tile>
+            <v-container fluid fill-height d-flex px-0>
+              <v-layout align-center justify-center>
+                <v-flex xs1 v-if="$vuetify.breakpoint.smAndUp">
+                  <v-btn color="" depressed icon @click="prev">
+                    <v-icon>chevron_left</v-icon>
+                  </v-btn>
+                </v-flex>
+                <v-flex xs12 sm10 md8>
+                  <v-window v-model="onboarding">
+                    <v-window-item v-for="(image,n) in carousel_images" :key="`card-${n}`">
+                      <v-card color="transparent" max-height="500" flat>
+                        <v-layout
+                          align-center
+                          justify-center
+                          fill-height
+                          tag="v-card-text"
+                        >
+                        
+                        <v-flex xs12>
+                          <v-img :src='image' min-height='300'></v-img>
+                        </v-flex>
+                        
+                        </v-layout>
+                      </v-card>
+                    </v-window-item>
+                  </v-window>
+                </v-flex>
+                <v-flex xs1 v-if="$vuetify.breakpoint.smAndUp">
+                  <v-btn depressed icon @click="next">
+                    <v-icon>chevron_right</v-icon>
+                  </v-btn>
+                </v-flex>
+              </v-layout>
+            </v-container>
+            <v-card-actions v-if="$vuetify.breakpoint.xsOnly" style="position:fixed;width:100%;bottom:0;">
+              <v-btn color="" depressed icon @click="prev">
+                <v-icon>chevron_left</v-icon>
+              </v-btn>
+              <v-spacer></v-spacer>
+              <v-btn depressed icon @click="next">
+                <v-icon>chevron_right</v-icon>
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </template>
+      </v-dialog>
     </div>
 </template>
 
@@ -117,6 +178,9 @@ export default {
   data:()=>({
     password: 'Password',
     show_reactions:false,
+    carousel_dialog:false,
+    carousel_images:[],
+    onboarding:0,
     drawer: null,
     message: 'Hey!',
     chat_messages:[],
@@ -128,7 +192,7 @@ export default {
     fab:true,
     curr_date:null
   }),
-  props:['regVoters'],
+  props:['members','room'],
   computed: {
     icon () {
       return this.icons[this.iconIndex]
@@ -142,15 +206,31 @@ export default {
   },
 
   methods: {
+    carouselDialog(images,index){
+      this.carousel_dialog = true
+      this.carousel_images = images
+      this.onboarding = index
+    },
+    next () {
+      this.onboarding = this.onboarding + 1 === this.carousel_images.length
+        ? 0
+        : this.onboarding + 1
+    },
+    prev () {
+      this.onboarding = this.onboarding - 1 < 0
+        ? this.carousel_images.length - 1
+        : this.onboarding - 1
+    },
     sameUser(msg){
-      return msg.user == this.getUser.username
+      return msg.sender == this.getUser.uid
     },
-    getName(username){
-      return this.regVoters.find(voter => voter.username == username).name
+    getSender(uid){
+      return this.members.find(member => member.uid == uid)
     },
-    Img(user){
+    Img(sender){
       //console.log('regvoters!: ', this.regVoters)
-      return this.regVoters ? this.regVoters.find(voter=> voter.username == user).imgSrc : null
+      let found = this.members.find(member=> member.uid == sender)
+      return this.members ? found ? found.photoURL : null : null
     },
     parseDate(timestamp){
       let d = new Date(timestamp)
@@ -162,7 +242,7 @@ export default {
     },
     goto(item,room){
       console.log(item,room)
-      if(this.regVoters.find(voter => voter.username == item.slice(1))){
+      if(this.members.find(voter => member.email == item.slice(1))){
         this.$router.push(`/forum/${room}/profile/${item.slice(1)}`)
         this.$eventBus.$emit('Toggle_drawerRight', true)
       }
@@ -206,20 +286,21 @@ export default {
       try {
         console.log(msg,reaction)
         let a_reaction = msg.reactions[reaction]
-        let me = this.getUser.username
+        let me = this.getUser.uid
 
-        if(a_reaction.indexOf(me) != -1){ // if user has reacted same way before
+        if(a_reaction.indexOf(me) != -1){ // if current user has reacted same way before
           
           a_reaction.splice(a_reaction.indexOf(me)) // this is reactive, so view are updated immediately
           
-          this.$eventBus.$emit('Add_Reaction',{
-            msgId:msg.msgId,reactions:msg.reactions,room:msg.room
+          
+          db.collection('chat_messages').doc(msg.msgId).update({
+            reactions:msg.reactions
           })
         }
-        else if(a_reaction.indexOf(me) == -1){ // if user hasn't reacted same way before
-          a_reaction.push(this.getUser.username) // this is reactive, so view are updated immediately
-          this.$eventBus.$emit('Add_Reaction',{
-            msgId:msg.msgId,reactions:msg.reactions,room:msg.room
+        else if(a_reaction.indexOf(me) == -1){ // if current user hasn't reacted same way before
+          a_reaction.push(this.getUser.uid) // this is reactive, so view are updated immediately
+          db.collection('chat_messages').doc(msg.msgId).update({
+            reactions:msg.reactions
           })
           //$('chat_home').scrollTop($('#chat_home')[0].scrollHeight);
         }
@@ -232,7 +313,24 @@ export default {
     scrollChat(){
        let doc = document.getElementById('chat_space')
       doc ? doc.scrollTop = doc.scrollHeight - doc.clientHeight : ''
-      console.log(doc.scrollTop)
+      //console.log(doc.scrollTop)
+    },
+    chatUpdate(){
+      
+      //console.log(this.$route.params.electionId)
+      if(this.$route.params.electionId){
+        db.collection('chat_messages').where('room','==',this.$route.params.electionId).onSnapshot(snapshot=>{
+          let msgs = []
+          snapshot.forEach(doc=>{
+            msgs.push(doc.data())
+            
+          })
+        
+          this.$store.dispatch('updateFromDb', msgs)
+          //console.log(msgs)
+          console.log(this.$store.state.chat_messages)
+        })
+      }
     }
   },
   mounted() {
@@ -240,11 +338,22 @@ export default {
       this.scrollChat()
     }, 4000);
     
+    firebase.auth().onAuthStateChanged((user)=>{
+      if (user) {
+        // User is signed in.
+        this.chatUpdate()
+        
+      } else {
+        console.log('No user is signed in.')
+      }
+    });
+    
+
     this.$eventBus.$on('Scroll_Chat', data=>{
       //this.scrollChat()
       console.log(data)
     })
-      console.log(this.regVoters)
+    
   },
   components:{
     'settings':Settings,

@@ -1,9 +1,16 @@
 <template>
   <div>
+    <navigation>
+      <span slot="title">Dashboard</span>
+      <h1 slot="extended_nav">Watch</h1>
+    </navigation>
     <vue-headful
       :title="title"
       :description="description"
     />
+    
+    <loading-bar v-show="!show_when_ready"></loading-bar>
+
     <v-container v-if="show_when_ready">
       <v-card >
         <v-layout row wrap>
@@ -17,7 +24,7 @@
                   <v-divider inset vertical class="mx-2"></v-divider>
                   <v-btn flat small class="white-text">Followers</v-btn>
                   <v-btn color="success" outline small class="white-text" @click="follow_election"
-                    :disabled='!!disabled.find(id => id == getUser._id)'>
+                    :disabled='!!disabled.find(id => id == getUser.uid)'>
                     {{follow_election_text}}
                   </v-btn>
                 </v-card-actions>
@@ -84,12 +91,12 @@
                 <v-btn fixed dark fab bottom right color="pink" ><v-icon>home</v-icon></v-btn>
               </v-card-text>
               <v-card-actions>
-                <v-btn @click="show_results_dialog = true" color="pink" 
-                  v-show="show_btn" dark v-if="inprogress || election_ended">
-                  View results
+                <v-btn @click="show_results_dialog = true" color="pink"
+                  v-show="show_btn" dark v-if="inprogress || election_ended" depressed small>
+                  See results
                 </v-btn>
-                <v-btn  color="pink" dark @click="show_voting_dialog = true" 
-                  v-show="show_btn"  v-if="inprogress" :disabled="voterdOrNot(getUser._id) == 'voted'">
+                <v-btn  color="teal" dark @click="show_voting_dialog = true" depressed small
+                  v-show="show_btn"  v-if="inprogress" :disabled="voterdOrNot(getUser.uid) == 'voted'">
                   Vote
                 </v-btn>
                 <v-tooltip top v-if="not_started">
@@ -115,11 +122,13 @@
                 Election Details
               </v-toolbar>
               <v-list dense>
-                <v-list-tile :to="`/users/${currElection.admin.username}`">
+                <v-list-tile :to="`/users/${currElection.admin}`">
                   <v-flex xs4>
                     <v-icon color="teal">person</v-icon>
                     Admin </v-flex>
-                  <v-flex xs8 class="text-capitalize"> {{currElection.admin.name}}</v-flex>
+                  <v-flex xs8 class="text-capitalize">
+                    {{getAdmin}}
+                  </v-flex>
                 </v-list-tile>
                 <v-list-tile>
                   <v-flex xs4>
@@ -176,7 +185,7 @@
                     <v-progress-circular style="display:block;margin:auto;"
                       :value="100"
                       color="success"
-                    >{{contestants.length}}</v-progress-circular>
+                    >{{currElection.contestants.length}}</v-progress-circular>
                     <div style="margin:auto;width:fit-content">Contestants</div>
                   </v-flex>
                   <v-flex xs4 justify-center>
@@ -239,7 +248,7 @@
     <v-dialog v-model="viewprofile" v-if="viewprofile" :style="styleObj"
       :fullscreen="$vuetify.breakpoint.smAndDown" width="300" hide-overlay>
       
-      <v-toolbar color="secondary" dense dark scroll-target="vprofile">
+      <v-toolbar  dense dark color="teal" scroll-target="vprofile">
         <v-toolbar-title>Profile</v-toolbar-title>
         <v-spacer></v-spacer>
         <v-btn icon dark @click="viewprofile = false">
@@ -265,23 +274,23 @@
               <v-tab href="#tab-3" class="text-capitalize"> Actions</v-tab>
 
               <v-tab-item value="tab-1">
-                <v-card-title class="py-2">{{currElection.regVoters.length}} Enrolled Voters</v-card-title>
+                <v-card-title class="py-2">{{regVoters.length}} Enrolled Voters</v-card-title>
                 <v-divider></v-divider>
                 
                 <v-container style="max-height:320px;overflow:auto;" class="scrollbar pl-0">
                   
                   <v-list two-line dense>
 
-                    <div v-for="(voter, index) in regVoters" :key="index">
-                      <v-list-tile  :key="voter.name" avatar @click="viewprofile = true; voterprofile = voter" :color="checkIfOnline(voter._id) ? 'default' : 'grey'">
+                    <div v-if="regVoters.length > 0" v-for="(voter, index) in regVoters" :key="index">
+                      <v-list-tile  :key="voter.name" avatar @click="viewprofile = true; voterprofile = voter" :color="checkIfOnline(voter.uid) ? 'default' : 'grey'">
                         <v-list-tile-avatar>
-                          <img :src="voter.imgSrc || `https://ui-avatars.com/api/?name=${voter.name}`">
+                          <img :src="voter.photoURL || `https://ui-avatars.com/api/?name=${voter.name}`">
                         </v-list-tile-avatar>
 
                         <v-list-tile-content>
                           <v-list-tile-title  class="text-capitalize">{{voter.name}}<span id="online_badge" v-if="checkIfOnline(voter)"></span></v-list-tile-title>
                           <!--v-list-tile-sub-title v-html="voter.username" ></v-list-tile-sub-title-->
-                          <v-list-tile-sub-title v-if="!isVoting(voter._id)"><span style=''>{{voterdOrNot(voter._id)}}</span></v-list-tile-sub-title>
+                          <v-list-tile-sub-title v-if="!isVoting(voter.uid)"><span style=''>{{voterdOrNot(voter.uid)}}</span></v-list-tile-sub-title>
                           <v-list-tile-sub-title v-else color="green"><span style='color:green;'>voting...</span></v-list-tile-sub-title>
                         </v-list-tile-content>
                       </v-list-tile>
@@ -304,8 +313,8 @@
                               title
                             </v-card-title>
                             <v-card-text class="white text--primary">
-                              <span>{{activity.by._id == currElection.admin._id ? 'Admin' : activity.by.name}} 
-                                {{activity.text}}</span>
+                              <!--span>{{activity.by == currElection.admin ? 'Admin' : extractVoter(activity.by).name}} 
+                                {{activity.text}}</span-->
                               <div class="caption">{{new Date(activity.dateCreated).toDateString('en-Us',{day:'numeric'})}}</div>
                             </v-card-text>
                           </v-card>
@@ -356,39 +365,43 @@
 
     <v-container grid-list-xs v-if="show_when_ready">
       <v-subheader class="font-weight-bold">Contestants</v-subheader>
+      
       <carousel :nav='true' :responsive="{0:{items:1,nav:false},600:{items:3,nav:true}}" >
-         <v-subheader v-if="contestants && contestants.length == 0">No contestants</v-subheader>
-        <v-card  class="mr-2 mb-1" height="280" v-for="contestant in contestants" :key="contestant._id">
+        
+        <v-subheader v-if="contestants && contestants.length == 0">No contestants</v-subheader>
+        <v-card  :class="i%2 > 0 ? 'purple round mr-2 mb-1' : 'teal round mr-2 mb-1'" 
+          dark height="280" v-if="contestants.length > 0" 
+          v-for="(contestant,i) in contestants" :key="contestant.email">
           <v-tooltip top>
             <v-img @click="viewManifesto(contestant)" class="hover" slot="activator"
-              :src="contestant.userId.imgSrc || `https://ui-avatars.com/api/?name=${contestant.userId.name}&size=300`"
+              :src="contestant.photoURL || `https://ui-avatars.com/api/?name=${contestant.name}&size=300`"
               height="150px"
             ></v-img>
-            <span>View <span class="text-capitalize">{{contestant.userId.name}}'s</span> manifesto</span>
+            <span>View <span class="text-capitalize">{{contestant.name}}'s</span> manifesto</span>
           </v-tooltip>
 
           <v-card-text primary-title style="cursor:-webkit-grab;cursor:grab;">
-            <span class="subheading success--text font-weight-bold mb-0 text-capitalize .text-truncate hover" @click="viewprofile = true; voterprofile = contestant.userId">
-              {{contestant.userId.name}}
-              <span id="online_badge" v-if="checkIfOnline(contestant.userId)"></span>
+            <span class="subheading font-weight-bold mb-0 text-capitalize .text-truncate hover" @click="viewprofile = true; voterprofile = contestant">
+              {{contestant.name}}
+              <span id="online_badge" v-if="checkIfOnline(contestant.email)"></span>
             </span>
           </v-card-text>
           <v-card-actions class="pa-3" style="cursor:-webkit-grab;cursor:grab;">
-            <span class='text-capitalize'>For {{contestant.role}}</span>
+            <span class='text-capitalize'>For {{getRole(contestant)}}</span>
             <v-spacer></v-spacer>
             <v-tooltip top>
-              <v-btn color="success" slot="activator" class="text-capitalize follow" v-if="contestant.userId.username != getUser.username" 
-                :disabled='!!disabled.find(id => id == contestant._id)'
-                flat outline small @click="follow($event,contestant)" :id="contestant._id">
-                {{contestant.userId.followers.length}}&nbsp;| Followers
+              <v-btn color="" slot="activator" class="text-capitalize follow" v-if="contestant.email != getUser.email" 
+                :disabled='!!disabled.find(email => email == contestant.email)'
+                flat outline small @click="follow($event,contestant)" :id="contestant.email">
+                {{contestant.followers.length}}&nbsp;| Followers
               </v-btn>
               
               <span :ref="contestant._id">
-                {{isFollowing(contestant) ? 'you are following ' + contestant.userId.name : 'Follow ' + contestant.userId.name}}
+                {{isFollowing(contestant) ? 'you are following ' + contestant.name : 'Follow ' + contestant.name}}
               </span>
             </v-tooltip>
-            <span v-if="contestant.userId.username == getUser.username" slot="activator">
-              {{contestant.userId.followers.length}}&nbsp;| Followers
+            <span v-if="contestant.email == getUser.email" slot="activator">
+              {{contestant.followers.length}}&nbsp;| Followers
             </span>
           </v-card-actions>
         </v-card>
@@ -424,9 +437,9 @@ export default {
     inprogress:false, // tells the timer whether the election is in progress or not
     election_ended:true, // tells the timer whether the election  has ended or not
     voterprofile:{},
-    activities:[],
+    //activities:[],
     contestants:[], // all the contestants for this election
-    votes:[], // contains all the votes made for the current election
+    votesArr:[], // contains all the votes made for the current election
     votingList:[], // list of people currently voting for the current election
     show_voting_dialog:false, // whether to show the voting window/ dialog
     show_results_dialog:false, // whether to show the results window/ dialog
@@ -456,12 +469,17 @@ export default {
         }
       }
     },
-    hasEnrolled(){
+    getAdmin(){
       console.log(this.regVoters)
-      return this.regVoters.find(voter => voter._id == this.getUser._id) ? true : false
+      let found = this.regVoters.find(voter => voter.email == this.currElection.admin)
+      return found ? found.name : this.currElection.admin
+    },
+    hasEnrolled(){
+      //console.log(this.regVoters)
+      return this.regVoters.find(voter => voter.uid == this.getUser.uid) ? true : false
     },
     follow_election_text(){
-      return this.currElection.followers.find(id => id == this.getUser._id) ? 
+      return this.currElection.followers.find(id => id == this.getUser.uid) ? 
       'Following' : 'Follow'
     },
     ...mapGetters([
@@ -472,57 +490,152 @@ export default {
       'getContestants',
       'getCurElection',
       'getCurElectionResults',
-      'getCurElectionActivities'
+      'getCurElectionActivities',
+      'getVotes',
       // ...
     ]),
     currElection(){
       return this.getCurElection
+    },
+    //contestants(){
+    //  return this.getContestants
+    //},
+    activities(){
+      return this.getCurElectionActivities
+    },
+    /*allVotes(){
+      return this.getCurElectionResults
+    },*/
+    votes(){
+      return this.getVotes
     }
   },
   methods:{
     async setup(){
-      let res = await api().post(
-        `dashboard/getId/${this.$route.params.electionId}`,
-        {token:this.getToken}
-      )
-      this.curElection = res.data
-      this.regVoters = res.data.regVoters
-      this.$store.dispatch('setCurElection', res.data)
+      // get election
+      let elecRef = db.collection('elections').doc(this.$route.params.electionId)
+      let res = await elecRef.get()
+      this.$store.dispatch('setCurElection', res.data())
 
-      let contestants = await api().post(
-        `dashboard/getContestants/${this.currElection._id}`,
-        {token:this.getToken}
-      )
-      // show only contestants that are not suspended. there for they can't be voted for
-      contestants = contestants.data.filter(item => item.suspended == false)
-      this.contestants = contestants
-      this.$store.dispatch('setCurElectionContestants', contestants)
-
-      let reslt = await api().post(`dashboard/getresult/${this.currElection._id}`, {token:this.getToken});
-      this.allVotes = reslt.data.finalScores
-      this.$store.dispatch('setCurElectionResults', reslt.data.finalScores)
-
-      let activities = await api().post(`dashboard/latestActivities/${res.data._id}`, {
-        token:this.getToken
+      // get registered voters
+      db.collection('moreUserInfo').where('enrolled','array-contains', this.$route.params.electionId)
+      .get().then(querySnapshot=>{
+        this.regVoters = []
+        querySnapshot.forEach(doc=>{
+          console.log(doc.id, " => ", doc.data());
+          this.regVoters.push(doc.data())
+        })
+        return this.regVoters
+      }).then(result=>{
+        // get contestants
+        let contestants = []
+        result.forEach(voter=>{
+          if(voter.contests.find(id => id == this.$route.params.electionId)){
+            contestants.push(voter)
+          }
+        })
+        console.log(contestants)
+        // show only contestants that are not suspended. therefore they can't be voted for
+        //contestants = contestants.data.filter(item => item.suspended == false)
+        this.contestants = contestants
+        //this.$store.dispatch('setCurElectionContestants', contestants)
+        this.open()
+        }).catch(err=>{
+        console.log(err)
       })
-      this.activities = activities.data
-      this.$store.dispatch('setCurElectionActivities', activities.data)
 
-      this.open()
+
+      
+      db.collection('votes').where('electionRef', '==', this.$route.params.electionId)
+      .onSnapshot(async querySnapshot=>{
+        let arr = []
+        querySnapshot.forEach(doc=>{
+          arr.push(doc.data())
+        })
+        this.votesArr = arr
+        console.log(this.votesArr)
+        this.allVotes = await this.getScores(await this.sortByRoles(this.votesArr))
+        console.log(this.allVotes)
+        this.getLabels()
+        this.$store.dispatch('allVotes', arr)
+      })
+      
+
+      // Get activities
+      db.collection('activities')
+      .where('electionRef','==',this.$route.params.electionId).get().then(querySnapshot=>{
+        let acts = []
+        querySnapshot.forEach(doc=>{
+          acts.push(doc.data())
+        })
+        this.$store.dispatch('setCurElectionActivities', acts)
+      })
+      
+
+      
+    },
+    async sortByRoles(votes){
+      let resultsByRoles = {};
+      if(votes.length > 0){
+        for(let item of Object.keys(votes[0].choices)){
+          resultsByRoles[item] = [];
+        }
+
+        
+        votes.map((item,index)=>{
+          for(let i=0;i<Object.keys(item.choices).length;i++){
+            let f = Object.keys(item.choices)[i] // each key
+            //console.log(f)
+            resultsByRoles[f].push(item.choices[f])
+          }
+          
+        })
+        //console.log(resultsByRoles)
+        /* => {
+                president:['contestant1id','contestant2id']
+              }
+        */
+        return resultsByRoles
+      }
+    },
+    async getScores(results){
+      let scores = [];
+      console.log('resultsByRoles: ', results)
+      for(let role in results){
+        
+        // sort the array of contestant ids in 'results[role]' by the ids
+        // so that duplicate ids are grouped together
+        //E.g ==> president:['contestant1id','contestant1id','contestant2id']
+        let sortedVal = results[role].sort()
+        sortedVal.forEach(id=>{
+          if(!scores.find(item=> item.id === id)){
+            let firstPos = sortedVal.indexOf(id);
+            let lastPos = sortedVal.lastIndexOf(id);
+            let score = lastPos - firstPos + 1;
+            scores.push({id:id,score:score,role:role});
+          }
+        })
+      }
+      console.log('scores: ', scores)
+      return scores;
     },
     async open(){
       try{
         this.countDownTimer()
         this.getLabels()
         this.show_when_ready = true
-        this.$eventBus.$emit('Update_Votes',{
-          user:this.getUser.username,
-          room:this.currElection._id
-        }) // after mounted, get the latest votes
       }catch(error){
         console.log(error)
       }
 
+    },
+    extractVoter(uid){
+      return this.regVoters.find(voter=> voter.uid == uid)
+    },
+    getRole(contestant){
+      let ref = contestant.contestsRef
+      .find(item=>item.electionRef == this.currElection.electionId)
+      return this.currElection.roles.find(role=>role.value = ref.role).title
     },
     countDownTimer(){
       //console.log(this.currElection.startDate)
@@ -547,50 +660,48 @@ export default {
 
         this.electionTime = {days:days, hours:hours, minutes:minutes, seconds:seconds}
         
-        if(this.currElection.regVoters){
-          let lent = Object.keys(this.regVoters).length
-          //console.log(this.votes)
-          if(this.votes && lent == this.votes.length){
-            // all voters have registered, stop the election
-            clearInterval(this.interval)
-            this.not_started = false
-            this.election_ended = true
-            this.inprogress = false
-            this.show_btn = true
-          }
-          else if(distance <= this.currElection.duration * 1000 * 60 * 60 && distance > 0){
-            // the election is in progress
-            //console.log('step2')
-            this.not_started = false
-            this.election_ended = false
-            this.inprogress = true
-            this.electionTime = {days:days + "d ", hours:hours + "h ", minutes:minutes + "m ", seconds:seconds + "s "}
-            this.show_btn = true
-          }
-          else if(distance <= 0 ){ // election duration is reached
-            //console.log(distance)
-            //console.log('step3')
-            clearInterval(this.interval)
-            this.inprogress = false
-            this.not_started = false
-            this.election_ended = true
-            this.show_btn = true
-          }
-          else{ // election not yet started
-            //console.log('step4')
-            this.not_started = true
-            this.inprogress = false
-            this.election_ended = false
-            this.show_btn = true
-          }
+        let lent = Object.keys(this.regVoters).length
+        
+        if(this.getVotes && lent == this.getVotes.length){
+          // all voters have registered, stop the election
+          clearInterval(this.interval)
+          this.not_started = false
+          this.election_ended = true
+          this.inprogress = false
+          this.show_btn = true
+        }
+        else if(distance <= this.currElection.duration * 1000 * 60 * 60 && distance > 0){
+          // the election is in progress
+          //console.log('step2')
+          this.not_started = false
+          this.election_ended = false
+          this.inprogress = true
+          this.electionTime = {days:days + "d ", hours:hours + "h ", minutes:minutes + "m ", seconds:seconds + "s "}
+          this.show_btn = true
+        }
+        else if(distance <= 0 ){ // election duration is reached
+          //console.log(distance)
+          //console.log('step3')
+          clearInterval(this.interval)
+          this.inprogress = false
+          this.not_started = false
+          this.election_ended = true
+          this.show_btn = true
+        }
+        else{ // election not yet started
+          //console.log('step4')
+          this.not_started = true
+          this.inprogress = false
+          this.election_ended = false
+          this.show_btn = true
         }
         
       }, 1000);
     },
     voterdOrNot(id){
-      if(this.votes){
-        let thisUser = this.votes.filter( eachvote => eachvote.voterId == id)
-        return thisUser.length == 0 ? 'Not voted': 'voted'
+      if(this.currElection){
+        let voted = this.currElection.voted.find(item => item == id)
+        return voted ? 'Voted': 'Not voted'
       }
       else{
         return 'Not voted'
@@ -598,23 +709,22 @@ export default {
     },
     isNotVoting(){
       console.log('closed voting dialog')
-      this.votingList.splice(this.votingList.indexOf(this.getUser._id), 1)
+      this.votingList.splice(this.votingList.indexOf(this.getUser.uid), 1)
     },
     getLabels(){
-      let labels = []
-      let data = []
-      let bgdColor = []
-      
+      this.labels = []
+      this.data = []
+      this.bgdColor = []
       this.contestants.map(d=>{
-        if(this.allVotes){ // if there are votes
+        if(this.allVotes && this.contestants.length > 0){ // if there are votes
 
-        
-        let foo = this.allVotes.filter(item=> {
-          return d._id == item.id
+        // get votes for a particular contestant
+        let foo = this.allVotes.filter(vote=> {
+          return d.uid == vote.id
         })
         //console.log(item)
-        //console.log(foo)
-        this.labels.push(d.userId.name)
+        console.log(d)
+        this.labels.push(d.name)
         //this.labels = labels
         this.data.push(foo[0] ? foo[0].score > 0 ? foo[0].score : 0 : 0)
         //this.data = data
@@ -645,94 +755,96 @@ export default {
       switch (activity.type) {
         case 'voter_registered':
           return 'purple'
-          break;
         case 'election_created':
           return 'primary'
-          break
         case 'election_edited':
           return 'success'
-          break
         case 'logo_updated':
           return 'secondary'
-          break
         case 'new_contestant':
           return 'teal'
-          break
         case 'voter_registered':
           return 'orange'
-          break
         case 'vote_casted':
           return 'success'
-          break
         case 'contestant_suspended':
           return 'black'
-          break
         case 'contestant_restored':
           return 'success'
-          break
         default:
           return 'white'
-          break;
       }
     },
     isFollowing(contestant){
-      return contestant.userId.followers.indexOf(this.getUser._id) == -1 ? false : true
+      return contestant.followers.indexOf(this.getUser.uid) == -1 ? false : true
     },
     follow(event,contestant){
-      if(contestant.userId.followers.indexOf(this.getUser._id) == -1){
-        this.disabled.push(contestant._id)
-        contestant.userId.followers.push(this.getUser._id)
+      //console.log(contestant)
+      if(contestant.followers.indexOf(this.getUser.uid) == -1){
+        this.disabled.push(contestant.uid)
+        contestant.followers.push(this.getUser.uid)
 
-        api().post(`dashboard/followContestant/${contestant.userId._id}/${this.getUser._id}`, {token:this.getToken}).then(res=>{
+        db.collection('moreUserInfo').doc(contestant.email).update({
+          followers:firebase.firestore.FieldValue.arrayUnion(this.getUser.uid)
+        }).then(async res=>{
+          await db.collection('moreUserInfo').doc(this.getUser.email).update({
+            following:firebase.firestore.FieldValue.arrayUnion(contestant.uid)
+          })
           if(res){
             //this.contestants = res.data,
-            this.disabled.splice(this.disabled.indexOf(contestant._id),1)
-            this.$refs[contestant._id][0].innerText = `you are following ${contestant.userId.name}`
+            this.disabled.splice(this.disabled.indexOf(contestant.uid),1)
+            this.$refs[contestant.uid][0].innerText = `you are following ${contestant.name}`
             //console.log(res.data)
-            this.disabled.splice(this.disabled.indexOf(contestant._id),1)
+            this.disabled.splice(this.disabled.indexOf(contestant.uid),1)
           }
         })
       }
       else{
-        this.disabled.push(contestant._id)
-        contestant.userId.followers.splice(contestant.userId.followers.indexOf(this.getUser._id), 1)
+        this.disabled.push(contestant.uid)
+        contestant.followers.splice(contestant.followers.indexOf(this.getUser.uid), 1)
         
         //event.target.innerText = `(${contestant.followers.length - 1})  follow`
-        api().post(`dashboard/unfollowContestant/${contestant.userId._id}/${this.getUser._id}`, {token:this.getToken}).then(res=>{
+        db.collection('moreUserInfo').doc(contestant.email).update({
+          followers:firebase.firestore.FieldValue.arrayRemove(this.getUser.uid)
+        }).then(async res=>{
+          await db.collection('moreUserInfo').doc(this.getUser.email).update({
+            following:firebase.firestore.FieldValue.arrayRemove(contestant.uid)
+          })
           if(res){
-            this.$refs[contestant._id][0].innerText = `Follow ${contestant.userId.name}`
+            this.$refs[contestant.uid][0].innerText = `Follow ${contestant.name}`
             //console.log(res.data)
-            this.disabled.splice(this.disabled.indexOf(contestant._id),1)
+            this.disabled.splice(this.disabled.indexOf(contestant.uid),1)
           }
+        }).catch(err=>{
+          console.log(err)
         })
       }
       
       
     },
     follow_election(){
-      console.log(this.getUser)
+      //console.log(this.getUser)
       let this_user = this.getUser
-      this.disabled.push(this_user._id)
-      if(this.currElection.followers.find(data=> data == this_user._id)){
+      this.disabled.push(this_user.uid)
+      if(this.currElection.followers.find(data=> data == this_user.uid)){
         // is following
         this.currElection.followers.splice(this.currElection.followers.indexOf(this_user),1)
-        api().post(`dashboard/unfollowElection/${this.currElection.electionId}/${this_user._id}`, {
-          token:this.getToken
+        db.collection('elections').doc(this.currElection.electionId).update({
+          followers:firebase.firestore.FieldValue.arrayRemove(this_user.uid)
         }).then(res=>{
-          if(res){
-            this.disabled.splice(this.disabled.indexOf(this_user._id),1)
-          }
+          this.disabled.splice(this.disabled.indexOf(this_user.uid),1)
+          
         })
       }
       else{
         // not following
-        this.currElection.followers.push(this_user._id)
-        api().post(`dashboard/followElection/${this.currElection.electionId}/${this_user._id}`, {
-          token:this.getToken
+        this.currElection.followers.push(this_user.uid)
+        db.collection('elections').doc(this.currElection.electionId).update({
+          followers:firebase.firestore.FieldValue.arrayUnion(this_user.uid)
         }).then(res=>{
-          if(res){
-            this.disabled.splice(this.disabled.indexOf(this_user._id),1)
-          }
+          
+          this.disabled.splice(this.disabled.indexOf(this_user.uid),1)
+          
         })
       }
     },
@@ -753,26 +865,7 @@ export default {
   async mounted(){
     // get the elections the user enrolled in
     try {
-      
-      if(this.getCurElection.electionId == this.$route.params.electionId){
-        this.open()
-      }
-      
       this.setup()
-      
-      //console.log(this.$store.state.allVotes)
-
-      this.$eventBus.$on('All_Votes', data=>{
-        // after component is mounted, receive all the votes casted
-        this.votes = data
-        console.log('alvotes data: ', data)
-        // the line below is bad!! don't use!
-        // clear the voting list, so that the 'voting...' will disappear from the users profile
-        this.votingList = []
-      })
-      this.$eventBus.$on('Update_Voting_Status', data=>{ // tell if a user is voting or not
-        this.votingList.push(data.user._id) // put the id of the user voting into the voting list
-      })
       
       this.$eventBus.$on('Hide_Profile', data=>{
         this.viewprofile = false
@@ -780,18 +873,18 @@ export default {
       
      
     } catch (error) {
-      console.log(error.response)
-      if(error.response.status == 401){
-        this.$router.push('/login')
-      }
+      console.log(error)
+      
     }
   },
   components:{
     ViewProfile,
+    LoadingBar,
     Vote,
     Results,
     BarChart,
-    carousel
+    carousel,
+    Navigation
   },
 }
 import api from '@/services/api'
@@ -801,6 +894,8 @@ import api from '@/services/api'
   import Vote from '@/components/Vote'
   import BarChart from '@/charts/barchart'
   import carousel from 'v-owl-carousel'
+  import Navigation from '@/components/Navigation'
+  import LoadingBar from '@/spinners/LoadingBar'
 </script>
 <style lang="scss" scoped>
   @mixin borderRadius($radius) {

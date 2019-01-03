@@ -8,34 +8,35 @@
       <v-toolbar-title>Settings</v-toolbar-title>
       <v-spacer></v-spacer>
       
-        <v-btn dark :small="$vuetify.breakpoint.xs" tile color="grey lighten-1" outline @click.native="$eventBus.$emit('hide_profile_settings', {})">Cancel</v-btn>
-        <v-btn dark :small="$vuetify.breakpoint.xs" tile  outline @click.native="save" :disabled="disabled_btn" :loading="saving">Save</v-btn>
-    
+      <v-btn dark :small="$vuetify.breakpoint.xs" tile color="grey lighten-1" outline @click.native="$eventBus.$emit('hide_profile_settings', {})">Cancel</v-btn>
+      <v-btn depressed color="secondary" @click.native="updateProfile" :disabled="disabled_btn" :loading="saving">Save</v-btn>
     </v-toolbar>
 
     <v-card-text>
       <v-layout row wrap>
         <v-flex sm8 xs12>
-          <v-container>
-            <v-layout row wrap justify-center>
-              <v-flex sm10 xs12 offset-sm-3>
-                <v-card tile>
-                  <v-card-title>Profile</v-card-title>
-                  <v-container>
-                    <v-layout row="">
-                      <v-flex xs12 d-flex>
-                        <v-text-field required small v-model="form.name" style="text-transform:capitalize"
-                         color="pink" browser-autocomplete="name" :placeholder="getUser.name" 
-                         label="Your Name">
-                         </v-text-field>
-                      </v-flex>
-                    </v-layout>
-                  </v-container>
+
+          <v-container grid-list-md>
+            <v-layout row wrap>
+              <v-flex xs12 sm10 offset-sm1>
+                <v-card  flat>
+                  <v-card-text>Profile</v-card-text>
+                  <v-card-text>
+                    <v-text-field class="mb-4" required small v-model="form.name" style="text-transform:capitalize"
+                      color="pink" browser-autocomplete="name" :placeholder="getUser.displayName" 
+                      label="Your Name">
+                    </v-text-field>
+
+                    <v-text-field required small v-model="form.email" style="text-transform:capitalize"
+                      color="pink" browser-autocomplete="email" :placeholder="getUser.email" 
+                      label="Your Email">
+                    </v-text-field>
+                  </v-card-text>
+                  
                 </v-card>
               </v-flex>
             </v-layout>
           </v-container>
-
 
           <v-container>
             <v-layout row wrap justify-center>
@@ -43,6 +44,7 @@
                 <v-card tile>
                   <v-card-title>School</v-card-title>
                   <v-card-text>
+                    
                     <v-checkbox
                       :label="form.is_student ? 'I am a student' : 'I am not a student'"
                       v-model="form.is_student"
@@ -76,45 +78,6 @@
             </v-layout>
           </v-container>
 
-
-          <v-container>
-            <v-layout row wrap justify-center>
-              <v-flex xs12 sm10 offset-sm-3>
-                <v-card tile>
-                  <v-list three-line subheader>
-                    <v-subheader>General</v-subheader>
-                    <v-list-tile avatar>
-                      <v-list-tile-action>
-                        <v-checkbox v-model="form.notifications"></v-checkbox>
-                      </v-list-tile-action>
-                      <v-list-tile-content>
-                        <v-list-tile-title>Notifications</v-list-tile-title>
-                        <v-list-tile-sub-title>Notify me through email about elections I subscribed</v-list-tile-sub-title>
-                      </v-list-tile-content>
-                    </v-list-tile>
-                    <v-list-tile avatar>
-                      <v-list-tile-action>
-                        <v-checkbox v-model="form.sound"></v-checkbox>
-                      </v-list-tile-action>
-                      <v-list-tile-content>
-                        <v-list-tile-title>Sound</v-list-tile-title>
-                        <v-list-tile-sub-title>Play sounds during notifications</v-list-tile-sub-title>
-                      </v-list-tile-content>
-                    </v-list-tile>
-                    <v-list-tile avatar>
-                      <v-list-tile-action>
-                        <v-checkbox v-model="form.extra"></v-checkbox>
-                      </v-list-tile-action>
-                      <v-list-tile-content>
-                        <v-list-tile-title>Auto-add widgets</v-list-tile-title>
-                        <v-list-tile-sub-title>Automatically add home screen widgets</v-list-tile-sub-title>
-                      </v-list-tile-content>
-                    </v-list-tile>
-                  </v-list>
-                </v-card>
-              </v-flex>
-            </v-layout>
-          </v-container>
         </v-flex>
 
         <v-flex sm4 xs12>
@@ -125,7 +88,7 @@
                 <v-card tile height="380">
                   <v-hover v-if="!selected_file">
                     <v-container slot-scope="{ hover }">
-                      <v-img :src=" getUser.imgSrc || `https://ui-avatars.com/api/?name=${getUser.name}&size=300`" max-height="250" @click="openFileSelect">
+                      <v-img :src=" getUser.photoURL || `https://ui-avatars.com/api/?name=${getUser.name}&size=300`" max-height="250" @click="openFileSelect">
                         <v-expand-transition>
                           <div v-if="hover" class="d-flex transition-fast-in-fast-out teal darken-2 v-card--reveal display-5 white--text"
                             style="height: 100%;">
@@ -184,117 +147,19 @@ export default {
     disabled_btn:false,
     form: {
       name:'',
+      email:'',
       is_student:false,
       school:'',
       faculty:'',
       department:'',
       work:'',
       work_role:'',
-      notifications: false,
-      sound: true,
-      extra: false,
     },
     selected_file:null,
     blob_url:'',
     selected_school:'',
     selected_faculty:'',
     selected_department:'',
-    schools:[
-      {
-        text:'UNN',
-        value:'Unn',
-        faculties:[
-          {
-            text:'Physical science',
-            value:'Physical_science',
-            departments:[
-              {
-                text:'Physics and Astronomy',
-                value:'phy'
-              },
-              {
-                text:'Computer Science',
-                value:'cs',
-              },
-              {
-                text:'Geology',
-                value:'geology'
-              },
-              {
-                text:'Chemistry',
-                value:'chemistry'
-              },
-              {
-                text:'Statistics',
-                value:'statistics'
-              }
-            ]
-          },
-          {
-            text:'Biological Sciences',
-            value:'biological_sciences',
-            departments:[
-              {
-                text:'Biochemistry',
-                value:'biochemistry',
-              },
-              {
-                text:'Microbiology',
-                value:'microbiology'
-              }
-            ]
-          }
-        ]
-      },
-      {
-        text:'Funai',
-        value:'Funai',
-        faculties:[
-          {
-            text:'Pha',
-            value:'pha',
-            departments:[
-              {
-                text:'Chem',
-                value:'chem'
-              },
-              {
-                text:'Computer Science Technology',
-                value:'cst',
-              },
-              {
-                text:'Geology',
-                value:'geology'
-              },
-            ]
-          },
-          {
-            text:'Social Science',
-            value:'social_science',
-            departments:[
-              {
-                text:'Public Administration',
-                value:'palg',
-              },
-              {
-                text:'Archiology',
-                value:'archiology'
-              }
-            ]
-          },
-          {
-            text:'Phy',
-            value:'phy',
-            departments:[
-              {
-                text:'Chem',
-                value:'chem'
-              }
-            ]
-          }
-        ]
-      }
-    ],
     notifications: false,
     sound: true,
     widgets: false,
@@ -320,7 +185,7 @@ export default {
       //console.log('trigger file select')
     },
     onFileSelect(e){
-      console.log(e.target.files)
+
       if(e.target.files[0].type == 'image/jpeg' || 
         e.target.files[0].type == 'image/jpg' || 
         e.target.files[0].type == 'image/png'
@@ -346,7 +211,7 @@ export default {
       this.upload_text = 'Updating photo...'
       let formData = new FormData()
       formData.append('file', this.selected_file)
-      formData.append('username', this.getUser.username)
+      formData.append('uid', this.getUser.uid)
       try {
         let response = await api().post( 'dashboard/updateProfile/photo',
           formData,
@@ -356,17 +221,10 @@ export default {
             }
           }
         )
-       /* let res = await api().post(`https://api.cloudinary.com/v1_1/${this.cloudinary.cloud_name}/upload`, formData)
-        console.log(res.data)
-        console.log(this.getToken)
-        let res2 = await api().post('dashboard/updateProfile/photo', {
-          username:this.getUser.username,
-          imgSrc:res.data.secure_url,
-          token:this.getToken
-        })
-        
-        console.log(res2.data)*/
-        this.$store.dispatch('setUser', {user:response.data.user,token:response.data.token})
+  
+        firebase.auth().currentUser.getIdToken(true);
+
+        //this.$store.dispatch('setUser', {user:response.data.user,token:response.data.token})
         this.upload_text = 'Update photo'
         this.selected_file = null
         this.blob_url = null
@@ -382,40 +240,37 @@ export default {
         //$NProgress.end()
       }
     },
-    async save(){
-      //$eventBus.$emit('hide_profile_settings', {})
+    async updateProfile(){
       try {
         this.saving = true
         this.disabled_btn = true
-        console.log(this.form)
-        let saved = await api().post('dashboard/updateProfile/details', {
-          username:this.getUser.username,
-          ...this.form,
-          token:this.getToken
+        await firebase.auth().currentUser.updateProfile({
+          displayName: this.form.name,
+          email:this.form.email
         })
 
-        // preferences saved successfully
-        this.$store.dispatch('setUser', {user:saved.data.user,token:saved.data.token})
-        //this.$store.dispatch('setLoggedInUser', saved.data.user)
-        console.log(saved.data)
-        this.setCurrSettings(this.getUser)
+        let userRef = db.collection('moreUserInfo').doc(this.getUser.email);
+        let update = await userRef.update({
+          name:this.form.name,
+          email:this.form.email,
+          school:this.form.school.text,
+          faculty:this.form.faculty.text,
+          department:this.form.department.text
+        });
+
+        this.$eventBus.$emit('Show_Snackbar', {show:true,message:'Profile updated successfully', color:'success'})
         this.saving = false
         this.disabled_btn = false
-        //this.$eventBus.$emit('hide_profile_settings', {})
-        this.$eventBus.$emit('Show_Snackbar', {show:true,message:'Settings updated successfully', color:'success'})
       } catch (error) {
-        console.log(error)
-        alert('something went wrong. Please try again')
+        this.$eventBus.$emit('Show_Snackbar', {show:true,message:'Something went wrong', color:'error'})
         this.saving = false
         this.disabled_btn = false
-        $NProgress.end()
       }
-      
     },
     async allSchools(){
       try {
         let schls = await api().post('dashboard/getSchools')
-        console.log(schls)
+        //console.log(schls)
         //this.schools = schls.data
         this.$store.dispatch('setSchools', schls.data)
         this.setCurrSettings(this.getUser)
@@ -423,12 +278,14 @@ export default {
         console.log(error)
       }
     },
-    setCurrSettings(data){
-      /*let res = await api().post(`dashboard/getUser/${this.$store.getters.getUser.username}`, {
-        token:this.$store.getters.getToken
-      })*/
+    async setCurrSettings(data){
+      
       this.me = data
-      console.log(this.me)
+      let userDetails = db.collection('moreUserInfo').doc(this.getUser.email);
+
+      let getDoc = await userDetails.get()
+        this.me = getDoc.data()
+        console.log(this.me)
       if(this.me){
         this.form.notifications = this.me.notifications
         this.form.is_student = this.me.is_student
@@ -436,7 +293,7 @@ export default {
         this.form.faculty = this.form.school.faculties.find(
           faculty => faculty.text == this.me.faculty
         )
-        console.log(this.form.faculty)
+        //console.log(this.form.faculty)
         this.form.department = this.form.faculty.departments.find(
           department => department.text == this.me.department
         )
