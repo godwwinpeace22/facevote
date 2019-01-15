@@ -1,24 +1,24 @@
 <template>
   <div>
     <loading-bar v-if="!open"></loading-bar>
-    <v-container grid-list-md v-show="open">
+    <v-container grid-list-md v-if="open">
       <v-layout row wrap>
-        <v-flex xs12 md3 d-flex>
+        <v-flex xs12 md4 d-flex>
           <v-card style='min-height:200px;'>
-            <v-img :src='user.photoURL' height="300"/>
+            <v-img :src="user.photoURL || `https://ui-avatars.com/api/?name=${user.name}&size=300`" height="300"/>
             <v-subheader class="font-weight-bold grey--text">About</v-subheader>
             <v-divider></v-divider>
             <v-list dense>
-              <v-list-tile v-for="item in about_user" :key="item">
-                <v-flex xs4>{{item}}:</v-flex>
+              <v-list-tile v-for="item in about_user" :key="item" @click="''">
+                <v-flex xs4 class="text-capitalize font-weight-bold">{{item}}:</v-flex>
                 <v-flex xs8 :class="item != 'email' ? 'text-capitalize text-truncate' : 'text-truncate'">
-                  {{user[item]}}
+                  {{truncateText(user[item])}}
                 </v-flex>
               </v-list-tile>
             </v-list>
           </v-card>
         </v-flex>
-        <v-flex xs12 md9 d-flex>
+        <v-flex xs12 md8 d-flex>
           <v-container grid-list-md pt-0 px-0 mt-0>
             <v-layout row wrap>
               <v-flex xs12>
@@ -124,6 +124,9 @@ export default {
     },
   },
   methods:{
+    truncateText(text){
+      return text.replace(/(.{20})..+/, "$1...");
+    },
     getRole(contest){
       let currContest = this.user.contestsRef.find(item => item.electionRef == contest.electionId)
       
@@ -146,7 +149,7 @@ export default {
         querySnapshot.forEach(doc=>{
           this.followings.push(doc.data())
         })
-        //console.log(this.followings)
+        console.log(this.followings)
       })
     }
   },
@@ -154,8 +157,8 @@ export default {
     LoadingBar,
   },
   mounted(){
-    this.getFollowers();
-    this.getFollowings()
+    this.user.uid ? this.getFollowers() : ''
+    this.user.uid ? this.getFollowings() : ''
   }
 }
 import LoadingBar from '@/spinners/LoadingBar'

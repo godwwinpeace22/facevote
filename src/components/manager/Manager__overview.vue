@@ -1,5 +1,67 @@
 <template>
   <div>
+
+    <v-container grid-list-sm>
+      <v-card class="pt-2 pb-5">
+        <v-layout row wrap>
+          <v-flex xs12 sm6>
+            <v-card class="" flat>
+              <v-subheader class="title font-weight-light">
+                {{currElection.title}}
+              </v-subheader>
+              <v-list dense v-for="item in overviewItems" :key="item[0]">
+                <v-list-tile @click="''">
+                  <v-flex xs4 class="font-weight-bold">
+                   {{item[0]}}
+                  </v-flex>
+                  <v-flex xs8>
+                    {{item[1]}}
+                  </v-flex>
+                </v-list-tile>
+              </v-list>
+            </v-card>
+          </v-flex>
+          <v-flex xs12 sm6>
+            <v-card
+              class="mx-auto text-xs-center"
+              color="green"
+              dark max-width="600">
+              <v-card-text>
+                <v-sheet color="rgba(0, 0, 0, .12)">
+                  <v-sparkline
+                    :value="value"
+                    color="rgba(255, 255, 255, .7)"
+                    height="100"
+                    padding="24"
+                    stroke-linecap="round"
+                    smooth
+                  >
+                    <template
+                      slot="label"
+                      slot-scope="item"
+                    >
+                      ${{ item.value }}
+                    </template>
+                  </v-sparkline>
+                </v-sheet>
+              </v-card-text>
+
+              <v-card-text>
+                <div class="display-1 font-weight-thin">Sales Last 24h</div>
+              </v-card-text>
+
+              <v-divider></v-divider>
+
+              <v-card-actions class="justify-center">
+                <v-btn block flat>Go to Report</v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-flex>
+        </v-layout>
+      </v-card>
+    </v-container>
+
+
     <v-container grid-list-sm>
       <v-layout row wrap>
         <v-flex sm9 d-flex>
@@ -91,7 +153,7 @@
                           <strong>{{new Date(activity.dateCreated).toDateString('en-Us',{day:'numeric'})}}</strong>
                         </v-flex>
                         <v-flex>
-                          <strong>{{activity.by._id == currElection.admin._id ? 'Admin' : activity.by.name}} 
+                          <strong>{{activity.by == $store.getters.getUser.uid ? 'Admin' : extractVoter(activity.by).name}} 
                             {{activity.text}}</strong>
                           <div class="caption">Mobile App</div>
                         </v-flex>
@@ -122,15 +184,15 @@
                     <div v-for="(voter, index) in filteredList" :key="index">
                       <v-list-tile  :key="voter.name" avatar @click="viewprofile = true; voterprofile = voter" color="'default'">
                         <v-list-tile-avatar>
-                          <img :src="voter.imgSrc || `https://ui-avatars.com/api/?name=${usr.name}`">
+                          <img :src="voter.photoURL || `https://ui-avatars.com/api/?name=${voter.name}`">
                         </v-list-tile-avatar>
 
                         <v-list-tile-content>
-                          <v-list-tile-title  class="text-capitalize">{{voter.name}}<!--span id="online_badge" 'v-if="checkIfOnline(voter)"'></span--></v-list-tile-title>
+                          <v-list-tile-title  class="text-capitalize">{{voter.name}}</v-list-tile-title>
                           
                         </v-list-tile-content>
                         <v-list-tile-action>
-                          <v-btn color="success" class="text-lowercase" v-if="isContestant(voter._id)" depressed small>contestant</v-btn>
+                          <v-btn color="success" class="text-lowercase" v-if="isContestant(voter.uid)" depressed small>contestant</v-btn>
                         </v-list-tile-action>
                       </v-list-tile>
                       <v-divider  :inset="true" :key="index"></v-divider>
@@ -179,7 +241,7 @@
       style="visibility:hidden" @change="openFileModal($event)" />
     
     <!-- suspend contestant dialog -->
-    <v-dialog v-model="suspend_dialog" max-width="500px">
+    <v-dialog v-model="suspend_dialog" max-width="500px" persistent>
       <v-card min-height='200'>
         <v-card-title>
           <span class='headline text-capitalize'>Suspend {{culprit.name | capitalize}}</span>
@@ -190,14 +252,14 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn flat @click="suspend_dialog = false">Cancel</v-btn>
+          <v-btn flat @click="suspend_dialog = false" :disabled="loading">Cancel</v-btn>
           <v-btn color="success" outline @click="suspend" :loading="loading">Suspend</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
     <!-- election settings dialog -->
-    <v-dialog v-model="settings_modal" v-if="settings_modal" fullscreen hide-overlay transition="dialog-bottom-transition" scrollable>
+    <!--v-dialog v-model="settings_modal" v-if="settings_modal" fullscreen hide-overlay transition="dialog-bottom-transition" scrollable>
       <v-card>
         <v-toolbar color="success">
           <v-toolbar-title class="white--text">Edit Election</v-toolbar-title>
@@ -208,12 +270,26 @@
           <edit-election :e6='3'></edit-election>
         </v-card-text>
       </v-card>
-    </v-dialog>
+    </v-dialog-->
   </div>
 </template>
 <script>
 export default {
   data:()=>({
+    contestants:[],
+    currElection:{},
+    regVoters:[],
+    activities:[],
+    tabledata:[],
+    value: [
+      423,
+      446,
+      675,
+      510,
+      590,
+      610,
+      760
+    ],
     settings_modal:false,
     text:'Lorem, ipsum dolor sit amet sed earum esse, culpa, enim omnis fuga aperiam ad deserunt voluptates!',
     search:'', // search contestants
@@ -232,14 +308,13 @@ export default {
     ],
     loading:false,
     suspend_dialog:false,
-    culprit:'',
-    table_data:[],
+    culprit:{},
     cloudinary: {
       uploadPreset: 'r9tlxvid',
       cloudName: 'unplugged'
     },
   }),
-  props:['currElection','regVoters','contestants','tabledata','activities'],
+  props:[],
   filters: {
     capitalize: function (value) {
       if (!value) return ''
@@ -252,9 +327,17 @@ export default {
     }
   },
   components:{
-    EditElection,
+    //EditElection,
   },
   computed:{
+    overviewItems(){
+      return [
+        ['Election title',this.currElection.title],
+        ['Creation Date',new Date(this.currElection.dateCreated).toDateString('en-Us',{day:'numeric'})],
+        ['Followers',this.currElection.followers.length],
+        ['Start Time',this.currElection.startTime],
+      ]
+    },
     filteredList() {
       if(this.regVoters){
         return this.regVoters.filter(voter => {
@@ -263,11 +346,97 @@ export default {
       }
     },
    followText(){
-     return this.user.followers.indexOf(this.currUser._id) == -1 ? '+ Follow' : 'Following'
+     //return this.user.followers.indexOf(this.currUser._id) == -1 ? '+ Follow' : 'Following'
+     return 'following'
    },
    
   },
   methods:{
+    extractVoter(uid){
+      return this.regVoters.find(voter=> voter.uid == uid)
+    },
+    getRole(contestant){
+      let ref = contestant.contestsRef
+      .find(item=>item.electionRef == this.currElection.electionId)
+      return this.currElection.roles.find(role=>role.value = ref.role).title
+    },
+    async setUp(){
+      try {
+
+        // Get current election
+        db.collection('elections')
+          .doc(this.$route.params.electionId)
+          .get().then(docs=>{
+            this.currElection = docs.data()
+            console.log('currElection: ', this.currElection)
+          }).catch(err=>{
+            console.log(err)
+          })
+
+        // Get regvoters
+        db.collection('moreUserInfo')
+          .where('enrolled','array-contains',this.$route.params.electionId)
+          .get().then(querySnapshot=>{
+            let myArr = []
+            querySnapshot.forEach(doc=>{
+              myArr.push(doc.data())
+            })
+            this.regVoters = myArr
+            console.log('regVoters: ', this.regVoters)
+            return myArr
+          }).then(result=>{
+            // get contestants
+            let contestants = []
+            result.forEach(voter=>{
+              if(voter.contests && voter.contests.find(id => id == this.$route.params.electionId)){
+                contestants.push(voter)
+              }
+            })
+            console.log('contestants: ', contestants)
+            this.contestants = contestants
+            return contestants
+          }).then(conts=>{
+            this.setTableData(conts)
+          }).catch(err=>{
+            console.log(err)
+          })
+        
+      } catch (error) {
+        console.log(error)
+        if(error){}
+      }
+    },
+    setTableData(contestants){
+      this.tabledata = [] // to prevent multiple pushings
+      console.log(contestants)
+      contestants.forEach(cont=>{
+        let myObj = {
+          value:false,
+          name:cont.name,
+          email:cont.email,
+          contId:cont.uid, // contestant id
+          role:this.getRole(cont),
+          department:cont.department,
+          faculty:cont.faculty,
+          suspended:cont.contestsRef.find(item=> item.electionRef == this.currElection.electionId).suspended
+        }
+        this.tabledata.push(myObj)
+      })
+      console.log('tabledata: ', this.tabledata)
+    },
+    getActivities(){
+      // Get activities
+      db.collection('activities')
+      .where('electionRef','==',this.$route.params.electionId)
+      .get().then(querySnapshot=>{
+        let acts = []
+        querySnapshot.forEach(doc=>{
+          acts.push(doc.data())
+        })
+        this.activities = acts
+        console.log('activities: ', acts)
+      })
+    },
     async follow(){
       if(this.user.followers.indexOf(this.currUser._id) == -1){
         // not following user, follow this user
@@ -290,7 +459,7 @@ export default {
     },
     isContestant(id){
       //console.log(id)
-      return this.contestants.find(item => item.userId._id == id)
+      return this.contestants.find(item => item.uid == id)
     },
     getColor(activity){
       switch (activity.type) {
@@ -332,15 +501,31 @@ export default {
         item.contId == this.culprit.contId
       )
       this.tabledata[foo].suspended = true
-      
-      let result = await api().post(`dashboard/suspendContestant`, {
-        token:this.$store.getters.getToken,
-        ...this.culprit,
-        electionRef:this.currElection._id,
-        admin:this.currElection.admin._id
+
+      let theOffender = this.contestants.find(item=> item.uid == this.culprit.contId)
+
+      let filterdContests = []
+
+      theOffender.contestsRef.forEach(contest=>{
+        if(contest.electionRef != this.currElection.electionId){
+          filterdContests.push(contest)
+        }else{
+          filterdContests.push({
+            electionRef:contest.electionRef,
+            role:contest.role,
+            suspended:true
+          })
+        }
+      })
+
+      let userRef = db.collection('moreUserInfo').doc(this.culprit.email)
+      await userRef.update({
+        contestsRef:filterdContests
       })
       this.loading = false
       this.suspend_dialog = false
+      
+      
     },
     async restore(contestant){
       try {
@@ -351,13 +536,27 @@ export default {
           this.tabledata[index].suspended = false
         }, 2000);
         
-        let result = await api().post(`dashboard/restoreContestant`,{
-          token:this.$store.getters.getToken,
-          ...contestant,
-          electionRef:this.currElection._id,
-          admin:this.currElection.admin._id
+        let theOffender = this.contestants.find(item=> item.uid == contestant.contId)
+
+        let filterdContests = []
+
+        theOffender.contestsRef.forEach(contest=>{
+          if(contest.electionRef != this.currElection.electionId){
+            filterdContests.push(contest)
+          }else{
+            filterdContests.push({
+              electionRef:contest.electionRef,
+              role:contest.role,
+              suspended:false
+            })
+          }
         })
 
+        let userRef = db.collection('moreUserInfo').doc(contestant.email)
+        await userRef.update({
+          contestsRef:filterdContests
+        })
+        
       } catch (error) {
         alert(error)
         console.log(error)
@@ -368,9 +567,8 @@ export default {
   },
   async mounted(){
     try {
-      setTimeout(
-        _=> console.log(this.tabledata),
-      4000)
+      await this.setUp()
+      await this.getActivities()
       
     } catch (error) {
       console.log(error)
@@ -379,5 +577,5 @@ export default {
   }
 }
 import api from '@/services/api'
-  import EditElection from '@/components/EditElection'
+  //import EditElection from '@/components/EditElection'
 </script>

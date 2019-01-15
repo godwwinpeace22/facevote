@@ -13,7 +13,8 @@
       <v-toolbar-title slot="activator">
         <template v-if="$vuetify.breakpoint.smAndUp">
           <v-avatar size="36" color="grey lighten-4">
-            <img :src="getUser.photoURL || `https://ui-avatars.com/api/?name=${getUser.displayName}`" alt="avatar">
+            <img v-if="getUserInfo" :src="getUserInfo.photoURL || `https://ui-avatars.com/api/?name=${getUser.displayName}`" alt="avatar">
+            <img v-else  :src="getUser.photoURL || `https://ui-avatars.com/api/?name=${getUser.displayName}`" alt="avatar">
           </v-avatar>
           <v-icon dark>arrow_drop_down</v-icon>
         </template>
@@ -45,8 +46,6 @@
       </v-list>
     </v-menu>
     <slot name="extended_nav" slot="extension"></slot>
-    <slot name="manage_election" slot="extension"></slot>
-    <slot name="enroll" slot="extension"></slot>
   </v-toolbar>
 </template>
 <script>
@@ -63,7 +62,8 @@ export default {
     ...mapGetters([
       'isAuthenticated',
       'getToken',
-      'getUser'
+      'getUser',
+      'getUserInfo',
     ]),
   },
 }

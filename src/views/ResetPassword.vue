@@ -5,20 +5,23 @@
       :title="title"
       :description="description"
     />
+
+    <v-snackbar v-model="snackbar.show" dark color="error" 
+      :timeout="5000" :vertical="$vuetify.breakpoint.xsOnly" top right>
+      {{ snackbar.message }}
+      <v-btn dark flat color="black" @click="snackbar = {}"> Close</v-btn>
+    </v-snackbar>
+
     <v-content>
       <v-container fluid fill-height class="cc login">
         <v-layout align-center justify-center>
           <v-flex xs12 sm8 md4>
             
-            <v-snackbar v-model="snackbar" color="error" :timeout="30000" top>
-              {{ message }}
-              <v-btn dark flat @click="snackbar = null"> Close</v-btn>
-            </v-snackbar>
             <h1 class="text-xs-center white--text mb-3" ><a href="/" style="text-decoration:none;color:#fff"> Contestr</a></h1>
             <v-subheader class="white--text text-xs-center d-block">Recover your account</v-subheader>
             <v-card flat class="pb-1" v-if="!show">
               <v-card-text>
-                <v-card-title class="text-xs-center mb-5 headline grey--text">Reset Your Password</v-card-title>
+                <v-card-title class="text-xs-center d-block mb-5 headline grey--text">Reset Your Password</v-card-title>
                 <v-form v-model="valid" ref="form">
                   <v-text-field label="Enter your email" color="teal" outline class="mb-2" v-model="form.email" 
                     :rules="emailRules" browser-autocomplete="email" prepend-inner-icon="mail" required>
@@ -56,9 +59,8 @@ export default {
   data:()=>({
     title:'Recover Account | Facevote',
     description:'',
-    message:'',
     loading:false,
-    snackbar:false,
+    snackbar:{},
     show:false,
     form:{
       email: '',
@@ -81,23 +83,32 @@ export default {
       try{
         if(this.$refs.form.validate()){
           this.loading = true
-          let res = await api().post('users/resetPasswordRequest', this.form)
+          await this.sendPasswordReset(this.form.email)
           
           this.loading = false
           this.show = true
         }
         else{
           this.loading = false
-          this.snackbar = true
-          this.message = 'Please provide email'
+          this.snackbar = {show:true, message:'Please provide email'}
           $NProgress.done()
         }
       }
       catch(err){
         this.loading = false
-        this.snackbar = true
-        this.message = err.response.data.message
+        this.snackbar = {show:true, message:err.message}
         $NProgress.done()
+      }
+    },
+    async sendPasswordReset(email){
+      try{
+        let res = await firebase.auth()
+        .sendPasswordResetEmail(email)
+        return res
+      }catch(err){
+        //this.snackbar = {show:true, message:err.message}
+        console.log(err)
+        throw new Error('Something went wrong')
       }
     }
   }

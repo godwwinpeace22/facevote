@@ -35,10 +35,11 @@ import Vue from 'vue'
   import Users from '@/views/Users'
   import Login from '@/views/Login'
   import ResetPassword from '@/views/ResetPassword'
-  import Reset from '@/views/Reset'
+  //import Reset from '@/views/Reset'
   import Signup from '@/views/Signup'
-  import ConfirmRegistration from '@/views/ConfirmRegistration'
+  import Confirm from '@/views/Confirm'
   import Verify from '@/views/Verify'
+  import NotFound from '@/views/404'
   import store from '@/store/store'
   import NProgress from 'nprogress'
 Vue.use(Router)
@@ -243,6 +244,11 @@ const router = new Router({
           component:Results,
           beforeEnter:requireAuth,
           props:true
+        },
+        {
+          path:'/notFound',
+          name:'notfound',
+          component:NotFound
         }
       ]
     },
@@ -256,26 +262,20 @@ const router = new Router({
       path:'/signup',
       name:'signup',
       component:Signup,
-      beforeEnter:requireLogout
+      //beforeEnter:requireLogout
     },
     {
-      path:'/confirm/:confirmationHash',
+      path:'/confirm',
       name:'confirm',
-      component:ConfirmRegistration,
-      beforeEnter:requireLogout
+      component:Confirm,
+      //beforeEnter:requireLogout
     },
     {
       path:'/reset-password',
-      name:'resetpassword',
+      name:'reset-password',
       component:ResetPassword,
-      beforeEnter:requireLogout
+      //beforeEnter:requireLogout
     },
-    {
-      path:'/reset',
-      name:'reset',
-      component:Reset,
-      beforeEnter:requireLogout
-    }
   ]
 })
 
@@ -287,6 +287,14 @@ router.beforeResolve((to, from, next) => {
   }
   next()
 })
+
+router.beforeEach((to, from, next) => {
+  if (!to.matched.length) {
+    next('/notFound');
+  } else {
+    next();
+  }
+});
 
 router.afterEach((to, from) => {
   // Complete the animation of the route progress bar.

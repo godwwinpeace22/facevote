@@ -2,7 +2,7 @@
   <v-layout d-flex>
       <v-flex xs12 d-flex>
         <v-card :flat="$vuetify.breakpoint.smAndDown">
-          <v-img :src="user.photoURL || `https://ui-avatars.com/api/?name=${user.name}&size=300`" height="200" aspect-ratio="2.75"></v-img>
+          <v-img :src="user.photoURL || `https://ui-avatars.com/api/?name=${user.name}&size=300`" :height="$vuetify.breakpoint.smAndDown ? 300 : 200" aspect-ratio="2.75"></v-img>
 
           <v-card-title primary-title>
             <div>

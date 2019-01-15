@@ -13,8 +13,9 @@
       </v-btn>
     </v-toolbar>
     
-    <v-container class="pa-0 pt-3 private_chat_home">
-      <v-card flat pa-0 id="chat_space" style="height:30vh;margin-top:px;overflow-y:auto;background:ore;">
+
+    <v-container v-if='!loading_messages' class="pa-0 pt-3 private_chat_home">
+      <v-card flat pa-0 id="chat_space" style="height:62vh;margin-top:px;overflow-y:auto;background:ore;">
         <div v-for="(msg,i) in myConversations" :key="i">
           <div v-if="divide(msg.timestamp, myConversations[i-1])" class="time_divider">
             {{divide(msg.timestamp, myConversations[i-1])}}
@@ -66,6 +67,7 @@ export default {
   data:()=>({
     data:true,
     message:'',
+    loading_messages:true,
   }),
   computed:{
     styleObj(){
@@ -176,14 +178,15 @@ export default {
           msgs.push(doc.data())
         })
 
-        //console.log(msgs)
         this.$store.dispatch('private_conversations', msgs)
-        
+        this.loading_messages = false
+
         await this.markMsgsAsRead()
       })
   }
 }
 import { mapGetters } from 'vuex'
+  //import LoadingBar from '@/spinners/LoadingBar'
 </script>
 
 <style lang="scss">

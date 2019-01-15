@@ -21,33 +21,27 @@
       :title="title"
     />
 
+    <loading-bar v-if="show_loading_bar"></loading-bar>
+
     <v-tabs-items v-model="model">
 
       <v-tab-item value="created">
-        <v-container grid-list-md class="pa-5">
+        <intro v-if="!show_loading_bar && no_created" :text='no_created_text'></intro>
+
+        <v-container grid-list-md :class="{'pa-5':$vuetify.breakpoint.mdAndUp}" v-if="!no_created">
           <v-subheader class="body-2 pl-0">Elections you created</v-subheader>
           <v-card class="pa-4 round" style="min-height:300px;">
-            <v-layout row wrap mt-3 :justify-center='!data_available'>
-              <v-subheader v-if="myCreatedElc.length == 0 && data_available" class="warning--text">You have not created any election yet</v-subheader>
-              <v-progress-circular class="mt-3" v-if="!data_available" indeterminate color="grey lighten-1"></v-progress-circular>
+            <v-layout row wrap mt-3 >
               <v-flex xs12 sm6 md4 v-for="election in myCreatedElc" :key="election._id" mb-2 px-2>
-                <v-card color="" dark class="" height="200" hover>
+                <v-card color="" dark class="purple" height="200" hover>
                   <v-layout row>
-                    <v-flex xs7>
+                    <v-flex xs12>
                       <v-card-title primary-title>
                         <div>
                           <div class=""><strong>{{election.title}}</strong></div>
-                          <div>Registerd voters:</div>
-                          <div>({{election.regVoters.length}})</div>
+                          <div>{{election.regVoters.length}} | Registerd voters</div>
                         </div>
                       </v-card-title>
-                    </v-flex>
-                    <v-flex xs5>
-                      <v-img
-                        :src="election.logo || 'https://cdn.vuetifyjs.com/images/cards/halcyon.png'"
-                        height="125px"
-                        contain
-                      ></v-img>
                     </v-flex>
                   </v-layout>
                   <v-divider light></v-divider>
@@ -68,31 +62,22 @@
       </v-tab-item>
 
       <v-tab-item value="enrolled">
-        <v-container grid-list-sm class="pa-5">
+        <intro v-if="!show_loading_bar && no_contested" :text='no_enrolled_text'></intro>
+        
+        <v-container grid-list-sm :class="{'pa-5':$vuetify.breakpoint.mdAndUp}" v-if="!no_contested">
           <v-subheader class="body-2 pl-0">Elections you have enrolled in</v-subheader>
           <v-card class="pa-4 round" style="min-height:300px;">
-            <v-layout row wrap mt-3 :justify-center='!data_available'>
-              <v-subheader v-if="myEnrolledElc.length == 0 && data_available">You have not enrolled in any elections yet</v-subheader>
-              <v-progress-circular class="mt-3" v-if="!data_available" indeterminate color="grey lighten-1"></v-progress-circular>
-
+            <v-layout row wrap mt-3 >
               <v-flex xs12 sm6 md4 v-for="election in myEnrolledElc" :key="election._id" mb-2 px-2>
-                <v-card color="" class="" height="200" hover dark>
+                <v-card color="" class="secondary" height="200" hover dark>
                   <v-layout row>
-                    <v-flex xs7>
+                    <v-flex xs12>
                       <v-card-title primary-title>
                         <div>
                           <div class=""><strong>{{election.title}}</strong></div>
-                          <div>Registerd voters:</div>
-                          <div>({{election.regVoters.length}})</div>
+                          <div>{{election.regVoters.length}} | Registerd voters</div>
                         </div>
                       </v-card-title>
-                    </v-flex>
-                    <v-flex xs5>
-                      <v-img
-                        :src="election.logo || 'https://cdn.vuetifyjs.com/images/cards/halcyon.png'"
-                        height="125px"
-                        contain
-                      ></v-img>
                     </v-flex>
                   </v-layout>
                   <v-divider light></v-divider>
@@ -111,13 +96,12 @@
       </v-tab-item>
 
       <v-tab-item value="contested">
-        <v-container grid-list-md class="pa-5">
+        <intro v-if="!show_loading_bar && no_enrolled" :text='no_contested_text'></intro>
+
+        <v-container grid-list-sm :class="{'pa-5':$vuetify.breakpoint.mdAndUp}" v-if="!no_enrolled">
           <v-subheader class="body-2 pl-0">Elections you contested in</v-subheader>
           <v-card class="pa-4 round" style="min-height:300px;">
-            <v-layout row wrap mt-3 :justify-center='!data_available'>
-              <v-subheader v-if="myContestedElc.length == 0 && data_available">You have not contested in any elections yet</v-subheader>
-              <v-progress-circular class="mt-3" v-if="!data_available" indeterminate color="grey lighten-1"></v-progress-circular>
-
+            <v-layout row wrap mt-3 >
               <v-flex xs12 sm6 md4 v-for="(contest,index) in myContestedElc" :key="index" mb-2 px-2 v-if="contest">
                 <v-card color="" class="" dark height="200" hover >
                   <v-layout row>
@@ -150,17 +134,31 @@
 <script>
 import api from '@/services/api'
 import Navigation from '@/components/Navigation'
+import Intro from '@/components/Intro'
+import LoadingBar from '@/spinners/LoadingBar'
 export default {
   data:()=>({
     title:'Manage Elections | Facevote',
+    no_created_text:{data:'Created, Perferendis cumq corp quos aliquid, praes inventore assumenda kkd opre perkj sf jkdd mond',action:{text:'Create Election',action_link:'/elections/create'}},
+    no_contested_text:{data:'Contested, Perferendis cumq corp quos aliquid, praes inventore assumenda kkd opre perkj sf jkdd mond',action:{text:'Contest',action_link:'/contest'}},
+    no_enrolled_text:{data:'Enrolled,Perferendis cumq corp quos aliquid, praes inventore assumenda kkd opre perkj sf jkdd mond',action:{text:'Enroll',action_link:'/enroll'}},
     text:'Lorem, ipsum dolor sit amet consectetur adipisicing elit. Distinctio optio quidem, in aliquid laborum non nihil quasi id error, corrupti voluptatem consequatur nostrum blanditiis expedita omnis accusantium vitae veritatis aut?',
     model:'created',
-    //myCreatedElc:[], // elections user created
-    //myContestedElc:[], // elections user contested in
-    //myEnrolledElc:[], // elections user enrolled in
-    data_available:false,
+    show_loading_bar:true,
   }),
   computed:{
+    no_created(){
+      return this.myCreatedElc.length > 0 ?
+      false : true
+    },
+    no_contested(){
+      return this.myContestedElc.length > 0 ?
+      false : true
+    },
+    no_enrolled(){
+      return this.myEnrolledElc.length > 0 ?
+      false : true
+    },
     myEnrolledElc(){
       return this.$store.getters.getMyEnrolled
     },
@@ -220,8 +218,7 @@ export default {
     try {
       this.$store.getters.getMyCreated && this.$store.getters.getMyEnrolled && 
       this.$store.getters.getMyContested ? 
-      this.data_available = true : ''
-      //let res = await api().post(`dashboard/getElections/${this.$store.getters.getUser.username}`, {token:this.$store.getters.getToken})
+      this.show_loading_bar = false : ''
       
       firebase.auth().onAuthStateChanged(async (user)=>{
       if (user) {
@@ -232,7 +229,7 @@ export default {
         await this.getMyEnrolled(user)
         // get elections user contested in
         await this.getMyContests(user)
-        this.data_available = true
+        this.show_loading_bar = false
         
       } else {
         console.log('No user is signed in.')
@@ -244,7 +241,9 @@ export default {
     }
   },
   components:{
-    Navigation
+    Navigation,
+    LoadingBar,
+    Intro,
   },
 }
 </script>

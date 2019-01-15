@@ -1,172 +1,172 @@
 <template>
-    <div style="background:#fff;" class="pa-0 pt-3 chat_home" id="chat_home">
-      <div flat pa-0 id="chat_space" style="height:75vh;margin-top:px;overflow-y:auto;background:ore;">
-        <div v-for="(msg,i) in getChatMessages" :key="i">
-          <div v-if="divide(msg.timestamp, getChatMessages[i-1])" style="background:oldlace;font-weight:bold;text-align:center;">
-            {{divide(msg.timestamp, getChatMessages[i-1])}}
-          </div>
-          <div class="chat_rectangle " id="speech_bubble">
-            <div class="chat_avartar"><img :src="Img(msg.sender)" alt="avartar"></div>
+  <loading-bar v-if='loading_messages'>
+    <v-subheader slot='loading_info' class='d-block mx-auto' style='width:fit-content;'>Loading messages...</v-subheader>
+  </loading-bar>
+  <div v-else style="background:#fff;" class="pa-0 pt-3 chat_home chat_space" id="chat_home">
+    <div flat pa-0 id="chat_space" class="chat_space" style="height:60vh;margin-top:px;overflow-y:auto;">
+      <div v-for="(msg,i) in getChatMessages" :key="i">
+        <div v-if="divide(msg.timestamp, getChatMessages[i-1])" style="background:oldlace;font-weight:bold;text-align:center;">
+          {{divide(msg.timestamp, getChatMessages[i-1])}}
+        </div>
+        <div class="chat_rectangle ">
+          <div class="chat_avartar"><img :src="Img(msg.sender)" alt="avartar"></div>
+          
+          <div class="chat_content">
+            <div style="width:100%;margin-top:0px;margin-bottom:0px;">
+              <span class="text-capitalize" v-if="msg.sender != getUser.uid " style="font-size:15px;margin-right:5px;">
+                <a class="subheading" @click.prevent="$router.push(`/forum/${msg.room}/profile/${getSender(msg.sender).email}`); 
+                  $eventBus.$emit('Toggle_drawerRight', true)">
+                {{msg.name}}</a>
+              </span>
+              <span v-else style="margin-right:5px;"><strong>You  </strong></span>
+              <span style="font-size:.9em;color:#555;" color="grey lighten-5">  {{parseDate(msg.timestamp)}}</span>
+            </div>
             
-            <div class="chat_content">
-              <div style="width:100%;margin-top:0px;margin-bottom:0px;">
-                <span class="text-capitalize" v-if="msg.sender != getUser.uid " style="font-size:15px;margin-right:5px;">
-                  <a class="subheading" @click.prevent="$router.push(`/forum/${msg.room}/profile/${getSender(msg.sender).email}`); 
-                    $eventBus.$emit('Toggle_drawerRight', true)">
-                  {{msg.name}}</a>
-                </span>
-                <span v-else style="margin-right:5px;"><strong>You  </strong></span>
-                <span style="font-size:.9em;color:#555;" color="grey lighten-5">  {{parseDate(msg.timestamp)}}</span>
-              </div>
-              
-              <div style="width:100%;">
+            <div style="width:100%;">
 
-                <!-- the spice of life -->
-                <template v-for="item in msg.chat.split(' ')">
-                  
-                  <router-link event="" @click.native.prevent="goto(item,msg.room)" 
-                    v-if="item.charAt(0) == '@'" 
-                    :to="'/forum/' + msg.room + '/profile/' + item.slice(1)" :key="item">
-                    {{item.slice(1)}} 
-                  </router-link>
+              <!-- the spice of life -->
+              <template v-for="item in msg.chat.split(' ')">
+                
+                <router-link event="" @click.native.prevent="goto(item,msg.room)" 
+                  v-if="item.charAt(0) == '@'" 
+                  :to="'/forum/' + msg.room + '/profile/' + item.slice(1)" :key="item">
+                  @{{findAMember(item.slice(1))}}
+                </router-link>
 
-                  <router-link v-else-if="item.charAt(0) == '#'" :to="item" append :key="item">{{item}} </router-link>
+                <router-link v-else-if="item.charAt(0) == '#'" :to="item" append :key="item">{{item}} </router-link>
 
-                  <template v-else>{{item}} </template>
+                <template v-else>{{item}} </template>
 
-                </template>
-                <v-container grid-list-md>
-                  <v-layout row wrap>
-                    <v-flex xs12 sm4 v-for="(image,i) in msg.images" :key="i">
-                      <v-card height="150" class="mb-1" flat>
-                        <v-img :src='image' height="150" @click="carouselDialog(msg.images,i)"></v-img>
-                      </v-card>
-                    </v-flex>
-                  </v-layout>
-                </v-container>
-              </div>
-              
-              <div class="show_reactions">
-                <div class="reactions">
-                  <v-btn icon small @click="add_reaction(msg,'like')">
-                    <img alt="Thumbs Up Hand Gesture" width=30 height=30 src="http://www.sherv.net/cm/emoticons/hand-gestures/thumbs-up-hand-gesture-smiley-emoticon.gif">
-                  </v-btn>
-                  <v-btn icon small @click="add_reaction(msg,'love')">
-                    <v-icon color="red">favorite</v-icon>
-                  </v-btn>
-                  <v-btn icon small @click="add_reaction(msg,'haha')">
-                    <span class="emojis">😃</span>
-                  </v-btn>
-                  <v-btn icon small @click="add_reaction(msg,'wow')">
-                    <span class="emojis">😲</span>
-                  </v-btn>
-                  <v-btn icon small @click="add_reaction(msg,'angry')">
-                    <span class="emojis">😣</span>
-                  </v-btn>
-                  <v-btn icon small @click="add_reaction(msg,'excited')">
-                    <img alt="Big Dancing Banana" width=20 height=20 src="http://www.sherv.net/cm/emo/funny/2/big-dancing-banana-smiley-emoticon.gif">
-                  </v-btn>
-                </div>
-                <v-tooltip bottom>
-                  <v-btn icon small slot="activator">
-                    <v-icon color="success">mood</v-icon>
-                  </v-btn>
-                  <span>Add reactions</span>
-                  
-                </v-tooltip>
-              </div>
-              <div style="display:inline-block;">
-                <v-btn icon small @click="add_reaction(msg,'like')" v-show="msg.reactions.like.length > 0">
-                  {{msg.reactions.like.length}}<img alt="Thumbs Up Hand Gesture" width=30 height=30 src="http://www.sherv.net/cm/emoticons/hand-gestures/thumbs-up-hand-gesture-smiley-emoticon.gif">
+              </template>
+              <v-container grid-list-md v-if="msg.images">
+                <v-layout row wrap>
+                  <v-flex xs12 sm4 v-for="(image,i) in msg.images" :key="i">
+                    <v-card height="150" class="mb-1" flat>
+                      <v-img :src='image' height="150" @click="carouselDialog(msg.images,i)"></v-img>
+                    </v-card>
+                  </v-flex>
+                </v-layout>
+              </v-container>
+            </div>
+            
+            <div class="show_reactions">
+              <div class="reactions">
+                <v-btn icon small @click="add_reaction(msg,'like')">
+                  <img alt="Thumbs Up Hand Gesture" width=30 height=30 src="http://www.sherv.net/cm/emoticons/hand-gestures/thumbs-up-hand-gesture-smiley-emoticon.gif">
                 </v-btn>
-                <v-btn icon small @click="add_reaction(msg,'love')" v-show="msg.reactions.love.length > 0">
-                  {{msg.reactions.love.length}}<v-icon color="red">favorite</v-icon>
+                <v-btn icon small @click="add_reaction(msg,'love')">
+                  <v-icon color="red">favorite</v-icon>
                 </v-btn>
-                <v-btn icon small @click="add_reaction(msg,'haha')" v-show="msg.reactions.haha.length > 0">
-                  {{msg.reactions.haha.length}}<span class="emojis">😃</span>
+                <v-btn icon small @click="add_reaction(msg,'haha')">
+                  <span class="emojis">😃</span>
                 </v-btn>
-                <v-btn icon small @click="add_reaction(msg,'wow')" v-show="msg.reactions.wow.length > 0">
-                  {{msg.reactions.wow.length}}<span class="emojis">😲</span>
+                <v-btn icon small @click="add_reaction(msg,'wow')">
+                  <span class="emojis">😲</span>
                 </v-btn>
-                <v-btn icon small @click="add_reaction(msg,'angry')" v-show="msg.reactions.angry.length > 0">
-                  {{msg.reactions.angry.length}}<span class="emojis">😣</span>
+                <v-btn icon small @click="add_reaction(msg,'angry')">
+                  <span class="emojis">😣</span>
                 </v-btn>
-                <v-btn icon small @click="add_reaction(msg,'excited')" v-show="msg.reactions.excited.length > 0">
-                  {{msg.reactions.excited.length}}<img alt="Big Dancing Banana" width=20 height=20 src="http://www.sherv.net/cm/emo/funny/2/big-dancing-banana-smiley-emoticon.gif">
+                <v-btn icon small @click="add_reaction(msg,'excited')">
+                  <img alt="Big Dancing Banana" width=20 height=20 src="http://www.sherv.net/cm/emo/funny/2/big-dancing-banana-smiley-emoticon.gif">
                 </v-btn>
               </div>
+              <v-tooltip bottom>
+                <v-btn icon small slot="activator">
+                  <v-icon color="success">mood</v-icon>
+                </v-btn>
+                <span>Add reactions</span>
+                
+              </v-tooltip>
+            </div>
+            <div style="display:inline-block;">
+              <v-btn icon small @click="add_reaction(msg,'like')" v-show="msg.reactions.like.length > 0">
+                {{msg.reactions.like.length}}<img alt="Thumbs Up Hand Gesture" width=30 height=30 src="http://www.sherv.net/cm/emoticons/hand-gestures/thumbs-up-hand-gesture-smiley-emoticon.gif">
+              </v-btn>
+              <v-btn icon small @click="add_reaction(msg,'love')" v-show="msg.reactions.love.length > 0">
+                {{msg.reactions.love.length}}<v-icon color="red">favorite</v-icon>
+              </v-btn>
+              <v-btn icon small @click="add_reaction(msg,'haha')" v-show="msg.reactions.haha.length > 0">
+                {{msg.reactions.haha.length}}<span class="emojis">😃</span>
+              </v-btn>
+              <v-btn icon small @click="add_reaction(msg,'wow')" v-show="msg.reactions.wow.length > 0">
+                {{msg.reactions.wow.length}}<span class="emojis">😲</span>
+              </v-btn>
+              <v-btn icon small @click="add_reaction(msg,'angry')" v-show="msg.reactions.angry.length > 0">
+                {{msg.reactions.angry.length}}<span class="emojis">😣</span>
+              </v-btn>
+              <v-btn icon small @click="add_reaction(msg,'excited')" v-show="msg.reactions.excited.length > 0">
+                {{msg.reactions.excited.length}}<img alt="Big Dancing Banana" width=20 height=20 src="http://www.sherv.net/cm/emo/funny/2/big-dancing-banana-smiley-emoticon.gif">
+              </v-btn>
             </div>
           </div>
         </div>
-          
       </div>
-
-      <!-- carousel dialog -->
-      <v-dialog v-model="carousel_dialog"
-        fullscreen transition="dialog-transition">
-        <v-toolbar dense flat color="grey" tile>
-          <v-toolbar-title class="white--text">Media files</v-toolbar-title>
-          <v-spacer></v-spacer>
-          <v-btn color="" dark icon @click="carousel_dialog = false">
-            <v-icon>close</v-icon>
-          </v-btn>
-        </v-toolbar>
-        <template>
-          <v-card color="" dark
-            flat tile>
-            <v-container fluid fill-height d-flex px-0>
-              <v-layout align-center justify-center>
-                <v-flex xs1 v-if="$vuetify.breakpoint.smAndUp">
-                  <v-btn color="" depressed icon @click="prev">
-                    <v-icon>chevron_left</v-icon>
-                  </v-btn>
-                </v-flex>
-                <v-flex xs12 sm10 md8>
-                  <v-window v-model="onboarding">
-                    <v-window-item v-for="(image,n) in carousel_images" :key="`card-${n}`">
-                      <v-card color="transparent" max-height="500" flat>
-                        <v-layout
-                          align-center
-                          justify-center
-                          fill-height
-                          tag="v-card-text"
-                        >
-                        
-                        <v-flex xs12>
-                          <v-img :src='image' min-height='300'></v-img>
-                        </v-flex>
-                        
-                        </v-layout>
-                      </v-card>
-                    </v-window-item>
-                  </v-window>
-                </v-flex>
-                <v-flex xs1 v-if="$vuetify.breakpoint.smAndUp">
-                  <v-btn depressed icon @click="next">
-                    <v-icon>chevron_right</v-icon>
-                  </v-btn>
-                </v-flex>
-              </v-layout>
-            </v-container>
-            <v-card-actions v-if="$vuetify.breakpoint.xsOnly" style="position:fixed;width:100%;bottom:0;">
-              <v-btn color="" depressed icon @click="prev">
-                <v-icon>chevron_left</v-icon>
-              </v-btn>
-              <v-spacer></v-spacer>
-              <v-btn depressed icon @click="next">
-                <v-icon>chevron_right</v-icon>
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </template>
-      </v-dialog>
+        
     </div>
+
+    <!-- carousel dialog -->
+    <v-dialog v-model="carousel_dialog"
+      fullscreen transition="dialog-transition">
+      <v-toolbar dense flat color="grey" tile>
+        <v-toolbar-title class="white--text">Media files</v-toolbar-title>
+        <v-spacer></v-spacer>
+        <v-btn color="" dark icon @click="carousel_dialog = false">
+          <v-icon>close</v-icon>
+        </v-btn>
+      </v-toolbar>
+      <template>
+        <v-card color="" dark
+          flat tile>
+          <v-container fluid fill-height d-flex px-0>
+            <v-layout align-center justify-center>
+              <v-flex xs1 v-if="$vuetify.breakpoint.smAndUp">
+                <v-btn color="" depressed icon @click="prev">
+                  <v-icon>chevron_left</v-icon>
+                </v-btn>
+              </v-flex>
+              <v-flex xs12 sm10 md8>
+                <v-window v-model="onboarding">
+                  <v-window-item v-for="(image,n) in carousel_images" :key="`card-${n}`">
+                    <v-card color="transparent" max-height="500" flat>
+                      <v-layout
+                        align-center
+                        justify-center
+                        fill-height
+                        tag="v-card-text"
+                      >
+                      
+                      <v-flex xs12>
+                        <v-img :src='image' min-height='300'></v-img>
+                      </v-flex>
+                      
+                      </v-layout>
+                    </v-card>
+                  </v-window-item>
+                </v-window>
+              </v-flex>
+              <v-flex xs1 v-if="$vuetify.breakpoint.smAndUp">
+                <v-btn depressed icon @click="next">
+                  <v-icon>chevron_right</v-icon>
+                </v-btn>
+              </v-flex>
+            </v-layout>
+          </v-container>
+          <v-card-actions v-if="$vuetify.breakpoint.xsOnly" style="position:fixed;width:100%;bottom:0;">
+            <v-btn color="" depressed icon @click="prev">
+              <v-icon>chevron_left</v-icon>
+            </v-btn>
+            <v-spacer></v-spacer>
+            <v-btn depressed icon @click="next">
+              <v-icon>chevron_right</v-icon>
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </template>
+    </v-dialog>
+  </div>
 </template>
 
 <script>
-function goto(msg){
-  router.push('/' + msg)
-}
 
 export default {
   props:{
@@ -190,7 +190,8 @@ export default {
     menu:false,
     chat:'',
     fab:true,
-    curr_date:null
+    curr_date:null,
+    loading_messages:true,
   }),
   props:['members','room'],
   computed: {
@@ -221,6 +222,10 @@ export default {
         ? this.carousel_images.length - 1
         : this.onboarding - 1
     },
+    findAMember(memberEmail){
+      let member = this.members.find(member=> member.email == memberEmail)
+      return member ? member.name : memberEmail
+    },
     sameUser(msg){
       return msg.sender == this.getUser.uid
     },
@@ -242,7 +247,7 @@ export default {
     },
     goto(item,room){
       console.log(item,room)
-      if(this.members.find(voter => member.email == item.slice(1))){
+      if(this.members.find(member => member.email == item.slice(1))){
         this.$router.push(`/forum/${room}/profile/${item.slice(1)}`)
         this.$eventBus.$emit('Toggle_drawerRight', true)
       }
@@ -327,6 +332,7 @@ export default {
           })
         
           this.$store.dispatch('updateFromDb', msgs)
+          this.loading_messages = false
           //console.log(msgs)
           console.log(this.$store.state.chat_messages)
         })
@@ -357,6 +363,7 @@ export default {
   },
   components:{
     'settings':Settings,
+    LoadingBar,
     //'users':Users,
   }
 }
@@ -364,6 +371,7 @@ import io from 'socket.io-client';
   import {mapGetters} from 'vuex'
   import api from '@/services/api'
   import Settings from '@/components/Settings'
+  import LoadingBar from '@/spinners/LoadingBar'
   //import Users from '@/components/Users'
   import { promisfy } from "@/helpers/promisify";
   
@@ -426,20 +434,6 @@ a{
     text-decoration:none;
     color:#00aabb;
   }
-}
-.speech-bubbl:after {
-	content: '';
-	position: absolute;
-	left: 0;
-	top: 50%;
-	width: 0;
-	height: 0;
-	border: 25px solid transparent;
-	border-right-color: #00aabb;
-	border-left: 0;
-	border-bottom: 0;
-	margin-top: -12.5px;
-	margin-left: -25px;
 }
 
 /* --scrollbar --*/

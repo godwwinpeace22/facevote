@@ -4,12 +4,15 @@
       <v-flex xs6 d-flex>
         <div style="height:70vh">
           <v-layout align-center justify-center fill-height>
-            <div class="spinner">
-              <div class="rect1"></div>
-              <div class="rect2"></div>
-              <div class="rect3"></div>
-              <div class="rect4"></div>
-              <div class="rect5"></div>
+            <div>
+              <slot name='loading_info'></slot>
+              <div class="spinner">
+                <div class="rect1"></div>
+                <div class="rect2"></div>
+                <div class="rect3"></div>
+                <div class="rect4"></div>
+                <div class="rect5"></div>
+              </div>
             </div>
           </v-layout>
         </div>

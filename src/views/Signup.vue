@@ -9,9 +9,9 @@
       <v-layout align-center justify-center>
         <v-flex xs12 sm8 md5>
 
-          <v-snackbar v-model="snackbar" color="error" :timeout="30000" top>
-            {{ message }}
-            <v-btn dark flat @click="snackbar = null"> Close</v-btn>
+          <v-snackbar v-model="snackbar.show" dark :color="snackbar.color" :timeout="30000" top>
+             <span v-html='snackbar.message'></span>
+            <v-btn dark flat color="white" @click="snackbar.show = false"> Close</v-btn>
           </v-snackbar>
 
           <h1 class="text-xs-center white--text mb-4" ><a href="/" style="text-decoration:none;color:#fff"> Contestr</a></h1>
@@ -28,26 +28,26 @@
                   <v-form ref="form" v-model="valid" class="text-xs-center pa-3">
                     <p class="text-xs-center">Lorem ipsum dolor, sit amet consectetur </p>
                     <v-text-field
-                      label="Full Name" class="mb-2"
+                      label="Full Name" class="mb-2" browser-autocomplete="name"
                       v-model="form.name" outline
                       :rules="nameRules" color="secondary" required>
                       <v-icon slot="prepend" color="teal">person</v-icon>
                     </v-text-field>
 
-                    <v-text-field
-                      label="Username" class="mb-2"
-                      v-model="form.username" outline
-                      :rules="nameRules" color="secondary"
-                      required >
-                      <v-icon slot="prepend" color="teal">person</v-icon>
-                    </v-text-field>
-
                     <v-text-field 
-                      label="Email" class="mb-2"
+                      label="Email" class="mb-2" browser-autocomplete="email"
                       v-model="form.email" outline
                       :rules="emailRules" color="secondary"
                       required type="email">
                       <v-icon slot="prepend" color="teal">mail</v-icon>
+                    </v-text-field>
+
+                    <v-text-field
+                      label="Phone Number" class="mb-2"
+                      v-model="form.phone" type="tel" outline browser-autocomplete="tel"
+                      :rules="phoneRules" color="secondary"
+                      required >
+                      <v-icon slot="prepend" color="teal">phone</v-icon>
                     </v-text-field>
 
                     <v-text-field class="mb-2"
@@ -85,17 +85,17 @@
                       <v-icon slot="prepend" color="teal">school</v-icon>
                     </v-autocomplete>
 
-                    <v-select color="secondary"
+                    <v-autocomplete color="secondary"
                       label="Faculty"  v-model="myFaculty" :items="mySchool.faculties"
-                      return-object item-text="text" outline class="mb-2"
+                      return-object item-text="text" outline class="mb-2" hide-no-data
                       :rules="nameRules" required >
                       <v-icon slot="prepend" color="teal">domain</v-icon>
-                    </v-select>
-                    <v-select label="Department" outline class="mb-2"
+                    </v-autocomplete>
+                    <v-autocomplete label="Department" outline class="mb-2" hide-no-data
                       v-model="myDepartment" :items="myFaculty.departments" required
                       return-object item-text="text" :rules="nameRules" color="secondary">
                       <v-icon slot="prepend" color="teal">place</v-icon>
-                    </v-select>
+                    </v-autocomplete>
                   </v-form>
                   <div class="text-xs-center">
                   <span class="caption grey--text text--darken-1">
@@ -152,11 +152,11 @@ export default {
     description:'',
     step:1,
     message:'Login',
-    snackbar:false,
+    snackbar:{},
     loading:false,
     form:{
       name: '',
-      username:'',
+      phone:'',
       email: '',
       is_student:true, // whether is student or not
       password:'',
@@ -174,13 +174,17 @@ export default {
     nameRules: [
       v => !!v || 'Please enter your username',
     ],
+    phoneRules: [
+      v => !!v || 'Please enter a valid phone number',
+      v => (v&& v.length >= 11) || 'Please enter a valid phone number'
+    ],
     passwordRules: [
       v => !!v || 'Please enter your password',
-      v => (v && v.length >= 4) || 'Password must be at least 4 characters'
+      v => (v && v.length >= 6) || 'Password must be at least 6 characters'
     ],
     passwordMatch: [
       v => !!v || 'Please enter your password',
-      v => (v && v.length >= 4) || 'Password must be at least 4 characters',
+      v => (v && v.length >= 6) || 'Password must be at least 6 characters',
       v => this.form.password === this.form.password2 || 'Passwords do not match'
     ],
     emailRules: [
@@ -222,8 +226,7 @@ export default {
           if((this.$refs.form && this.$refs.form2.validate()) && (this.$refs.form2 && this.$refs.form.validate())){
             this.send()
           }else{
-            this.snackbar = true
-            this.message = 'Please provide all required fields'
+            this.snackbar = {status:true,color:'error', message:'Please provide all required fields'}
           }
         }
         else{
@@ -235,44 +238,91 @@ export default {
       }
     },
     async send(){
-      try{
-        if(this.form.password !== this.form.password2){
-          this.snackbar = true
-          this.message = 'Passwords do not match'
-        }
-        else{
-          console.log(this.form.password, this.form.password2)
-          this.form.school = this.mySchool.text
-          this.form.faculty = this.myFaculty.text
-          this.form.department = this.myDepartment.text
-          this.loading = true
-          //console.log(this.form)
-          let res = await authService.Register(this.form)
+      if(this.form.password !== this.form.password2){
+        this.snackbar = {status:true,color:'error', message:'Passwords do not match'}
+      }
+      else{
+        let user_school = this.mySchool.text
+        let user_faculty = this.myFaculty.text
+        let user_department = this.myDepartment.text
+        this.loading = true
+        //console.log(this.form)
+        /*let res = await authService.Register(this.form)
           console.log(res.data)
-          this.loading = false
+          //this.loading = false
 
           firebase.auth().signInWithCustomToken(res.data)
           .then((result)=>{
-             console.log(result.user)
+            console.log(result.user)
           })
           .catch(function(error) {
             // Handle Errors here.
             console.log(error)
             var errorCode = error.code;
             var errorMessage = error.message;
+            this.snackbar = true
+            this.message = 'Sorry, something went wrong. Try again'
+            $NProgress.done()
             // ...
+          });*/
+        
+        let user = this.form
+        firebase.auth().createUserWithEmailAndPassword(user.email, user.password)
+          .then(userRecord=>{
+            //console.log(userRecord)
+            // update users profile info
+            firebase.auth().currentUser.updateProfile({
+              displayName: user.name,
+            }).catch(function(error) {
+                // An error happened.
+            });
+
+            // store additional user info
+            db.collection('moreUserInfo').doc(user.email).set({
+              uid:userRecord.user.uid,
+              name:user.name,
+              email:user.email,
+              phone:user.phone,
+              suspended:false,
+              followers:[],
+              is_verified:false,
+              is_student:user.is_student,
+              was_once_a_student:user.is_student,
+              school:user_school,
+              faculty:user_faculty,
+              department:user_department
+            }).then(done=>{
+              this.snackbar = {show:true,color:'purple', message:'Account created successfully'}
+              
+              // send email verification message
+              //console.log(firebase.auth().currentUser)
+              firebase.auth().currentUser.sendEmailVerification().then((sent)=>{
+                // Email sent.
+                
+                setTimeout(() => {
+                  this.$router.push('/')
+                }, 2000);
+
+              }).catch(function(error) {
+                // An error happened.
+              });
+              
+            })
+          })
+          .catch((error) =>{
+            console.log(error)
+            this.loading = false
+            $NProgress.done()
+            var errorCode = error.code;
+            if(errorCode == 'auth/weak-password' || errorCode == 'auth/invalid-email' 
+              || errorCode == 'auth/email-already-in-use' || errorCode == "auth/network-request-failed"){
+
+              this.snackbar = {show:true,color:'error', message:error.message}
+            }else{
+              this.snackbar = {show:true,color:'error', message:'Something went wrong, please try again'}
+            }
           });
-          //this.step = 3
-        }
-      }catch(err){
-        console.log(err)
-        console.log(err.response)
-        if(err.response){
-          this.loading = false
-          this.snackbar = true
-          this.message = err.response.data.message
-          $NProgress.done()
-        }
+        //this.step = 3
       }
     }
   },
@@ -284,9 +334,6 @@ export default {
 import Nav from '@/components/Nav'
   import api from '@/services/api'
   import Footer from '@/components/Footer'
-  //import { validationMixin } from 'vuelidate'
-  //import { required, minLength, email, password } from 'vuelidate/lib/validators'
-  import authService from '@/services/authService'
 </script>
 <style lang="scss" scoped>
   @mixin MainColor(){

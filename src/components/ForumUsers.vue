@@ -1,5 +1,17 @@
 <template>
   <div id="forum_users" style="height: calc(100% - 50px);overflow-y:auto;" class="navdrawr">
+    <v-container grid-list-xs fluid v-if='members.length == 0'>
+      <v-layout>
+        <v-flex xs12>
+          <div style="height:100%">
+            <v-layout align-center justify-center fill-height>
+              <v-progress-circular indeterminate color="grey lighten-2"></v-progress-circular>
+            </v-layout>
+          </div>
+        </v-flex>
+      </v-layout>
+    </v-container>
+  
     <v-list dense class="">
       <v-list-tile @click.stop="'a'">
         <v-list-tile-content>
@@ -26,7 +38,7 @@
             <v-list-tile-sub-title v-if="getRole(member)"><i>for</i> {{getRole(member)}}</v-list-tile-sub-title>
           </v-list-tile-content>
           <v-list-tile-action>
-            <v-icon :color="isOnline(member.uid) ? 'success' : 'grey'">lens</v-icon>
+            <v-icon :color="member.online ? 'success' : 'grey'">lens</v-icon>
           </v-list-tile-action>
         </v-list-tile>
       </v-list>
@@ -90,10 +102,13 @@ export default {
       true : false
     },
     getRole(member){ // return the role a user is contesting for
-      
-      let res = member.contestsRef.find(contest=>contest.electionRef == this.thisGroup.electionId)
-      //console.log(res)
-      return this.thisGroup.roles.find(role => role.value == res.role).title
+      if(member.contestsRef){
+        let res = member.contestsRef.find(contest=>contest.electionRef == this.thisGroup.electionId)
+        //console.log(res)
+        return this.thisGroup.roles.find(role => role.value == res.role).title
+      }else{
+        return false
+      }
     },
     checkIfOnline(username){
       let those_online = this.$store.state.those_online
@@ -102,26 +117,7 @@ export default {
     },
   },
   async mounted(){
-    firebase.firestore().collection('status')
-      .where('state', '==', 'online')
-      .onSnapshot((snapshot)=>{
-        
-        snapshot.docChanges().forEach((change)=>{
-          
-          if (change.type === 'added') {
-            this.onlineMembers.push(change.doc.id)
-            var msg = 'User ' + change.doc.id + ' is online.';
-            console.log(msg);
-            // ...
-          }
-          if (change.type === 'removed') {
-            this.onlineMembers.splice(this.onlineMembers.indexOf(change.doc.id),1)
-            var msg = 'User ' + change.doc.id + ' is offline.';
-            console.log(msg);
-            // ...
-          }
-        });
-      });
+    
   },
 
   destroyed(){

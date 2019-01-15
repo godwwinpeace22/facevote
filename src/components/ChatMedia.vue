@@ -2,6 +2,7 @@
   <div>
     <v-container grid-list-sm>
       <v-layout row wrap>
+        <v-subheader v-show="$store.getters.getChatMedia.length == 0">No items</v-subheader>
         <v-flex xs6 sm4 md2 v-for="(image,i) in $store.getters.getChatMedia" :key="i">
           <v-card height="150" class="mb-1" flat>
             <v-img :src='image' height="150" @click="carouselDialog($store.getters.getChatMedia,i)"></v-img>

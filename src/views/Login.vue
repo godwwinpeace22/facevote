@@ -10,13 +10,13 @@
         <v-layout align-center justify-center>
           <v-flex xs12 sm8 md4>
             
-            <v-snackbar :value="snackbar" color="error"
-              :timeout="3000" top :vertical="$vuetify.breakpoint.smAndDown">
-              {{ message }}
-              <v-btn dark flat @click="snackbar = false"> Close</v-btn>
+            <v-snackbar v-model="snackbar.show" :color="snackbar.color"
+              :timeout="5000" top :vertical="$vuetify.breakpoint.xsOnly">
+              {{ snackbar.message }}
+              <v-btn dark flat @click="snackbar.show = false"> Close</v-btn>
             </v-snackbar>
 
-            <h1 class="text-xs-center white--text mb-3" ><a href="/" style="text-decoration:none;color:#fff"> Contestr</a></h1>
+            <h1 class="text-xs-center white--text mb-3" ><a href="/" style="text-decoration:none;color:#fff"> FaceVote</a></h1>
             <v-subheader class="white--text text-xs-center d-block">Log in to your account</v-subheader>
             <v-card dark flat tile style="background:inherit">
               <!--v-toolbar dark dense flat style="background:inherit;text-align:center;">
@@ -27,12 +27,14 @@
                 <v-form v-model="valid" ref="form">
                   <v-text-field label="Email" color="teal" outline class="mb-2" 
                     v-model="form.email" :rules="nameRules" browser-autocomplete="email"
-                    prepend-inner-icon="mail" required>
+                    required>
+                     <v-icon slot="prepend-inner" color="teal">mail</v-icon>
                   </v-text-field>
-                  <v-text-field id="text-field" color="teal" prepend-inner-icon="lock" 
+                  <v-text-field id="text-field" color="teal" 
                     outline  v-model="form.password" type="password" :rules="passwordRules"
                     browser-autocomplete="password" label="Password" hint="At least 6 characters" 
                     required>
+                     <v-icon slot="prepend-inner" color="teal">lock</v-icon>
                   </v-text-field>
                 </v-form>
               </v-card-text>
@@ -46,7 +48,7 @@
               <p class="ml-5 pb-1">Don't have an account? 
                 <router-link to="/signup" class="pl-2 success--text" style="text-decoration:none;"> Sign up here</router-link>
               </p>
-              <p class="ml-5">
+              <p class="ml-5 pl-5">
                 <router-link to="/reset-password" class="primary--text" style="text-decoration:none;">
                 Forgot your password ?</router-link>
               </p>
@@ -63,9 +65,8 @@ export default {
   data:()=>({
     title:'Login | Facevote',
     description:'',
-    message:'',
     loading:false,
-    snackbar:false,
+    snackbar:{},
     show_spinner:false,
     form:{
       email: '',
@@ -82,7 +83,7 @@ export default {
     ],
     passwordRules: [
       v => !!v || 'Please enter your password',
-      v => (v && v.length >= 4) || 'Password must be at least 4 characters'
+      v => (v && v.length >= 6) || 'Password must be at least 6 characters'
     ],
   }),
   components:{
@@ -97,12 +98,9 @@ export default {
       try{
         if(this.$refs.form.validate()){
           this.loading = true
-          //console.log(this.form)
-          //let res = await authService.Login(this.form)
-          //console.log(res.data)
-          //this.$store.dispatch('setUser', {user:res.data.user,token:res.data.token})
 
-          firebase.auth().signInWithEmailAndPassword(this.form.email, this.form.password).then((result)=>{
+          firebase.auth().signInWithEmailAndPassword(this.form.email, this.form.password)
+          .then((result)=>{
             console.log(result.user)
             
             firebase.auth().onAuthStateChanged((user)=>{
@@ -116,34 +114,57 @@ export default {
               }
             });
             
-          }).catch(function(error) {
-            // Handle Errors here.
-            var errorCode = error.code;
-            var errorMessage = error.message;
-            // ...
+          }).catch(error=> {
+            console.log(error)
+            this.loading = false
+            function errorMsg(code){
+              switch(code){
+                case "auth/user-not-found":
+                  return "Sorry we couldn't find that account"
+                case "auth/wrong-password":
+                  return "The email or password is invalid"
+                case "auth/network-request-failed":
+                  return "Network error, Check your internet connection"
+                default:
+                  return "Something went wrong, try again"
+              }
+            }
+            this.snackbar = {
+              show:true,
+              message:errorMsg(error.code),
+              color:'error'
+            }
           });
-
-          //this.$store.dispatch('setLoggedInUser', res.data.user)
           
         }
         else{
-          this.snackbar = true
-          this.message = 'Please provide username and password'
+          this.snackbar = {
+            show:true, 
+            message:'Please provide username and password',
+            color:'error'
+          }
+          
         }
       }
       catch(err){
         console.log(err)
-        console.log(err.response)
-        if(err.response){
-          this.loading = false
-          this.snackbar = true
-          this.message = err.response.data.message
-          $NProgress.done()
+        this.loading = false
+        $NProgress.done()
+        if(err.errorCode){
+          
+          this.snackbar = {
+            show:true,
+            message:err.message,
+            color:'error'
+          }
         }else{
-          this.loading = false
-          this.snackbar = true
-          this.message = 'Sorry, something went wrong. Try again'
-          $NProgress.done()
+          
+          this.snackbar = {
+            show:true,
+            message:'Sorry, something went wrong. Try again',
+            color:'error'
+          }
+          
         }
       }
     }
@@ -155,9 +176,6 @@ export default {
 
 import Nav from '@/components/Nav'
   import Footer from '@/components/Footer'
-  //import { validationMixin } from 'vuelidate'
-  //import { required, minLength, email, password } from 'vuelidate/lib/validators'
-  import authService from '@/services/authService'
 </script>
 <style lang="scss">
   @mixin MainColor(){

@@ -90,26 +90,33 @@
               <v-subheader class='font-weight-bold'>Winners</v-subheader>
               
               <v-list dense two-line>
-                <!-- if there are ties in the scores -->
-                <div v-for="winner in winners" :key="`${winner.id}${winner.score}`"
-                  v-if="typeof winner[0] == 'object'">
+                
+                <div v-for="(winnersInEachRole,i) in winners" :key="winnersInEachRole.length + Math.random() * i">
                   
-                  <v-list-tile avatar v-for="winner2 in winner" :key="winner2.id">
+                  <v-list-tile avatar v-for="winner in winnersInEachRole" :key="winner.id">
                     <v-list-tile-avatar>
-                      <img :src="getDetail(winner2.id).photoURL || `https://ui-avatars.com/api/?name=${getName(winner2.id)}`">
+                      <img :src="getDetail(winner.id).photoURL || `https://ui-avatars.com/api/?name=${getName(winner.id)}`">
                     </v-list-tile-avatar>
                     <v-list-tile-content class='font-weight-bold'>
-                      {{getName(winner2.id)}}
-                      <v-list-tile-sub-title>{{winner2.score}} votes</v-list-tile-sub-title>
+                      {{getName(winner.id)}}
+                      <v-list-tile-sub-title>{{winner.score}} votes</v-list-tile-sub-title>
                     </v-list-tile-content>
-                      
-                      <v-list-tile-action class='font-weight-bold'> {{winner2.role}}</v-list-tile-action>
+                      <!-- if there are ties in the scores -->
+                      <v-list-tile-action class='font-weight-bold' v-if='winnersInEachRole.length > 1'>
+                        <v-tooltip top>
+                          <v-btn color="purple" slot='activator' dark icon class='text-capitalize mr-2'>Tie</v-btn>
+                          <span>There was a tie for this role</span>
+                        </v-tooltip>
+                        
+                      </v-list-tile-action>
+
+                      <v-list-tile-action class='font-weight-bold'> {{winner.role}}</v-list-tile-action>
                     
                   </v-list-tile>
                   <v-divider></v-divider>
                 </div>
                 <!-- no ties -->
-                <div v-for="winner in winners" :key="`${winner.id}${winner.score}`"
+                <!--div v-for="winner in winners" :key="`${winner.id}${winner.score}`"
                   v-else>
                   <v-list-tile avatar v-for="winner in winner" :key="winner.id">
                     <v-list-tile-avatar>
@@ -124,7 +131,7 @@
                     
                   </v-list-tile>
                   <v-divider></v-divider>
-                </div>
+                </div-->
               </v-list>
             </v-card>
           </v-flex>
@@ -133,13 +140,28 @@
           <v-flex xs12 sm4 d-flex class="pt-0">
             <v-card class="dflex">
               <v-subheader class='font-weight-bold'>Voter turnout</v-subheader>
-              <bar-chart :chart-data="chartData4" :options="chartOptions"></bar-chart>
+
+              <!-- turnout in a department election -->
+              <pie-chart v-if="currElection.type == 'School' && currElection.level == 'Department'"
+                :chart-data="chartData4" :options="chartOptions">
+              </pie-chart>
+
+              <!-- turnout by department in a faculty election -->
+              <bar-chart v-if="currElection.type == 'School' && currElection.level == 'Faculty'" 
+                :chart-data="chartData5" :options="chartOptions">
+              </bar-chart>
+
+              <!-- turnout by faculty in a school election-->
+              <bar-chart v-if="currElection.type == 'School' && currElection.level == 'School'" 
+                :chart-data="chartData6" :options="chartOptions">
+              </bar-chart>
             </v-card>
           </v-flex>
 
         </v-layout>
       </v-card>
     </v-container>
+
     <!-- All Results -->
     <v-container grid-list-xl class="px-0">
       <v-subheader>All results</v-subheader>
@@ -270,7 +292,8 @@ export default {
       responsive: true, maintainAspectRatio: true,
       
     },
-    chartData4:{
+    chartData4:{},
+    /*chartData4:{
       datasets: [{
         label:'# of stuff',
         data: [10, 20, 30],
@@ -281,7 +304,9 @@ export default {
         'Yellow',
         'Blue'
       ]
-    }
+    },*/
+    chartData5:{},
+    chartData6:{},
   }),
   props:['id','roles','currElection','allVotes',
     'regVoters','contestants', 'charDate3','countDownDate'
@@ -394,24 +419,17 @@ export default {
       let rl = this.results.filter(
         item => item.role == role
       ); // filter out other roles
-      
-      // check if there is a tie
-      let sorted = rl.sort((a,b)=>{
-        return b.score - a.score
-      })
-      let scoreArr = []
-      let winners = []
-      console.log(typeof winners)
-      sorted.forEach(item=>{
-        winners.push(item)
-        if(scoreArr.indexOf(item.score) != -1 &&
-          !winners.find(winner=> winner.id == item.id)){
-          winners.push(item)
+
+      let uniqueScores = []
+      rl.forEach(item => {
+        if(uniqueScores.indexOf(item.score) == -1){
+          uniqueScores.push(item.score)
         }
-        scoreArr.push(item.score)
-      })
+      });
       
-      return winners
+      let theHighestScore = uniqueScores.sort((a,b) => b-a)[0]
+      //find all results with the highest unique score
+      return rl.filter(result => result.score == theHighestScore)
     },
     percentage_score(contestant,role){
       let total_score_for_role = this.sortedResults.find(a=> a.role == role)
@@ -486,15 +504,102 @@ export default {
       this.sortedResults.forEach(result => {
         //console.log(result)
         if(result.contestants.length > 0){
+          // the winners for each role ( if there is no tie then there is only one winner)
           let theWinners = this.getWinner(result.role)
           //console.log(theWinners)
           if(theWinners){
-            this.winners.push(theWinners)
+            this.winners.push(theWinners) // winners in all the roles
           }
         }
       });
       //console.log(this.winners)
-    }
+    },
+    truncateText(text){
+      return text.replace(/(.{12})..+/, "$1...");
+    },
+    async deptTurnout(){
+      let members = [] // voters in the same dept
+      db.collection('moreUserInfo')
+      .where('department','==',this.currElection.department)
+      .where('school','==',this.currElection.school)
+      .get().then(querySnapshot=>{
+        
+        querySnapshot.forEach(doc=>{
+          members.push(doc.data())
+        })
+
+        let enrolled = this.regVoters.length
+        let not_enrolled = members.length - enrolled
+        //console.log(enrolled,not_enrolled)
+        this.chartData4 = {
+          datasets: [{
+            data: [enrolled, not_enrolled],
+            backgroundColor:['teal','yellow'],
+          }],
+          labels: [
+            'Enrolled',
+            'Not enrolled'
+          ]
+        }
+      })
+    },
+    async findAFaculty(){
+      let faculty = await api().post('dashboard/findAFaculty/' + this.currElection.faculty + '/' + this.currElection.school)
+      //console.log(faculty)
+      return faculty.data
+    },
+    async findASchool(school){
+      let found = await api().post('dashboard/getASchool/'+school)
+      console.log('findASchool: ', found)
+      return found.data
+    },
+    async turnoutByDepartment(){
+      let thisFaculty = await this.findAFaculty()
+      
+      let votersByDept = {}
+      
+      thisFaculty.departments.forEach(dept=>{
+        let members = this.regVoters.filter(voter => voter.department == dept.text)
+        votersByDept[dept.text] = members.length
+      })
+
+      //console.log(votersByDept)
+      this.chartData5 = {
+        datasets: [{
+          label:'Turnout by department',
+          data: Object.values(votersByDept),
+          backgroundColor:['teal','yellow','purple','cyan','lemon','blue','pink','orange','grey'],
+        }],
+        labels: Object.keys(votersByDept).map(key =>{
+          return this.truncateText(key)
+        })
+      }
+    
+    },
+    async turnoutByFaculty(){
+      let thisSchool = await this.findASchool(this.currElection.school)
+      
+      let votersByFaculty = {}
+      
+      thisSchool.faculties.forEach(fac=>{
+        let members = this.regVoters.filter(voter => voter.faculty == fac.abbr)
+        votersByFaculty[faculty.abbr] = members.length
+      })
+
+      //console.log(votersByDept)
+      this.chartData6 = {
+        datasets: [{
+          label:'Turnout by faculty',
+          data: Object.values(votersByFaculty),
+          backgroundColor:['teal','yellow','purple','cyan','lemon','blue','pink','orange','grey'],
+        }],
+        labels: Object.keys(votersByFaculty).map(key =>{
+          return this.truncateText(key)
+        })
+      }
+    
+    },
+    
   },
   async mounted(){
     if(this.getCurElection.electionId == this.id){
@@ -505,6 +610,9 @@ export default {
       )
 
       this.sortResults()
+      this.currElection.level == 'Department' ? this.deptTurnout() : ''
+      this.currElection.level == 'Faculty' ? this.turnoutByDepartment() : ''
+      this.currElection.level == 'School' ? this.turnoutByFaculty() : ''
       this.getLabels()
       this.allWinners()
     }
@@ -514,6 +622,9 @@ export default {
       (a,b) => b.score - a.score
     )
     //console.log(this.results)
+    this.currElection.level == 'Department' ? this.deptTurnout() : ''
+    this.currElection.level == 'Faculty' ? this.turnoutByDepartment() : ''
+    this.currElection.level == 'School' ? this.turnoutByFaculty() : ''
     this.sortResults()
     this.getLabels()
     this.allWinners()

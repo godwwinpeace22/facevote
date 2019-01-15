@@ -15,7 +15,8 @@
               <v-list-group no-action class="mb-5 pt-1">
                 <v-list-tile slot="activator">
                   <v-list-tile-avatar color="grey lighten-4">
-                    <img :src="getUser.photoURL || `https://ui-avatars.com/api/?name=${getUser.displayName}`">
+                    <img v-if="getUserInfo" :src="getUserInfo.photoURL || `https://ui-avatars.com/api/?name=${getUser.displayName}`">
+                    <img v-else :src="getUser.photoURL || `https://ui-avatars.com/api/?name=${getUser.displayName}`">
                   </v-list-tile-avatar>
                   <v-list-tile-title class="text-capitalize">{{getUser.displayName}}</v-list-tile-title>
                 </v-list-tile>
@@ -178,8 +179,8 @@
             <v-btn dark flat @click="snackbar.show = false"> Close</v-btn>
           </v-snackbar>
 
-          <v-dialog v-model="settings_dialog" v-if="settings_dialog" fullscreen hide-overlay transition="dialog-bottom-transition" scrollable>
-            <profile-settings :dialog='settings_dialog'></profile-settings>
+          <v-dialog v-model="settings_dialog" fullscreen hide-overlay transition="dialog-bottom-transition" scrollable>
+            <profile-settings :dialog='settings_dialog' v-if="settings_dialog"></profile-settings>
           </v-dialog>
 
 
@@ -202,7 +203,7 @@
             </v-btn>
           </v-speed-dial-->
 
-          <router-view v-show="!show_loading_bar" :chat='chat'></router-view>
+          <router-view v-show="!show_loading_bar"></router-view>
           <loading-bar v-show="show_loading_bar"></loading-bar>
         </v-flex>
       </v-layout>
@@ -223,7 +224,7 @@ export default {
     show_private_msg_list:false,
     snackbar:{},
     navmenus:[
-      {title:'Notifications', icon:'notifications', link:'/notifications'},
+      {title:'Notifications', icon:'notifications', link:"#"},
       {title:'Forum', icon:'forum', link:'/forum'},
       {title:'Enroll', icon:'fingerprint', link:'/enroll'},
     ],
@@ -231,15 +232,8 @@ export default {
       {name:'My profile', icon:'person', link:''},
       {name: 'Settings', icon:'settings', link:''}
     ],
-    mini:false,
     drawer:true,
-    drawer2:false,
-    drawerRight: true,
-    right: null,
-    left: null,
-    right_sidebar:null,
     settings_dialog:false,
-    chat:'',
     someoneistyping:false,
   }),
   components:{
@@ -256,103 +250,41 @@ export default {
       'isAuthenticated',
       'getToken',
       'getUser',
+      'getUserInfo',
       'getUnreadPMsgs',
     ]),
   },
   
   methods:{
-    showRightNav(){
-      if(this.$store.state.show_right_nav){
-        this.$store.dispatch('showRightNav', [false,true])
-      }
-      else{
-        this.$store.dispatch('showRightNav', [true,true])
-      }
-    },
     logout(){
       this.$store.dispatch('logout')
     },
     presenceWatcher(){
       // Fetch the current user's ID from Firebase Authentication.
-      var uid = firebase.auth().currentUser.uid;
+      let userId = firebase.auth().currentUser.uid;
 
-      // Create a reference to this user's specific status node.
-      // This is where we will store data about being online/offline.
-      var userStatusDatabaseRef = firebase.database().ref('/status/' + uid);
+      const usersRef = db.collection('users'); // Get a reference to the Users collection;
+      const onlineRef = database.ref('.info/connected'); // Get a reference to the list of connections
 
-      // We'll create two constants which we will write to 
-      // the Realtime database when this device is offline
-      // or online.
-      var isOfflineForDatabase = {
-          state: 'offline',
-          last_changed: firebase.database.ServerValue.TIMESTAMP,
-      };
+      onlineRef.on('value', snapshot => {
+        
+        database
+          .ref(`/status/${userId}`)
+          .onDisconnect() // Set up the disconnect hook
+          .set('offline') // The value to be set for this key when the client disconnects
+          .then(() => {
+              // Set the Firestore User's online status to true
+              usersRef
+                .doc(this.$store.getters.getUser.email)
+                .set({
+                  online: true,
+                }, { merge: true});  
 
-      var isOnlineForDatabase = {
-          state: 'online',
-          last_changed: firebase.database.ServerValue.TIMESTAMP,
-      };
-
-      // Create a reference to the special '.info/connected' path in 
-      // Realtime Database. This path returns `true` when connected
-      // and `false` when disconnected.
-      firebase.database().ref('.info/connected').on('value', function(snapshot) {
-          // If we're not currently connected, don't do anything.
-          if (snapshot.val() == false) {
-              return;
-          };
-
-          // If we are currently connected, then use the 'onDisconnect()' 
-          // method to add a set which will only trigger once this 
-          // client has disconnected by closing the app, 
-          // losing internet, or any other means.
-          userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function() {
-            // The promise returned from .onDisconnect().set() will
-            // resolve as soon as the server acknowledges the onDisconnect() 
-            // request, NOT once we've actually disconnected:
-            // https://firebase.google.com/docs/reference/js/firebase.database.OnDisconnect
-
-            // We can now safely set ourselves as 'online' knowing that the
-            // server will mark us as offline once we lose connection.
-            userStatusDatabaseRef.set(isOnlineForDatabase);
+              // Let's also create a key in our real-time database
+              // The value is set to 'online'
+              database.ref(`/status/${userId}`).set('online');
           });
-      });
-
-      var userStatusFirestoreRef = firebase.firestore().doc('/status/' + uid);
-
-      // Firestore uses a different server timestamp value, so we'll 
-      // create two more constants for Firestore state.
-      var isOfflineForFirestore = {
-          state: 'offline',
-          last_changed: firebase.firestore.FieldValue.serverTimestamp(),
-      };
-
-      var isOnlineForFirestore = {
-          state: 'online',
-          last_changed: firebase.firestore.FieldValue.serverTimestamp(),
-      };
-
-      firebase.database().ref('.info/connected').on('value', function(snapshot) {
-          if (snapshot.val() == false) {
-              // Instead of simply returning, we'll also set Firestore's state
-              // to 'offline'. This ensures that our Firestore cache is aware
-              // of the switch to 'offline.'
-              userStatusFirestoreRef.set(isOfflineForFirestore);
-              return;
-          };
-
-          userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function() {
-              userStatusDatabaseRef.set(isOnlineForDatabase);
-
-              // We'll also add Firestore set here for when we come online.
-              userStatusFirestoreRef.set(isOnlineForFirestore);
-          });
-      });
-
-      userStatusFirestoreRef.onSnapshot(function(doc) {
-          var isOnline = doc.data().state == 'online';
-          // ... use isOnline
-          console.log(doc.data())
+        
       });
     },
     pUnreadMsgs(){
@@ -365,12 +297,12 @@ export default {
         })
       
         this.$store.dispatch('pUnreadMsgs', msgs)
-        console.log(msgs)
+        //console.log(msgs)
       })
     }
   },
   async mounted(){
-
+    //console.log(firebase.firestore.FieldValue.serverTimestamp().seconds)
     this.$eventBus.$on('Toggle_Left_Drawer', data=>{
       this.drawer = !this.drawer
     })
@@ -568,8 +500,8 @@ export default {
 
   },
   async created(){
-
-    console.log(firebase.auth().currentUser)
+    document.getElementById('welcome_logo').style.display = 'none'
+    //console.log(firebase.auth().currentUser)
     firebase.auth().onAuthStateChanged((user)=>{
       if (user) {
         // User is signed in.
@@ -584,7 +516,7 @@ export default {
     firebase.auth().currentUser.getIdTokenResult()
     .then((idTokenResult) => {
       
-      console.log(idTokenResult.claims)
+      //console.log(idTokenResult.claims)
     })
     .catch((error) => {
       console.log(error);
@@ -624,7 +556,6 @@ $mainBgColor:#1c1f35;
 .v-dialog--fullscreen{
   background:#fff !important;
 }
-
 h3 {
   margin: 40px 0 0;
 }
@@ -667,7 +598,7 @@ a {
   border: 1px solid rgba(115, 114, 114, 0.54) !important;
 }
 .v-content{
-  background:#f7f7f7;
+  background:#eceff1;
 }
 
 /* --scrollbar --*/

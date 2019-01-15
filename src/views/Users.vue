@@ -94,6 +94,7 @@ export default {
    },
    ...mapGetters([
      'getUser',
+     'getUserInfo',
      'getToken',
      'isAuthenticated'
    ])
@@ -105,11 +106,11 @@ export default {
         this.disabled = true
         this.user.followers.push(this.getUser.uid)
 
-        db.collection('moreUserInfo').doc(this.user.uid).update({
+        db.collection('moreUserInfo').doc(this.getUser.uid).update({
           followers:firebase.firestore.FieldValue.arrayUnion(this.getUser.uid)
         }).then(async res=>{
           await db.collection('moreUserInfo').doc(this.getUser.email).update({
-            following:firebase.firestore.FieldValue.arrayUnion(this.user.uid)
+            following:firebase.firestore.FieldValue.arrayUnion(this.getUser.uid)
           })
           this.disabled = false
         })
@@ -118,48 +119,57 @@ export default {
         // is following the user, unfollow
         this.disabled = true
         this.user.followers.splice(this.user.followers.indexOf(this.getUser.uid),1)
-        db.collection('moreUserInfo').doc(this.user.uid).update({
+        db.collection('moreUserInfo').doc(this.getUser.uid).update({
           followers:firebase.firestore.FieldValue.arrayRemove(this.getUser.uid)
         }).then(async res=>{
           await db.collection('moreUserInfo').doc(this.getUser.email).update({
-            following:firebase.firestore.FieldValue.arrayRemove(this.user.uid)
+            following:firebase.firestore.FieldValue.arrayRemove(this.getUser.uid)
           })
           this.disabled = false
         })
       }
     },
+    async getUserElections(){
+      let elecRef = db.collection('elections')
+      let myArr = []
+      elecRef.where('contestants','array-contains',this.user.uid).get().then(doc=>{
+        myArr = []
+        doc.forEach(item=>{
+          console.log(item.id, " => ", item.data());
+          myArr.push(item.data())
+        })
+        this.myContests = myArr
+      })
+    },
+    async getUserPosts(){
+      db.collection('posts').where('createdBy','==',this.user.uid)
+      .get().then(querySnapshot=>{
+        this.posts = []
+        querySnapshot.forEach(doc => {
+          this.posts.push(doc.data())
+        });
+      }).catch(err=>{
+        console.log(err)
+      })
+    },
     async setUp(){
       try {
-        
-        let user
-        let userRef = db.collection('moreUserInfo')
-        .doc(this.$route.params.email)
-        user = await userRef.get()
-        this.user = user.data()
-        console.log(user)
-        
+        if(this.$route.params.email == this.getUser.email && this.getUserInfo){
+          this.user = this.getUserInfo
+          console.log(this.user)
+          console.log(this.getUser.email,this.getUserInfo)
+        }
+        else{
+          let userRef = db.collection('moreUserInfo')
+          .doc(this.$route.params.email)
 
-        let elecRef = db.collection('elections')
-        let myArr = []
-        elecRef.where('contestants','array-contains',this.user.uid).get().then(doc=>{
-          myArr = []
-          doc.forEach(item=>{
-            console.log(item.id, " => ", item.data());
-            myArr.push(item.data())
-          })
-          this.myContests = myArr
-        })
-
-        
-        db.collection('posts').where('createdBy','==',this.user.uid)
-        .get().then(querySnapshot=>{
-          this.posts = []
-          querySnapshot.forEach(doc => {
-            this.posts.push(doc.data())
-          });
-        }).catch(err=>{
-          console.log(err)
-        })
+          let user = await userRef.get()
+          user.data().uid == this.getUser.uid ? this.$store.dispatch('setUserInfo',user.data()) : ''
+          this.user = user.data()
+          //console.log(user.data())
+        }
+        await this.getUserElections()
+        await this.getUserPosts()
 
       } catch (error) {
         console.log(error)

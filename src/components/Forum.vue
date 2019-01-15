@@ -1,5 +1,5 @@
 <template>
-  <div style="background:gre;height:93vh;overflow:hidden;margin-top:;" class="navdrawr">
+  <div style="background:gre;height:;overflow:hidden;margin-top:;" class="navdrawr">
     <vue-headful
       :title="title"
     />
@@ -108,8 +108,8 @@
 
           <!-- MENTION MEMBER -->
           <v-menu width="500"  :close-on-content-click='false' 
-            attach="chat_input"
-            slot="append" max-height="500" left top offset-y v-model="mention_dialog">
+            attach="chat_input" slot="append" max-height="500" 
+            left top offset-y v-model="mention_dialog">
             <v-card class="pa-0" flat>
               <v-toolbar flat dense color="cyan"></v-toolbar>
               <div :style="styleMention" class="navdrawr">
@@ -283,14 +283,14 @@ export default {
         db.collection('moreUserInfo')
         .where('enrolled','array-contains', this.$route.params.electionId)
         .limit(25)
-        .get().then(querySnapshot=>{
+        .onSnapshot(querySnapshot=>{
           this.members = []
           querySnapshot.forEach(doc=>{
             //console.log(doc.id, " => ", doc.data());
             this.members.push(doc.data())
           })
           this.ready = true
-        }).catch(err=>{
+        },err=>{
           console.log(err)
         })
       }catch(error){
@@ -432,7 +432,7 @@ export default {
       
     },
     appendUser(member){
-      this.message += ' #' + member.email + ' '
+      this.message += ' @' + member.email + ' '
     },
     appendEmoji(emoji){
       this.message += emoji
@@ -442,14 +442,14 @@ export default {
   async mounted() {
     
     this.setCurrRoom()
-    console.log(this.$vuetify.breakpoint)
+    //console.log(this.$vuetify.breakpoint)
     // hide the forum_users nav onload on small screens, and also show the btn to trigger the it on the navbar
-    this.$vuetify.breakpoint.sm || this.$vuetify.breakpoint.xs ? 
-    this.$store.dispatch('showRightNav', [false,true]) : ''
-    //console.log(this.chat)
-    
+    //this.$vuetify.breakpoint.sm || this.$vuetify.breakpoint.xs ? 
+    //this.$store.dispatch('showRightNav', [false,true]) : ''
+
     this.$eventBus.$on('Toggle_drawerRight', data=>{
       this.drawerRight = data
+      this.model = 'Members'
     })
 
   },

@@ -11,12 +11,15 @@
     
     <loading-bar v-show="!show_when_ready"></loading-bar>
 
-    <v-container v-if="show_when_ready">
+
+    <!-- ==DETAILS== -->
+    <v-container :grid-list-sm='$vuetify.breakpoint.xsOnly' v-if="show_when_ready">
       <v-card >
         <v-layout row wrap>
           <v-flex xs12 sm8 d-flex class="mb-0">
             <v-card dark flat tile class="ma-0">
               <v-card-title class="headline">{{currElection.title}}</v-card-title>
+              <small class="pl-3 d-block" style="color:#eee;">Election Id: {{currElection.electionId}}</small>
               <v-card-text>
 
                 <v-card-actions class="mt-0 pt-0">
@@ -40,7 +43,7 @@
 
                             <div class="singleBar">
                               <div class="bar">
-                                <div class="value" style="height: 38%;background:teal;">
+                                <div class="value elevation-4" style="height: 38%;background:teal;">
                                   <span id="ontop">{{electionTime.days}}</span>
                                   <span>DAYS</span>
                                 </div>
@@ -96,10 +99,10 @@
                   See results
                 </v-btn>
                 <v-btn  color="teal" dark @click="show_voting_dialog = true" depressed small
-                  v-show="show_btn"  v-if="inprogress" :disabled="voterdOrNot(getUser.uid) == 'voted'">
+                  v-show="show_btn"    :disabled="voterdOrNot(getUser.uid) == 'Voted'">
                   Vote
                 </v-btn>
-                <v-tooltip top v-if="not_started">
+                <v-tooltip top v-if="not_started" class="ml-3">
                   <v-btn  color="success" slot="activator" small dark :to="`/enroll`" 
                     v-show="show_btn"  v-if="not_started" :disabled="hasEnrolled">
                     Enroll
@@ -172,7 +175,7 @@
                   <v-flex xs8 class="text-capitalize">{{currElection.department}}</v-flex>
                 </v-list-tile>
               </v-list>
-              <v-container grid-list-xs>
+              <!--v-container grid-list-xs>
                 <v-layout row wrap>
                   <v-flex xs4 justify-center>
                     <v-progress-circular style="display:block;margin:auto;"
@@ -198,7 +201,7 @@
                     
                   </v-flex>
                 </v-layout>
-              </v-container>
+              </v-container-->
               
             </v-card>
           </v-flex>
@@ -218,15 +221,15 @@
             <v-btn dark flat @click.native="isNotVoting; show_voting_dialog = false;">Cancel</v-btn>
           </v-toolbar-items>
         </v-toolbar>
-        <vote id="vote_target" :currElection='currElection' :contestants='contestants'></vote>
+        <vote id="vote_target" :currElection='currElection' :contestants='contestants' :countDownDate='countDownDate' :rawVotes='rawVotes'></vote>
       </v-card>
     </v-dialog>
 
 
     <v-dialog v-model="show_results_dialog" v-if="show_results_dialog" 
-      fullscreen transition="dialog-bottom-transition" hide-overlay>
+      fullscreen transition="dialog-bottom-transition" scrollable>
       <v-card>
-        <v-toolbar clipped-left flat dark color="success">
+        <v-toolbar clipped-left flat dark color="success" scroll-target="result_dialog">
           <v-btn icon dark @click.native="show_results_dialog = false;">
             <v-icon>close</v-icon>
           </v-btn>
@@ -237,11 +240,12 @@
               Close</v-btn>
           </v-toolbar-items>
         </v-toolbar>
-
-        <results :id='currElection._id' :chartData3='chartData' :allVotes='allVotes'
-         :currElection='currElection' :contestants='contestants' :regVoters='regVoters'
-         :roles='currElection.roles' :countDownDate='countDownDate' v-if="show_results_dialog">
-        </results>
+        <div id='result_dialog'>
+          <results :id='currElection._id' :chartData3='chartData' :allVotes='allVotes'
+          :currElection='currElection' :contestants='contestants' :regVoters='regVoters'
+          :roles='currElection.roles' :countDownDate='countDownDate' v-if="show_results_dialog">
+          </results>
+        </div>
       </v-card>
     </v-dialog>
 
@@ -259,6 +263,33 @@
       <view-profile :user='voterprofile'  id="vprofile"></view-profile>
     </v-dialog>
 
+    <!-- ==SMALL CARDS== -->
+    <v-container grid-list-xl v-if="show_when_ready">
+      <v-layout row wrap>
+        <v-flex xs12 sm4 md3 v-for="(flashNumber,i) in flashNumbers" :key="i">
+          <v-card class="mt-3 mx-auto round">
+            <v-sheet
+              class="v-sheet--offset ml-3" :class="{'orange':i==0,'primary':i==1,'success':i==2,'cyan':i==3}"
+              color="" elevation="3"
+              max-width="35%" height="80">
+              <v-icon class='mx-auto d-block ma-auto' 
+                style="width:50px;padding-top:15%;" size="50" color="white">
+                {{flashNumber.icon1}}
+              </v-icon>
+            </v-sheet>
+
+            <v-card-text class="pt-0">
+              <div class="subheading font-weight-light grey--text mb-2">{{flashNumber.text}}</div>
+              <div class="subheading font-weight-light text-xs-right">{{flashNumber.number}}0K</div>
+              <v-divider class="my-2"></v-divider>
+              <v-icon class="mr-2" small>{{flashNumber.icon2}}</v-icon>
+              <span class="caption grey--text font-weight-light">{{flashNumber.sub}}</span>
+            </v-card-text>
+          </v-card>
+        </v-flex>
+      </v-layout>
+    </v-container>
+
 
     <v-container class='election_details' v-if="show_when_ready">
       <v-layout row wrap>
@@ -274,13 +305,10 @@
               <v-tab href="#tab-3" class="text-capitalize"> Actions</v-tab>
 
               <v-tab-item value="tab-1">
-                <v-card-title class="py-2">{{regVoters.length}} Enrolled Voters</v-card-title>
-                <v-divider></v-divider>
                 
-                <v-container style="max-height:320px;overflow:auto;" class="scrollbar pl-0">
+                <v-container style="max-height:320px;overflow:auto;" class="scrollbar pt-1 pl-0">
                   
                   <v-list two-line dense>
-
                     <div v-if="regVoters.length > 0" v-for="(voter, index) in regVoters" :key="index">
                       <v-list-tile  :key="voter.name" avatar @click="viewprofile = true; voterprofile = voter" :color="checkIfOnline(voter.uid) ? 'default' : 'grey'">
                         <v-list-tile-avatar>
@@ -303,21 +331,15 @@
               <v-tab-item value="tab-2">
                 <v-subheader>Recent activities</v-subheader>
                 <v-divider></v-divider>
-                <div class="pt-2 scrollbar" style="max-height:350px;overflow:auto;background:#eee;">
+                <div class="pt-2 scrollbar" style="max-height:350px;overflow:auto;">
                   <v-timeline align-top dense>
-                    <v-timeline-item :color="getColor(activity)" small v-for="activity in activities" :key="activity._id">
+                    <v-timeline-item :color="getColor(activity)" small v-for="activity in activities" :key="activity.id">
                       <v-layout pt-3>
                         <v-flex>
-                          <v-card class="mr-1" dark :color="getColor(activity)">
-                            <v-card-title class="title">
-                              title
-                            </v-card-title>
-                            <v-card-text class="white text--primary">
-                              <!--span>{{activity.by == currElection.admin ? 'Admin' : extractVoter(activity.by).name}} 
-                                {{activity.text}}</span-->
-                              <div class="caption">{{new Date(activity.dateCreated).toDateString('en-Us',{day:'numeric'})}}</div>
-                            </v-card-text>
-                          </v-card>
+                          <strong>{{activity.by == getUser.uid ? 'Admin' : 
+                            extractVoter(activity.by).name}} 
+                            {{activity.text}}</strong>
+                          <div class="caption">{{new Date(activity.dateCreated).toDateString('en-Us',{day:'numeric'})}}</div>
                         </v-flex>
                       </v-layout>
                     </v-timeline-item>
@@ -348,12 +370,9 @@
           <v-card style="min-height:400px;">
             <v-container>
               <v-toolbar flat dense color="white">
-                <v-toolbar-title><h5><v-icon>equalizer</v-icon> Stats</h5></v-toolbar-title>
+                <v-toolbar-title><h5><v-icon color="orange">equalizer</v-icon> Stats</h5></v-toolbar-title>
                 <v-spacer></v-spacer>
-                <!--v-toolbar-items class="hidden-sm-and-down"-->
-                <!--v-btn color="success" small outline flat @click="trythis">Add data</v-btn-->
                 <v-btn small flat color="success" outline  @click="show_results_dialog = true" :disabled="!inprogress || !election_ended"> more charts</v-btn>
-                <!--/v-toolbar-items-->
                 
               </v-toolbar>
               <bar-chart :chart-data="chartData" :options="chartOptions" ></bar-chart>
@@ -363,19 +382,21 @@
       </v-layout>
     </v-container>
 
-    <v-container grid-list-xs v-if="show_when_ready">
+    <!-- ===CONTESTANTS=== -->
+    <v-container grid-list-md v-if="show_when_ready">
+      <v-card class="round pa-4" style="min-height:150px;">
       <v-subheader class="font-weight-bold">Contestants</v-subheader>
       
-      <carousel :nav='true' :responsive="{0:{items:1,nav:false},600:{items:3,nav:true}}" >
+      <carousel :nav='true' :responsive="{0:{items:1,nav:false},600:{items:3,nav:true},800:{items:4,nav:true}}" >
         
         <v-subheader v-if="contestants && contestants.length == 0">No contestants</v-subheader>
         <v-card  :class="i%2 > 0 ? 'purple round mr-2 mb-1' : 'teal round mr-2 mb-1'" 
-          dark height="280" v-if="contestants.length > 0" 
+          dark height="285" v-if="contestants.length > 0" 
           v-for="(contestant,i) in contestants" :key="contestant.email">
           <v-tooltip top>
             <v-img @click="viewManifesto(contestant)" class="hover" slot="activator"
               :src="contestant.photoURL || `https://ui-avatars.com/api/?name=${contestant.name}&size=300`"
-              height="150px"
+              height="185px"
             ></v-img>
             <span>View <span class="text-capitalize">{{contestant.name}}'s</span> manifesto</span>
           </v-tooltip>
@@ -386,7 +407,7 @@
               <span id="online_badge" v-if="checkIfOnline(contestant.email)"></span>
             </span>
           </v-card-text>
-          <v-card-actions class="pa-3" style="cursor:-webkit-grab;cursor:grab;">
+          <v-card-actions class="px-3 pb-3 pt-0" style="cursor:-webkit-grab;cursor:grab;">
             <span class='text-capitalize'>For {{getRole(contestant)}}</span>
             <v-spacer></v-spacer>
             <v-tooltip top>
@@ -405,7 +426,9 @@
             </span>
           </v-card-actions>
         </v-card>
+        
       </carousel>
+      </v-card>
     </v-container>
   </div>
 </template>
@@ -439,7 +462,7 @@ export default {
     voterprofile:{},
     //activities:[],
     contestants:[], // all the contestants for this election
-    votesArr:[], // contains all the votes made for the current election
+    rawVotes:[], // contains all the raw votes made for the current election
     votingList:[], // list of people currently voting for the current election
     show_voting_dialog:false, // whether to show the voting window/ dialog
     show_results_dialog:false, // whether to show the results window/ dialog
@@ -461,6 +484,71 @@ export default {
   }),
   props:['electionId'], // this prop is from the vue-router params
   computed:{
+    flashNumbers(){
+      return [
+        {text:'Registerd voters',number:this.regVoters.length,icon1:'equalizer',icon2:'timer',sub:this.lastRegistration},
+        {text:'Contestants', number:this.contestants.length,icon1:'spa',icon2:'block',sub:this.suspendedContestants},
+        {text:'Votes',number:this.allVotes.length,icon1:'trending_up',icon2:'timer',sub:this.lastVotedTime},
+        {text:'Followers',number:this.currElection.followers.length,icon1:'people',icon2:'timer',sub:'opps sub'}
+      ]
+    },
+    lastRegistration(){
+      let regActivities = this.activities.filter(
+        activity => activity.type == 'voter_registered'
+      )
+      //console.log(regActivities[0])
+
+      if(regActivities && regActivities.length > 0){
+        let the_last_reg_time = regActivities[0].dateCreated
+        let now = Date.now()
+        let oneMin = 60*1000
+        let oneHour = 60*oneMin
+        let oneDay = 24*oneHour
+        let oneWeek = oneDay * 7
+        let time_difference = now - the_last_reg_time
+        console.log(now,the_last_reg_time,time_difference)
+        return time_difference < oneMin ?
+        Math.floor(time_difference) + ' seconds ago' :
+        time_difference < oneHour ? 'Last registration ' + Math.floor(time_difference/oneMin) + ' minutes ago' :
+        time_difference < oneDay ? 'Last registration ' + Math.floor(time_difference/oneHour) + ' hours ago' :
+        time_difference < oneWeek ? 'Last registration ' + Math.floor(time_difference/oneDay) + ' days ago' :
+        'Last registration ' + new Date(the_last_reg_time).toLocaleString('en-Us',{hour:'numeric',minute:'numeric'})
+      }
+      else{
+        return 'No registrations yet'
+      }
+    },
+    suspendedContestants(){
+      let suspended = []
+      this.contestants.forEach(contestant => {
+        let found = contestant.contestsRef.find(contest => contest.electionRef == this.currElection.electionId)
+        found ? found.suspended ? suspended.push(contestant) : '' : ''
+      });
+      return suspended > 0 ? suspended.length + 'suspended contestants' : 'No contestant suspended'
+    },
+    lastVotedTime(){
+      if(this.rawVotes && this.rawVotes.length > 0){
+        let sortedVotes = this.rawVotes.sort((a,b)=>b.createdAt - a.createdAt)
+        let the_last_vote_time = sortedVotes[0].createdAt
+        let now = Date.now()
+        let oneMin = 60*1000
+        let oneHour = 60*oneMin
+        let oneDay = 24*oneHour
+        let oneWeek = oneDay * 7
+        let time_difference = now - the_last_vote_time
+        
+        return time_difference < oneMin ?
+        Math.floor(time_difference) + ' seconds ago' :
+        time_difference < oneHour ? 'Last vote ' + Math.floor(time_difference/oneMin) + ' minutes ago' :
+        time_difference < oneDay ? 'Last vote ' + Math.floor(time_difference/oneHour) + ' hours ago' :
+        time_difference < oneWeek ? 'Last vote ' + Math.floor(time_difference/oneDay) + ' days ago' :
+        'Last vote ' + new Date(the_last_vote_time).toLocaleString('en-Us',{hour:'numeric',minute:'numeric'})
+      }
+      else{
+        return 'No votes yet'
+      }
+      
+    },
     styleObj(){
       if(this.$vuetify.breakpoint.smAndDown){
         return {
@@ -484,7 +572,6 @@ export default {
     },
     ...mapGetters([
       'isAuthenticated',
-      'getToken',
       'getUser',
       'getSchools',
       'getContestants',
@@ -497,15 +584,9 @@ export default {
     currElection(){
       return this.getCurElection
     },
-    //contestants(){
-    //  return this.getContestants
-    //},
     activities(){
       return this.getCurElectionActivities
     },
-    /*allVotes(){
-      return this.getCurElectionResults
-    },*/
     votes(){
       return this.getVotes
     }
@@ -514,47 +595,38 @@ export default {
     async setup(){
       // get election
       let elecRef = db.collection('elections').doc(this.$route.params.electionId)
-      let res = await elecRef.get()
-      this.$store.dispatch('setCurElection', res.data())
+      await elecRef.onSnapshot(async (doc)=>{
+        this.$store.dispatch('setCurElection', doc.data())
+        console.log('currElection: ', doc.data())
+      })
+      
 
       // get registered voters
       db.collection('moreUserInfo').where('enrolled','array-contains', this.$route.params.electionId)
-      .get().then(querySnapshot=>{
+      .onSnapshot(async querySnapshot=>{
         this.regVoters = []
         querySnapshot.forEach(doc=>{
           console.log(doc.id, " => ", doc.data());
           this.regVoters.push(doc.data())
         })
-        return this.regVoters
-      }).then(result=>{
-        // get contestants
-        let contestants = []
-        result.forEach(voter=>{
-          if(voter.contests.find(id => id == this.$route.params.electionId)){
-            contestants.push(voter)
-          }
-        })
-        console.log(contestants)
-        // show only contestants that are not suspended. therefore they can't be voted for
-        //contestants = contestants.data.filter(item => item.suspended == false)
-        this.contestants = contestants
-        //this.$store.dispatch('setCurElectionContestants', contestants)
+        await this.allContestants()
         this.open()
-        }).catch(err=>{
+      }, function(err){
+        // handle listening errors
         console.log(err)
       })
 
 
-      
+      // get raw votes for this election
       db.collection('votes').where('electionRef', '==', this.$route.params.electionId)
       .onSnapshot(async querySnapshot=>{
         let arr = []
         querySnapshot.forEach(doc=>{
           arr.push(doc.data())
         })
-        this.votesArr = arr
-        console.log(this.votesArr)
-        this.allVotes = await this.getScores(await this.sortByRoles(this.votesArr))
+        this.rawVotes = arr // the raw votes
+        console.log(this.rawVotes)
+        this.allVotes = await this.getScores(await this.sortByRoles(this.rawVotes))
         console.log(this.allVotes)
         this.getLabels()
         this.$store.dispatch('allVotes', arr)
@@ -563,7 +635,8 @@ export default {
 
       // Get activities
       db.collection('activities')
-      .where('electionRef','==',this.$route.params.electionId).get().then(querySnapshot=>{
+      .orderBy('dateCreated', 'desc')
+      .where('electionRef','==',this.$route.params.electionId).onSnapshot(async querySnapshot=>{
         let acts = []
         querySnapshot.forEach(doc=>{
           acts.push(doc.data())
@@ -573,6 +646,20 @@ export default {
       
 
       
+    },
+    async allContestants(voters){
+      // get contestants
+      let contestants = []
+      this.regVoters.forEach(voter=>{
+        if(voter.contests && voter.contests.find(id => id == this.$route.params.electionId)){
+          contestants.push(voter)
+        }
+      })
+      console.log(contestants)
+      // show only contestants that are not suspended. therefore they can't be voted for
+      //contestants = contestants.data.filter(item => item.suspended == false)
+      this.contestants = contestants
+      //this.$store.dispatch('setCurElectionContestants', contestants)
     },
     async sortByRoles(votes){
       let resultsByRoles = {};
@@ -635,22 +722,27 @@ export default {
     getRole(contestant){
       let ref = contestant.contestsRef
       .find(item=>item.electionRef == this.currElection.electionId)
-      return this.currElection.roles.find(role=>role.value = ref.role).title
+      return this.currElection.roles.find(role=>role.value == ref.role).title
+    },
+    async serverTime(){
+
+      // MAKE SURE YOU SECURE THIS ENDPOINT
+      let resp = await api().post('dashboard/serverTimestamp')
+      this.currentTime = resp.data
     },
     countDownTimer(){
-      //console.log(this.currElection.startDate)
       this.startDate = new Date(this.currElection.startDate + ' ' + this.currElection.startTime).getTime();
-      //this.startDate = new Date('2018, 29 September' + ' ' + '18:00').getTime();
-      //console.log(countDownDate)
       this.countDownDate = this.startDate + this.currElection.duration * 1000 * 60 * 60
-      //console.log(countDownDate)
+      console.log(this.countDownDate)
+      console.log(this.startDate)
 			this.interval = setInterval(()=>{
         var now = new Date().getTime();
-        var distance = this.countDownDate - now;
-        var days = Math.floor(distance/(1000*60*60*24));
-        var hours = Math.floor((distance % (1000*60*60*24))/(1000*60*60));
-        var minutes = Math.floor((distance % (1000*60*60))/(1000*60));
-        var seconds = Math.floor((distance % (1000*60))/1000);
+        //let now = serverDate.now();
+        let distance = this.countDownDate - now;
+        let days = Math.floor(distance/(1000*60*60*24));
+        let hours = Math.floor((distance % (1000*60*60*24))/(1000*60*60));
+        let minutes = Math.floor((distance % (1000*60*60))/(1000*60));
+        let seconds = Math.floor((distance % (1000*60))/1000);
       
         //this.electionTime = {days:days + "d ", hours:hours + "h ", minutes:secondsminutes + "m ", seconds:seconds + "s "}
         days = days < 10 ? days = `0${days}` : days
@@ -662,7 +754,7 @@ export default {
         
         let lent = Object.keys(this.regVoters).length
         
-        if(this.getVotes && lent == this.getVotes.length){
+        if(this.getVotes && this.getVotes.length != 0 && lent == this.getVotes.length){
           // all voters have registered, stop the election
           clearInterval(this.interval)
           this.not_started = false
@@ -711,6 +803,9 @@ export default {
       console.log('closed voting dialog')
       this.votingList.splice(this.votingList.indexOf(this.getUser.uid), 1)
     },
+    truncateText(text){
+      return text.replace(/(.{18})..+/, "$1...");
+    },
     getLabels(){
       this.labels = []
       this.data = []
@@ -724,7 +819,7 @@ export default {
         })
         //console.log(item)
         console.log(d)
-        this.labels.push(d.name)
+        this.labels.push(this.truncateText(d.name))
         //this.labels = labels
         this.data.push(foo[0] ? foo[0].score > 0 ? foo[0].score : 0 : 0)
         //this.data = data
@@ -871,6 +966,9 @@ export default {
         this.viewprofile = false
       })
       
+      this.$eventBus.$on('Close_Voting_Dialog', data=>{
+        this.show_voting_dialog = false
+      })
      
     } catch (error) {
       console.log(error)
@@ -911,6 +1009,12 @@ import api from '@/services/api'
   #bar_chart{
     width:100%;
   }
+
+  .v-sheet--offset {
+    top: -24px;
+    position: relative;
+  }
+  
   @media (min-width: 0){
     .flex.xs12 {
       margin-bottom: 15px;

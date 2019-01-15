@@ -369,7 +369,7 @@ export default {
     },
   },
   components:{
-    MyCarousel
+    
   },
   mounted(){
     

@@ -45,6 +45,8 @@ import {
   VAutocomplete,
   VDataTable,
   VExpansionPanel,
+  VSparkline,
+  VSheet
 } from 'vuetify'
 import api from '@/services/api'
 import 'vuetify/src/stylus/app.styl'
@@ -94,7 +96,9 @@ Vue.use(Vuetify, {
     VRadioGroup,
     VAutocomplete,
     VDataTable,
-    VExpansionPanel
+    VExpansionPanel,
+    VSparkline,
+    VSheet,
   },
   directives,
   theme: {

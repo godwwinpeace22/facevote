@@ -10,12 +10,12 @@
       />
       <v-subheader>Select an election to watch</v-subheader>
 
-      <v-card class="round pa-5 elevation-2">
+      <v-card class="round pa-4 elevation-2" :class="{'pa-5':$vuetify.breakpoint.mdAndUp}">
         <v-layout row wrap :justify-center='!data_available'>
           <v-subheader v-if="elections.length == 0 && data_available">Nothing here. To watch an election, either create one, contest or enroll to vote</v-subheader>
-          <v-progress-circular class="mt-3" v-if="!data_available" indeterminate color="grey lighten-1"></v-progress-circular>
-
-          <v-flex xs12 sm6 md4 d-flex v-for='election in elections' :key="election._id" >
+          <!--v-progress-circular class="mt-3" v-if="!data_available" indeterminate color="grey lighten-1"></v-progress-circular-->
+          <loading-bar v-if="!data_available"></loading-bar>
+          <v-flex xs12 sm6 md4 d-flex v-for='election in elections' :key="election.id">
             
             <v-card color="" dark class="py-3" height="" :to="'/elections/watch/' + election.electionId">
               <v-layout row>
@@ -62,7 +62,8 @@ export default {
     }
   },
   components:{
-    Navigation
+    Navigation,
+    LoadingBar
   },
   methods:{
     setCurElection(election){
@@ -106,14 +107,16 @@ export default {
         if (user) {
           this.$store.getters.getMyCreated && 
           this.$store.getters.getMyEnrolled ? 
-          this.data_available = true : ''
+          '' : ''
 
           // get election user created
-          await this.getMyCreated(user)
-          // get elections user enrolled in
-          await this.getMyEnrolled(user)
+          this.getMyCreated(user).then(res=>{
+            this.getMyEnrolled(user).then(res2=>{
+              this.data_available = true
+            })
+          }).catch(err=>{console.log(err)})
           
-          this.data_available = true
+          //this.data_available = true
           
         } else {
           console.log('No user is signed in.')
@@ -135,6 +138,7 @@ export default {
 
 import api from '@/services/api'
 import Navigation from '@/components/Navigation'
+import LoadingBar from '@/spinners/LoadingBar'
 </script>
 <style lang="scss">
   @mixin borderRadius($radius) {

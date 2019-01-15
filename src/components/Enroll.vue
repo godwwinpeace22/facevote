@@ -6,17 +6,24 @@
       <span slot="title">Dashboard</span>
       <h1 slot="extended_nav">Enroll</h1>
     </navigation>
+
+    <v-snackbar v-model="snackbar.show" :timeout="5000" :color="snackbar.color" top>
+      {{snackbar.message}} 
+      <v-btn dark flat @click="snackbar.show = false"> Close</v-btn>
+    </v-snackbar>
+
+
     <v-container grid-list-xl dark>
       <v-card class="round black--text">
         <v-stepper v-model="e5" dark class="white" style="min-height:300px;">
           <v-stepper-header class="grey" dark style="color:#fff;">
-            <v-stepper-step :complete="e5 > 1" step="1">Enroll</v-stepper-step>
+            <v-stepper-step :complete="e5 > 1" step="1">Intro</v-stepper-step>
             <v-divider></v-divider>
             <v-stepper-step :complete="e5 > 2" step="2">Select election</v-stepper-step>
             <v-divider></v-divider>
-            <v-stepper-step :complete="e5 > 3" step="3">Choose</v-stepper-step>
+            <v-stepper-step :complete="e5 > 3" step="3">Enroll</v-stepper-step>
             <v-divider></v-divider>
-            <v-stepper-step step="3">Finish</v-stepper-step>
+            <v-stepper-step :complete="e5 > 3" step="3">Finish</v-stepper-step>
           </v-stepper-header>
           <v-stepper-items>
             <v-stepper-content step="1">
@@ -44,8 +51,9 @@
                   </v-layout>
                 </v-container>
                 <v-card-actions>
-                  <v-btn depressed @click="e5 = 1">Previous</v-btn>
-                  <v-btn color="success" @click="getElection" :disabled="!electionId">Submit</v-btn>
+                  <v-btn depressed @click="e5 = 1" :disabled="loading">Previous</v-btn>
+                  <v-btn color="success" @click="getElection" 
+                    :disabled="!electionId" :loading="loading">Submit</v-btn>
                 </v-card-actions>
               </v-card>
             </v-stepper-content>
@@ -57,41 +65,28 @@
                   <v-divider></v-divider>
                   <h3 v-if="hide">{{error_msg}}</h3>
                 </v-card-text>
-                
-                <v-spacer></v-spacer>
-                <v-container>
-                  <v-layout row wrap>
-                    <v-flex xs12>
-                      <div id="video-container">
-                        <video id="camera-stream" width="500" autoplay></video>
-                      </div>
-                      <canvas style="display:none"></canvas>
-                      <img src="" alt="" id="canvasImg">
-                    </v-flex>
-                  </v-layout>
-                </v-container>
               </v-card>
 
-              <v-btn flat @click="e5 = 2">Previous</v-btn>
-              <v-btn color="secondary" @click="enroll" :disabled="hide" v-if="!hide">Enroll</v-btn>
+              <v-btn color="grey lighten-1" depressed @click="e5 = 2" :disabled="loading">Previous</v-btn>
+              <v-btn color="secondary" @click="enroll" 
+               v-if="!hide" :loading="loading" depressed>Enroll</v-btn>
             </v-stepper-content>
 
             <v-stepper-content step="4">
-              <v-card class="mb-5" color="grey lighten-5" style="min-height:200px;" flat tile>
+              <v-card class="mb-5" light color="grey lighten-5" style="min-height:200px;" flat tile>
                 <v-card-text v-if="election.length != 0">
                   <span class="subheading">{{election.title}}</span>
                   <v-divider></v-divider>
                   </v-card-text>
                   <v-spacer></v-spacer>
                 <v-card-text>
-                  <p>Tells us more about you</p>
-                  
+                  <p>You have successfully enrolled for this election</p>
+                  <p>Whats next?</p>
                   
                 </v-card-text>
               </v-card>
-
-              <v-btn flat @click="e5 = 3">Previous</v-btn>
-              <v-btn color="primary" @click="e5 = 1"> Finish</v-btn>
+              <v-btn color="primary" :to="'/contest'">Contest</v-btn>
+              <v-btn color="primary" :to="'/forum/'+election.electionId">Forum</v-btn>
             </v-stepper-content>
           </v-stepper-items>
         </v-stepper>
@@ -106,6 +101,7 @@ export default {
     title:'Enroll | Facevote',
     e5:1,
     snackbar:{},
+    loading:false,
     electionId:null,
     election:{},
     contestant:{
@@ -131,16 +127,19 @@ export default {
   methods:{
     async getElection(){
       try {
-        let details = db.collection('moreUserInfo').doc(this.$store.getters.getUser.email);
-
-        let doc = await details.get()
-        let user = doc.data()
-        console.log(user)
+        
         // prevent making unneccessary api calls
         if(!this.electionId){
           alert('Id is required') 
         }
         else{
+          this.loading = true
+          let details = db.collection('moreUserInfo').doc(this.$store.getters.getUser.email);
+
+          let doc = await details.get()
+          let user = doc.data()
+          console.log(user)
+
           let electionRef = db.collection('elections').doc(this.electionId)
           let id = await electionRef.get()
           console.log(id.data())
@@ -148,23 +147,14 @@ export default {
             this.snackbar = {
               show:true,message:'Sorry, election not found', color:'error'
             }
+            this.loading = false
           }
           else{
             this.election = id.data()
-            this.e5 = 2
-            //this.startCamera()
+            this.loading = false
+            this.e5 = 3
 
-            // disable enrollment if election has started or has ended
-            // make sure to do this on the server to since the date on client machine might be behind
-            let countDownDate = new Date(this.election.startDate + ' ' + this.election.startTime).getTime();
-            //let countDownDate2 = countDownDate + this.election.duration * 1000 * 60 * 60
-            let now = Date.now()
-            
-            if(now > countDownDate){
-              this.hide = true; this.error_msg = 'Sorry, enrollment has ended'
-            } // election is in progress or ended
-
-            else if(this.election.regVoters.find(item=> item == this.$store.getters.getUser.uid)){
+            if(this.election.regVoters.find(item=> item == this.$store.getters.getUser.uid)){
               console.log(this.election.regVoters.find(item=> item == this.$store.getters.getUser.uid))
               this.error_msg = 'Sorry, you have already enrolled for this election'
               this.hide = true
@@ -204,53 +194,36 @@ export default {
       }
     },
     async enroll(){
-      try {
-        if(this.election.regVoters.indexOf(this.$store.getters.getUser.uid) != -1){
-          
-          this.snackbar = {
-            show:true,message:'Sorry, you are already enrolled for this election', color:'error'
-          }
-        }
-        else{
-          // Update election
-          var electionRef = db.collection('elections').doc(this.election.electionId);
-          var arrUnion = await electionRef.update({
-            regVoters: firebase.firestore.FieldValue.arrayUnion(this.$store.getters.getUser.uid)
-          });
-
-          //update User details
-          let userRef = db.collection('moreUserInfo')
-          .doc(this.$store.getters.getUser.email);
-          await userRef.update({
-            enrolled:firebase.firestore.FieldValue.arrayUnion(this.election.electionId)
-          });
-
-          // create new activity
-          await db.collection('activities').add({
-            type:'voter_registered',
-            by:this.$store.getters.getUser.uid,
-            dateCreated:Date.now(),
-            text:'enrolled for this election',
-            electionRef:this.selectedElection.electionId
-          })
-
+      firebase.auth().currentUser.getIdToken().then((token)=>{
+        this.loading = true
+        api().post('dashboard/enroll',{
+          election:this.election,
+          idToken:token,
+          email:this.$store.getters.getUser.email
+        }).then(result =>{
+          console.log(result)
           this.snackbar = {
             show:true,message:'Enrollement successfull!', color:'success'
           }
-        }
-        
-      } catch (error) {
-        $NProgress.done()
-        console.log(error.response)
-
-        if(error.response){
-          //alert(error.response.data.message)
-          this.snackbar = {
-            show:true,message:error.response.data.message, color:'error'
+          this.loading = false
+          this.e5 = 4
+        }).catch(error=>{
+          $NProgress.done()
+          this.loading = false
+          console.log(error)
+          console.log(error.response)
+          if(error.response){
+            this.snackbar = {
+              show:true,message:error.response.data.message, color:'error'
+            }
+          }else{
+            this.snackbar = {
+              show:true,message:'Something went wrong, check your internet connection and try again', color:'error'
+            }
           }
-        }
-        
-      }
+          
+        })
+      })
     },
     startCamera(){
       if (navigator.getUserMedia) {

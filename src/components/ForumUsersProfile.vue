@@ -100,10 +100,15 @@ export default {
       return found ? true : false
     },
     getRole(){
-      let res = this.user.contestsRef.find(contest=>contest.electionRef == this.thisGroup.electionId)
-      //console.log(res)
-      let found = this.thisGroup.roles.find(role => role.value == res.role)
-      return found ? {role:found.title,contesting:'Yes'} : false
+      if(this.user.contestsRef){
+        let res = this.user.contestsRef.find(contest=>contest.electionRef == this.thisGroup.electionId)
+        //console.log(res)
+        let found = this.thisGroup.roles.find(role => role.value == res.role)
+        return found ? {role:found.title,contesting:'Yes'} : false
+      }
+      else{
+        return false
+      }
     },
     follow(event){
       if(this.user.followers.indexOf(this.currUser.uid) == -1){

@@ -27,10 +27,10 @@ export default new Vuex.Store({
   plugins:[
     vuexLocalStorage.plugin,
     createMutationsSharer({ predicate: 
-      ['logout', 'setUser', 'curRoom','saveChatMessages','updateFromDb','updateThoseOnline','allVotes'] })
+      ['logout', 'setUser','setUserInfo', 'curRoom','saveChatMessages','updateFromDb','updateThoseOnline','allVotes'] })
   ],
   state: {
-    user:null, // loggedin user, persisted in localstored but with limited info for security reasons.
+    userInfo:null, // additional info for logged in user
     logged_in_user:null, // this is the same as user but is not persisted in local storage.
     token:null,
     isAuthenticated:false,
@@ -58,15 +58,18 @@ export default new Vuex.Store({
     votes:[],
   },
   mutations: {
+    setUserInfo(state,data){
+      state.userInfo = data
+    },
     setUser(state,data){
-      state.token = data.token
       state.isAuthenticated = data
-      state.timestamp = Date.now()
+      state.userInfo = null
     },
     logout(state){
       firebase.auth().signOut().then(function() {
         // Sign-out successful.
         state.isAuthenticated = false
+        state.userInfo = null
         router.push('/login')
         //window.location.reload()
       }).catch(function(error) {
@@ -147,6 +150,9 @@ export default new Vuex.Store({
   actions:{
     setUser({commit}, data){
       commit('setUser', data)
+    },
+    setUserInfo({commit}, data){
+      commit('setUserInfo', data)
     },
     setLoggedInUser({commit}, data){
       commit('setLoggedInUser', data)
@@ -246,6 +252,7 @@ export default new Vuex.Store({
     .sort((a,b)=>a.timestamp - b.timestamp),
     
     getUser: state => state.isAuthenticated,
+    getUserInfo:state => state.userInfo, // additional info for user
     getChatMessages:(state)=>{
      return state.chat_messages.sort((a,b) => a.timestamp - b.timestamp)
     },
