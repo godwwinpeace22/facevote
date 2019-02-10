@@ -1,10 +1,87 @@
 <template>
   <div>
     <loading-bar v-if="!open"></loading-bar>
-    <v-container grid-list-md v-if="open">
+    <v-container grid-list-xs :class="{'pa-0':$vuetify.breakpoint.smAndDown}">
+      <v-layout row wrap>
+        <v-flex xs12 md10>
+          <v-card height="180" class="cyan">
+            <v-card-media
+              contain
+              height="auto"
+              src="https://cdn.vuetifyjs.com/images/parallax/material.jpg"
+            >
+              
+            </v-card-media>
+          </v-card>
+          <v-card height="">
+            <v-sheet
+              class="v-sheet--offset" :class="{'ml-5':$vuetify.breakpoint.mdAndUp}"
+              color="" elevation="3" style="border-radius:50%;margin:auto;padding-top:4px;"
+              width="150" height="150">
+              <v-img :src="user.photoURL || `https://ui-avatars.com/api/?name=${user.name}&size=142`" 
+                width="142" height="142" style="border-radius:50%;margin:auto;display:block;padding-top:4px;"/>
+            </v-sheet>
+            <v-card-text style="margin-top:-75px;">
+              <div class="text-xs-center text-md-left" :class="{'ml-5':$vuetify.breakpoint.mdAndUp}">
+                <p class="title mb-1">{{user.name}}</p>
+                <p>Studies at <strong>{{user.school}}</strong>,<br/> Faculty of {{user.faculty}}, Department of {{user.department}}</p>
+                <p></p>
+              </div>
+
+              <v-item-group v-model="onboarding" class="text-xs-center" mandatory>
+                <v-container grid-list-md :class="{'pa-0':$vuetify.breakpoint.smAndDown}">
+                  <v-layout row wrap justify-start align-start>
+                    <v-item>
+                      <v-flex xs4 slot-scope="{ active, toggle }" @click="toggle">
+                        <v-card height="80" elevation="1" flat>
+                          <div class="text-xs-center secondary--text headline pt-2">2.6M</div>
+                          <div class="text-xs-center grey--text">Followers</div>
+                        </v-card>
+                      </v-flex>
+                      
+                    </v-item>
+                    <v-item>
+                      <v-flex xs4 slot-scope="{ active, toggle }" @click="toggle">
+                        <v-card height="80" elevation="1" flat>
+                          <div class="text-xs-center secondary--text headline pt-2">500</div>
+                          <div class="text-xs-center grey--text">Contests</div>
+                        </v-card>
+                      </v-flex>
+                      
+                    </v-item>
+                    <v-item>
+                      <v-flex xs4 slot-scope="{ active, toggle }" @click="toggle">
+                        <v-card height="80" elevation="1" flat>
+                          <div class="text-xs-center secondary--text headline pt-2">200</div>
+                          <div class="text-xs-center grey--text">Posts</div>
+                        </v-card>
+                      </v-flex>
+                      
+                    </v-item>
+                  </v-layout>
+                </v-container>
+              </v-item-group>
+              
+              <v-container :class="{'pa-0':$vuetify.breakpoint.smAndDown}" grid-list-md>
+                <v-subheader>Recent posts</v-subheader>
+                <v-layout row wrap>
+                  <v-flex xs4 v-for="i in 4" :key="i" >
+                    <v-card color="" height="100" class="elevation-0">
+                      
+                    </v-card>
+                  </v-flex>
+                </v-layout>
+                
+              </v-container>
+            </v-card-text>
+          </v-card>
+        </v-flex>
+      </v-layout>
+    </v-container>
+    <!--v-container grid-list-md v-if="open">
       <v-layout row wrap>
         <v-flex xs12 md4 d-flex>
-          <v-card style='min-height:200px;'>
+          <v-card style='min-height:200px;' class="round">
             <v-img :src="user.photoURL || `https://ui-avatars.com/api/?name=${user.name}&size=300`" height="300"/>
             <v-subheader class="font-weight-bold grey--text">About</v-subheader>
             <v-divider></v-divider>
@@ -22,7 +99,7 @@
           <v-container grid-list-md pt-0 px-0 mt-0>
             <v-layout row wrap>
               <v-flex xs12>
-                <v-card style='min-height:200px;' class="mb-4" height="300">
+                <v-card style='min-height:200px;' class="mb-4 round_top" height="300">
                   <v-toolbar dense flat color="white" scroll-target="#scroll_target">
                     <v-subheader class="font-weight-bold grey--text">Contests</v-subheader>
                     <v-spacer></v-spacer>
@@ -103,13 +180,15 @@
           
         </v-flex>
       </v-layout>
-    </v-container>
+    </v-container-->
     
   </div>
 </template>
 <script>
 export default {
   data: ()=>({
+    length:3,
+    onboarding:0,
     follower_tab:1,
     followers:[],
     followings:[],
@@ -171,6 +250,26 @@ import LoadingBar from '@/spinners/LoadingBar'
     -o-border-radius:$radius;
   }
   $mainBgColor:#1c1f35;
+
+  .round{
+    @include borderRadius(6px)
+  }
+  .round_top{
+    border-top-right-radius: 6px;
+    border-top-left-radius: 6px;
+    -webkit-border-top-right-radius:6px;
+    -webkit-border-top-left-radius:6px;
+    -moz-border-top-right-radius:6px;
+    -moz-border-top-left-radius:6px;
+    -o-border-top-right-radius:6px;
+    -o-border-top-left-radius:6px;
+  }
+
+  .v-sheet--offset {
+    top: -75px;
+    position: relative;
+    @include borderRadius(50%);
+  }
 
   /* --scrollbar --*/
   .scrollbar::-webkit-scrollbar {

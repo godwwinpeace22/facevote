@@ -1,6 +1,6 @@
 <template>
-  <v-card>
-    <v-toolbar color="teal" dark dense flat>
+  <v-card class="round">
+    <v-toolbar color="teal" dark dense flat scroll-target="private_chat_home">
       <v-avatar size="36" color="grey lighten-4">
         <img :src="user.imgSrc || user.photoURL || `https://ui-avatars.com/api/?name=${user.name}`" alt="avatar">
       </v-avatar>
@@ -14,8 +14,8 @@
     </v-toolbar>
     
 
-    <v-container v-if='!loading_messages' class="pa-0 pt-3 private_chat_home">
-      <v-card flat pa-0 id="chat_space" style="height:62vh;margin-top:px;overflow-y:auto;background:ore;">
+    <v-container v-if='!loading_messages' class="pa-0 pt-3 private_chat_home" :style="switchHeight">
+      <v-card flat pa-0 id="chat_space" style="height:92%;margin-top:px;overflow-y:auto;background:ore;">
         <div v-for="(msg,i) in myConversations" :key="i">
           <div v-if="divide(msg.timestamp, myConversations[i-1])" class="time_divider">
             {{divide(msg.timestamp, myConversations[i-1])}}
@@ -33,7 +33,7 @@
                 {{msg.message}}
               </div>
             </div>
-            <div class="private_chat_content" style="background:#9E9E9E;color:#fff;" v-else>
+            <div class="private_chat_content" style="background:rgb(194, 228, 245);color:rgb(34, 35, 35);" v-else>
               <div style="margin-top:0px;margin-bottom:0px;float:right;">
                 <v-avatar size="36" color="grey lighten-4">
                   <img :src="getUser.photoURL  || `https://ui-avatars.com/api/?name=${getUser.displayName}`" alt="avatar">
@@ -51,7 +51,7 @@
           
       </v-card>
     </v-container>
-    <div class="white--text pb-0 px-1" style='padding-top:10px;width:100%;'>
+    <div class="white--text pb-0 px-1" style='padding-top:10px;width:100%;position:absolute;bottom:0;background:#fff'>
       
       <v-textarea v-model="message" box color="deep-purple" @keypress="isTyping"
         label="Type a message" outline
@@ -74,6 +74,17 @@ export default {
       if(this.$vuetify.breakpoint.smAndDown){
         return {
           height:'100vh'
+        }
+      }
+    },
+    switchHeight(){
+      if(this.$vuetify.breakpoint.smAndDown){
+        return {
+          height:'93vh'
+        }
+      }else{
+        return {
+          height:'60vh'
         }
       }
     },
@@ -199,9 +210,6 @@ import { mapGetters } from 'vuex'
 }
 $mainBgColor:#1c1f35;
 
-.v-text-field__details{
-  display:none;
-}
 .private_chat_home{
   //background-image:url('../assets/chat_wallpaper.jpg');
   background-size:cover;
@@ -214,6 +222,7 @@ $mainBgColor:#1c1f35;
   font-weight:bold;
   text-align:center;
   padding:0px 15px;
+  margin:0px 15px;
   @include borderRadius(10px);
 }
 .private_chat_avartar{

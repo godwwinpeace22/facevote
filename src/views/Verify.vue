@@ -3,13 +3,13 @@
     <navigation>
       <span>Dashboard</span>
     </navigation>
+
+  
     <v-stepper v-model="e5" d-flex style="">
-      <v-stepper-header class="teal">
+      <v-stepper-header class="teal white--text">
         <v-stepper-step :complete="e5 > 1" step="1">Verify your account</v-stepper-step>
         <v-divider></v-divider>
-        <v-stepper-step :complete="e5 > 2" step="2">Face Recognition</v-stepper-step>
-        <v-divider></v-divider>
-        <v-stepper-step step="3">Finish</v-stepper-step>
+        <v-stepper-step step="2">Finish</v-stepper-step>
       </v-stepper-header>
       <v-stepper-items>
 
@@ -23,37 +23,12 @@
               </template>
             </v-card-text>
             <v-card-actions>
-              <v-btn color="secondary" @click="e5 = 2">Next</v-btn>
+              <v-btn color="secondary" @click="verify_dialog = true; startCamera()">Next</v-btn>
             </v-card-actions>
           </v-card>
         </v-stepper-content>
 
         <v-stepper-content step="2">
-          <v-card class="mb-5" color="grey lighten-5"  style="min-height:200px;" flat tile>
-            <v-card-text>
-              <!--v-subheader>Face Recognition</v-subheader-->
-              <!--div>Position your face in the oval then press capture</div-->
-            </v-card-text>
-            <v-container grid-list-xs>
-              <v-layout row wrap justify-center justify-space-around>
-                <v-flex xs12 sm6>
-                  <v-card>
-                    <div id="video-container">
-                      <video id="camera-stream" autoplay width="450"></video>
-                    </div>
-                    <canvas style="display:none"></canvas>
-                    <img src="" alt="" id="canvasImg">
-                  </v-card>
-                </v-flex>
-              </v-layout>
-            </v-container>
-          </v-card>
-
-          <v-btn flat @click="e5 = 1">Previous</v-btn>
-          <v-btn color="primary" @click="verify" :loading="loading">Capture</v-btn>
-        </v-stepper-content>
-
-        <v-stepper-content step="3">
           <v-card class="mb-5" color="grey lighten-5" style="min-height:200px;" flat tile>
             <v-card-text >
               <span class="subheading"></span>
@@ -61,7 +36,7 @@
               </v-card-text>
               <v-spacer></v-spacer>
             <v-card-text>
-              <p>Tells us more about you</p>
+              <p>Verification Done!</p>
               
               
             </v-card-text>
@@ -72,14 +47,63 @@
         </v-stepper-content>
       </v-stepper-items>
     </v-stepper>
+
+    <v-layout row justify-center>
+      <v-dialog v-model="verify_dialog" fullscreen transition="dialog-bottom-transition" :overlay="false">
+        <v-card>
+          <v-toolbar dark color="secondary">
+            <v-btn icon @click.native="verify_dialog = false" dark>
+              <v-icon>close</v-icon>
+            </v-btn>
+            <v-toolbar-title>Verify Account</v-toolbar-title>
+            <v-spacer></v-spacer>
+            <v-toolbar-items>
+              <v-btn dark flat @click.native="verify_dialog = false; ctrack.stop();">Close</v-btn>
+            </v-toolbar-items>
+          </v-toolbar>
+          
+          <v-card class="mb-5" color="grey lighten-5"  style="min-height:200px;" flat tile>
+            <v-card-text>
+              <div class="text-xs-center">Position your face on the box</div>
+            </v-card-text>
+            <v-container grid-list-xs>
+              <v-layout row wrap justify-center justify-space-around>
+                <v-flex xs12 sm4>
+                  <v-card>
+                    
+                    <!--div id="video-container">
+                      <video id="camera-stream" autoplay width="100%"></video>
+                    </div>
+                    <canvas style="display:none"></canvas>
+                    <img src="" alt="" id="canvasImg"-->
+
+                    <video id="videoel" width="400" height="300" preload="auto" loop playsinline autoplay>
+                    </video>
+                    <canvas id="overlay" width="400" height="300"></canvas>
+
+                    <v-card-actions>
+                      <v-btn color="secondary" @click="startVideo" :loading="loading">Capture</v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-flex>
+              </v-layout>
+            </v-container>
+          </v-card>
+
+        </v-card>
+      </v-dialog>
+    </v-layout>
   </div>
 </template>
 <script>
 export default {
   data:()=>({
     e5:1,
+    verify_dialog:false,
     loading:false,
     vid:'',
+    ctrack:'',
+    trackingStarted:false,
     cloudinary: {
        uploadPreset: 'izcl0gzg',
        cloudName: 'unplugged',
@@ -90,45 +114,44 @@ export default {
      }, 
   }),
   methods:{
-    async enroll(){
-      try {
-        if(this.election.regVoters.indexOf(this.$store.getters.getUser._id) != -1){
-          alert('you have already enrolled for this election');
-        }
-        else{
-          let res = await api().post(`dashboard/enroll/${this.electionId}`, {user:this.$store.getters.getUser,token:this.$store.getters.getToken})
-          console.log(res)
-          alert('enrollement successfull');
-        }
-        
-      } catch (error) {
-
-        console.log(error.response)
-        if(error.response.status = 401){
-          alert('you have already enrolled for this election')
-        }
-        
-      }
-    },
     startCamera(){
-      if (navigator.getUserMedia) {
-          // Request the camera.
-          let $self = this
-          navigator.getUserMedia({	video: true}, function(localMediaStream) {
-              // Get a reference to the video element on the page.
-              var vid = document.getElementById('camera-stream');
-              $self.vid = vid
-              // Create an object URL for the video stream and use this to set the video source.
-              vid.srcObject = localMediaStream
-            },
-            function(err) {
-              console.log('The following error occurred when trying to use getUserMedia: ' + err);
-            }
-          );
+      /*if (navigator.getUserMedia) {
+        // Request the camera.
+        let $self = this
+        navigator.getUserMedia({	video: true}, function(localMediaStream) {
+            // Get a reference to the video element on the page.
+            var vid = document.getElementById('camera-stream');
+            $self.vid = vid
+            // Create an object URL for the video stream and use this to set the video source.
+            vid.srcObject = localMediaStream
+          },
+          function(err) {
+            console.log('The following error occurred when trying to use getUserMedia: ' + err);
+          }
+        );
 
-        } else {
-          alert('Sorry, your browser does not support getUserMedia');
-        }
+      }
+      else {
+        alert('Sorry, your browser does not support getUserMedia');
+      }*/
+
+
+      navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+      window.URL = window.URL || window.webkitURL || window.msURL || window.mozURL;
+      // set up video
+      if (navigator.mediaDevices) {
+        navigator.mediaDevices.getUserMedia({video : true}).then(this.gumSuccess).catch(this.gumFail);
+      } else if (navigator.getUserMedia) {
+        navigator.getUserMedia({video : true}, gumSuccess, gumFail);
+      } else {
+        alert("Your browser does not seem to support getUserMedia, using a fallback video instead.");
+      }
+
+      
+      this.ctrack = new clm.tracker();
+      this.ctrack.init();
+      this.trackingStarted = false;
+      console.log(this.ctrack)
     },
     makeblob(dataURL) {
 			const BASE64_MARKER = ';base64,';
@@ -145,7 +168,22 @@ export default {
       
 			return new Blob([uInt8Array], { type: contentType });
 		},
-    
+    startVideo() {
+      // start video
+      var vid = document.getElementById('videoel');
+      var vid_width = vid.width;
+      var vid_height = vid.height;
+      var overlay = document.getElementById('overlay');
+      var overlayCC = overlay.getContext('2d');
+      
+      vid.play();
+      // start tracking
+      this.ctrack.start(vid);
+      this.trackingStarted = true;
+      console.log('trackingStarted: ', this.trackingStarted)
+      // start loop to draw face
+      this.drawLoop();
+    },
     async verify(){
       try {
         this.loading = true
@@ -160,6 +198,7 @@ export default {
         
         
         this.processImage(base64Img)
+
         //let result = await api().post(`dashboard/verify/${this.$store.getters.getUser.uid}`)
         //console.log(result)
         //this.loading = false
@@ -195,10 +234,65 @@ export default {
 
       }
     },
+    adjustVideoProportions() {
+      // resize overlay and video if proportions of video are not 4:3
+      // keep same height, just change width
+      console.log('adjust proportions')
+      var vid = document.getElementById('videoel');
+      var vid_width = vid.width;
+      var vid_height = vid.height;
+      var overlay = document.getElementById('overlay');
+      var overlayCC = overlay.getContext('2d');
 
+      var proportion = vid.videoWidth/vid.videoHeight;
+      vid_width = Math.round(vid_height * proportion);
+      vid.width = vid_width;
+      overlay.width = vid_width;
+    },
+    gumSuccess( stream ) {
+      // add camera stream if getUserMedia succeeded
+      var vid = document.getElementById('videoel');
+      if ("srcObject" in vid) {
+        vid.srcObject = stream;
+      } else {
+        vid.src = (window.URL && window.URL.createObjectURL(stream));
+      }
+      console.log('gumSuccess')
+      vid.onloadedmetadata = ()=>{
+        this.adjustVideoProportions();
+        vid.play();
+      }
+      vid.onresize = ()=>{
+        this.adjustVideoProportions();
+        if (this.trackingStarted) {
+          this.ctrack.stop();
+          this.ctrack.reset();
+          this.ctrack.start(vid);
+        }
+      }
+    },
+    gumFail() {
+      // fall back to video if getUserMedia failed
+      alert("There was some problem trying to fetch video from your webcam, using a fallback video instead.");
+    },
+    drawLoop(){
+      var vid = document.getElementById('videoel');
+      var vid_width = vid.width;
+      var vid_height = vid.height;
+      var overlay = document.getElementById('overlay');
+      var overlayCC = overlay.getContext('2d');
+
+      requestAnimationFrame(this.drawLoop)
+      overlayCC.clearRect(0, 0, vid_width, vid_height);
+      if (this.ctrack.getCurrentPosition()) {
+        //console.log(this.ctrack.getCurrentPosition())
+        this.ctrack.draw(overlay);
+      }
+      //console.log('drawLoop')
+    },
     processImage(sourceImageUrl) {
         
-        var subscriptionKey = "731fce7df5e245a692f8077a774b1023";
+        var subscriptionKey = "";
 
         var uriBase =
             "https://westcentralus.api.cognitive.microsoft.com/face/v1.0/detect";
@@ -291,7 +385,7 @@ export default {
       },
   },
   mounted(){
-    this.startCamera()
+    
   },
   components:{
     Navigation
@@ -301,6 +395,14 @@ import api from '@/services/api'
 import axios from 'axios'
 import Navigation from '@/components/Navigation'
 import unirest from 'unirest'
+import clm from 'clmtrackr'
 //const Kairos =  require('@/assets/kairos.js')
 //import { promisfy } from "@/helpers/promisify";
 </script>
+
+
+<style lang="scss" scoped>
+  #videoel, #overlay{
+    position: absolute;
+  }
+</style>

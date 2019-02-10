@@ -2,7 +2,15 @@
   <loading-bar v-if='loading_messages'>
     <v-subheader slot='loading_info' class='d-block mx-auto' style='width:fit-content;'>Loading messages...</v-subheader>
   </loading-bar>
+
+  
   <div v-else style="background:#fff;" class="pa-0 pt-3 chat_home chat_space" id="chat_home">
+    <v-snackbar v-model="snackbar.show" :timeout="5000" :color="snackbar.color" 
+      class="white--text" top right>
+      {{snackbar.message}} 
+      <v-btn dark flat @click="snackbar.show = false"> Close</v-btn>
+    </v-snackbar>
+
     <div flat pa-0 id="chat_space" class="chat_space" style="height:60vh;margin-top:px;overflow-y:auto;">
       <div v-for="(msg,i) in getChatMessages" :key="i">
         <div v-if="divide(msg.timestamp, getChatMessages[i-1])" style="background:oldlace;font-weight:bold;text-align:center;">
@@ -38,6 +46,23 @@
                 <template v-else>{{item}} </template>
 
               </template>
+              
+              <!-- ACTIONS FOR ADMINS OR MODERATORS -->
+              <div id="moderator_actions" v-if="isModerator(getUser.uid)">
+                <v-menu offset-y>
+                  <v-btn flat icon slot="activator">
+                    <v-icon>more_vert</v-icon>
+                  </v-btn>
+                  <v-list dense>
+                    <v-list-tile @click="deleteMessage(msg)">
+                      <v-list-tile-title>Delete this message</v-list-tile-title>
+                    </v-list-tile>
+                  </v-list>
+                </v-menu>
+                
+              </div>
+
+              <!-- UPLOADED IMAGES -->
               <v-container grid-list-md v-if="msg.images">
                 <v-layout row wrap>
                   <v-flex xs12 sm4 v-for="(image,i) in msg.images" :key="i">
@@ -178,6 +203,7 @@ export default {
   data:()=>({
     password: 'Password',
     show_reactions:false,
+    snackbar:{},
     carousel_dialog:false,
     carousel_images:[],
     onboarding:0,
@@ -193,7 +219,14 @@ export default {
     curr_date:null,
     loading_messages:true,
   }),
-  props:['members','room'],
+  props:['members','room','thisGroup'],
+  watch:{
+    room: function(e){
+      //console.log(e)
+      this.loading_messages = true // it will set if off when its done
+      this.chatUpdate()
+    }
+  },
   computed: {
     icon () {
       return this.icons[this.iconIndex]
@@ -256,6 +289,22 @@ export default {
     },
     doSomething(){
       alert('Do something!')
+    },
+    deleteMessage(msg){
+      // Delete an inappropriate msg
+      db.collection('chat_messages').doc(msg.msgId)
+      .delete().then(done=>{
+        this.snackbar = {show:true,message:'Message deleted',color:'dark'}
+      }).catch(err=>{
+        this.snackbar = {show:true,message:'Something went wrong',color:'error'}
+      })
+    },
+    isModerator(userId){
+      //console.log(userId,this.thisGroup.moderators)
+      let found = this.thisGroup.moderators ?
+      this.thisGroup.moderators.find(id => id == userId) : false
+      //console.log(found,this.thisGroup)
+      return found ? true : false
     },
     divide(timestamp,prev){
       let options = {year: 'numeric', month: 'numeric', day: 'numeric' };
@@ -339,7 +388,7 @@ export default {
       }
     }
   },
-  mounted() {
+  created() {
     setTimeout(() => {
       this.scrollChat()
     }, 4000);
@@ -367,13 +416,9 @@ export default {
     //'users':Users,
   }
 }
-import io from 'socket.io-client';
-  import {mapGetters} from 'vuex'
-  import api from '@/services/api'
+import {mapGetters} from 'vuex'
   import Settings from '@/components/Settings'
   import LoadingBar from '@/spinners/LoadingBar'
-  //import Users from '@/components/Users'
-  import { promisfy } from "@/helpers/promisify";
   
 </script>
 <style lang="scss" scoped>
@@ -436,6 +481,14 @@ a{
   }
 }
 
+#moderator_actions{
+  float:right;
+  margin-top: -30px;
+  display:none;
+}
+.chat_rectangle:hover #moderator_actions{
+  display:block;
+}
 /* --scrollbar --*/
 .chat_space::-webkit-scrollbar {
     width: 10px;

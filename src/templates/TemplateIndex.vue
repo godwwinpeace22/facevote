@@ -1,7 +1,8 @@
 <template>
   <div>
-    <sleek v-if="template == 2"> </sleek>
-    <default v-else :selectedElection='selectedElection' :manifestoData='manifestoData'></default>
+    <sleek v-if="template == 'sleek'" > </sleek>
+    <default v-if="template == 'default'" :viewonly="viewonly" :selectedElection='selectedElection' :manifestoData='manifestoData'></default>
+    <!-- <default v-else :selectedElection='selectedElection' :manifestoData='manifestoData'></default> -->
     
   </div>
 </template>
@@ -10,7 +11,24 @@ export default {
   data: ()=>({
 
   }),
-  props:['template', 'selectedElection', 'manifestoData'],
+  props:{
+    template:{
+      type:String,
+      default:'default'
+    },
+    selectedElection:{
+      //type:Object,
+      required:true
+    },
+    manifestoData:{
+      //type:Object,
+    },
+    viewonly:{
+      type:Boolean,
+      default:false
+    }
+
+  },
   components:{
     Default,
     Sleek

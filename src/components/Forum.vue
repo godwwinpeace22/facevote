@@ -3,41 +3,40 @@
     <vue-headful
       :title="title"
     />
-      <navigation>
-        <span slot="title">{{$vuetify.breakpoint.smAndDown ? this_group.title : 'Forum'}}</span>
-        <v-toolbar slot="extended_nav" color="teal" dark flat
-          style='background-color:#29648a;' dense>
-          <v-tabs v-model="model" color="teal" 
-            v-if="$vuetify.breakpoint.smAndDown" slider-color="yellow">
-            <v-tab
-              v-for="item in ['Chat','Members','Media']"
-              :key="item"
-              :href="`#${item}`"
-            >
-              {{ item }}
-            </v-tab>
-          </v-tabs>
-          <template v-else>
-            <h1>{{this_group.title}}</h1>
-            
-          </template>
-          <v-spacer></v-spacer>
+    <navigation>
+      <span slot="title">{{$vuetify.breakpoint.smAndDown ? this_group.title : 'Forum'}}</span>
+      <v-toolbar slot="extended_nav" color="teal" dark flat
+        style='background-color:#29648a;' dense>
+        <v-tabs v-model="model" color="teal" 
+          v-if="$vuetify.breakpoint.smAndDown" slider-color="yellow">
+          <v-tab
+            v-for="item in ['Chat','Members','Media']"
+            :key="item"
+            :href="`#${item}`"
+          >
+            {{ item }}
+          </v-tab>
+        </v-tabs>
+        <template v-else>
+          <h1>{{this_group.title}}</h1>
           
-          <v-menu offset-y>
-            <v-btn icon slot="activator"
-              v-show="$vuetify.breakpoint.mdAndUp">
-              <v-icon size="30">menu</v-icon>
-            </v-btn>
-            <v-list>
-              <v-list-tile @click="media_dialog = true">
-                <v-list-tile-title>Media files</v-list-tile-title>
-              </v-list-tile>
-            </v-list>
-          </v-menu>
-          
-        </v-toolbar>
-      </navigation>
-      
+        </template>
+        <v-spacer></v-spacer>
+        
+        <v-menu offset-y>
+          <v-btn icon slot="activator"
+            v-show="$vuetify.breakpoint.mdAndUp">
+            <v-icon size="30">menu</v-icon>
+          </v-btn>
+          <v-list>
+            <v-list-tile @click="media_dialog = true">
+              <v-list-tile-title>Media files</v-list-tile-title>
+            </v-list-tile>
+          </v-list>
+        </v-menu>
+        
+      </v-toolbar>
+    </navigation>
 
     <v-navigation-drawer fixed v-model="drawerRight" v-if="$vuetify.breakpoint.mdAndUp" 
       :mobile-break-point="960"
@@ -48,97 +47,98 @@
       
     </v-navigation-drawer>
 
-    <v-tabs-items v-model="model">
+    <loading-bar v-if="!ready"><div slot="loading_info">Loading...</div></loading-bar>
+
+    <v-tabs-items v-model="model" style="min-height:100vh;background:#fff;" v-else>
       <v-tab-item value="Chat">
-        <chatwindow :members='members' :room='this_group.electionId'></chatwindow>
+        <chatwindow :members='members' :room='this_group.electionId' :thisGroup='this_group' v-if="ready"></chatwindow>
+        <!-- Textarea -->
+        <div v-show="model == 'Chat'" v-if="ready" :style="styleInput">
+          <div class="chat_input white--text" id="chat_input" style='width:100%;background:#fff;z-index:0;'>
+        
+            <v-form @submit.prevent='submit' style="margin-left:px;background:#fff;" class="px-2">
+              <v-textarea v-model="message" color="deep-purple" @keyup.shift.50="mention_dialog = true" 
+                @keypress="isTyping" id="form" :disabled="!canSendMessages"
+                :label="canSendMessages ? 'Type a message' : 'You cannot send messages in this group'" outline 
+                rows="1" auto-grow
+              >
+              <v-tooltip top slot="append" v-show="!message.trim()">
+                <v-btn icon slot="activator" @click='triggerFileSelect'>
+                  <v-icon color="success">photo_camera</v-icon>
+                </v-btn>
+                <span>Send a photo</span>
+              </v-tooltip>
+              <v-tooltip top slot="append">
+                <v-btn icon slot="activator" @click='mention_dialog = true'>
+                  <span color="success" style="color:green;margin-top:-3px;font-size:18px;">@</span>
+                </v-btn>
+                <span>Mention someone</span>
+              </v-tooltip>
+              <v-tooltip top slot="append-outer" v-if="message.trim()">
+                <v-btn icon slot="activator" @click="sendMessage">
+                  <v-icon color="teal">{{message.trim() ? 'send' : '' }}</v-icon>
+                </v-btn>
+                <span>Send message</span>
+              </v-tooltip>
+
+              <!-- EMOJIS DIALOG-->
+              <v-menu max-width="300" :close-on-content-click='false'
+                slot="prepend-inner" max-height="300" top offset-y>
+
+                <v-btn slot="activator" icon >
+                  <v-icon color="success">mood</v-icon>
+                </v-btn>
+                <v-card class="pa-0">
+                  <v-card-text >
+                    <v-btn small flat color="primary" icon v-for="(emoji,i) in emojis" :key="i" @click="appendEmoji(emoji)">
+                      <span style="font-size:30px;display:block;margin-top:-7px;">{{emoji}}</span>
+                    </v-btn>
+                  </v-card-text>
+                </v-card>
+              </v-menu>
+
+              <!-- MENTION MEMBER -->
+              <v-menu width="500"  :close-on-content-click='false' 
+                attach="chat_input" id="mention" slot="append" max-height="500" 
+                left top offset-y v-model="mention_dialog">
+                <v-card class="pa-0" flat>
+                  <v-toolbar flat dense color="cyan"></v-toolbar>
+                  <div :style="styleMention" class="navdrawr">
+                    <v-list subheader dense>
+                      <v-subheader v-show="members.length == 0">No results found</v-subheader>
+                      <v-list-tile v-for="member in members" :key="member.uid" avatar @click="appendUser(member)">
+                        
+                        <v-list-tile-avatar>
+                          <!-- prefer to use loggedin user's info rather than his info from voters list -->
+                          <img :src="member.photoURL">
+                        </v-list-tile-avatar>
+
+                        <v-list-tile-content>
+                          <v-list-tile-title class="text-capitalize">{{member.name}}</v-list-tile-title>
+                        </v-list-tile-content>
+                      </v-list-tile>
+                    </v-list>
+
+                    <v-divider></v-divider>
+                  </div>
+                </v-card>
+              </v-menu>
+              
+              </v-textarea>
+              <input id="file_input" accept="image/jpeg,image/png" multiple
+                type="file" ref="file_input" style="visibility:hidden" @change="triggerFileModal($event)" />
+            </v-form>
+          </div>
+        </div>
       </v-tab-item>
       <v-tab-item value="Members" v-if="$vuetify.breakpoint.smAndDown">
         <router-view :members='members' v-if="ready" :thisGroup='this_group'></router-view>
       </v-tab-item>
-      <v-tab-item value="Media" v-if="$vuetify.breakpoint.smAndDown">
+      <v-tab-item value="Media" v-if="ready && $vuetify.breakpoint.smAndDown">
         <chat-media></chat-media>
       </v-tab-item>
     </v-tabs-items>
  
-
-    <!-- Textarea -->
-    <div v-show="model == 'Chat'" :style="styleInput">
-      <div class="chat_input white--text" id="chat_input" style='width:100%;background:#fff;z-index:0;'>
-     
-        <v-form @submit.prevent='submit' style="margin-left:px;background:#fff;" class="px-2">
-          <v-textarea v-model="message" color="deep-purple" @keyup.shift.50="mention_dialog = true" 
-            @keypress="isTyping" id="form"
-            label="Type a message" outline 
-            rows="1" auto-grow
-          >
-          <v-tooltip top slot="append" v-show="!message.trim()">
-            <v-btn icon slot="activator" @click='triggerFileSelect'>
-              <v-icon color="success">photo_camera</v-icon>
-            </v-btn>
-            <span>Send a photo</span>
-          </v-tooltip>
-          <v-tooltip top slot="append">
-            <v-btn icon slot="activator" @click='mention_dialog = true'>
-              <span color="success" style="color:green;margin-top:-3px;font-size:18px;">@</span>
-            </v-btn>
-            <span>Mention someone</span>
-          </v-tooltip>
-          <v-tooltip top slot="append-outer" v-if="message.trim()">
-            <v-btn icon slot="activator" @click="sendMessage">
-              <v-icon color="teal">{{message.trim() ? 'send' : '' }}</v-icon>
-            </v-btn>
-            <span>Send message</span>
-          </v-tooltip>
-
-          <!-- EMOJIS DIALOG-->
-          <v-menu max-width="300" :close-on-content-click='false'
-            slot="prepend-inner" max-height="300" top offset-y>
-
-            <v-btn slot="activator" icon >
-              <v-icon color="success">mood</v-icon>
-            </v-btn>
-            <v-card class="pa-0">
-              <v-card-text >
-                <v-btn small flat color="primary" icon v-for="(emoji,i) in emojis" :key="i" @click="appendEmoji(emoji)">
-                  <span style="font-size:30px;display:block;margin-top:-7px;">{{emoji}}</span>
-                </v-btn>
-              </v-card-text>
-            </v-card>
-          </v-menu>
-
-          <!-- MENTION MEMBER -->
-          <v-menu width="500"  :close-on-content-click='false' 
-            attach="chat_input" slot="append" max-height="500" 
-            left top offset-y v-model="mention_dialog">
-            <v-card class="pa-0" flat>
-              <v-toolbar flat dense color="cyan"></v-toolbar>
-              <div :style="styleMention" class="navdrawr">
-                <v-list subheader dense>
-                  <v-subheader v-show="members.length == 0">No results found</v-subheader>
-                  <v-list-tile v-for="member in members" :key="member.uid" avatar @click="appendUser(member)">
-                    
-                    <v-list-tile-avatar>
-                      <!-- prefer to use loggedin user's info rather than his info from voters list -->
-                      <img :src="member.photoURL">
-                    </v-list-tile-avatar>
-
-                    <v-list-tile-content>
-                      <v-list-tile-title class="text-capitalize">{{member.name}}</v-list-tile-title>
-                    </v-list-tile-content>
-                  </v-list-tile>
-                </v-list>
-
-                <v-divider></v-divider>
-              </div>
-            </v-card>
-          </v-menu>
-          
-          </v-textarea>
-          <input id="file_input" accept="image/jpeg,image/png" multiple
-            type="file" ref="file_input" style="visibility:hidden" @change="triggerFileModal($event)" />
-        </v-form>
-      </div>
-    </div>
 
     <!-- CHAT MEDIA DIALOG -->
     <v-dialog v-model="media_dialog" fullscreen
@@ -192,12 +192,19 @@
 
     
     <!-- File uplaod progres dialog -->
-    <v-dialog v-model="progress_dialog" hide-overlay max-width="300">
+    <v-dialog v-model="progress_dialog" max-width="300" persistent>
       <v-card>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn flat icon>
+            <v-icon @click="progress_dialog = false">close</v-icon>
+          </v-btn>
+        </v-card-actions>
         <v-container class="mt-0">
           <v-subheader >Uploading file</v-subheader>
           <v-progress-linear :indeterminate="true" ></v-progress-linear>
         </v-container>
+      
       </v-card>
     </v-dialog>
   </div>
@@ -244,6 +251,11 @@ export default {
     '$route' (to, from) {
       // react to route changes...
       this.drawerRight = true
+      //console.log(to,from)
+      if(to.name =='members' && from.name == 'members'){
+        this.ready = false
+        this.setCurrRoom()
+      }
     }
   },
   computed: {
@@ -256,6 +268,14 @@ export default {
       'token',
       'getUser'
     ]),
+    canSendMessages(){
+      // check if current user can send messages to current group
+      let can = this.members.find(member => member.uid == this.getUser.uid)
+      let banned = this.this_group.bif ?
+      this.this_group.bif.find(memberId => memberId == this.getUser.uid) : false
+      return can && !banned ? true : false
+       
+    },
     styleInput(){
       if(this.$vuetify.breakpoint.smAndDown){
         return {position:'fixed',bottom:'-20px',width:'100%'}
@@ -264,9 +284,13 @@ export default {
       }
     },
     styleMention(){
-      if(this.$vuetify.breakpoint.smAndDown){
+      if(this.$vuetify.breakpoint.xsOnly){
+        return {height:'200px',overflowY:'auto',width:'270px'}
+      }
+      else if(this.$vuetify.breakpoint.smAndDown){
         return {height:'200px',overflowY:'auto',width:'300px'}
-      }else{
+      }
+      else{
         return {height:'200px',overflowY:'auto',width:'400px'}
       }
     }
@@ -274,12 +298,21 @@ export default {
   },
 
   methods: {
-    // opens the chat window on select
-    async setCurrRoom(){
-      try{
-        let groupRef = await db.collection('elections').doc(this.$route.params.electionId).get()
-        this.this_group = groupRef.data()
-        //this.$store.dispatch('curRoom', this.$route.params.electionId)
+    findARoom(){
+      return new Promise((resolve,reject)=>{
+        db.collection('elections')
+        .doc(this.$route.params.electionId).get().then(doc=>{
+          if(!doc.exists){
+            reject('No such document')
+          }else{
+            resolve(doc.data())
+          }
+          
+        }).catch(err=> reject({code:'NoDoc',message:err}))
+      })
+    },
+    retrieveMembers(){
+      return new Promise((resolve,reject)=>{
         db.collection('moreUserInfo')
         .where('enrolled','array-contains', this.$route.params.electionId)
         .limit(25)
@@ -289,14 +322,32 @@ export default {
             //console.log(doc.id, " => ", doc.data());
             this.members.push(doc.data())
           })
-          this.ready = true
+          resolve(this.members)
+          //this.ready = true
         },err=>{
-          console.log(err)
+          reject(err)
         })
-      }catch(error){
-        this.dispatchError(error)
-      }
+      })
+    },
+    // opens the chat window on select
+    setCurrRoom(){
       
+      this.findARoom().then(room=>{
+        //console.log('room: ', room)
+        this.this_group = room
+
+        this.retrieveMembers().then(members=>{
+          //console.log('members: ', members)
+          this.ready = true;
+        }).catch(error=>this.$router.push('/notFound'))
+      }).catch(err=>{
+        //console.log('err: ', err)
+        this.$router.push('/notFound')
+      })
+      
+    },
+    dispatchError(error){
+      console.log(error);
     },
     triggerFileSelect(){
       //console.log('upload a file')
@@ -439,13 +490,9 @@ export default {
     },
     
   },
-  async mounted() {
+  created() {
     
     this.setCurrRoom()
-    //console.log(this.$vuetify.breakpoint)
-    // hide the forum_users nav onload on small screens, and also show the btn to trigger the it on the navbar
-    //this.$vuetify.breakpoint.sm || this.$vuetify.breakpoint.xs ? 
-    //this.$store.dispatch('showRightNav', [false,true]) : ''
 
     this.$eventBus.$on('Toggle_drawerRight', data=>{
       this.drawerRight = data
@@ -464,7 +511,8 @@ export default {
     'settings':Settings,
     'users':ForumUsers,
     Navigation,
-    ChatMedia
+    ChatMedia,
+    LoadingBar,
   }
 }
 //import io from 'socket.io-client';
@@ -473,11 +521,10 @@ import api from '@/services/api'
   import Settings from '@/components/Settings'
   import ForumUsers from '@/components/ForumUsers'
   import Chatwindow from '@/components/Chatwindow'
-  import { promisfy } from "@/helpers/promisify"
   import ChatwindowVue from './Chatwindow.vue'
   import Navigation from '@/components/Navigation'
   import ChatMedia from '@/components/ChatMedia'
-  import carousel from 'v-owl-carousel'
+  import LoadingBar from '@/spinners/LoadingBar'
 </script>
 <style lang="scss" scoped>
 .v-content{
@@ -502,6 +549,10 @@ $mainBgColor:#1c1f35;
 }
 nav{
   margin-top:48px;
+}
+.v-menu>div{
+  right:10px !important;
+  left:initial !important;
 }
 
 .nudgeup .v-btn__content{

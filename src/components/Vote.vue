@@ -1,16 +1,17 @@
 <template>
   <div id="vote_target">
 
-    <v-snackbar v-model="snackbar" color="warning" :timeout="30000" top>
-      {{ message }}
-      <v-btn dark flat @click="snackbar = null"> Close</v-btn>
+    <v-snackbar v-model="snackbar.show" dark :color="snackbar.color" 
+      :timeout="5000" :vertical="$vuetify.breakpoint.xsOnly" top right>
+      {{ snackbar.message }}
+      <v-btn dark flat color="white" @click="snackbar = null"> Close</v-btn>
     </v-snackbar>
 
-    <v-stepper v-model="e6" vertical style="background:#fff;" class="d-block">
+    <v-stepper v-model="e6" vertical style="background:#fff;box-shadow:none;" class="d-block">
       <span v-for="i in steps" :key="i">
         <v-stepper-step :complete="e6 > i" :step="i" editable>
           {{roles[i-1] ? roles[i-1].title : ''}}
-          <small>Select your candidate for {{roles[i-1] ? roles[i-1].title : ''}}{{roles[i-1].token}}</small>
+          <small>Click to select your choice candidate for {{roles[i-1] ? roles[i-1].title : ''}}</small>
         </v-stepper-step>
         <v-divider vertical
           v-if="i !== steps"
@@ -18,9 +19,8 @@
         ></v-divider>
 
         <v-stepper-content :step="i">
-          <v-subheader v-if="contestants && contestants.length == 0">No contestants</v-subheader>
           <v-card color="grey lighten-3" class="mb-5" style="min-height:200px;" 
-            v-if="contestantsByRoles[roles[i-1].value].length > 0">
+            v-if="contestants.length > 0 && contestantsByRoles[roles[i-1].value].length > 0">
             <v-layout row wrap mt-3>
               <v-flex sm4 md3 v-for="contestant in contestantsByRoles[roles[i-1].token]" 
                 @click.stop="vote(contestant,$event,roles[i-1].title)" :class="roles[i-1].title" 
@@ -65,12 +65,12 @@ export default {
     myVote:{},
     contestantsByRoles:{},
     disabled:true,
-    snackbar:false,
+    snackbar:{},
     message:'',
     //disabled:true,
     loading:false
   }),
-  props:['currElection','contestants','rawVotes','countDownDate'],
+  props:['currElection','contestants','rawVotes'],
   watch: {
     steps (val) {
       if (this.e1 > val) {
@@ -150,36 +150,67 @@ export default {
       this.loading = true
 
       // Prevent multiple voting
-      if(this.rawVotes.find(rawvote => rawvote.voterId == this.$store.getters.getUser.uid)){
-        alert('Sorry, you have already voted for this election')
-        this.$eventBus.$emit('Close_Voting_Dialog', true)
+     /* if(this.currElection.votes.find(voterId => voterId == this.$store.getters.getUser.uid)){
+        
+        this.snackbar = {
+          show:true,
+          message:'Sorry, you have already voted for this election',
+          color:'error'
+        }
+
+        setTimeout(() => {
+          // close the voting dialog after voting and prevent more voting attempts
+          this.$eventBus.$emit('Close_Voting_Dialog', true)
+        }, 3000);
+
       }
-      else{
+      else{*/
 
         // vote
         firebase.auth().currentUser.getIdToken().then((token)=>{
-
+          let myVote = btoa(JSON.stringify(this.myVote))
+          console.log(myVote)
           api().post('dashboard/vote', {
-            currElection:this.currElection,
+            electionId:this.currElection.electionId,
             idToken:token,
-            myVote:this.myVote
+            myVote:myVote
           }).then(result=>{
             console.log(result)
-            // close the voting dialog after voting and prevent more voting attempts
-            this.$eventBus.$emit('Close_Voting_Dialog', true)
-            alert(result.data.message, 'You have voted successfully')
+            
+            this.snackbar = {
+              show:true,
+              message:'You have voted successfully',
+              color:'purple'
+            }
+            setTimeout(() => {
+              // close the voting dialog after voting and prevent more voting attempts
+              this.$eventBus.$emit('Close_Voting_Dialog', true)
+            }, 3000);
             
             }).catch(err=>{
             this.loading = false
             if(err.response){
               console.log(err.response)
-              alert(err.response.data.message)
-              this.$eventBus.$emit('Close_Voting_Dialog', true)
+              
+              this.snackbar = {
+                show:true,
+                message:err.response.data.message,
+                color:'error'
+              }
+              setTimeout(() => {
+                // close the voting dialog and prevent more voting attempts
+                this.$eventBus.$emit('Close_Voting_Dialog', true)
+              }, 3000);
             }
             else{
               $NProgress.done()
               console.log(err)
-              alert('Voting failed, check your internet connection and try again')
+              
+              this.snackbar = {
+                show:true,
+                message:'Voting failed, check your internet connection and try again',
+                color:'error'
+              }
             }
             
           })
@@ -187,26 +218,33 @@ export default {
           
         }).catch(err=>{
           console.log(err)
-          console.log(err.response)
-          alert('Something went wrong')
+          //console.log(err.response)
+          this.snackbar = {
+            show:true,
+            message:'Something went wrong, try again',
+            color:'err'
+          }
           this.loading = false
         })
-      }
+      //}
     },
   },
+  
   mounted(){
-    console.log(this.currElection.roles)
     this.roles = this.currElection.roles
     this.steps = this.currElection.roles.length
-
-    this.contestants.forEach(contestant=>{
+    console.log(this.roles)
+    console.log(this.contestants)
+    if(this.contestants.length > 0){
+      this.contestants.forEach(contestant=>{
       
-      let thisContest = contestant.contestsRef.find(contest => contest.electionRef == this.currElection.electionId)
-      this.contestantsByRoles[thisContest.role] ? '' : this.contestantsByRoles[thisContest.role] = []
+        let thisContest = contestant.contestsRef.find(contest => contest.electionRef == this.currElection.electionId)
+        this.contestantsByRoles[thisContest.role] ? '' : this.contestantsByRoles[thisContest.role] = []
+      
+        this.contestantsByRoles[thisContest.role].push(contestant)
+      })
+    }
     
-      this.contestantsByRoles[thisContest.role].push(contestant)
-    })
-    console.log(this.contestantsByRoles)
   },
   destroyed(){
     document.title = 'Vote | Facevote'

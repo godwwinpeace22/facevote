@@ -21,14 +21,12 @@
       :title="title"
     />
 
-    <loading-bar v-if="show_loading_bar"></loading-bar>
-
     <v-tabs-items v-model="model">
 
       <v-tab-item value="created">
-        <intro v-if="!show_loading_bar && no_created" :text='no_created_text'></intro>
-
-        <v-container grid-list-md :class="{'pa-5':$vuetify.breakpoint.mdAndUp}" v-if="!no_created">
+        <intro v-if="created_ready && no_created" :text='no_created_text'></intro>
+        <loading-bar v-if="!created_ready"><div slot="loading_info">Loading elections...</div></loading-bar>
+        <v-container grid-list-md :class="{'pa-5':$vuetify.breakpoint.mdAndUp}" v-if="created_ready && !no_created">
           <v-subheader class="body-2 pl-0">Elections you created</v-subheader>
           <v-card class="pa-4 round" style="min-height:300px;">
             <v-layout row wrap mt-3 >
@@ -62,9 +60,9 @@
       </v-tab-item>
 
       <v-tab-item value="enrolled">
-        <intro v-if="!show_loading_bar && no_contested" :text='no_enrolled_text'></intro>
-        
-        <v-container grid-list-sm :class="{'pa-5':$vuetify.breakpoint.mdAndUp}" v-if="!no_contested">
+        <intro v-if="enrolled_ready && no_enrolled" :text='no_enrolled_text'></intro>
+        <loading-bar v-if="!enrolled_ready"><div slot="loading_info">Loading elections...</div></loading-bar>
+        <v-container grid-list-sm :class="{'pa-5':$vuetify.breakpoint.mdAndUp}" v-if="enrolled_ready && !no_enrolled">
           <v-subheader class="body-2 pl-0">Elections you have enrolled in</v-subheader>
           <v-card class="pa-4 round" style="min-height:300px;">
             <v-layout row wrap mt-3 >
@@ -96,9 +94,9 @@
       </v-tab-item>
 
       <v-tab-item value="contested">
-        <intro v-if="!show_loading_bar && no_enrolled" :text='no_contested_text'></intro>
-
-        <v-container grid-list-sm :class="{'pa-5':$vuetify.breakpoint.mdAndUp}" v-if="!no_enrolled">
+        <intro v-if="contests_ready && no_contested" :text='no_contested_text'></intro>
+        <loading-bar v-if="!contests_ready"><div slot="loading_info">Loading elections...</div></loading-bar>
+        <v-container grid-list-sm :class="{'pa-5':$vuetify.breakpoint.mdAndUp}" v-if="contests_ready && !no_contested">
           <v-subheader class="body-2 pl-0">Elections you contested in</v-subheader>
           <v-card class="pa-4 round" style="min-height:300px;">
             <v-layout row wrap mt-3 >
@@ -144,7 +142,9 @@ export default {
     no_enrolled_text:{data:'Enrolled,Perferendis cumq corp quos aliquid, praes inventore assumenda kkd opre perkj sf jkdd mond',action:{text:'Enroll',action_link:'/enroll'}},
     text:'Lorem, ipsum dolor sit amet consectetur adipisicing elit. Distinctio optio quidem, in aliquid laborum non nihil quasi id error, corrupti voluptatem consequatur nostrum blanditiis expedita omnis accusantium vitae veritatis aut?',
     model:'created',
-    show_loading_bar:true,
+    created_ready:false,
+    contests_ready:false,
+    enrolled_ready:false,
   }),
   computed:{
     no_created(){
@@ -170,66 +170,82 @@ export default {
     },
   },
   methods:{
-    async getMyCreated(user){
-      let elecRef = db.collection('elections')
-      let myArr = []
-      elecRef.where('admin','==',user.email).get().then(doc=>{
-        myArr = []
-        doc.forEach(item=>{
-          console.log(item.id, " => ", item.data());
-          myArr.push(item.data())
-        })
-        this.$store.dispatch('setMyCreated', myArr)
-        return myArr
+    getMyCreated(user){
+      return new Promise((resolve,reject)=>{
+        let elecRef = db.collection('elections')
+        let myArr = []
+        elecRef.where('admin','==',user.uid).get().then(doc=>{
+          myArr = []
+          doc.forEach(item=>{
+            console.log(item.id, " => ", item.data());
+            myArr.push(item.data())
+          })
+          this.$store.dispatch('setMyCreated', myArr)
+          resolve(myArr)
+        }).catch(err=>reject(err))
       })
       
     },
-    async getMyEnrolled(user){
-      let elecRef = db.collection('elections')
-      let myArr = []
-      elecRef.where('regVoters','array-contains',user.uid).get().then(doc=>{
-        myArr = []
-        doc.forEach(item=>{
-          console.log(item.id, " => ", item.data());
-          myArr.push(item.data())
-        })
+    getMyEnrolled(user){
+      return new Promise((resolve,reject)=>{
+        let elecRef = db.collection('elections')
+        let myArr = []
+        elecRef.where('regVoters','array-contains',user.uid).get().then(doc=>{
+          myArr = []
+          doc.forEach(item=>{
+            console.log(item.id, " => ", item.data());
+            myArr.push(item.data())
+          })
 
-        this.$store.dispatch('setMyEnrolled', myArr)
-        return myArr
+          this.$store.dispatch('setMyEnrolled', myArr)
+          resolve(myArr)
+        }).catch(err=>reject(err))
       })
       
     },
-    async getMyContests(user){
-      let myArr = []
-      //console.log(this.myEnrolledElc)
-      this.myEnrolledElc.forEach(election=>{
-        if(election.contestants.find(userId => userId == user.uid)){
-          console.log(election)
-          myArr.push(election)
-        }
-      })
-      this.$store.dispatch('setMyContested', myArr)
-      return myArr
+    getMyContests(user){
+      return new Promise((resolve,reject)=>{
+        let myArr = []
+        this.myEnrolledElc.forEach(election=>{
+          if(election.contestants.find(userId => userId == user.uid)){
+            console.log(election)
+            myArr.push(election)
+          }
+        })
+        this.$store.dispatch('setMyContested', myArr)
+        resolve(myArr)
+      }).catch(err=> reject(err))
+      
     }
   },
-  async mounted(){
+  created(){
 
     // get the elections the user created, contested, and voted in
     try {
-      this.$store.getters.getMyCreated && this.$store.getters.getMyEnrolled && 
-      this.$store.getters.getMyContested ? 
-      this.show_loading_bar = false : ''
+      this.$store.getters.getMyCreated.length > 0 ?
+      this.created_ready = true : ''
+      
+      this.$store.getters.getMyEnrolled.length > 0 ?
+      this.enrolled_ready = true : ''
+      this.$store.getters.getMyContested.length > 0 ?
+      this.contests_ready = true : ''
       
       firebase.auth().onAuthStateChanged(async (user)=>{
       if (user) {
 
         // get election user created
-        await this.getMyCreated(user)
-        // get elections user enrolled in
-        await this.getMyEnrolled(user)
-        // get elections user contested in
-        await this.getMyContests(user)
-        this.show_loading_bar = false
+        this.getMyCreated(user).then(d=>{
+          console.log(d)
+          this.created_ready = true
+          this.getMyEnrolled(user).then(e=>{
+            console.log(e)
+            this.enrolled_ready = true
+            this.getMyContests(user).then(done=>{
+              this.contests_ready = true
+              console.log(done)
+            })
+          })
+        })
         
       } else {
         console.log('No user is signed in.')

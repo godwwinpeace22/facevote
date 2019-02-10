@@ -7,7 +7,7 @@
       <h1 slot="extended_nav">Enroll</h1>
     </navigation>
 
-    <v-snackbar v-model="snackbar.show" :timeout="5000" :color="snackbar.color" top>
+    <v-snackbar v-model="snackbar.show" :timeout="5000" :color="snackbar.color" top right>
       {{snackbar.message}} 
       <v-btn dark flat @click="snackbar.show = false"> Close</v-btn>
     </v-snackbar>
@@ -23,7 +23,7 @@
             <v-divider></v-divider>
             <v-stepper-step :complete="e5 > 3" step="3">Enroll</v-stepper-step>
             <v-divider></v-divider>
-            <v-stepper-step :complete="e5 > 3" step="3">Finish</v-stepper-step>
+            <v-stepper-step :complete="e5 > 4" step="4">Finish</v-stepper-step>
           </v-stepper-header>
           <v-stepper-items>
             <v-stepper-content step="1">
@@ -33,7 +33,10 @@
                   <p>{{lorem}}</p>
                 </v-card-text>
                 <v-card-actions>
-                  <v-btn color="success" depressed @click="e5 = 2">Next</v-btn>
+                  <v-btn color="success" depressed @click="e5 = 2">
+                    Next
+                    <v-icon small>chevron_right</v-icon>
+                  </v-btn>
                 </v-card-actions>
               </v-card>
             </v-stepper-content>
@@ -42,7 +45,7 @@
                 <v-card-text>Insert the Id of the election you want to contest for below</v-card-text>
                 <v-container>
                   <v-layout row>
-                    <v-flex xs6>
+                    <v-flex xs12 sm6>
                       <v-text-field label="Election Id" name="electionId" :value="electionId" 
                         hint="e.g gray-fighter-2187" v-model="electionId" browser-autocomplete="electionId">
                       </v-text-field>
@@ -51,9 +54,15 @@
                   </v-layout>
                 </v-container>
                 <v-card-actions>
-                  <v-btn depressed @click="e5 = 1" :disabled="loading">Previous</v-btn>
+                  <v-btn depressed @click="e5 = 1" :disabled="loading">
+                    <v-icon small>chevron_left</v-icon>
+                    Previous
+                  </v-btn>
                   <v-btn color="success" @click="getElection" 
-                    :disabled="!electionId" :loading="loading">Submit</v-btn>
+                    :disabled="!electionId" :loading="loading">
+                    Submit
+                    <v-icon small>chevron_right</v-icon>
+                  </v-btn>
                 </v-card-actions>
               </v-card>
             </v-stepper-content>
@@ -67,7 +76,10 @@
                 </v-card-text>
               </v-card>
 
-              <v-btn color="grey lighten-1" depressed @click="e5 = 2" :disabled="loading">Previous</v-btn>
+              <v-btn color="grey lighten-1" depressed @click="e5 = 2" :disabled="loading">
+                <v-icon small>chevron_left</v-icon>
+                Previous
+              </v-btn>
               <v-btn color="secondary" @click="enroll" 
                v-if="!hide" :loading="loading" depressed>Enroll</v-btn>
             </v-stepper-content>
@@ -86,7 +98,7 @@
                 </v-card-text>
               </v-card>
               <v-btn color="primary" :to="'/contest'">Contest</v-btn>
-              <v-btn color="primary" :to="'/forum/'+election.electionId">Forum</v-btn>
+              <v-btn color="secondary" :to="'/forum/'+election.electionId">Forum</v-btn>
             </v-stepper-content>
           </v-stepper-items>
         </v-stepper>
@@ -134,7 +146,7 @@ export default {
         }
         else{
           this.loading = true
-          let details = db.collection('moreUserInfo').doc(this.$store.getters.getUser.email);
+          let details = db.collection('moreUserInfo').doc(this.$store.getters.getUser.uid);
 
           let doc = await details.get()
           let user = doc.data()
@@ -197,9 +209,8 @@ export default {
       firebase.auth().currentUser.getIdToken().then((token)=>{
         this.loading = true
         api().post('dashboard/enroll',{
-          election:this.election,
-          idToken:token,
-          email:this.$store.getters.getUser.email
+          electionId:this.election.electionId,
+          idToken:token
         }).then(result =>{
           console.log(result)
           this.snackbar = {

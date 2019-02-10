@@ -123,7 +123,7 @@ export default {
   watch: {
     '$route' (to, from) {
       // react to route changes...
-      this.setUp()
+      //this.setUp()
     }
   },
   filters: {
@@ -145,31 +145,8 @@ export default {
         })
       }
     },
-   followText(){
-     return this.user.followers.indexOf(this.currUser._id) == -1 ? '+ Follow' : 'Following'
-   }
   },
   methods:{
-    async follow(){
-      if(this.user.followers.indexOf(this.currUser._id) == -1){
-        // not following user, follow this user
-        this.disabled = true
-        this.user.followers.push(this.currUser._id)
-        await api().post(`dashboard/followContestant/${this.user._id}/${this.currUser._id}`, {
-          token:this.$store.getters.getToken
-        })
-        this.disabled = false
-      }
-      else{
-        // is following the user, unfollow
-        this.disabled = true
-        await api().post(`dashboard/unfollowContestant/${this.user._id}/${this.currUser._id}`, {
-          token:this.$store.getters.getToken
-        })
-        this.user.followers.splice(this.user.followers.indexOf(this.currUser._id),1)
-        this.disabled = false
-      }
-    },
     
   },
   async mounted(){

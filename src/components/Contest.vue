@@ -9,32 +9,38 @@
       <h1 slot="extended_nav">Contest</h1>
     </navigation>
 
-    <intro v-if="elections.length == 0" :text='no_elections_text'></intro>
-    <v-container grid-list-sm v-else>
+    <v-snackbar v-model="snackbar.show" :timeout="10000" :color="snackbar.color" top right>
+      {{snackbar.message}} 
+      <v-btn dark flat @click="snackbar.show = false"> Close</v-btn>
+    </v-snackbar>
+
+    <v-container grid-list-lg>
+      <v-card class="round">
+      <loading-bar v-if="!ready" height="50vh"><div slot="loading_info">Loading...</div></loading-bar>
+      </v-card>
+    </v-container>
+
+    <intro v-if="ready && elections.length == 0" :text='no_elections_text'></intro>
+
+    <v-container v-if="ready && elections.length > 0" grid-list-sm>
       <v-card class="round">
         <v-stepper v-model="e5" dark class="white">
-
-          <v-snackbar v-model="snackbar.show" :timeout="5000" :color="snackbar.color" top>
-            {{snackbar.message}} 
-            <v-btn dark flat @click="snackbar.show = false"> Close</v-btn>
-          </v-snackbar>
-
           <v-stepper-header class="grey">
             <v-stepper-step :complete="e5 > 1" step="1">Select election</v-stepper-step>
             <v-divider></v-divider>
             <v-stepper-step :complete="e5 > 2" step="2">Choose a position</v-stepper-step>
             <v-divider></v-divider>
-            <v-stepper-step step="3">Submit</v-stepper-step>
+            <v-stepper-step :complete="e5 > 3" step="3">Submit</v-stepper-step>
             <v-divider></v-divider>
-            <v-stepper-step step="4">Finish</v-stepper-step>
+            <v-stepper-step :complete="e5 > 4" step="4">Finish</v-stepper-step>
           </v-stepper-header>
           <v-stepper-items>
             <v-stepper-content step="1">
-              <v-card class="" light color="grey lighten-5" style="min-height:200px;"  flat tile>
-                <v-card-text>Select the election you want to contest for below</v-card-text>
+              <v-card class="" light color="grey lighten-5" style="min-height:250px;"  flat tile>
+                <v-card-text>Select the election you want to contest in to continue</v-card-text>
                 <v-container>
                   <v-layout row>
-                    <v-flex xs6>
+                    <v-flex xs12 sm6>
                       <v-select required small v-model="selectedElection"
                         :items="elections" color="pink"
                         item-text="title"
@@ -48,38 +54,47 @@
                 
               </v-card>
 
-              <v-btn color="secondary" dark depressed @click="e5 = 2" :disabled="!selectedElection.admin">Next</v-btn>
+              <v-btn color="secondary" dark depressed @click="e5 = 2" v-if="selectedElection.admin">
+                Next
+                <v-icon small>chevron_right</v-icon>
+              </v-btn>
             </v-stepper-content>
 
             <v-stepper-content step="2">
-              <v-card class="mb-5" light color="grey lighten-5"  style="min-height:200px;" flat tile>
+              <v-card class="mb-5" light color="grey lighten-5"  style="min-height:250px;" flat tile>
                 <v-card-text >
-                  <span class="subheading">{{selectedElection.title}}</span>
+                  <span class="subheading">Contest: {{selectedElection.title}}</span>
                   <v-divider></v-divider>
                 </v-card-text>
                 
                 <v-spacer></v-spacer>
                 <v-container>
                   <v-layout row wrap>
-                    <v-flex xs6>
+                    <v-flex xs12 sm6>
                       <v-select :items="selectedElection.roles" label="Select role" 
                         v-model="selectedRole" item-text="title" return-object>
                       </v-select>
-                      <span>If you are authorized to contest, you will be given a token, provide the token below</span>
+                      <span class="d-block my-4">If you are authorized to contest, you will be given a token, provide the token below</span>
                       <v-text-field label="token" v-model="contestant.acstoken"></v-text-field>
                     </v-flex>
                   </v-layout>
                 </v-container>
               </v-card>
 
-              <v-btn flat @click="e5 = 1">Previous</v-btn>
-              <v-btn color="secondary" depressed @click="e5 = 3" :disabled="disabled">Next</v-btn>
+              <v-btn flat @click="e5 = 1" dark color="grey">
+                <v-icon small>chevron_left</v-icon>
+                Previous
+              </v-btn>
+              <v-btn color="secondary" dark depressed @click="e5 = 3" v-if="!disabled">
+                Next
+                <v-icon small>chevron_right</v-icon>
+              </v-btn>
             </v-stepper-content>
 
             <v-stepper-content step="3">
-              <v-card class="mb-5" light color="grey lighten-5" style="min-height:200px;" flat tile>
+              <v-card class="mb-5" light color="grey lighten-5" style="min-height:250px;" flat tile>
                 <v-card-text >
-                  <span class="subheading">{{selectedElection.title}}</span>
+                  <span class="subheading">Contest: {{truncateText(selectedElection.title)}}</span>
                   <v-divider></v-divider>
                   </v-card-text>
                   <v-spacer></v-spacer>
@@ -90,14 +105,17 @@
                 </v-card-text>
               </v-card>
 
-              <v-btn flat @click="e5 = 2" :disabled="loading">Previous</v-btn>
+              <v-btn flat @click="e5 = 2" color="grey" :disabled="loading">
+                <v-icon small>chevron_left</v-icon>
+                Previous
+              </v-btn>
               <v-btn color="secondary" @click="contest" :loading="loading"> Finish</v-btn>
             </v-stepper-content>
 
             <v-stepper-content step="4">
               <v-card class="mb-5" light color="grey lighten-5" style="min-height:200px;" flat tile>
                 <v-card-text >
-                  <span class="subheading">Contesting successful</span>
+                  <span class="subheading">Application successful!</span>
                   
                   </v-card-text>
                   <v-spacer></v-spacer>
@@ -106,7 +124,7 @@
                 </v-card-text>
               </v-card>
 
-              <v-btn flat :to="`/watch/${selectedElection.electionId}`">Vote</v-btn>
+              <v-btn color="success" :to="`/watch/${selectedElection.electionId}`">Create Manifesto</v-btn>
               <v-btn color="secondary" :to="`/forum/${selectedElection.electionId}`">Forum</v-btn>
             </v-stepper-content>
           </v-stepper-items>
@@ -123,6 +141,7 @@ export default {
     e5:1,
     snackbar:false,
     loading:false,
+    ready:false,
     electionId:null,
     selectedElection:{},
     selectedRole:{},
@@ -153,6 +172,7 @@ export default {
               myArr.push(doc.data())
           });
           this.elections = myArr
+          this.ready = true
       })
       .catch(function(error) {
           console.log("Error getting documents: ", error);
@@ -171,8 +191,8 @@ export default {
         firebase.auth().currentUser.getIdToken().then((token)=>{
           api().post('dashboard/contest', {
             idToken:token,
-            election:this.selectedElection,
-            selectedRole:this.selectedRole
+            electionId:this.selectedElection.electionId,
+            selectedRole:this.selectedRole.value
           }).then(resp=>{
             this.snackbar = {
               show:true,message:resp.data.message,color:'success'
@@ -200,9 +220,13 @@ export default {
         })
 
       }
-    }
+    },
+    truncateText(text){
+      console.log(text)
+      return text ? text.replace(/(.{50})..+/, "$1...") : ''
+    },
   },
-  mounted(){
+  created(){
     firebase.auth().onAuthStateChanged((user)=>{
       if (user) {
         // User is signed in.
@@ -217,11 +241,13 @@ export default {
   components:{
     Navigation,
     Intro,
+    LoadingBar,
   }
 }
 import api from '@/services/api'
 import Navigation from '@/components/Navigation'
 import Intro from '@/components/Intro'
+import LoadingBar from '@/spinners/LoadingBar'
 </script>
 <style lang="scss" scoped>
   //.v-stepper{

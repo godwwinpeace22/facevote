@@ -1,8 +1,11 @@
 <template>
   <v-layout d-flex>
       <v-flex xs12 d-flex>
-        <v-card :flat="$vuetify.breakpoint.smAndDown">
-          <v-img :src="user.photoURL || `https://ui-avatars.com/api/?name=${user.name}&size=300`" :height="$vuetify.breakpoint.smAndDown ? 300 : 200" aspect-ratio="2.75"></v-img>
+        <v-card :flat="$vuetify.breakpoint.smAndDown" tile>
+          <v-img class="ma-2" :src="user.photoURL || 
+          `https://ui-avatars.com/api/?name=${user.name}&size=300`" 
+          :height="$vuetify.breakpoint.smAndDown ? 300 : 200" aspect-ratio="2.75"
+            lazy-src="'https://picsum.photos/10/6?image=15'"></v-img>
 
           <v-card-title primary-title>
             <div>
@@ -16,12 +19,22 @@
           
           <v-card-actions>
             <v-btn flat outline small color="success" class="text-capitalize"  :to='`/users/${user.email}`'>View Profile</v-btn>
-            <template v-if='$store.getters.getUser.email != user.email'>
+            <template v-if='$store.getters.getUser.uid != user.uid'>
               <v-btn flat outline small color="success" class="text-capitalize"  @click="openPrivateChatWindow">Message</v-btn>
-              <v-btn flat outline small color="success" class="text-capitalize" >Explore</v-btn>
+              <!--v-btn flat outline small color="success" class="text-capitalize" >Explore</v-btn-->
             </template>
             <v-btn flat outline small color="success" class="text-capitalize" v-else dark @click="dialog = true" >Edit Profile</v-btn>
             
+            <!-- FLAGGING USERS -->
+            <v-tooltip top dark class="ml-3" color="black" max-width="300">
+              <v-btn icon slot="activator" :color="flaggedByYou ? 'error' : 'secondary'" 
+                small >
+                <v-icon small @click="flagUser" :disabled="disabled || flaggedByYou" >flag</v-icon>
+              </v-btn>
+              
+              <span class="error--text" v-if="flaggedByYou">You flagged this voter</span>
+              <span v-else>Don't recognize this person? Flag them to raise an alarm! Do this with caution</span>
+            </v-tooltip>
           </v-card-actions>
           <v-list dense>
             <!--v-tooltip top>
@@ -52,7 +65,7 @@
               <v-list-tile-content>Dept.: {{user.department}}</v-list-tile-content>
             </v-list-tile>
           </v-list>
-          <v-dialog v-model="dialog" fullscreen hide-overlay transition="dialog-bottom-transition" scrollable>
+          <v-dialog v-model="dialog" lazy fullscreen hide-overlay transition="dialog-bottom-transition" scrollable>
             <profile-settings :dialog='dialog'></profile-settings>
           </v-dialog>
           <v-divider></v-divider>
@@ -63,9 +76,22 @@
 <script>
 export default {
   data: ()=>({
-    dialog:false
+    dialog:false,
+    disabled:false,
   }),
   props:['user'],
+  computed:{
+    ...mapGetters([
+      'getUser',
+      'getUserInfo'
+    ]),
+    flaggedByYou(){
+      let flagged = this.user.flaggedBy && 
+      this.user.flaggedBy.find(uid => uid == this.getUser.uid) ? 
+      true : false
+      return flagged
+    }
+  },
   methods:{
     openPrivateChatWindow(){
       this.$eventBus.$emit('Open_Private_Chat_Window', {
@@ -75,6 +101,23 @@ export default {
         last_msg_status:null
       })
     },
+    flagUser(){
+      // mark the user as flagged
+      //console.log('flagging...')
+      this.disabled = true
+      this.user.flaggedBy ?
+      this.user.flaggedBy.push(this.getUser.uid) :
+      this.user.flaggedBy = [this.getUser.uid]
+      
+      db.collection('moreUserInfo')
+      .doc(this.user.uid).update({
+        flaggedBy:firebase.firestore.FieldValue.arrayUnion(this.getUser.uid)
+      }).then(()=>{
+        //this.disabled = false
+      }).catch(err=>{
+        
+      })
+    }
   },
   components:{
     ProfileSettings,
@@ -86,6 +129,7 @@ export default {
   }
 }
 
+import {mapGetters} from 'vuex'
 import ProfileSettings from '@/components/ProfileSettings'
 </script>
 

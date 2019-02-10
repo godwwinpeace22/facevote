@@ -5,7 +5,17 @@
       <slot name='title'></slot>
     </v-toolbar-title>
     <v-spacer></v-spacer>
-    <v-btn outline to="/elections/watch" dark>Vote</v-btn>
+    
+    <v-menu offset-y open-on-hover nudge-bottom dark content-class="round" min-width="200" max-width="250">
+      <v-btn outline slot="activator" dark>Vote</v-btn>
+      <v-subheader v-if="getMyEnrolled.length == 0">No elections to show</v-subheader>
+      <v-list dense>
+        <v-list-tile v-for="election in getMyEnrolled" :key="election.electionId" 
+          :to="`/elections/watch/${election.electionId}`" class="text-truncate">
+          <v-list-tile-title>{{election.title}}</v-list-tile-title>
+        </v-list-tile>
+      </v-list>
+    </v-menu>
 
     <v-divider inset vertical class="mr-2"></v-divider>
 
@@ -13,8 +23,11 @@
       <v-toolbar-title slot="activator">
         <template v-if="$vuetify.breakpoint.smAndUp">
           <v-avatar size="36" color="grey lighten-4">
-            <img v-if="getUserInfo" :src="getUserInfo.photoURL || `https://ui-avatars.com/api/?name=${getUser.displayName}`" alt="avatar">
-            <img v-else  :src="getUser.photoURL || `https://ui-avatars.com/api/?name=${getUser.displayName}`" alt="avatar">
+            <img v-if="getUserInfo && getUserInfo.photoURL" :src="getUserInfo.photoURL" alt="avatar">
+            <img v-else-if="getUser.photoURL"  :src="getUser.photoURL" alt="avatar">
+            <v-avatar v-else color="success" size="38">
+              <span class="white--text headline">{{getUser.displayName.charAt(0)}}</span>
+            </v-avatar>
           </v-avatar>
           <v-icon dark>arrow_drop_down</v-icon>
         </template>
@@ -46,6 +59,12 @@
       </v-list>
     </v-menu>
     <slot name="extended_nav" slot="extension"></slot>
+
+    <!-- SETTINGS DIALOG -->
+    <v-dialog v-model="settings_dialog" lazy fullscreen hide-overlay transition="dialog-bottom-transition" scrollable>
+      <profile-settings :dialog='settings_dialog' v-if="settings_dialog"></profile-settings>
+    </v-dialog>
+
   </v-toolbar>
 </template>
 <script>
@@ -64,8 +83,21 @@ export default {
       'getToken',
       'getUser',
       'getUserInfo',
+      'getMyEnrolled'
     ]),
   },
+  components:{
+    ProfileSettings,
+  },
+   mounted(){
+     this.$eventBus.$on('hide_profile_settings', ()=>{
+      this.settings_dialog = false
+    })
+    this.$eventBus.$on('show_profile_settings', ()=>{
+      this.settings_dialog = true
+    })
+   }
 }
 import { mapGetters } from 'vuex'
+import ProfileSettings from '@/components/ProfileSettings'
 </script>

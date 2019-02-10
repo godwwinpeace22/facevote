@@ -3,7 +3,6 @@
     <!--toolbar></toolbar-->
     <vue-headful
       :title="title"
-      :description="description"
     />
     <v-content>
       <v-container fluid fill-height class="cc login">
@@ -16,7 +15,7 @@
               <v-btn dark flat @click="snackbar.show = false"> Close</v-btn>
             </v-snackbar>
 
-            <h1 class="text-xs-center white--text mb-3" ><a href="/" style="text-decoration:none;color:#fff"> FaceVote</a></h1>
+            <h1 class="text-xs-center white--text mb-3" ><a href="/" style="text-decoration:none;color:#fff"> {{app_title}}</a></h1>
             <v-subheader class="white--text text-xs-center d-block">Log in to your account</v-subheader>
             <v-card dark flat tile style="background:inherit">
               <!--v-toolbar dark dense flat style="background:inherit;text-align:center;">
@@ -32,7 +31,7 @@
                   </v-text-field>
                   <v-text-field id="text-field" color="teal" 
                     outline  v-model="form.password" type="password" :rules="passwordRules"
-                    browser-autocomplete="password" label="Password" hint="At least 6 characters" 
+                    browser-autocomplete="password" label="Password" 
                     required>
                      <v-icon slot="prepend-inner" color="teal">lock</v-icon>
                   </v-text-field>
@@ -64,7 +63,7 @@
 export default {
   data:()=>({
     title:'Login | Facevote',
-    description:'',
+    app_title:'Facevote',
     loading:false,
     snackbar:{},
     show_spinner:false,
@@ -79,11 +78,10 @@ export default {
     valid:true,
     checkbox: false,
     nameRules: [
-      v => !!v || 'Please enter your username',
+      v => !!v || 'Please enter your email',
     ],
     passwordRules: [
-      v => !!v || 'Please enter your password',
-      v => (v && v.length >= 6) || 'Password must be at least 6 characters'
+      v => !!v || 'Please enter your password'
     ],
   }),
   components:{

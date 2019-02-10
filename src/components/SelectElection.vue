@@ -1,23 +1,31 @@
 <template>
   <div>
+    <vue-headful
+      :title="title"
+    />
+
     <navigation>
       <span slot="title">Dashboard</span>
       <h1 slot="extended_nav">Watch</h1>
     </navigation>
-    <v-container grid-list-xl>
-      <vue-headful
-        :title="title"
-      />
-      <v-subheader>Select an election to watch</v-subheader>
 
-      <v-card class="round pa-4 elevation-2" :class="{'pa-5':$vuetify.breakpoint.mdAndUp}">
-        <v-layout row wrap :justify-center='!data_available'>
-          <v-subheader v-if="elections.length == 0 && data_available">Nothing here. To watch an election, either create one, contest or enroll to vote</v-subheader>
-          <!--v-progress-circular class="mt-3" v-if="!data_available" indeterminate color="grey lighten-1"></v-progress-circular-->
-          <loading-bar v-if="!data_available"></loading-bar>
-          <v-flex xs12 sm6 md4 d-flex v-for='election in elections' :key="election.id">
+    <intro v-if="ready && elections.length == 0" :text='no_election_text'></intro>
+    <v-container grid-list-lg>
+      <v-card class="round">
+        <loading-bar v-if="!ready" height="50vh"><div slot="loading_info">Loading elections...</div></loading-bar>
+      </v-card>
+    </v-container>
+
+    <v-container grid-list-xl v-if="ready && elections.length > 0">
+      
+      <v-subheader>Select an election</v-subheader>
+
+      <v-card class="round pa-4 grey lighten-4 elevation-2" :class="{'pa-5':$vuetify.breakpoint.mdAndUp}">
+        <v-layout row wrap >
+          
+          <v-flex v-if="ready && elections.length > 0" xs12 sm6 md4 d-flex v-for='election in elections' :key="election.id">
             
-            <v-card color="" dark class="py-3" height="" :to="'/elections/watch/' + election.electionId">
+            <v-card color="" dark class="round py-3"  height="" :to="'/elections/watch/' + election.electionId">
               <v-layout row>
                 <v-flex xs12>
                   <v-card-title primary-title>
@@ -45,15 +53,16 @@
 export default {
   data:()=>({
     title:'Select Election | Facevote',
-    //elections:[],
-    data_available:false,
+    ready:false,
+    no_election_text:{data:'Nothing here. To watch an election, either create one, contest or enroll to vote',action:{text:'Enroll',action_link:'/enroll'}},
   }),
   computed:{
     elections(){
       let elect = [...this.$store.getters.getMyCreated, ...this.$store.getters.getMyEnrolled]
       let myArr = []
-      elect.forEach(election =>{
-        console.log(election)
+      elect.sort((a,b)=>a.dateCreated - b.dateCreated)
+      .forEach(election =>{
+        // make sure no election is duplicated
         if(!myArr.find(item => item.electionId == election.electionId)){
           myArr.push(election)
         }
@@ -63,82 +72,81 @@ export default {
   },
   components:{
     Navigation,
-    LoadingBar
+    LoadingBar,
+    Intro,
   },
   methods:{
     setCurElection(election){
       this.$router.push()
       this.$store.dispatch('setCurrElection', election)
     },
-    async getMyCreated(user){
-      let elecRef = db.collection('elections')
-      let myArr = []
-      elecRef.where('admin','==',user.email).get().then(doc=>{
-        myArr = []
-        doc.forEach(item=>{
-          console.log(item.id, " => ", item.data());
-          myArr.push(item.data())
+    getMyCreated(user){
+      return new Promise((resolve,reject)=>{
+        let elecRef = db.collection('elections')
+        let myArr = []
+        elecRef.where('admin','==',user.email).get().then(doc=>{
+          myArr = []
+          doc.forEach(item=>{
+            //console.log(item.id, " => ", item.data());
+            myArr.push(item.data())
+          })
+          this.$store.dispatch('setMyCreated', myArr)
+          resolve(myArr)
         })
-        this.$store.dispatch('setMyCreated', myArr)
-        return myArr
       })
       
     },
-    async getMyEnrolled(user){
-      let elecRef = db.collection('elections')
-      let myArr = []
-      elecRef.where('regVoters','array-contains',user.uid).get().then(doc=>{
-        myArr = []
-        doc.forEach(item=>{
-          console.log(item.id, " => ", item.data());
-          myArr.push(item.data())
-        })
+    getMyEnrolled: function(user){
+      return new Promise((resolve,reject)=>{
 
-        this.$store.dispatch('setMyEnrolled', myArr)
-        return myArr
+        let elecRef = db.collection('elections')
+        let myArr = []
+
+        elecRef.where('regVoters','array-contains',user.uid)
+        .get().then(doc=>{
+          myArr = []
+          doc.forEach(item=>{
+            //console.log(item.id, " => ", item.data());
+            myArr.push(item.data())
+          })
+
+          this.$store.dispatch('setMyEnrolled', myArr)
+          resolve(myArr)
+        })
       })
       
     },
+    
   },
-  async mounted(){
-    try {
+  created(){
       
-      firebase.auth().onAuthStateChanged(async (user)=>{
-        if (user) {
-          this.$store.getters.getMyCreated && 
-          this.$store.getters.getMyEnrolled ? 
-          '' : ''
+    firebase.auth().onAuthStateChanged(async (user)=>{
+      if (user) {
+        this.$store.getters.getMyCreated.length > 0 && 
+        this.$store.getters.getMyEnrolled.length > 0 ? 
+        this.ready = true : ''
 
-          // get election user created
-          this.getMyCreated(user).then(res=>{
-            this.getMyEnrolled(user).then(res2=>{
-              this.data_available = true
-            })
-          }).catch(err=>{console.log(err)})
-          
-          //this.data_available = true
-          
-        } else {
-          console.log('No user is signed in.')
-        }
-      });
-      // since 'created' and 'enrolled' might contain same election
-      // its best to filter them to prevent duplicates
-      
-      
-      
-      
-      
-    } catch (error) {
-      console.log(error)
-      
-    }
+        // get election user created
+        this.getMyCreated(user).then(res=>{
+          console.log('res: ', res)
+          this.getMyEnrolled(user).then(res2=>{
+            console.log('res2: ', res2)
+            this.ready = true
+          })
+        }).catch(err=>{console.log(err)})
+        
+        
+      } else {
+        console.log('No user is signed in.')
+      }
+    });
   },
 }
 
 import api from '@/services/api'
 import Navigation from '@/components/Navigation'
 import LoadingBar from '@/spinners/LoadingBar'
+import Intro from '@/components/Intro'
 </script>
 <style lang="scss">
   @mixin borderRadius($radius) {

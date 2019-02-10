@@ -33,5 +33,9 @@ import Footer from '@/components/Footer'
   #notfound{
     /*background:#042943;*/
     min-height:84vh;
+    background:url('../assets/fogg-no-comments.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat:no-repeat;
   }
 </style>

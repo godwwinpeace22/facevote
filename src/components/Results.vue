@@ -7,7 +7,7 @@
         <v-layout row wrap>
 
           <!-- ==== OVERVIEW ===== -->
-          <v-flex xs12 sm4 d-flex class="pt-0">
+          <v-flex xs12 sm6 md4 d-flex class="pt-0  mb-2">
             <v-card class="dflex">
               <v-subheader class="font-weight-bold">Overview</v-subheader>
               <v-list dense>
@@ -17,7 +17,17 @@
                       <v-list-tile-title>Start time</v-list-tile-title>
                     </v-flex>
                     <v-flex xs8> 
-                      {{startTime}}
+                      {{currElection.timed ? startTime : 'Not specified'}}
+                    </v-flex>
+                  </v-layout>
+                </v-list-tile>
+                <v-list-tile>
+                  <v-layout row wrap>
+                    <v-flex xs4>
+                      <v-list-tile-title>Status</v-list-tile-title>
+                    </v-flex>
+                    <v-flex xs8> 
+                      {{inprogress ? 'In progress' : 'Ended'}}
                     </v-flex>
                   </v-layout>
                 </v-list-tile>
@@ -26,7 +36,7 @@
                     <v-flex xs4>
                       <v-list-tile-title>End time</v-list-tile-title>
                     </v-flex>
-                    <v-flex xs8>{{endTime}}</v-flex>
+                    <v-flex xs8>{{currElection.timed ? endTime : 'Not specified'}}</v-flex>
                   </v-layout>
                 </v-list-tile>
                 <v-list-tile>
@@ -34,7 +44,7 @@
                     <v-flex xs4>
                       <v-list-tile-title>Duration</v-list-tile-title>
                     </v-flex>
-                    <v-flex xs8>{{currElection.duration}}hrs</v-flex>
+                    <v-flex xs8>{{currElection.timed ? currElection.duration + ' hrs' : 'Not specified'}}</v-flex>
                   </v-layout>
                 </v-list-tile>
                 <v-list-tile>
@@ -54,6 +64,8 @@
                   </v-layout>
                 </v-list-tile>
               </v-list>
+
+              <!-- CIRCULAR PROGRESS BAR FOR STATS -->
               <v-container grid-list-xs>
                 <v-layout row wrap class="text-xs-center">
                   <v-flex xs4 justify-center>
@@ -85,9 +97,12 @@
           </v-flex>
 
           <!-- ==== WINNERS ===== -->
-          <v-flex xs12 sm4 d-flex class="pt-0">
+          <v-flex xs12 sm6 md4 d-flex class="pt-0 mb-2">
             <v-card class="dflex">
-              <v-subheader class='font-weight-bold'>Winners</v-subheader>
+              <v-subheader class='font-weight-bold'>Winners 
+                <span v-if="inprogress" class="pl-3 green--text"> (Voting still in progress)</span>
+                <span v-if="electionEnded" class="pl-3 orange--text">Voting Ended</span>
+              </v-subheader>
               
               <v-list dense two-line>
                 
@@ -115,45 +130,31 @@
                   </v-list-tile>
                   <v-divider></v-divider>
                 </div>
-                <!-- no ties -->
-                <!--div v-for="winner in winners" :key="`${winner.id}${winner.score}`"
-                  v-else>
-                  <v-list-tile avatar v-for="winner in winner" :key="winner.id">
-                    <v-list-tile-avatar>
-                      <img :src="getDetail(winner.id).photoURL || `https://ui-avatars.com/api/?name=${getName(winner.id)}`">
-                    </v-list-tile-avatar>
-                    <v-list-tile-content class='font-weight-bold'>
-                      {{getName(winner.id)}}
-                      <v-list-tile-sub-title>{{winner.score}} votes</v-list-tile-sub-title>
-                    </v-list-tile-content>
-                      
-                      <v-list-tile-action class='font-weight-bold'> {{winner.role}}</v-list-tile-action>
-                    
-                  </v-list-tile>
-                  <v-divider></v-divider>
-                </div-->
               </v-list>
             </v-card>
           </v-flex>
 
           <!-- ==== VOTER TURNOUT ===== -->
-          <v-flex xs12 sm4 d-flex class="pt-0">
-            <v-card class="dflex">
-              <v-subheader class='font-weight-bold'>Voter turnout</v-subheader>
+          <v-flex sm12 md4 d-flex class="pt-0">
+            <v-card class="d-block" style="width:100%;">
+              <v-subheader class='font-weight-bold'>Voter turnout
+                <v-tooltip left max-width="300px">
+                  <v-btn icon slot="activator" dark small>
+                    <v-icon color="black" small>help</v-icon>
+                  </v-btn>
+                  <span v-if="currElection.level == 'Faculty'">This chart compares the number of people that voted in each department</span>
+                  <span v-if="currElection.level == 'General'">This chart compares the number of people that voted in each faculty</span>
+                </v-tooltip>
+              </v-subheader>
 
               <!-- turnout in a department election -->
               <pie-chart v-if="currElection.type == 'School' && currElection.level == 'Department'"
                 :chart-data="chartData4" :options="chartOptions">
               </pie-chart>
 
-              <!-- turnout by department in a faculty election -->
-              <bar-chart v-if="currElection.type == 'School' && currElection.level == 'Faculty'" 
-                :chart-data="chartData5" :options="chartOptions">
-              </bar-chart>
-
-              <!-- turnout by faculty in a school election-->
-              <bar-chart v-if="currElection.type == 'School' && currElection.level == 'School'" 
-                :chart-data="chartData6" :options="chartOptions">
+              <!-- turnout by department or faculty in a faculty or school election -->
+              <bar-chart v-if="currElection.type == 'School' && currElection.level != 'Department'" 
+                :chart-data="chartData4" :options="chartOptions">
               </bar-chart>
             </v-card>
           </v-flex>
@@ -278,12 +279,13 @@ export default {
       scales: {
           yAxes: [{
             ticks: {
-                beginAtZero: true
+                beginAtZero: true,
             }
           }],
           xAxes: [{
             ticks: {
-                beginAtZero: true
+                beginAtZero: true,
+                autoSkip:false,
             }
           }]
       }
@@ -293,23 +295,9 @@ export default {
       
     },
     chartData4:{},
-    /*chartData4:{
-      datasets: [{
-        label:'# of stuff',
-        data: [10, 20, 30],
-        backgroundColor:['teal','yellow','purple'],
-      }],
-      labels: [
-        'Red',
-        'Yellow',
-        'Blue'
-      ]
-    },*/
-    chartData5:{},
-    chartData6:{},
   }),
   props:['id','roles','currElection','allVotes',
-    'regVoters','contestants', 'charDate3','countDownDate'
+    'regVoters','contestants', 'charDate3', 'inprogress','electionEnded'
   ],
   computed:{
     endTime(){
@@ -564,15 +552,16 @@ export default {
       })
 
       //console.log(votersByDept)
-      this.chartData5 = {
-        datasets: [{
-          label:'Turnout by department',
-          data: Object.values(votersByDept),
-          backgroundColor:['teal','yellow','purple','cyan','lemon','blue','pink','orange','grey'],
-        }],
+      this.chartData4 = {
         labels: Object.keys(votersByDept).map(key =>{
           return this.truncateText(key)
-        })
+        }),
+        datasets: [{
+          label:'Turnout by department',
+          backgroundColor:['teal','yellow','purple','cyan','lemon','blue','pink','orange','grey'],
+          data: Object.values(votersByDept),
+        }]
+        
       }
     
     },
@@ -582,16 +571,18 @@ export default {
       let votersByFaculty = {}
       
       thisSchool.faculties.forEach(fac=>{
-        let members = this.regVoters.filter(voter => voter.faculty == fac.abbr)
-        votersByFaculty[faculty.abbr] = members.length
+        let members = this.regVoters.filter(voter => voter.faculty == fac.text)
+        votersByFaculty[fac.text] = members.length
       })
 
-      //console.log(votersByDept)
-      this.chartData6 = {
+      //console.log(votersByFaculty)
+      this.chartData4 = {
         datasets: [{
           label:'Turnout by faculty',
           data: Object.values(votersByFaculty),
-          backgroundColor:['teal','yellow','purple','cyan','lemon','blue','pink','orange','grey'],
+          backgroundColor:['teal','yellow','purple','cyan','lemon','blue','pink',
+            'orange','grey','lightblue','violet','brown','black','teal',
+            'purple','grey','pink','lightgreen'],
         }],
         labels: Object.keys(votersByFaculty).map(key =>{
           return this.truncateText(key)
@@ -601,7 +592,7 @@ export default {
     },
     
   },
-  async mounted(){
+  async created(){
     if(this.getCurElection.electionId == this.id){
       this.results = this.getCurElectionResults
 
@@ -612,7 +603,7 @@ export default {
       this.sortResults()
       this.currElection.level == 'Department' ? this.deptTurnout() : ''
       this.currElection.level == 'Faculty' ? this.turnoutByDepartment() : ''
-      this.currElection.level == 'School' ? this.turnoutByFaculty() : ''
+      this.currElection.level == 'General' ? this.turnoutByFaculty() : ''
       this.getLabels()
       this.allWinners()
     }
@@ -624,7 +615,7 @@ export default {
     //console.log(this.results)
     this.currElection.level == 'Department' ? this.deptTurnout() : ''
     this.currElection.level == 'Faculty' ? this.turnoutByDepartment() : ''
-    this.currElection.level == 'School' ? this.turnoutByFaculty() : ''
+    this.currElection.level == 'General' ? this.turnoutByFaculty() : ''
     this.sortResults()
     this.getLabels()
     this.allWinners()

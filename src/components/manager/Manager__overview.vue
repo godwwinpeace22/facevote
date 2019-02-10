@@ -1,7 +1,7 @@
 <template>
   <div>
 
-    <v-container grid-list-sm>
+    <v-container grid-list-sm v-if="ready">
       <v-card class="pt-2 pb-5">
         <v-layout row wrap>
           <v-flex xs12 sm6>
@@ -62,7 +62,7 @@
     </v-container>
 
 
-    <v-container grid-list-sm>
+    <v-container grid-list-sm v-if="ready">
       <v-layout row wrap>
         <v-flex sm9 d-flex>
           <v-card >
@@ -132,108 +132,112 @@
       </v-layout>
     </v-container>
 
-    <v-container grid-list-md class="scrollbar">
+    <v-container grid-list-md class="scrollbar" v-if="ready">
       
       <v-layout row wrap mb-5>
-        <v-flex xs12 sm8>
-          <v-layout row wrap>
-            <v-flex xs12 sm7 d-flex>
-              <v-card >
-                <v-list dense>
-                  <v-list-tile avatar>
-                    Activity
-                  </v-list-tile>
-                </v-list>
-                <v-divider></v-divider>
-                <div class="scrollbar my-3" style="max-height:230px;overflow-y:auto;overflow-x:hidden;">
-                  <v-timeline align-top dense class="scrollbar" >
-                    <v-timeline-item :color="getColor(activity)" small v-for="activity in activities" :key="activity._id">
-                      <v-layout pt-3>
-                        <v-flex xs3>
-                          <strong>{{new Date(activity.dateCreated).toDateString('en-Us',{day:'numeric'})}}</strong>
-                        </v-flex>
-                        <v-flex>
-                          <strong>{{activity.by == $store.getters.getUser.uid ? 'Admin' : extractVoter(activity.by).name}} 
-                            {{activity.text}}</strong>
-                          <div class="caption">Mobile App</div>
-                        </v-flex>
-                      </v-layout>
-                    </v-timeline-item>
-                  </v-timeline>
-                </div>
-              </v-card>
-            </v-flex>
-            <v-flex xs12 sm5 d-flex>
-              <v-card >
-                <v-list dense>
-                  <v-list-tile avatar>
-
-                    Registered voters
-                    <v-spacer></v-spacer>
-                    <v-text-field hide-details v-model="search_voters"
-                      append-icon="search" color="secondary" single-line
-                      label="Search voters..."
-                    ></v-text-field>
-                  </v-list-tile>
-                </v-list>
-                <v-divider></v-divider>
-                <div style="max-height:230px;overflow-y:auto;" class="scrollbar my-3">
-                  <v-list two-line dense>
-                    <v-subheader v-if="regVoters.length == 0">No registered voters yet</v-subheader>
-                    <v-subheader v-if="filteredList.length == 0  && regVoters.length != 0">No results found</v-subheader>
-                    <div v-for="(voter, index) in filteredList" :key="index">
-                      <v-list-tile  :key="voter.name" avatar @click="viewprofile = true; voterprofile = voter" color="'default'">
-                        <v-list-tile-avatar>
-                          <img :src="voter.photoURL || `https://ui-avatars.com/api/?name=${voter.name}`">
-                        </v-list-tile-avatar>
-
-                        <v-list-tile-content>
-                          <v-list-tile-title  class="text-capitalize">{{voter.name}}</v-list-tile-title>
-                          
-                        </v-list-tile-content>
-                        <v-list-tile-action>
-                          <v-btn color="success" class="text-lowercase" v-if="isContestant(voter.uid)" depressed small>contestant</v-btn>
-                        </v-list-tile-action>
-                      </v-list-tile>
-                      <v-divider  :inset="true" :key="index"></v-divider>
-                    </div>
-                  </v-list>
-                </div>
-              </v-card>
-            </v-flex>
-          </v-layout>
-        </v-flex>
-        <v-flex xs12 sm4>
-          <v-layout row wrap>
-            <v-flex xs12 sm12  d-flex>
-              <v-card >
-                <v-list dense>
-                  <v-list-tile>
-                    <v-list-tile-title>Tokens</v-list-tile-title>
-                  </v-list-tile>
-                </v-list>
-                <v-divider></v-divider>
-                <v-expansion-panel inset>
-                  <v-expansion-panel-content
-                    v-for="(role,i) in currElection.roles"
-                    :key="i"
-                  >
-                    <div slot="header" class="font-weight-bold text-uppercase" style="color:;">{{role.title}}</div>
-                    
-                    <v-card>
-                      <v-card-text>{{text}}</v-card-text>
-                    </v-card>
-                    <v-card-actions>
-                      <h4 class="pl-2">{{role.token}}</h4>
-                    </v-card-actions>
-                  </v-expansion-panel-content>
-                </v-expansion-panel>
-              </v-card>
-            </v-flex>
-          </v-layout>
-        </v-flex>
         
-        
+        <v-flex xs12 sm6 d-flex>
+          <v-card >
+            <v-list dense>
+              <v-list-tile avatar>
+                Activity
+              </v-list-tile>
+            </v-list>
+            <v-divider></v-divider>
+            <div class="scrollbar my-3 mr-1" style="max-height:230px;overflow-y:auto;overflow-x:hidden;">
+              <v-timeline align-top dense class="scrollbar" >
+                <v-timeline-item :color="getColor(activity)" small v-for="activity in activities" :key="activity._id">
+                  <v-layout pt-3>
+                    <v-flex xs3>
+                      <strong>{{new Date(activity.dateCreated).toDateString('en-Us',{day:'numeric'})}}</strong>
+                    </v-flex>
+                    <v-flex>
+                      <strong>{{activity.by == $store.getters.getUser.uid ? 'Admin' : extractVoter(activity.by).name}} 
+                        {{activity.text}}</strong>
+                      <div class="caption">Mobile App</div>
+                    </v-flex>
+                  </v-layout>
+                </v-timeline-item>
+              </v-timeline>
+            </div>
+          </v-card>
+        </v-flex>
+        <v-flex xs12 sm6 d-flex>
+          <v-card >
+            <v-list dense>
+              <v-list-tile avatar>
+
+                Registered voters
+                <v-spacer></v-spacer>
+                <v-text-field hide-details v-model="search_voters"
+                  append-icon="search" color="secondary" single-line
+                  label="Search voters..."
+                ></v-text-field>
+              </v-list-tile>
+            </v-list>
+            <v-divider></v-divider>
+            <div style="max-height:230px;overflow-y:auto;" class="scrollbar my-3 mr-1">
+              <v-list three-line dense>
+                <v-subheader v-if="regVoters.length == 0">No registered voters yet</v-subheader>
+                <v-subheader v-if="filteredList.length == 0  && regVoters.length != 0">No results found</v-subheader>
+                <div v-for="(voter, index) in filteredList" :key="index">
+                  <v-list-tile  :key="voter.name" avatar @click="viewprofile = true; voterprofile = voter" color="'default'">
+                    <v-list-tile-avatar>
+                      <img :src="voter.photoURL" v-if="voter.photoURL">
+                      <v-avatar size="38" class="white--text" :color="$helpers.colorMinder(voter.name.charAt(0))" v-else>
+                        {{voter.name.charAt(0)}}
+                      </v-avatar>
+                    </v-list-tile-avatar>
+
+                    <v-list-tile-content>
+                      <v-list-tile-title  class="text-capitalize secondary--text">{{voter.name}}</v-list-tile-title>
+                      <v-list-tile-sub-title v-if="isContestant(voter.uid)" class="text--primary">Contestant</v-list-tile-sub-title>
+                      <v-list-tile-sub-title v-if="voterSuspended(voter)" class="error--text">suspended</v-list-tile-sub-title>
+                    </v-list-tile-content>
+                    <v-list-tile-action>
+                      <v-tooltip top>
+                        <v-btn slot="activator" v-if="voter.flaggedBy && voter.flaggedBy.length > 0" 
+                          color="error" icon small @click="flagged_user_dialog = true; flagged_user = voter">
+                          <v-icon>flag</v-icon>
+                        </v-btn>
+                        <span>This user has been flagged as suspicious</span>
+                      </v-tooltip>
+
+                      
+                      <!--v-btn color="success" class="d-inline text-lowercase"  depressed small>contestant</v-btn-->
+                    </v-list-tile-action>
+                  </v-list-tile>
+                  <v-divider  :inset="true" :key="index"></v-divider>
+                </div>
+              </v-list>
+            </div>
+          </v-card>
+        </v-flex>
+        <v-flex xs12 sm6  d-flex>
+          <v-card >
+            <v-list dense>
+              <v-list-tile>
+                <v-list-tile-title>Tokens</v-list-tile-title>
+              </v-list-tile>
+            </v-list>
+            <v-divider></v-divider>
+            <v-expansion-panel inset>
+              <v-expansion-panel-content
+                v-for="(role,i) in currElection.roles"
+                :key="i"
+              >
+                <div slot="header" class="font-weight-bold text-uppercase" style="color:;">{{role.title}}</div>
+                
+                <v-card>
+                  <v-card-text>{{text}}</v-card-text>
+                </v-card>
+                <v-card-actions>
+                  <h4 class="pl-2">{{role.token}}</h4>
+                </v-card-actions>
+              </v-expansion-panel-content>
+            </v-expansion-panel>
+          </v-card>
+        </v-flex>
       </v-layout>
     </v-container>
 
@@ -258,6 +262,39 @@
       </v-card>
     </v-dialog>
 
+    <!-- FLAGGED USER DIALOG -->
+    <v-dialog persistent
+      v-model="flagged_user_dialog" 
+      v-if="flagged_user.name"
+      max-width="500px"
+      transition="dialog-transition" lazy
+    >
+      <v-toolbar color="grey lighten-3" dense>
+        <v-avatar size="38" class="white--text" :color="$helpers.colorMinder(flagged_user.name.charAt(0))">
+          <img :src="flagged_user.photoURL" v-if="flagged_user.photoURL" alt="alt">
+          <span v-else>{{flagged_user.name.charAt(0)}}</span>
+        </v-avatar>
+        <v-toolbar-title>{{flagged_user.name}}</v-toolbar-title>
+        <v-spacer></v-spacer>
+        <v-btn icon @click="flagged_user_dialog = false">
+          <v-icon>close</v-icon>
+        </v-btn>
+      </v-toolbar>
+      <v-card>
+        <v-card-text>
+          <p>This user has been flagged as suspicious. This usually happens when a voter is not 
+          recognized by other voters</p>
+          <p>You can suspend this user to prevent them from voting or ignore the flags. Do this with caution</p>
+          <p>Note that the user will be notified once they are suspended</p>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn color="orange" small @click="suspendVoter(flagged_user)" 
+            v-if="!voterSuspended(flagged_user)" :loading="loading">Suspend voter</v-btn>
+          <v-btn color="orange" small @click="restoreVoter(flagged_user)" v-else :loading="loading">Restore voter</v-btn>
+          <v-btn color="secondary" small @click="flagged_user_dialog = false" :disabled="loading">Ignore</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <!-- election settings dialog -->
     <!--v-dialog v-model="settings_modal" v-if="settings_modal" fullscreen hide-overlay transition="dialog-bottom-transition" scrollable>
       <v-card>
@@ -276,6 +313,9 @@
 <script>
 export default {
   data:()=>({
+    ready:false,
+    flagged_user_dialog:false,
+    flagged_user:{},
     contestants:[],
     currElection:{},
     regVoters:[],
@@ -348,10 +388,17 @@ export default {
    followText(){
      //return this.user.followers.indexOf(this.currUser._id) == -1 ? '+ Follow' : 'Following'
      return 'following'
-   },
+   }
    
   },
   methods:{
+    voterSuspended(voter){
+    let finding = voter.suspended &&
+    voter.suspended.find(electionId => electionId == this.$route.params.electionId) ?
+    true : false
+    console.log(finding)
+    return finding
+   },
     extractVoter(uid){
       return this.regVoters.find(voter=> voter.uid == uid)
     },
@@ -366,8 +413,20 @@ export default {
         // Get current election
         db.collection('elections')
           .doc(this.$route.params.electionId)
-          .get().then(docs=>{
-            this.currElection = docs.data()
+          .get().then(doc=>{
+            
+            if(doc.exists){
+              console.log(this.$store.getters.getUser.uid)
+              if(doc.data().admin != this.$store.getters.getUser.uid){
+                this.$router.push('/notFound')
+              }
+              else{
+                this.currElection = doc.data()
+              }
+            }
+            else{
+              this.$router.push('/notFound')
+            }
             console.log('currElection: ', this.currElection)
           }).catch(err=>{
             console.log(err)
@@ -397,6 +456,7 @@ export default {
             return contestants
           }).then(conts=>{
             this.setTableData(conts)
+            this.ready = true
           }).catch(err=>{
             console.log(err)
           })
@@ -518,7 +578,7 @@ export default {
         }
       })
 
-      let userRef = db.collection('moreUserInfo').doc(this.culprit.email)
+      let userRef = db.collection('moreUserInfo').doc(this.culprit.uid)
       await userRef.update({
         contestsRef:filterdContests
       })
@@ -552,7 +612,7 @@ export default {
           }
         })
 
-        let userRef = db.collection('moreUserInfo').doc(contestant.email)
+        let userRef = db.collection('moreUserInfo').doc(contestant.uid)
         await userRef.update({
           contestsRef:filterdContests
         })
@@ -562,7 +622,29 @@ export default {
         console.log(error)
       }
       
-    }
+    },
+    suspendVoter(voter){
+      // Suspend a voter from voting
+      this.loading = true
+      db.collection('moreUserInfo').doc(voter.uid)
+      .update({
+        suspended:firebase.firestore.FieldValue.arrayUnion(this.$route.params.electionId)
+      }).then(()=>{
+        this.loading = false
+        this.suspend_dialog = false
+      })
+    },
+    restoreVoter(voter){
+      // Restore a voter to allow them vote
+      this.loading = true
+      db.collection('moreUserInfo').doc(voter.uid)
+      .update({
+        suspended:firebase.firestore.FieldValue.arrayRemove(this.$route.params.electionId)
+      }).then(()=>{
+        this.loading = false
+        this.suspend_dialog = false
+      })
+    },
     
   },
   async mounted(){

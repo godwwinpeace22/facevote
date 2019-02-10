@@ -3,7 +3,6 @@
     <!--toolbar></toolbar-->
     <vue-headful
       :title="title"
-      :description="description"
     />
     <v-container fluid fill-height>
       <v-layout align-center justify-center>
@@ -14,7 +13,7 @@
             <v-btn dark flat color="white" @click="snackbar.show = false"> Close</v-btn>
           </v-snackbar>
 
-          <h1 class="text-xs-center white--text mb-4" ><a href="/" style="text-decoration:none;color:#fff"> Contestr</a></h1>
+          <h1 class="text-xs-center white--text mb-4" ><a href="/" style="text-decoration:none;color:#fff">{{app_title}}</a></h1>
           
           <v-card class="" max-width="800">
             <v-card-title class="title font-weight-bold justify-space-around">
@@ -24,7 +23,7 @@
 
             <v-window v-model="step">
               <v-window-item :value="1">
-                <v-card-text>
+                <v-card-text :class="{'px-0':$vuetify.breakpoint.xsOnly}">
                   <v-form ref="form" v-model="valid" class="text-xs-center pa-3">
                     <p class="text-xs-center">Lorem ipsum dolor, sit amet consectetur </p>
                     <v-text-field
@@ -149,7 +148,7 @@
 export default {
   data:()=>({
     title:'Sign Up | Facevote',
-    description:'',
+    app_title:'Facevote',
     step:1,
     message:'Login',
     snackbar:{},
@@ -278,12 +277,12 @@ export default {
             });
 
             // store additional user info
-            db.collection('moreUserInfo').doc(user.email).set({
+            db.collection('moreUserInfo').doc(userRecord.user.uid).set({
               uid:userRecord.user.uid,
               name:user.name,
               email:user.email,
               phone:user.phone,
-              suspended:false,
+              suspended:[], // contains array of elections user is suspended to vote in
               followers:[],
               is_verified:false,
               is_student:user.is_student,
@@ -296,16 +295,16 @@ export default {
               
               // send email verification message
               //console.log(firebase.auth().currentUser)
-              firebase.auth().currentUser.sendEmailVerification().then((sent)=>{
+              //firebase.auth().currentUser.sendEmailVerification().then((sent)=>{
                 // Email sent.
                 
                 setTimeout(() => {
                   this.$router.push('/')
                 }, 2000);
 
-              }).catch(function(error) {
+              /*}).catch(function(error) {
                 // An error happened.
-              });
+              });*/
               
             })
           })

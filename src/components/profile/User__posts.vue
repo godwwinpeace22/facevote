@@ -10,7 +10,7 @@
             <v-icon>add</v-icon>
             New post</v-btn>
         </v-toolbar>
-        <v-container class="grey lighten-3">
+        <v-container class="px-0 grey lighten-3">
           <v-layout row wrap>
             <v-subheader v-if="posts.length == 0">No recent post</v-subheader>
             <v-flex sm6 v-for="post of posts" :key="post.dateCreated">
@@ -21,7 +21,21 @@
                   </v-flex>
                   <v-flex xs12 sm7 md8 d-flex class="py-0">
                     <div class="pa-2" style="height:150px;overflow:hidden;">
-                      {{truncateText(post.message)}}
+                      Lorem ipsum dolor sit, amet consectetur adipisicing qui nam corrupti natus. Cupiditate adipisci architecto suscipit veniam autem quo, voluptatum nemo exercitationem, inventore vero deserunt
+                      
+                      {{$helpers.truncateText(post.message)}}
+                      
+                      <v-card-actions>
+                        <v-btn  icon small>
+                          <v-icon color="red">thumbs_up</v-icon>
+                        </v-btn>
+                        <v-btn icon small>
+                          <v-icon color="secondary">share</v-icon>
+                        </v-btn>
+                        <v-btn icon small>
+                          <v-icon color="secondary">insert_comment</v-icon>
+                        </v-btn>
+                      </v-card-actions>
                     </div>
                   </v-flex>
                 </v-layout>
@@ -39,7 +53,7 @@
 
     <!-- READ POST DIALOG -->
     <v-dialog v-model="read" persistent :fullscreen="$vuetify.breakpoint.smAndDown"
-      max-width="600px" transition="dialog-transition">
+      max-width="850px" transition="dialog-transition">
       <v-toolbar dense>
         Read post
         <v-spacer></v-spacer>
@@ -49,6 +63,10 @@
       </v-toolbar>
       <v-card tile>
         <v-card-text>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Nesciunt earum nam vel quod assumenda. Sunt vero unde perspiciatis aut, eum minima, quidem necessitatibus odit sit facere nisi natus eius debitis.
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Nesciunt earum nam vel quod assumenda. Sunt vero unde perspiciatis aut, eum minima, quidem necessitatibus odit sit facere nisi natus eius debitis.
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Nesciunt earum nam vel quod assumenda. Sunt vero unde perspiciatis aut, eum minima, quidem necessitatibus odit sit facere nisi natus eius debitis.
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Nesciunt earum nam vel quod assumenda. Sunt vero unde perspiciatis aut, eum minima, quidem necessitatibus odit sit facere nisi natus eius debitis.
           {{post_to_read.message}}
           <v-container grid-list-sm px-0>
             <v-layout row wrap class="mt-3">
@@ -94,7 +112,7 @@
                       >
                       
                       <v-flex xs12>
-                        <v-img :src='image' min-height='300'></v-img>
+                        <v-img :src='image' max-height='500' min-height='300' width="100%"></v-img>
                       </v-flex>
                       
                       </v-layout>
@@ -130,78 +148,10 @@
       persistent :fullscreen='$vuetify.breakpoint.smAndDown'
       max-width="850px"
       transition="slide-y-transition">
-      <v-card>
-        <v-toolbar dense flat dark color="teal">
-          <v-subheader class="white--text">Compose</v-subheader>
-          <v-spacer></v-spacer>
-          <v-btn depressed small outline @click="new_post_dialog = false">Cancel</v-btn>
-        </v-toolbar>
-        <v-card-text class="px-0">
-          <v-stepper v-model="e14" vertical class="elevation-0">
-            <v-stepper-step step="1">
-              Your Message
-              <small>Compose your message</small>
-            </v-stepper-step>
 
-            <v-stepper-content step="1">
-              <v-card color="" flat tile class="mb-5" min-height="200px">
-                <v-textarea auto-grow color="secondary"
-                  label="Type your message" v-model="form.message"
-                  name="broadcast" outline
-                ></v-textarea>
-
-                <!-- Selected images preview -->
-                <v-container grid-list-sm px-0>
-                  <v-layout row wrap v-if="blob_urls">
-                    <v-flex xs3 v-for="(blob_url,i) in blob_urls" :key="i">
-                      <v-card height="100" class="mb-1">
-                        <v-img :src='blob_url' height="100"></v-img>
-                      </v-card>
-                    </v-flex>
-                  </v-layout>
-                </v-container>
-                
-                <v-chip color="teal" text-color="white" @click="triggerFileSelector">
-                  <v-avatar>
-                    <v-icon color="">insert_photo</v-icon>
-                  </v-avatar>
-                  Add Photo
-                </v-chip>
-                <v-chip color="grey" text-color="white" v-if="blob_urls.length > 0" @click="blob_urls = [];selected_files = []">
-                  <v-avatar>
-                    <v-icon color="error">cancel</v-icon>
-                  </v-avatar>
-                  Clear All
-                </v-chip>
-              </v-card>
-              <v-btn color="success" outline flat :disabled="p_msg_rules" @click="e14 = 2">Continue</v-btn>
-            </v-stepper-content>
-
-            <v-stepper-step step="2">Choose Audience</v-stepper-step>
-
-            <v-stepper-content step="2">
-              <v-card flat class="mb-5" min-height="200px">
-                <v-layout row wrap>
-                  <v-flex xs8>
-                    
-                    <p class="mt-5">Select the audience for your new post.</p>
-                    <v-select class="mt-3" outline color="secondary"
-                      label="Select group" v-model="form.group"
-                      :items="myContests" item-value="electionId"
-                      item-text="title"
-                    ></v-select>
-                  </v-flex>
-                </v-layout>
-              </v-card>
-              <v-btn flat @click="e14 = 1">Previous</v-btn>
-              <v-btn color="success" outline :disabled="p_group_rules" :loading="loading" flat @click="newPost">Finish</v-btn>
-            </v-stepper-content>
-            <v-divider inset vertical></v-divider>
-          </v-stepper>
-        </v-card-text>
-      </v-card>
+      <new-post :user='user' :myContests='myContests'></new-post>
     </v-dialog>
-    <input type="file" name="file" id="post_img" multiple style="visibility:hidden;" @change="onPostFileSelect($event)" accept="image/jpeg,image/png">
+    
   </div>
 </template>
 <script>
@@ -258,123 +208,20 @@ export default {
       text.substr(0,120) + '...' :
       text.substr(0,200) + '...'
     },
-    triggerFileSelector(){
-      document.getElementById('post_img').click()
-    },
-    onPostFileSelect(e){
-      let stop = true
-      let file_sizes = 0
-      for(let file of e.target.files){
-        if(file.type == 'image/jpeg' || 
-          file.type == 'image/jpg' || file.type == 'image/png'){
-            stop = false
-          
-        }
-        else{
-          stop = true
-          break
-        }
-        file_sizes += file.size
-      }
-
-      // Allow only images
-      if(!stop){
-        let one_mb = 1000000
-        // limit total file upload to 1mb
-        if(file_sizes < one_mb){
-          //console.log(e.target.files)
-          for(let file of e.target.files){
-            console.log(file)
-            this.blob_urls.push(URL.createObjectURL(file))
-          }
-          this.selected_files = e.target.files
-          
-        }
-        else{
-          alert('Please select an image that is less than 1mb')
-        }
-      }
-      else{
-        alert('Only images are allowed!')
-      }
-    },
-    async uploadImages(){
-      try {
-        let clUrl = `https://api.cloudinary.com/v1_1/${this.cloudinary.cloud_name}/upload`
-        let formData = new FormData()
-        let uploaded = []
-        for(let file of this.selected_files){
-          formData.append('file', file)
-          formData.append('upload_preset',this.cloudinary.upload_preset)
-
-          let response = await api().post( clUrl,
-            formData,
-            {
-              headers: {
-                  'Content-Type': 'multipart/form-data'
-              }
-            }
-          )
-
-          uploaded.push(response.data.secure_url)
-        }
-        
-        console.log(uploaded)
-        return uploaded
-      } catch (error) {
-        this.loading = false
-        this.snackbar.show = true
-        this.snackbar.color = 'error'
-        this.snackbar.message = 'Sorry, something went wrong, try again.'
-        console.log(error)
-        console.log(error.response)
-      }
-      
-    },
-    async newPost(){
-      try{
-        this.loading = true
-        let images = await this.uploadImages()
-        console.log(images)
-        let post = {
-          message:this.form.message,
-          images:images,
-          group:this.form.group,
-          dateCreated:Date.now(),
-          seenBy:[],
-          reactions:[],
-          comments:[],
-          department:this.user.department,
-          faculty:this.user.faculty,
-          school:this.user.school,
-          createdBy:this.$store.getters.getUser.uid
-        }
-        
-        let res = await db.collection('posts').add(post)
-        console.log(res)
-        this.loading = false
-        this.posts.push(post)
-        this.new_post_dialog = false
-
-        this.snackbar = {
-          show:true,
-          color:'success',
-          message:'Post was created successfully'
-        }
-        
-      }catch(err){
-        console.log(err)
-        this.loading = false
-      }
-    },
+    
   },
   components:{
-    
+    NewPost
   },
   mounted(){
     
-    
+    this.$eventBus.$on('HideNewPostDialog', data=>{
+      this.new_post_dialog = false
+    })
+    this.$eventBus.$on('ShowSnackbar', data=>{
+      this.snackbar = data
+    })
   },
 }
-import api from '@/services/api'
+import NewPost from '@/components/profile/User__posts_new'
 </script>

@@ -5,7 +5,8 @@ module.exports = {
       {
         "useBuiltIns": "entry"
       }
-    ]
+    ],
+    
   ],
   "plugins": [
     [

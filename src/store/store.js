@@ -15,6 +15,8 @@ const vuexLocalStorage = new VuexPersist({
     token:state.token,
     //isAuthenticated:state.isAuthenticated,
     curRoom:state.curRoom,
+    schools:state.schools,
+    feedFilter:state.feedFilter,
     //chat_messages:state.chat_messages,
     //those_online:state.those_online,
     //allVotes:state.allVotes,
@@ -27,7 +29,7 @@ export default new Vuex.Store({
   plugins:[
     vuexLocalStorage.plugin,
     createMutationsSharer({ predicate: 
-      ['logout', 'setUser','setUserInfo', 'curRoom','saveChatMessages','updateFromDb','updateThoseOnline','allVotes'] })
+      ['logout', 'setUser','saveFeedFilter','setUserInfo', 'curRoom','saveChatMessages','updateFromDb','updateThoseOnline','allVotes'] })
   ],
   state: {
     userInfo:null, // additional info for logged in user
@@ -56,6 +58,7 @@ export default new Vuex.Store({
     myCreated:[],
     myContested:[],
     votes:[],
+    feedFilter:null,
   },
   mutations: {
     setUserInfo(state,data){
@@ -70,11 +73,17 @@ export default new Vuex.Store({
         // Sign-out successful.
         state.isAuthenticated = false
         state.userInfo = null
+        state.myEnrolled = []
+        state.myCreated = []
+        state.myContested = []
         router.push('/login')
-        //window.location.reload()
+        window.location.reload()
       }).catch(function(error) {
         console.log(error)
       });
+    },
+    saveFeedFilter(state,data){
+      state.feedFilter = data
     },
     curRoom(state,data){
       state.curRoom = data
@@ -159,6 +168,9 @@ export default new Vuex.Store({
     },
     logout({commit}){
       commit('logout')
+    },
+    saveFeedFilter({commit},data){
+      commit('saveFeedFilter',data)
     },
     curRoom({commit}, data){
       commit('curRoom', data)
@@ -274,7 +286,8 @@ export default new Vuex.Store({
         
       })
       return arr
-    }
+    },
+    getFeedFilter: state => state.feedFilter
   }
 })
 

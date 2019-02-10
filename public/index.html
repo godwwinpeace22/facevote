@@ -3,10 +3,12 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0 maximum-scale=1, user-scalable=no, minimal-ui">
     <link rel="icon" href="<%= BASE_URL %>favicon.ico">
-    <link rel="stylesheet" href="https://unpkg.com/nprogress@0.2.0/nprogress.css">
     <style>
+      html{
+        overflow-y:auto !important;
+      }
       .Aligner {
         display: flex;
         align-items: center;
@@ -17,57 +19,15 @@
         max-width: 50%;
       }
     </style>
-    <!--script src="<%= BASE_URL %>js/serverDate.js"></script-->
-    <script src="https://www.gstatic.com/firebasejs/5.7.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/5.7.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/5.7.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/5.7.0/firebase-database.js"></script>
-    <script>
-      // Initialize Firebase
-      var config = {
-        apiKey: "AIzaSyA6kjTtvPaK5co3cqG2WZob9e7WdEineFA",
-        authDomain: "facevote-eb748.firebaseapp.com",
-        databaseURL: "https://facevote-eb748.firebaseio.com",
-        projectId: "facevote-eb748",
-      };
-      var app = firebase.initializeApp(config);
-
-      var db = firebase.firestore();
-      var database = firebase.database();
-
-      db.settings({
-        timestampsInSnapshots: true
-      });
-
-      firebase.firestore().enablePersistence()
-      .catch(function(err) {
-          if (err.code == 'failed-precondition') {
-              // Multiple tabs open, persistence can only be enabled
-              // in one tab at a a time.
-              // ...
-              console.log(err)
-          } else if (err.code == 'unimplemented') {
-              // The current browser does not support all of the
-              // features required to enable persistence
-              // ...
-              console.log(err)
-          }
-      });
-      // Disable deprecated features
-      
-    </script>
     
-    <!--script src="https://unpkg.com/nprogress@0.2.0/nprogress.js"></script-->
-    <!--link href="https://fonts.googleapis.com/css?family=Roboto:100:300,400,500,700,900|Material+Icons" rel="stylesheet"-->
-    <!--link href="https://fonts.googleapis.com/css?family=Roboto:100:300,400,500,700,900|Material+Icons" rel="stylesheet"-->
-    <title>facevote</title>
+    <title>Facevote</title>
   </head>
   <body>
     <noscript>
       <strong>We're sorry but facevote doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
     </noscript>
     <div id="app"></div>
-    <!-- built files will be auto injected -->
+    
     <div class="Aligner" id="welcome_logo">
       <img  class="Aligner-item" src="<%= BASE_URL %>img/icons/msapplication-icon-144x144.png" alt="logo" srcset="">
     </div>

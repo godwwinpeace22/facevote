@@ -20,6 +20,43 @@
     
     <v-card-text>
       <v-layout row wrap>
+
+        <v-flex sm4 xs12 order-sm2>
+          <v-container>
+            <v-layout row justify-center>
+              <v-flex xs12>
+                
+                <v-card tile style="min-height:400;">
+                  <v-hover :class="{profile_card: selected_file}">
+                    <v-container slot-scope="{ hover }">
+                      <v-img :src="blob_url || getUser.photoURL || `https://ui-avatars.com/api/?name=${getUser.displayName}&size=300`" max-height="250" @click="openFileSelect">
+                        <v-expand-transition>
+                          <div v-if="hover" class="d-flex transition-fast-in-fast-out teal darken-2 v-card--reveal display-5 white--text"
+                            style="height: 100%;">
+                            <v-icon x-large class="text-xs-center">photo_camera</v-icon>
+                            <h3>Change profile photo</h3>
+                          </div>
+                        </v-expand-transition>
+                      </v-img>
+                      <v-btn color="success" class="mt-4" small outline @click="openFileSelect">Change Photo</v-btn>
+                    </v-container>
+                  </v-hover>
+                  <v-card-actions class="ml-3">
+                    <v-btn dark :color="uploading ? 'grey' : 'teal'" class="text-capitalize d-block" @click="updatePhoto"
+                      v-if="selected_file" >{{upload_text}}
+                    </v-btn>
+                  </v-card-actions>
+                  <v-container v-if="uploading" class="py-0 px-0">
+                    <v-progress-linear :indeterminate="true" ></v-progress-linear>
+                  </v-container>
+                </v-card>
+                
+                <input type="file" style="visibility:hidden;" id="file" @change="onFileSelect($event)" accept="image/jpeg,image/png"/>
+              </v-flex>
+            </v-layout>
+          </v-container>
+        </v-flex>
+
         <v-flex sm8 xs12>
 
           <v-container grid-list-md>
@@ -34,7 +71,7 @@
                     </v-text-field>
 
                     <v-text-field required small v-model="form.email" style="text-transform:capitalize"
-                      color="secondary" browser-autocomplete="email" :placeholder="getUser.email" 
+                      color="secondary" browser-autocomplete="email" :placeholder="getUser.email" disabled
                       label="Your Email">
                     </v-text-field>
 
@@ -114,41 +151,7 @@
 
         </v-flex>
 
-        <v-flex sm4 xs12>
-          <v-container>
-            <v-layout row justify-center>
-              <v-flex xs12>
-                
-                <v-card tile style="min-height:400;">
-                  <v-hover :class="{profile_card: selected_file}">
-                    <v-container slot-scope="{ hover }">
-                      <v-img :src="blob_url || getUser.photoURL || `https://ui-avatars.com/api/?name=${getUser.displayName}&size=300`" max-height="250" @click="openFileSelect">
-                        <v-expand-transition>
-                          <div v-if="hover" class="d-flex transition-fast-in-fast-out teal darken-2 v-card--reveal display-5 white--text"
-                            style="height: 100%;">
-                            <v-icon x-large class="text-xs-center">photo_camera</v-icon>
-                            <h3>Change profile photo</h3>
-                          </div>
-                        </v-expand-transition>
-                      </v-img>
-                      <v-btn color="success" class="mt-4" small outline @click="openFileSelect">Change Photo</v-btn>
-                    </v-container>
-                  </v-hover>
-                  <v-card-actions class="ml-3">
-                    <v-btn dark :color="uploading ? 'grey' : 'teal'" class="text-capitalize d-block" @click="updatePhoto"
-                      v-if="selected_file" >{{upload_text}}
-                    </v-btn>
-                  </v-card-actions>
-                  <v-container v-if="uploading" class="py-0 px-0">
-                    <v-progress-linear :indeterminate="true" ></v-progress-linear>
-                  </v-container>
-                </v-card>
-                
-                <input type="file" style="visibility:hidden;" id="file" @change="onFileSelect($event)" accept="image/jpeg,image/png"/>
-              </v-flex>
-            </v-layout>
-          </v-container>
-        </v-flex>
+        
       </v-layout>
     </v-card-text>
   </v-card>
@@ -244,7 +247,7 @@ export default {
           this.uploading = false
           this.snackbar = {show:true,message:'Photo updated successfully',color:'black'}
 
-          let docRef = db.collection('moreUserInfo').doc(this.getUser.email)
+          let docRef = db.collection('moreUserInfo').doc(this.getUser.uid)
           let doc = await docRef.get()
           console.log(doc.data())
           this.$store.dispatch('setUserInfo',doc.data())
@@ -266,11 +269,11 @@ export default {
           displayName: this.form.name || this.getUser.displayName
         })
 
-        let userRef = db.collection('moreUserInfo').doc(this.getUser.email);
+        let userRef = db.collection('moreUserInfo').doc(this.getUser.uid);
         if(this.getUserInfo.was_once_a_student){
           let update = await userRef.update({
             name:this.form.name || this.getUser.displayName,
-            email:this.form.email || this.getUser.email,
+            //email:this.form.email || this.getUser.email,
             phone:this.form.phone || this.getUserInfo.phone,
             is_student:this.form.is_student
           });
@@ -279,7 +282,7 @@ export default {
         else{
           let update = await userRef.update({
             name:this.form.name || this.getUser.displayName,
-            email:this.form.email || this.getUser.email,
+            //email:this.form.email || this.getUser.email,
             phone:this.form.phone || this.getUserInfo.phone,
             is_student:this.form.is_student,
             was_once_a_student:this.form.is_student,
@@ -335,7 +338,7 @@ export default {
       
     }
   },
-  async mounted(){
+  async created(){
     await this.setUp()
     
     

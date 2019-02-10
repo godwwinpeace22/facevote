@@ -148,6 +148,7 @@ export default {
         querySnapshot.forEach(doc => {
           this.posts.push(doc.data())
         });
+        console.log(this.posts)
       }).catch(err=>{
         console.log(err)
       })
@@ -158,18 +159,26 @@ export default {
           this.user = this.getUserInfo
           console.log(this.user)
           console.log(this.getUser.email,this.getUserInfo)
+          await this.getUserElections()
+          await this.getUserPosts()
         }
         else{
-          let userRef = db.collection('moreUserInfo')
-          .doc(this.$route.params.email)
+          let user = []
+          db.collection('moreUserInfo')
+          .where('email','==',this.$route.params.email)
+          .get().then(querySnapshot=>{
+            querySnapshot.forEach(item=>{
+              user.push(item.data())
+            })
+            
+            user[0].uid == this.getUser.uid ? this.$store.dispatch('setUserInfo',user[0]) : ''
+            this.user = user[0]
 
-          let user = await userRef.get()
-          user.data().uid == this.getUser.uid ? this.$store.dispatch('setUserInfo',user.data()) : ''
-          this.user = user.data()
-          //console.log(user.data())
+            this.getUserElections()
+            this.getUserPosts()
+          })
         }
-        await this.getUserElections()
-        await this.getUserPosts()
+        
 
       } catch (error) {
         console.log(error)
@@ -177,8 +186,9 @@ export default {
       }
     }
   },
-  async mounted(){
+  async created(){
     try {
+      console.log(this.$route.params.email)
       this.setUp()
       this.$eventBus.$on('Create_Broadcast_Resp', (data)=>{
         this.broadcasts.push(data)

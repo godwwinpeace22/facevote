@@ -30,7 +30,10 @@
           
           <v-list-tile-avatar>
             <!-- prefer to user loggedin user's info rather than his info from voters list -->
-            <img :src="member.photoURL">
+            <img :src="member.photoURL" v-if="member.photoURL">
+            <v-avatar v-else :color="$helpers.colorMinder(member.name.charAt(0))" size="40">
+              <span class="white--text headline">{{member.name.charAt(0)}}</span>
+            </v-avatar>
           </v-list-tile-avatar>
 
           <v-list-tile-content>
@@ -38,7 +41,7 @@
             <v-list-tile-sub-title v-if="getRole(member)"><i>for</i> {{getRole(member)}}</v-list-tile-sub-title>
           </v-list-tile-content>
           <v-list-tile-action>
-            <v-icon :color="member.online ? 'success' : 'grey'">lens</v-icon>
+            <v-icon :color="member.online ? 'success' : 'grey'" small>lens</v-icon>
           </v-list-tile-action>
         </v-list-tile>
       </v-list>
@@ -51,7 +54,7 @@
 export default {
   data:()=>({
     search:'',
-    onlineMembers:[],
+    //onlineMembers:[],
     drawerRight: true,
     right: null,
     left: null,
@@ -66,7 +69,15 @@ export default {
       console.log(this.members)
       if(this.members && this.members.length > 0){
         //console.log(this.members)
-        return this.members.filter(member => {
+        // let those online appear first, at the top
+        let online = []
+        let offline = []
+        this.members.forEach(m=>{
+          m.online ? online.push(m) : offline.push(m)
+        })
+
+        let sortedByOnline = [...online, ...offline]
+        return sortedByOnline.filter(member => {
           return member.name.toLowerCase().includes(this.search.toLowerCase())
         })
       }
@@ -84,8 +95,8 @@ export default {
       db.collection("moreUserInfo")
         .where('enrolled','array-contains', this.$route.params.electionId)
         .startAfter(lastVisible)
-        .limit(25).get().then(querySnapshot=>{
-          querySnapshot.forEach(doc=>{
+        .limit(25).get().then(docs=>{
+          docs.forEach(doc=>{
             //console.log(doc.id, " => ", doc.data());
             this.members.push(doc.data())
           })
@@ -96,11 +107,11 @@ export default {
     checkProfile(){
       this.$eventBus.$emit('show_right_sidebar','profile');
     },
-    isOnline(userId){
+    /*isOnline(userId){
       console.log(userId,this.onlineMembers)
       return this.onlineMembers.find(memberId => memberId == userId) ? 
       true : false
-    },
+    },*/
     getRole(member){ // return the role a user is contesting for
       if(member.contestsRef){
         let res = member.contestsRef.find(contest=>contest.electionRef == this.thisGroup.electionId)
@@ -110,11 +121,11 @@ export default {
         return false
       }
     },
-    checkIfOnline(username){
+    /*checkIfOnline(username){
       let those_online = this.$store.state.those_online
       let found = those_online.find(data => data.username == username)
       return found ? 'success' : 'grey'
-    },
+    },*/
   },
   async mounted(){
     
@@ -126,7 +137,7 @@ export default {
   components:{
   }
 }
-import api from '@/services/api'
+//import api from '@/services/api'
 import {mapGetters} from 'vuex'
 </script>
 

@@ -1,12 +1,13 @@
 <template>
-  <v-container grid-list-xs fluid>
+  <v-container grid-list-xs fluid :class="[background]">
     <v-layout column>
       <v-flex xs6 d-flex>
-        <div style="height:70vh">
+        <div :style="styleObj">
           <v-layout align-center justify-center fill-height>
             <div>
               <slot name='loading_info'></slot>
-              <div class="spinner">
+              <v-progress-circular indeterminate color="accent" v-if="spinnerType == 'circle'"></v-progress-circular>
+              <div class="spinner" v-if="spinnerType == 'bars'">
                 <div class="rect1"></div>
                 <div class="rect2"></div>
                 <div class="rect3"></div>
@@ -23,7 +24,27 @@
 </template>
 <script>
 export default {
-  
+  props:{
+    height:{
+      type:String,
+      default:'70vh'
+    },
+    spinnerType:{
+      type:String,
+      default:'bars'
+    },
+    background:{
+      type:String,
+      default:'inherit'
+    }
+  },
+  computed:{
+    styleObj(){
+      return {
+        height:this.height ? this.height : '70vh',
+      }
+    }
+  }
 }
 </script>
 <style lang="scss" scoped>

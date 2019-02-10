@@ -9,15 +9,22 @@
       :title="title"
     />
 
-    <loading-bar v-if="show_loading_bar"></loading-bar>
     
-    <intro v-if="!show_loading_bar && $store.getters.getMyEnrolled.length == 0" :text='no_forum_text'></intro>
-    <v-container grid-list-xl :pa-5='$vuetify.breakpoint.mdAndUp' class="greyish_background" v-if="$store.getters.getMyEnrolled.length > 0">
+    <intro v-if="ready && elections.length == 0" :text='no_forum_text'></intro>
+     <v-container grid-list-lg>
+       <v-card class="round">
+        <loading-bar v-if="!ready" height="50vh"><div slot="loading_info">Loading groups...</div></loading-bar>
+       </v-card>
+     </v-container>
+
+    <v-container grid-list-xl v-if="ready && elections.length > 0" :pa-5='$vuetify.breakpoint.mdAndUp' class="greyish_background">
       <v-subheader>Your connected groups</v-subheader>
+
       <v-card class=" round elevation-2 pa-4" :class="{'pa-5':$vuetify.breakpoint.mdAndUp}">
         <v-layout row wrap>
-          <v-flex xs12 sm6 md4 d-flex v-for='election in $store.getters.getMyEnrolled' :key="election._id" mb-2>
-            <v-card color="randomColor" dark class="py-3" :to="'/forum/' + election.electionId">
+
+          <v-flex xs12 sm6 md4 d-flex v-for='election in elections' :key="election._id" mb-2>
+            <v-card dark class="py-3" :to="'/forum/' + election.electionId">
               <v-layout row>
                 <v-flex xs12>
                   <v-card-title primary-title>
@@ -44,74 +51,98 @@
 export default {
   data:()=>({
     title:'Your connected groups | Facevote',
-    elections:[],
-    show_loading_bar:true,
+    ready:false,
     no_forum_text:{data:'Enrolled,Perferendis cumq corp quos aliquid, praes inventore assumenda kkd opre perkj sf jkdd mond',action:{text:'Enroll',action_link:'/enroll'}}
   }),
   computed:{
     shouldPad(){
       return this.$vuetify.breakpoint.xsOnly ? false : true
     },
+    elections(){
+      let elect = [...this.$store.getters.getMyCreated, ...this.$store.getters.getMyEnrolled]
+      let myArr = []
+      elect.sort((a,b)=>a.dateCreated - b.dateCreated)
+      .forEach(election =>{
+        // make sure no election is duplicated
+        if(!myArr.find(item => item.electionId == election.electionId)){
+          myArr.push(election)
+        }
+      })
+      return myArr
+    },
     randomColor(){
-      let random = Math.floor(Math.random() * 10)
+      let random = Math.floor(Math.random() * 6)
+      let indexArr = []
       let colors = [
       'cyan','success','secondary','primary','purple'
       ]
-      return colors[random]
+      if(indexArr[indexArr.length -1] != random){
+        indexArr.push(random)
+        return colors[random]
+      }else{
+        this.randomColor()
+      }
+      
     }
   },
   methods:{
-    async getMyCreated(user){
-      let elecRef = db.collection('elections')
-      let myArr = []
-      elecRef.where('admin','==',user.email).get().then(doc=>{
-        myArr = []
-        doc.forEach(item=>{
-          console.log(item.id, " => ", item.data());
-          myArr.push(item.data())
+    getMyCreated(user){
+      return new Promise((resolve,reject)=>{
+        let elecRef = db.collection('elections')
+        let myArr = []
+        elecRef.where('admin','==',user.email).get().then(doc=>{
+          myArr = []
+          doc.forEach(item=>{
+            console.log(item.id, " => ", item.data());
+            myArr.push(item.data())
+          })
+          this.$store.dispatch('setMyCreated', myArr)
+          resolve(myArr)
+        }).catch(err=>{
+          reject(err)
         })
-        this.$store.dispatch('setMyCreated', myArr)
-        return myArr
       })
-      
     },
-    async getMyEnrolled(user){
-      let elecRef = db.collection('elections')
-      let myArr = []
-      elecRef.where('regVoters','array-contains',user.uid).get().then(doc=>{
-        myArr = []
-        doc.forEach(item=>{
-          console.log(item.id, " => ", item.data());
-          myArr.push(item.data())
+    getMyEnrolled(user){
+      return new Promise((resolve,reject)=>{
+        let elecRef = db.collection('elections')
+        let myArr = []
+        elecRef.where('regVoters','array-contains',user.uid).get().then(doc=>{
+          myArr = []
+          doc.forEach(item=>{
+            console.log(item.id, " => ", item.data());
+            myArr.push(item.data())
+          })
+
+          this.$store.dispatch('setMyEnrolled', myArr)
+          resolve(myArr)
+        }).catch(err=>{
+          reject(err)
         })
-
-        this.$store.dispatch('setMyEnrolled', myArr)
-        return myArr
       })
-      
-    },
-  },
-  async mounted(){
-    try {
-       firebase.auth().onAuthStateChanged(async (user)=>{
-        if (user) { 
-          
-          this.$store.getters.getMyEnrolled ? 
-          this.show_loading_bar = false : ''
-
-          // get elections user enrolled in
-          await this.getMyEnrolled(user)
-          
-          this.show_loading_bar = false
-          
-        } else {
-          console.log('No user is signed in.')
-        }
-      });
-    } catch (error) {
-      console.log(error)
       
     }
+  },
+  created(){
+    firebase.auth().onAuthStateChanged(async (user)=>{
+      if (user) { 
+        
+        this.$store.getters.getMyEnrolled.length > 0 && 
+        this.$store.getters.getMyCreated.length > 0 ? 
+        this.ready = true : ''
+
+        // get elections user enrolled in or created
+        this.getMyEnrolled(user).then(myenrolled=>{
+          this.getMyCreated(user).then(mycreated=>{
+            this.ready = true;
+            console.log(mycreated)
+          })
+        })
+        
+      } else {
+        console.log('No user is signed in.')
+      }
+    })
   },
   components:{
     Navigation,

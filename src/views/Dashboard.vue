@@ -7,16 +7,19 @@
 
           <v-navigation-drawer fixed v-model="drawer" app dark width="220" class='navdrawr' 
             style="background-color:#1c1f35;color:bfbbbb;z-index:20" >
-            <v-toolbar flat tile style="background-color:#1c1f35;color:#fff;">
-              <v-toolbar-title>Contestr</v-toolbar-title>
+            <v-toolbar flat tile class="mb-3" style="background-color:rgba(51, 54, 78, 0.9);color:#fff;">
+              <v-toolbar-title>Facevote</v-toolbar-title>
             </v-toolbar>
-            <v-list dense style="background-color:#1c1f35;color:bfbbbb;" v-if="isAuthenticated" class="home_list">
+            <v-list dense style="background-color:#1c1f35;color:bfbbbb;padding-top:0;" v-if="isAuthenticated" class="home_list">
             
-              <v-list-group no-action class="mb-5 pt-1">
+              <!--v-list-group no-action class="mb-5 pt-1">
                 <v-list-tile slot="activator">
                   <v-list-tile-avatar color="grey lighten-4">
-                    <img v-if="getUserInfo" :src="getUserInfo.photoURL || `https://ui-avatars.com/api/?name=${getUser.displayName}`">
-                    <img v-else :src="getUser.photoURL || `https://ui-avatars.com/api/?name=${getUser.displayName}`">
+                    <img v-if="getUserInfo && getUserInfo.photoURL" :src="getUserInfo.photoURL">
+                    <img v-else-if="getUser.photoURL" :src="getUser.photoURL">
+                    <v-avatar v-else color="success" size="40">
+                      <span class="white--text headline">{{getUser.displayName.charAt(0)}}</span>
+                    </v-avatar>
                   </v-list-tile-avatar>
                   <v-list-tile-title class="text-capitalize">{{getUser.displayName}}</v-list-tile-title>
                 </v-list-tile>
@@ -25,7 +28,6 @@
                     <v-icon color="success">account_box</v-icon>
                   </v-list-tile-action>
                   <v-list-tile-title>My Profile</v-list-tile-title>
-                  <!--profile-settings :dialog='settings_dialog'></profile-settings-->
                 </v-list-tile>
                 <v-list-tile @click="settings_dialog = !settings_dialog">
                     <v-list-tile-action>
@@ -33,20 +35,27 @@
                     </v-list-tile-action>
                   <v-list-tile-title>Edit profile</v-list-tile-title>
                 </v-list-tile>
-                <!--v-tooltip top>
-                  <v-list-tile slot="activator" to="/dashboard/verify" v-if="!$store.getters.getUser.isVerified">
-                    <v-list-tile-action style="">
-                      <v-icon color="error">error</v-icon>
-                    </v-list-tile-action>
-                    <v-list-tile-content style="color:red;">
-                      Verify account
-                    </v-list-tile-content>
-                  </v-list-tile>
-                  <span>Verify your account to participate in elections</span>
-                </v-tooltip-->
-              </v-list-group>
+              </v-list-group-->
 
-              <v-menu v-model="menu" v-if="menu" :position-x="40" :position-y="50">
+
+              <!--v-list-group no-action class="mb-3" style="background:rgba(51, 54, 78, 0.9);border-bottom:1px solid rgba(76, 79, 105, 0.9); border-top:1px solid rgba(76, 79, 105, 0.9);">
+                <v-list-tile slot="activator">
+                  <v-list-tile-action>
+                    <v-icon color="">swap_horiz</v-icon>
+                  </v-list-tile-action>
+                  <v-list-tile-title class="text-capitalize">Switch Elections</v-list-tile-title>
+                </v-list-tile>
+
+                <v-list-tile  @click="''">
+                  <v-list-tile-title>Election 1</v-list-tile-title>
+                </v-list-tile>
+
+                <v-list-tile @click="''">
+                  <v-list-tile-title>Election 2</v-list-tile-title>
+                </v-list-tile>
+              </v-list-group-->
+
+              <v-menu v-model="menu" lazy :position-x="40" :position-y="50">
                 <view-profile :user='getUser'></view-profile>
               </v-menu>
 
@@ -90,9 +99,28 @@
               </v-dialog>
 
 
+              <v-menu offset-y offset-x open-on-hover class="d-block" min-width="200" max-width="250" dark content-class="round">
+                <loading-bar v-if="fetching_enrolled" background="dark" spinnerType="circle" height="10px"></loading-bar>
+                <v-subheader v-if="!fetching_enrolled && getMyEnrolled.length == 0">No groups to show</v-subheader>
+                
+                <v-list-tile slot="activator" v-else>
+                  <v-list-tile-action>
+                    <v-icon>forum</v-icon>
+                  </v-list-tile-action>
+                  <v-list-tile-title>Forum</v-list-tile-title>
+                </v-list-tile>
+                <v-list dense>
+                  <v-list-tile v-for="election in getMyEnrolled" :key="election.electionId"
+                  :to="`/forum/${election.electionId}`" exact>
+                    <v-list-tile-title class="text-truncate">{{election.title}}</v-list-tile-title>
+                  </v-list-tile>
+                </v-list>
+              </v-menu>
+              
+
               <v-list-tile :to="menu.link" exact v-for="menu in navmenus" :key="menu.icon">
                 <v-list-tile-action>
-                  <v-icon>{{menu.icon}}</v-icon>
+                  <v-icon :color="menu.icon_color">{{menu.icon}}</v-icon>
                 </v-list-tile-action>
                 <v-list-tile-title>{{menu.title}}</v-list-tile-title>
               </v-list-tile>
@@ -174,14 +202,10 @@
               </v-list-tile>
             </v-list>
           </v-navigation-drawer>
-          <v-snackbar v-model="snackbar.show" :timeout="10000" :color="snackbar.color" top>
+          <v-snackbar v-model="snackbar.show" :timeout="5000" :color="snackbar.color" top>
             {{snackbar.message}} 
             <v-btn dark flat @click="snackbar.show = false"> Close</v-btn>
           </v-snackbar>
-
-          <v-dialog v-model="settings_dialog" fullscreen hide-overlay transition="dialog-bottom-transition" scrollable>
-            <profile-settings :dialog='settings_dialog' v-if="settings_dialog"></profile-settings>
-          </v-dialog>
 
 
           <!--v-speed-dial v-model="fab" fixed bottom
@@ -203,8 +227,8 @@
             </v-btn>
           </v-speed-dial-->
 
-          <router-view v-show="!show_loading_bar"></router-view>
-          <loading-bar v-show="show_loading_bar"></loading-bar>
+          <router-view v-if="!show_loading_bar"></router-view>
+          <loading-bar v-if="show_loading_bar"></loading-bar>
         </v-flex>
       </v-layout>
 
@@ -222,11 +246,13 @@ export default {
     show_loading_bar:true,
     show_private_chat_window:false,
     show_private_msg_list:false,
+    fetching_enrolled:true,
     snackbar:{},
     navmenus:[
-      {title:'Notifications', icon:'notifications', link:"#"},
-      {title:'Forum', icon:'forum', link:'/forum'},
+      //{title:'Notifications', icon:'notifications', link:"#"},
+      //{title:'Forum', icon:'forum', link:'/forum'},
       {title:'Enroll', icon:'fingerprint', link:'/enroll'},
+      {title:'Verify Account', icon:'verified_user', link:'/verify',icon_color:'success'},
     ],
     toolbar_items: [
       {name:'My profile', icon:'person', link:''},
@@ -237,7 +263,7 @@ export default {
     someoneistyping:false,
   }),
   components:{
-    ProfileSettings,
+    //ProfileSettings,
     ViewProfile,
     LoadingBar,
     PrivateMsgList,
@@ -252,6 +278,7 @@ export default {
       'getUser',
       'getUserInfo',
       'getUnreadPMsgs',
+      'getMyEnrolled',
     ]),
   },
   
@@ -261,9 +288,9 @@ export default {
     },
     presenceWatcher(){
       // Fetch the current user's ID from Firebase Authentication.
-      let userId = firebase.auth().currentUser.uid;
+      let userId = this.getUser.uid;
 
-      const usersRef = db.collection('users'); // Get a reference to the Users collection;
+      const usersRef = db.collection('moreUserInfo'); // Get a reference to the Users collection;
       const onlineRef = database.ref('.info/connected'); // Get a reference to the list of connections
 
       onlineRef.on('value', snapshot => {
@@ -275,7 +302,7 @@ export default {
           .then(() => {
               // Set the Firestore User's online status to true
               usersRef
-                .doc(this.$store.getters.getUser.email)
+                .doc(this.getUser.uid)
                 .set({
                   online: true,
                 }, { merge: true});  
@@ -299,19 +326,109 @@ export default {
         this.$store.dispatch('pUnreadMsgs', msgs)
         //console.log(msgs)
       })
-    }
+    },
+    myEnrolled(user){
+      this.fetching_enrolled = true
+      return new Promise((resolve,reject)=>{
+        db.collection('elections').where('regVoters','array-contains',user.uid)
+        .get().then(docs=>{
+          let myArr = []
+          docs.forEach(doc=>{
+            myArr.push(doc.data())
+          })
+          this.$store.dispatch('setMyEnrolled',myArr)
+          this.fetching_enrolled = false
+          console.log(this.getMyEnrolled)
+        })
+      })
+    },
+    /*pSystem(){
+      // Fetch the current user's ID from Firebase Authentication.
+      var uid = firebase.auth().currentUser.uid;
+
+      // Create a reference to this user's specific status node.
+      // This is where we will store data about being online/offline.
+      var userStatusDatabaseRef = firebase.database().ref('/status/' + uid);
+
+      // We'll create two constants which we will write to
+      // the Realtime database when this device is offline
+      // or online.
+      var isOfflineForDatabase = {
+          state: 'offline',
+          last_changed: firebase.database.ServerValue.TIMESTAMP,
+      };
+
+      var isOnlineForDatabase = {
+          state: 'online',
+          last_changed: firebase.database.ServerValue.TIMESTAMP,
+      };
+
+      // Create a reference to the special '.info/connected' path in
+      // Realtime Database. This path returns `true` when connected
+      // and `false` when disconnected.
+      firebase.database().ref('.info/connected').on('value', function(snapshot) {
+          // If we're not currently connected, don't do anything.
+          if (snapshot.val() == false) {
+              return;
+          };
+
+          // If we are currently connected, then use the 'onDisconnect()'
+          // method to add a set which will only trigger once this
+          // client has disconnected by closing the app,
+          // losing internet, or any other means.
+          userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function() {
+              // The promise returned from .onDisconnect().set() will
+              // resolve as soon as the server acknowledges the onDisconnect()
+              // request, NOT once we've actually disconnected:
+              // https://firebase.google.com/docs/reference/js/firebase.database.OnDisconnect
+
+              // We can now safely set ourselves as 'online' knowing that the
+              // server will mark us as offline once we lose connection.
+              userStatusDatabaseRef.set(isOnlineForDatabase);
+          });
+      });
+
+
+      // ...
+      var userStatusFirestoreRef = firebase.firestore().doc('/status/' + uid);
+
+      // Firestore uses a different server timestamp value, so we'll
+      // create two more constants for Firestore state.
+      var isOfflineForFirestore = {
+          state: 'offline',
+          last_changed: firebase.firestore.FieldValue.serverTimestamp(),
+      };
+
+      var isOnlineForFirestore = {
+          state: 'online',
+          last_changed: firebase.firestore.FieldValue.serverTimestamp(),
+      };
+
+      firebase.database().ref('.info/connected').on('value', function(snapshot) {
+          if (snapshot.val() == false) {
+              // Instead of simply returning, we'll also set Firestore's state
+              // to 'offline'. This ensures that our Firestore cache is aware
+              // of the switch to 'offline.'
+              userStatusFirestoreRef.set(isOfflineForFirestore);
+              return;
+          };
+
+          userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function() {
+              userStatusDatabaseRef.set(isOnlineForDatabase);
+
+              // We'll also add Firestore set here for when we come online.
+              userStatusFirestoreRef.set(isOnlineForFirestore);
+          });
+      });
+    }*/
   },
   async mounted(){
     //console.log(firebase.firestore.FieldValue.serverTimestamp().seconds)
+    document.getElementById('welcome_logo').style.display = 'none'
     this.$eventBus.$on('Toggle_Left_Drawer', data=>{
       this.drawer = !this.drawer
     })
-    this.$eventBus.$on('hide_profile_settings', ()=>{
-      this.settings_dialog = false
-    })
-    this.$eventBus.$on('show_profile_settings', ()=>{
-      this.settings_dialog = true
-    })
+    
     
     this.$eventBus.$on('Open_Private_Chat_Window', (data)=>{
       this.chat_user = data
@@ -500,12 +617,12 @@ export default {
 
   },
   async created(){
-    document.getElementById('welcome_logo').style.display = 'none'
     //console.log(firebase.auth().currentUser)
     firebase.auth().onAuthStateChanged((user)=>{
       if (user) {
         // User is signed in.
         this.$store.dispatch('setUser', user)
+        this.myEnrolled(user)
         this.presenceWatcher()
         this.pUnreadMsgs()
       } else {
@@ -531,10 +648,8 @@ export default {
   }
 }
 
-import io from 'socket.io-client';
-  import { mapGetters } from 'vuex'
-  import api from '@/services/api'
-  import ProfileSettings from '@/components/ProfileSettings'
+import { mapGetters } from 'vuex'
+  //import api from '@/services/api'
   import ViewProfile from '@/components/ViewProfile'
   import LoadingBar from '@/spinners/LoadingBar'
   import PrivateMsgList from '@/components/PrivateMsgList'
@@ -552,6 +667,10 @@ import io from 'socket.io-client';
   -o-border-radius:$radius;
 }
 $mainBgColor:#1c1f35;
+
+[v-cloak] {
+  display: none;
+}
 
 .v-dialog--fullscreen{
   background:#fff !important;

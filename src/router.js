@@ -4,7 +4,7 @@ import Vue from 'vue'
   import About from './views/About.vue'
   import Dashboard from '@/views/Dashboard'
   import Feed from '@/components/Feed'
-  import News from '@/components/News'
+  import ReadPost from '@/components/ReadPost'
   import Forum from '@/components/Forum'
   import Enroll from '@/components/Enroll'
   import Contest from '@/components/Contest'
@@ -42,9 +42,11 @@ import Vue from 'vue'
   import NotFound from '@/views/404'
   import store from '@/store/store'
   import NProgress from 'nprogress'
+  import './plugins/firebase';
 Vue.use(Router)
 
-console.log(firebase.auth().currentUser)
+//console.log(firebase)
+//console.log(About)
 let isLoggedIn = firebase.auth().onAuthStateChanged((user)=>{
   if(user){
     return true
@@ -95,6 +97,12 @@ const router = new Router({
           component:Feed
         },
         {
+          path:'feed/:postId',
+          name:'readfeed',
+          props:true,
+          component:ReadPost
+        },
+        {
           path:'enroll',
           name:'enroll',
           component:Enroll,
@@ -107,12 +115,12 @@ const router = new Router({
           beforeEnter:requireAuth,
         },
         
-        {
+        /*{
           path:'forum',
           name:'select_forum',
           component:SelectForum,
           beforeEnter:requireAuth,
-        },
+        },*/
         {
           path:'/users/:email',
           component:Users,
@@ -225,12 +233,12 @@ const router = new Router({
           beforeEnter:requireAuth,
         },
 
-        {
+        /*{
           path:'elections/watch',
           component:SelectElection,
           name:'selectelection',
           beforeEnter:requireAuth,
-        },
+        },*/
 
         {
           path:'elections/watch/:electionId',
