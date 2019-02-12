@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div id="forum_user_profile" style="overflow:auto;height:100%;">
 
     <v-snackbar :color="snackbar.color" top right
       v-model="snackbar.show" absolute>
@@ -11,10 +11,6 @@
       <v-btn icon :to="'/forum/' + $route.params.electionId">
         <v-icon>chevron_left</v-icon>
       </v-btn>
-      <v-spacer></v-spacer>
-      <!--v-btn v-show="$vuetify.breakpoint.smAndDown" icon @click="$eventBus.$emit('Toggle_drawerRight', false)">
-        <v-icon>close</v-icon>
-      </v-btn-->
     </v-toolbar>
     <v-layout>
       <v-flex xs12 px-2 v-if="show_profile">

@@ -1,5 +1,5 @@
 <template>
-  <div id="forum_users" style="height: calc(100% - 50px);overflow-y:auto;" class="navdrawr">
+  <div id="forum_users" style="height:100%;overflow-y:auto;" class="navdrawr pb-2">
     <v-container grid-list-xs fluid v-if='members.length == 0'>
       <v-layout>
         <v-flex xs12>
@@ -46,7 +46,7 @@
         </v-list-tile>
       </v-list>
       <v-btn color="teal" dark small depressed @click="nextDocs(members[members.length -1])" v-if="members.length >= 25">See more..</v-btn>
-      <v-divider></v-divider>
+      
     </div>
   </div>
 </template>
@@ -59,9 +59,6 @@ export default {
     right: null,
     left: null,
     right_sidebar:true,
-    items2: [
-      { title: 'Travis Howard', avatar: 'https:cdn.vuetifyjs.com/images/lists/5.jpg' }
-    ]
   }),
   props:['members', 'thisGroup'],
   computed: {

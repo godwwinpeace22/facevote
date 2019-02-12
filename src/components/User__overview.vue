@@ -1,17 +1,17 @@
 <template>
   <div>
     <loading-bar v-if="!open"></loading-bar>
-    <v-container grid-list-xs :class="{'pa-0':$vuetify.breakpoint.smAndDown}">
+    <v-container v-else grid-list-xs :class="{'pa-0':$vuetify.breakpoint.smAndDown}">
       <v-layout row wrap>
         <v-flex xs12 md10>
           <v-card height="180" class="cyan">
-            <v-card-media
+            <v-img
               contain
               height="auto"
               src="https://cdn.vuetifyjs.com/images/parallax/material.jpg"
             >
               
-            </v-card-media>
+            </v-img>
           </v-card>
           <v-card height="">
             <v-sheet
@@ -65,9 +65,33 @@
               <v-container :class="{'pa-0':$vuetify.breakpoint.smAndDown}" grid-list-md>
                 <v-subheader>Recent posts</v-subheader>
                 <v-layout row wrap>
-                  <v-flex xs4 v-for="i in 4" :key="i" >
-                    <v-card color="" height="100" class="elevation-0">
+                  <v-flex xs12 sm6 v-for="post in posts" :key="post.dateCreated" >
+                    <!--v-card color="" :height="$vuetify.breakpoint.smAndDown ? 200 : 100" class="elevation-0">
                       
+                    </v-card-->
+                    <v-card class="mx-auto" :img="post.images[0]" height="200" :color="$helpers.colorMinder(post.message.charAt(0))" dark>
+                      <v-card-text class="">
+                        {{post.message}}
+                      </v-card-text>
+
+                      <v-card-actions>
+                        <v-list-tile class="grow">
+                          <v-list-tile-avatar color="grey darken-3">
+                            <v-img class="elevation-6"
+                              :src="user.photoURL">
+                            </v-img>
+                          </v-list-tile-avatar>
+
+                          <v-list-tile-content>
+                            <v-list-tile-title>{{user.name}}</v-list-tile-title>
+                          </v-list-tile-content>
+
+                          <v-layout align-center justify-end>
+                            <v-icon class="mr-1" color="red">favorite</v-icon>
+                            <span class="subheading mr-2">256</span>
+                          </v-layout>
+                        </v-list-tile>
+                      </v-card-actions>
                     </v-card>
                   </v-flex>
                 </v-layout>
@@ -196,7 +220,7 @@ export default {
       'name','email','school','faculty','department'
     ],
   }),
-  props:['myContests','user','broadcasts'],
+  props:['myContests','user','broadcasts','posts'],
   computed:{
     open(){
       return this.user.uid ? true : false

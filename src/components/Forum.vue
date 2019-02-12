@@ -39,8 +39,8 @@
     </navigation>
 
     <v-navigation-drawer fixed v-model="drawerRight" v-if="$vuetify.breakpoint.mdAndUp" 
-      :mobile-break-point="960"
-      right hide-overlay clipped app width="300" class='navdrawr'>
+      :mobile-break-point="960" style="overflow:hidden;"
+      right hide-overlay clipped app width="300" class='user_presence_sidebar navdrawr pr-1'>
       
       <v-divider></v-divider>
       <router-view :members='members' v-if="ready" :thisGroup='this_group'></router-view>
@@ -49,11 +49,11 @@
 
     <loading-bar v-if="!ready"><div slot="loading_info">Loading...</div></loading-bar>
 
-    <v-tabs-items v-model="model" style="min-height:100vh;background:#fff;" v-else>
-      <v-tab-item value="Chat">
+    <v-tabs-items v-model="model" class="" style="background:#fff;" v-else>
+      <v-tab-item value="Chat" :style="styleForTabs">
         <chatwindow :members='members' :room='this_group.electionId' :thisGroup='this_group' v-if="ready"></chatwindow>
         <!-- Textarea -->
-        <div v-show="model == 'Chat'" v-if="ready" :style="styleInput">
+        <div v-show="model == 'Chat'" v-if="ready" :style="styleInput" style="display:;">
           <div class="chat_input white--text" id="chat_input" style='width:100%;background:#fff;z-index:0;'>
         
             <v-form @submit.prevent='submit' style="margin-left:px;background:#fff;" class="px-2">
@@ -103,14 +103,17 @@
                 left top offset-y v-model="mention_dialog">
                 <v-card class="pa-0" flat>
                   <v-toolbar flat dense color="cyan"></v-toolbar>
-                  <div :style="styleMention" class="navdrawr">
+                  <div :style="styleMention" class="navdrawr my-1">
                     <v-list subheader dense>
                       <v-subheader v-show="members.length == 0">No results found</v-subheader>
                       <v-list-tile v-for="member in members" :key="member.uid" avatar @click="appendUser(member)">
                         
                         <v-list-tile-avatar>
-                          <!-- prefer to use loggedin user's info rather than his info from voters list -->
-                          <img :src="member.photoURL">
+                          <img :src="member.photoURL" v-if="member.photoURL">
+                          <v-avatar v-else size="38" class="white--text" :color="$helpers.colorMinder(member.name.charAt(0))">
+                            <span >{{member.name.charAt(0)}}</span>
+                          </v-avatar>
+                          
                         </v-list-tile-avatar>
 
                         <v-list-tile-content>
@@ -125,16 +128,17 @@
               </v-menu>
               
               </v-textarea>
-              <input id="file_input" accept="image/jpeg,image/png" multiple
-                type="file" ref="file_input" style="visibility:hidden" @change="triggerFileModal($event)" />
+              
             </v-form>
           </div>
         </div>
+        <input id="file_input" accept="image/jpeg,image/png" multiple
+          type="file" ref="file_input" style="visibility:hidden" @change="triggerFileModal($event)" />
       </v-tab-item>
-      <v-tab-item value="Members" v-if="$vuetify.breakpoint.smAndDown">
+      <v-tab-item value="Members" v-if="$vuetify.breakpoint.smAndDown" :style="styleForTabs">
         <router-view :members='members' v-if="ready" :thisGroup='this_group'></router-view>
       </v-tab-item>
-      <v-tab-item value="Media" v-if="ready && $vuetify.breakpoint.smAndDown">
+      <v-tab-item value="Media" v-if="ready && $vuetify.breakpoint.smAndDown" class="" :style="styleForTabs">
         <chat-media></chat-media>
       </v-tab-item>
     </v-tabs-items>
@@ -278,9 +282,9 @@ export default {
     },
     styleInput(){
       if(this.$vuetify.breakpoint.smAndDown){
-        return {position:'fixed',bottom:'-20px',width:'100%'}
+        return {position:'fixed',bottom:'0px',width:'100%'}
       }else{
-        return {position:'fixed',bottom:'-20px',width:'calc(100% - 520px)'}
+        return {position:'fixed',bottom:'0px',width:'calc(100% - 520px)'}
       }
     },
     styleMention(){
@@ -292,6 +296,14 @@ export default {
       }
       else{
         return {height:'200px',overflowY:'auto',width:'400px'}
+      }
+    },
+    styleForTabs(){
+      if(this.$vuetify.breakpoint.smAndDown){
+        return {height:'calc(100vh - 112px)'}
+      }
+      else{
+        return {height:'calc(100vh - 128px)'}
       }
     }
     
@@ -566,10 +578,10 @@ nav{
     @include borderRadius(10px)
   }
 .navdrawr::-webkit-scrollbar-track {
-  box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-  -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-  -moz-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-  -o-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+  box-shadow: inset 0 0 6px #eae6e6;
+  -webkit-box-shadow: inset 0 0 6px #eae6e6;
+  -moz-box-shadow: inset 0 0 6px #eae6e6;
+  -o-box-shadow: inset 0 0 6px #eae6e6;
   background-color: #f5f6fa ;
   @include borderRadius(10px)
 }

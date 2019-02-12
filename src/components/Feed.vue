@@ -170,7 +170,7 @@
                 <v-layout row wrap>
                   <v-flex v-for="(image,i) in post.images" :key="i" class="px-2" 
                     :class="{'xs3':post.images.length >=3,'xs12':post.images.length == 1,'xs6':post.images.length == 2}">
-                    <v-card dark  :height="$vuetify.breakpoint.xsOnly ? 100 : post.images.length == 1 ? 400 : '200'" class="mb-3">
+                    <v-card dark max-height="500px" :height="post.images.length == 1 ? 'initial' : $vuetify.breakpoint.xsOnly ? 100 : '200'" class="mb-3">
                       <v-img :src="image" :lazy-src="`https://picsum.photos/10/6?image=${i * 5 + 10}`" 
                         alt="" class="grey lighten-2 linkify" height="100%" width="100%"
                         @click="carouselDialog(post.images,i)">
@@ -526,7 +526,7 @@ export default {
         value = user.school
       }
       
-      console.log(key,value)
+      console.log(key,value,user)
       return new Promise((resolve,reject)=>{
         db.collection('posts')
         .where(key,'==',value)
@@ -662,7 +662,7 @@ export default {
               this.ready = true;
             })
             
-          })
+          }).catch(err=>console.log(err))
           
           this.allElections(this.getUserInfo)
         }

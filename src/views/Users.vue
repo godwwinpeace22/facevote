@@ -16,9 +16,9 @@
 
     <v-tabs-items v-model="model">
       <v-tab-item value="Overview">
-        <overview :myContests='myContests' :user='user'></overview>
+        <overview :myContests='myContests' :user='user' :posts='posts'></overview>
       </v-tab-item>
-      <v-tab-item value="Manifesto">
+      <v-tab-item value="Manifestos">
         <manifesto :myContests='myContests' :user='user'></manifesto>
       </v-tab-item>
       <v-tab-item value="Posts">

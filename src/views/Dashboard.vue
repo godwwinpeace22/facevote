@@ -80,26 +80,7 @@
                 </v-list-tile-action>
               </v-list-tile>
 
-
-              <v-dialog v-model="show_private_msg_list" max-width="500" min-width="300" 
-                :fullscreen="$vuetify.breakpoint.smAndDown">
-                <v-toolbar color="teal" dark dense>
-                  <v-toolbar-title>Inbox</v-toolbar-title>
-                  <v-spacer></v-spacer>
-                  <v-btn icon @click="show_private_msg_list = !show_private_msg_list">
-                    <v-icon>close</v-icon>
-                  </v-btn>
-                </v-toolbar>
-                <private-msg-list v-if="show_private_msg_list" style="min-height:300px;background:#fff;"></private-msg-list>
-              </v-dialog>
-
-              <v-dialog v-model="show_private_chat_window" hide-overlay max-width="400" 
-                :fullscreen="$vuetify.breakpoint.smAndDown">
-                <private-chat-window v-if="show_private_chat_window" :user='chat_user'></private-chat-window>
-              </v-dialog>
-
-
-              <v-menu offset-y offset-x open-on-hover class="d-block" min-width="200" max-width="250" dark content-class="round">
+              <v-menu offset-y offset-x open-on-hover close-on-click class="d-block" min-width="200" max-width="250" dark content-class="round">
                 <loading-bar v-if="fetching_enrolled" background="dark" spinnerType="circle" height="10px"></loading-bar>
                 <v-subheader v-if="!fetching_enrolled && getMyEnrolled.length == 0">No groups to show</v-subheader>
                 
@@ -231,7 +212,25 @@
           <loading-bar v-if="show_loading_bar"></loading-bar>
         </v-flex>
       </v-layout>
+      
+      <!-- PRIVATE MESSAGE LIST -->
+      <v-dialog v-model="show_private_msg_list" max-width="500" min-width="300" 
+        :fullscreen="$vuetify.breakpoint.smAndDown">
+        <v-toolbar color="teal" dark dense>
+          <v-toolbar-title>Inbox</v-toolbar-title>
+          <v-spacer></v-spacer>
+          <v-btn icon @click="show_private_msg_list = !show_private_msg_list">
+            <v-icon>close</v-icon>
+          </v-btn>
+        </v-toolbar>
+        <private-msg-list v-if="show_private_msg_list" style="min-height:300px;background:#fff;"></private-msg-list>
+      </v-dialog>
 
+      <!-- PRIVATE CHAT WINDOW -->
+      <v-dialog v-model="show_private_chat_window" hide-overlay :max-width="$vuetify.breakpoint.smOnly ? 500 : 400" 
+        :fullscreen="$vuetify.breakpoint.xsOnly">
+        <private-chat-window v-if="show_private_chat_window" :user='chat_user'></private-chat-window>
+      </v-dialog>
       <!--v-navigation-drawer right temporary v-model="right" fixed></v-navigation-drawer-->
     </v-content>
   </v-app>
@@ -727,10 +726,10 @@ a {
     @include borderRadius(10px)
   }
 .navdrawr::-webkit-scrollbar-track {
-  box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-  -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-  -moz-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-  -o-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+  box-shadow: inset 0 0 6px #eae6e6;
+  -webkit-box-shadow: inset 0 0 6px #eae6e6;
+  -moz-box-shadow: inset 0 0 6px #eae6e6;
+  -o-box-shadow: inset 0 0 6px #eae6e6;
   background-color: $mainBgColor;
   @include borderRadius(10px)
 }

@@ -120,10 +120,10 @@
                   </v-btn>
                   <span>Join the conversation for this election</span>
                 </v-tooltip>
-                <v-btn color="secondary" class="ml-3" small v-if="getUser.uid == currElection.admin"
+                <!--v-btn color="secondary" class="ml-3" small v-if="getUser.uid == currElection.admin"
                   :to="`/elections/manage/${currElection.electionId}`">
                   <v-icon>settings</v-icon>
-                  <span class="ml-2">Manager</span></v-btn>
+                  <span class="ml-2">Manager</span></v-btn-->
               </v-card-actions>
 
             </v-card>

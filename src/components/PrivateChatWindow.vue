@@ -1,8 +1,9 @@
 <template>
-  <v-card class="round">
-    <v-toolbar color="teal" dark dense flat scroll-target="private_chat_home">
-      <v-avatar size="36" color="grey lighten-4">
-        <img :src="user.imgSrc || user.photoURL || `https://ui-avatars.com/api/?name=${user.name}`" alt="avatar">
+  <v-card :id="$vuetify.breakpoint.smAndUp ? 'private_chat' : ''">
+    <v-toolbar style="background:#8BC34A;" dark dense flat scroll-target="private_chat_home" :id="$vuetify.breakpoint.smAndUp ? 'private_chat_nav' : ''" >
+      <v-avatar size="36" :color="$helpers.colorMinder(user.name.charAt(0))">
+        <img v-if="user.imgSrc || user.photoURL" :src="user.imgSrc || user.photoURL" alt="avatar">
+        <span v-else>{{user.name.charAt(0)}}</span>
       </v-avatar>
 
       <v-toolbar-title>{{user.name}}</v-toolbar-title>
@@ -14,15 +15,15 @@
     </v-toolbar>
     
 
-    <v-container v-if='!loading_messages' class="pa-0 pt-3 private_chat_home" :style="switchHeight">
-      <v-card flat pa-0 id="chat_space" style="height:92%;margin-top:px;overflow-y:auto;background:ore;">
+    <v-container v-if='!loading_messages' class="pa-0 private_chat_home" :style="switchHeight">
+      <v-card flat pa-0 id="chat_space" class="pb-1 pt-3" style="height:100%;margin-top:px;overflow-y:auto;background:ore;">
         <div v-for="(msg,i) in myConversations" :key="i">
           <div v-if="divide(msg.timestamp, myConversations[i-1])" class="time_divider">
             {{divide(msg.timestamp, myConversations[i-1])}}
           </div>
-          <div class="private_chat_rectangle " id="speech_bubble">
-            <!--div class="private_chat_avartar"><img :src="'https://api.adorable.io/avatars/285/' + msg.user + '@adorable.png'" alt="avartar"></div-->
-            <div class="private_chat_content" style="background:beige;" v-if="msg.sender != getUser.uid">
+          <div class="private_chat_rectangle px-2 py-1" id="speech_bubble">
+            
+            <div class="private_chat_content" style="background:rgb(249, 249, 237);" v-if="msg.sender != getUser.uid">
               <div style="float:left;margin-right:10px;margin-top:0px;margin-bottom:0px;">
                 <v-avatar size="36" color="grey lighten-4">
                   <img :src="user.imgSrc || user.photoURL || `https://ui-avatars.com/api/?name=${user.name}`" alt="avatar">
@@ -33,7 +34,8 @@
                 {{msg.message}}
               </div>
             </div>
-            <div class="private_chat_content" style="background:rgb(194, 228, 245);color:rgb(34, 35, 35);" v-else>
+            <!--YOU-->
+            <div class="private_chat_content" style="background:rgb(234, 241, 245);color:rgb(34, 35, 35);" v-else>
               <div style="margin-top:0px;margin-bottom:0px;float:right;">
                 <v-avatar size="36" color="grey lighten-4">
                   <img :src="getUser.photoURL  || `https://ui-avatars.com/api/?name=${getUser.displayName}`" alt="avatar">
@@ -51,7 +53,7 @@
           
       </v-card>
     </v-container>
-    <div class="white--text pb-0 px-1" style='padding-top:10px;width:100%;position:absolute;bottom:0;background:#fff'>
+    <div class="white--text pb-0 pl-2 pr-4" style='padding-top:10px;width:100%;position:absolute;bottom:0;background:#fff'>
       
       <v-textarea v-model="message" box color="deep-purple" @keypress="isTyping"
         label="Type a message" outline
@@ -71,16 +73,16 @@ export default {
   }),
   computed:{
     styleObj(){
-      if(this.$vuetify.breakpoint.smAndDown){
+      if(this.$vuetify.breakpoint.xsOnly){
         return {
           height:'100vh'
         }
       }
     },
     switchHeight(){
-      if(this.$vuetify.breakpoint.smAndDown){
+      if(this.$vuetify.breakpoint.xsOnly){
         return {
-          height:'93vh'
+          height:'calc(100vh - 125px)'
         }
       }else{
         return {
@@ -222,7 +224,8 @@ $mainBgColor:#1c1f35;
   font-weight:bold;
   text-align:center;
   padding:0px 15px;
-  margin:0px 15px;
+  margin:auto;
+  width:fit-content;
   @include borderRadius(10px);
 }
 .private_chat_avartar{
@@ -266,6 +269,18 @@ $mainBgColor:#1c1f35;
   }
 }
 
+.v-text-field__details{
+  display:none;
+}
+#private_chat_nav .v-toolbar__content{
+  background:#8BC34A;
+  border-top-right-radius: 10px;
+  border-top-left-radius: 10px;
+}
+#private_chat{
+  border-top-right-radius: 10px;
+  border-top-left-radius: 10px;
+}
 /* --scrollbar --*/
 .private_chat_home::-webkit-scrollbar {
     width: 10px;

@@ -4,14 +4,14 @@
   </loading-bar>
 
   
-  <div v-else style="background:#fff;" class="pa-0 pt-3 chat_home chat_space" id="chat_home">
+  <div v-else style="background:#fff;" class="pa-0 py-3 px-1 chat_home chat_space" id="chat_home">
     <v-snackbar v-model="snackbar.show" :timeout="5000" :color="snackbar.color" 
       class="white--text" top right>
       {{snackbar.message}} 
       <v-btn dark flat @click="snackbar.show = false"> Close</v-btn>
     </v-snackbar>
 
-    <div flat pa-0 id="chat_space" class="chat_space" style="height:60vh;margin-top:px;overflow-y:auto;">
+    <div flat pa-0 id="chat_space" class="chat_space" style="height:100%;margin-top:px;overflow-y:auto;">
       <div v-for="(msg,i) in getChatMessages" :key="i">
         <div v-if="divide(msg.timestamp, getChatMessages[i-1])" style="background:oldlace;font-weight:bold;text-align:center;">
           {{divide(msg.timestamp, getChatMessages[i-1])}}
@@ -65,9 +65,11 @@
               <!-- UPLOADED IMAGES -->
               <v-container grid-list-md v-if="msg.images">
                 <v-layout row wrap>
-                  <v-flex xs12 sm4 v-for="(image,i) in msg.images" :key="i">
-                    <v-card height="150" class="mb-1" flat>
-                      <v-img :src='image' height="150" @click="carouselDialog(msg.images,i)"></v-img>
+                  <v-flex v-for="(image,i) in msg.images" :key="i" 
+                    :class="{'xs3':msg.images.length >=3,'xs12':msg.images.length == 1,'xs6':msg.images.length == 2}">
+                    <v-card class="mb-1" flat
+                      max-height="500px" :height="msg.images.length == 1 ? 'initial' : $vuetify.breakpoint.xsOnly ? 100 : '200'">
+                      <v-img :src='image' height="100%" max-height="500px" @click="carouselDialog(msg.images,i)"></v-img>
                     </v-card>
                   </v-flex>
                 </v-layout>
@@ -194,12 +196,6 @@
 <script>
 
 export default {
-  props:{
-    icons:{
-      type:Array
-    },
-    source:String
-  },
   data:()=>({
     password: 'Password',
     show_reactions:false,
@@ -440,7 +436,7 @@ a{
   //background-image:url('../assets/chat_wallpaper.jpg');
   background-size:cover;
   background-position: center;
-  height:75vh;
+  height:calc(100% - 80px);
   //background-color: #00aabb;
 }
 .chat_avartar{
@@ -460,7 +456,7 @@ a{
 .chat_content{
   display:inline-block;
   //background:yellow;
-  width:90%;
+  width:calc(100% - 50px);
   min-height: 40px;
 }
 .chat_rectangle {
@@ -484,6 +480,7 @@ a{
 #moderator_actions{
   float:right;
   margin-top: -30px;
+  margin-right:-16px;
   display:none;
 }
 .chat_rectangle:hover #moderator_actions{
@@ -500,7 +497,7 @@ a{
   -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
   -moz-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
   -o-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-  background-color: $mainBgColor;
+  background-color: #eae6e6;
   @include borderRadius(10px)
 }
 .chat_space::-webkit-scrollbar-thumb {
