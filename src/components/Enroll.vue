@@ -3,8 +3,8 @@
     <vue-headful :title="title"/>
 
     <navigation>
-      <span slot="title">Dashboard</span>
-      <h1 slot="extended_nav">Enroll</h1>
+      <span slot="title">{{$vuetify.breakpoint.smAndUp ? 'Dashboard' : 'Enroll'}}</span>
+      <h1 slot="extended_nav" v-if="$vuetify.breakpoint.smAndUp">Enroll</h1>
     </navigation>
 
     <v-snackbar v-model="snackbar.show" :timeout="5000" :color="snackbar.color" top right>
@@ -13,10 +13,10 @@
     </v-snackbar>
 
 
-    <v-container grid-list-xl dark>
-      <v-card class="round black--text">
+    <v-container grid-list-xl :pa-0="$vuetify.breakpoint.xsOnly" :mt-4="$vuetify.breakpoint.smAndUp">
+      <v-card class="black--text" :class="{round:$vuetify.breakpoint.smAndUp}">
         <v-stepper v-model="e5" dark class="white" style="min-height:300px;">
-          <v-stepper-header class="grey" dark style="color:#fff;">
+          <v-stepper-header :class="{grey:$vuetify.breakpoint.smAndUp,teal:$vuetify.breakpoint.xsOnly}" dark style="color:#fff;">
             <v-stepper-step :complete="e5 > 1" step="1">Intro</v-stepper-step>
             <v-divider></v-divider>
             <v-stepper-step :complete="e5 > 2" step="2">Select election</v-stepper-step>
@@ -25,9 +25,9 @@
             <v-divider></v-divider>
             <v-stepper-step :complete="e5 > 4" step="4">Finish</v-stepper-step>
           </v-stepper-header>
-          <v-stepper-items>
+          <v-stepper-items :style="style_stepper_items">
             <v-stepper-content step="1">
-              <v-card light>
+              <v-card light :flat="$vuetify.breakpoint.xsOnly">
                 <v-card-text>
                   <p>{{lorem}}</p>
                   <p>{{lorem}}</p>
@@ -42,11 +42,11 @@
             </v-stepper-content>
             <v-stepper-content step="2">
               <v-card class="mb-5" light color="grey lighten-5" style="min-height:200px;"  flat tile>
-                <v-card-text>Insert the Id of the election you want to contest for below</v-card-text>
+                <v-card-text>Insert the Id of the election you want to enroll for below</v-card-text>
                 <v-container>
                   <v-layout row>
                     <v-flex xs12 sm6>
-                      <v-text-field label="Election Id" name="electionId" :value="electionId" 
+                      <v-text-field label="Election Id" outline color="secondary" name="electionId" :value="electionId" 
                         hint="e.g gray-fighter-2187" v-model="electionId" browser-autocomplete="electionId">
                       </v-text-field>
                       
@@ -72,7 +72,7 @@
                 <v-card-text v-if="election.length != 0">
                   <span class="subheading">{{election.title}}</span>
                   <v-divider></v-divider>
-                  <h3 v-if="hide">{{error_msg}}</h3>
+                  <h3 v-if="hide" class="error--text">{{error_msg}}</h3>
                 </v-card-text>
               </v-card>
 
@@ -96,9 +96,18 @@
                   <p>Whats next?</p>
                   
                 </v-card-text>
+                <v-card-actions>
+                  <v-btn color="secondary" @click="$store.dispatch('curRoom', election)"
+                    v-if="curRoom && curRoom.electionId != election.electionId">
+                    Switch current election
+                  </v-btn>
+                  <template v-if="curRoom && curRoom.electionId == election.electionId">
+                    <v-btn color="success" to="/forum">Join the conversation</v-btn>
+                    <v-btn color="success" to="/contest">Contest</v-btn>
+                  </template>
+                </v-card-actions>
               </v-card>
-              <v-btn color="primary" :to="'/contest'">Contest</v-btn>
-              <v-btn color="secondary" :to="'/forum/'+election.electionId">Forum</v-btn>
+              
             </v-stepper-content>
           </v-stepper-items>
         </v-stepper>
@@ -136,6 +145,23 @@ export default {
         ],
      }, 
   }),
+  computed:{
+    style_stepper_items(){
+      if(this.$vuetify.breakpoint.xsOnly){
+        return {
+          "min-height": 'calc(100vh - 128px) !important'
+        }
+      }
+    },
+    ...mapGetters([
+      'getUserInfo',
+      'getUser',
+      'getMyEnrolled'
+    ]),
+    ...mapState([
+      'curRoom'
+    ])
+  },
   methods:{
     async getElection(){
       try {
@@ -144,55 +170,71 @@ export default {
         if(!this.electionId){
           alert('Id is required') 
         }
+        else if(this.curRoom && this.curRoom.electionId == this.electionId.trim()){
+          this.error_msg = 'Sorry, you have already enrolled for this election'
+          this.hide = true
+          this.e5 = 3
+        }
+        else if(this.getUserInfo && !!this.getUserInfo.enrolled.find(id => id == this.electionId)){
+          this.error_msg = 'Sorry, you have already enrolled for this election'
+          this.hide = true
+          this.e5 = 3
+        }
         else{
           this.loading = true
           let details = db.collection('moreUserInfo').doc(this.$store.getters.getUser.uid);
+          let doc, user
 
-          let doc = await details.get()
-          let user = doc.data()
+          if(this.getUserInfo){
+            user = this.getUserInfo
+          }
+          else{
+            doc = await details.get()
+            user = doc.data()
+          }
+
           console.log(user)
 
           let electionRef = db.collection('elections').doc(this.electionId)
+          
           let id = await electionRef.get()
           console.log(id.data())
-          if(!id.data()){
+          
+          if(!id.exists){
             this.snackbar = {
               show:true,message:'Sorry, election not found', color:'error'
             }
             this.loading = false
+          }
+          else if(this.getUserInfo && !!this.getUserInfo.enrolled.find(id => id == this.electionId)){
+            this.error_msg = 'Sorry, you have already enrolled for this election'
+            this.hide = true
           }
           else{
             this.election = id.data()
             this.loading = false
             this.e5 = 3
 
-            if(this.election.regVoters.find(item=> item == this.$store.getters.getUser.uid)){
-              console.log(this.election.regVoters.find(item=> item == this.$store.getters.getUser.uid))
-              this.error_msg = 'Sorry, you have already enrolled for this election'
-              this.hide = true
-            }
-            else{
-              if(this.election.type == 'School' && user.school == this.election.school){
-                if(this.election.level == 'Department' && user.department != this.election.department){
-                  this.error_msg = 'Sorry, you can only vote in your department'
-                  this.hide = true
-                }
-                else if(this.election.level == 'Faculty' && user.faculty != this.election.faculty){
-                  this.error_msg = 'Sorry, you can only vote in your faculty'
-                  this.hide = true
-                }
-                else{
-                  this.hide = false
-                }
+            if(this.election.type == 'School' && user.sch == this.election.sch){
+              if(this.election.level == 'Department' && user.dept != this.election.dept){
+                this.error_msg = 'Sorry, you can only vote in your department'
+                this.hide = true
               }
-              else if(this.election.type == 'School' && user.school != this.election.school){
-                console.log(user, this.election)
-                this.error_msg = 'Sorry, you can only vote in your school'
+              else if(this.election.level == 'Faculty' && user.fac != this.election.fac){
+                this.error_msg = 'Sorry, you can only vote in your faculty'
                 this.hide = true
               }
               else{
                 this.hide = false
               }
+            }
+            else if(this.election.type == 'School' && user.sch != this.election.sch){
+              console.log(user, this.election)
+              this.error_msg = 'Sorry, you can only vote in your school'
+              this.hide = true
+            }
+            else{
+              this.hide = false
             }
           }
         }
@@ -212,10 +254,13 @@ export default {
           electionId:this.election.electionId,
           idToken:token
         }).then(result =>{
-          console.log(result)
+          
+          this.$store.dispatch('setMyEnrolled', {election: this.election, merge: true})
+
           this.snackbar = {
             show:true,message:'Enrollement successfull!', color:'success'
           }
+
           this.loading = false
           this.e5 = 4
         }).catch(error=>{
@@ -223,6 +268,7 @@ export default {
           this.loading = false
           console.log(error)
           console.log(error.response)
+
           if(error.response){
             this.snackbar = {
               show:true,message:error.response.data.message, color:'error'
@@ -321,6 +367,10 @@ export default {
         a.click();
       },
   },
+  created(){
+    
+    
+  },
   components:{
     Navigation
   }
@@ -328,6 +378,7 @@ export default {
 import api from '@/services/api'
 import axios from 'axios'
 import Navigation from '@/components/Navigation'
+import { mapGetters, mapState } from 'vuex';
 </script>
 <style lang="scss">
   @mixin borderRadius($radius) {

@@ -15,7 +15,7 @@
 
           <h1 class="text-xs-center white--text mb-4" ><a href="/" style="text-decoration:none;color:#fff">{{app_title}}</a></h1>
           
-          <v-card class="" max-width="800">
+          <v-card class="" max-width="800" v-if="!verification_sent">
             <v-card-title class="title font-weight-bold justify-space-around">
               <span>{{ currentTitle }}</span>
               
@@ -133,6 +133,16 @@
               </v-btn>
             </v-card-actions>
           </v-card>
+
+          <v-card v-else>
+            <v-card-text>
+              Check your email to confirm your registration
+              <p>Didn't get the verification link ? <br>
+                <v-btn color="info" flat @click="sendVerificationLInk(true)" :disabled="disabled" :loading="loading">Resend verification link</v-btn>
+              </p>
+            </v-card-text>
+          </v-card>
+
           <v-subheader class="ml-5 white--text">Already have an account? 
             <router-link to="/login" class="pl-2 font-weight-bold success--text" style="text-decoration:none;"> Sign in</router-link>
           </v-subheader>
@@ -153,6 +163,8 @@ export default {
     message:'Login',
     snackbar:{},
     loading:false,
+    disabled: false,
+    verification_sent: false,
     form:{
       name: '',
       phone:'',
@@ -236,6 +248,24 @@ export default {
         console.log(err)
       }
     },
+    sendVerificationLInk(alert){
+      this.loading = true
+      return new Promise((resolve, reject)=>{
+        firebase.auth().currentUser.sendEmailVerification().then(done=>{
+          resolve(done)
+          if(alert){
+            this.disabled = true;
+            this.loading = false
+
+            this.snackbar = {
+              show: true,
+              message: 'Email verification link resent',
+              color: 'purple'
+            }
+          }
+        }).catch(err => reject(err))
+      })
+    },
     async send(){
       if(this.form.password !== this.form.password2){
         this.snackbar = {status:true,color:'error', message:'Passwords do not match'}
@@ -245,25 +275,6 @@ export default {
         let user_faculty = this.myFaculty.text
         let user_department = this.myDepartment.text
         this.loading = true
-        //console.log(this.form)
-        /*let res = await authService.Register(this.form)
-          console.log(res.data)
-          //this.loading = false
-
-          firebase.auth().signInWithCustomToken(res.data)
-          .then((result)=>{
-            console.log(result.user)
-          })
-          .catch(function(error) {
-            // Handle Errors here.
-            console.log(error)
-            var errorCode = error.code;
-            var errorMessage = error.message;
-            this.snackbar = true
-            this.message = 'Sorry, something went wrong. Try again'
-            $NProgress.done()
-            // ...
-          });*/
         
         let user = this.form
         firebase.auth().createUserWithEmailAndPassword(user.email, user.password)
@@ -282,29 +293,31 @@ export default {
               name:user.name,
               email:user.email,
               phone:user.phone,
-              suspended:[], // contains array of elections user is suspended to vote in
-              followers:[],
-              is_verified:false,
-              is_student:user.is_student,
-              was_once_a_student:user.is_student,
-              school:user_school,
-              faculty:user_faculty,
-              department:user_department
+              followers: 0,
+              is_verified: false,
+              is_student: user.is_student,
+              was_once_a_student: user.is_student,
+              sch: user_school,
+              fac: user_faculty,
+              dept: user_department
             }).then(done=>{
               this.snackbar = {show:true,color:'purple', message:'Account created successfully'}
               
+              
               // send email verification message
-              //console.log(firebase.auth().currentUser)
-              //firebase.auth().currentUser.sendEmailVerification().then((sent)=>{
-                // Email sent.
-                
-                setTimeout(() => {
-                  this.$router.push('/')
-                }, 2000);
+              this.sendVerificationLInk().then((sent)=>{
+                this.verification_sent = true
+                // Email sent. Sign out user
+                this.loading = false
+                firebase.auth().signOut().then(()=>{
+                  console.log('logged out')
+                })
 
-              /*}).catch(function(error) {
+              }).catch(function(error) {
                 // An error happened.
-              });*/
+                this.loading = false
+                console.log(error)
+              })
               
             })
           })
@@ -327,6 +340,7 @@ export default {
   },
   mounted(){
     this.getSchools()
+    document.getElementById('welcome_logo').style.display = 'none'
   }
 }
 

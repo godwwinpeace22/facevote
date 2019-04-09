@@ -1,136 +1,107 @@
 <template>
   <v-app id="inspire">
     <v-content>
-      <v-layout>
+      <v-layout >
         <v-flex>
           <vue-headful :title="title"/>
 
-          <v-navigation-drawer fixed v-model="drawer" app dark width="220" class='navdrawr' 
+          <v-navigation-drawer fixed v-model="drawer" app dark width="230" class='navdrawr' 
             style="background-color:#1c1f35;color:bfbbbb;z-index:20" >
-            <v-toolbar flat tile class="mb-3" style="background-color:rgba(51, 54, 78, 0.9);color:#fff;">
+            <v-toolbar flat tile class="" style="background-color:rgba(51, 54, 78, 0.9);color:#fff;">
               <v-toolbar-title>Facevote</v-toolbar-title>
             </v-toolbar>
-            <v-list dense style="background-color:#1c1f35;color:bfbbbb;padding-top:0;" v-if="isAuthenticated" class="home_list">
-            
-              <!--v-list-group no-action class="mb-5 pt-1">
-                <v-list-tile slot="activator">
-                  <v-list-tile-avatar color="grey lighten-4">
-                    <img v-if="getUserInfo && getUserInfo.photoURL" :src="getUserInfo.photoURL">
-                    <img v-else-if="getUser.photoURL" :src="getUser.photoURL">
-                    <v-avatar v-else color="success" size="40">
-                      <span class="white--text headline">{{getUser.displayName.charAt(0)}}</span>
-                    </v-avatar>
-                  </v-list-tile-avatar>
-                  <v-list-tile-title class="text-capitalize">{{getUser.displayName}}</v-list-tile-title>
-                </v-list-tile>
-                <v-list-tile  :to="`/users/${getUser.email}`">
-                  <v-list-tile-action>
-                    <v-icon color="success">account_box</v-icon>
-                  </v-list-tile-action>
-                  <v-list-tile-title>My Profile</v-list-tile-title>
-                </v-list-tile>
-                <v-list-tile @click="settings_dialog = !settings_dialog">
-                    <v-list-tile-action>
-                      <v-icon color="success">settings</v-icon>
-                    </v-list-tile-action>
-                  <v-list-tile-title>Edit profile</v-list-tile-title>
-                </v-list-tile>
-              </v-list-group-->
+            <v-divider></v-divider>
 
+            <!-- Switch Elections -->
+            <v-expansion-panel>
+              <v-expansion-panel-content style="background: #2f324a;">
+                <template slot="actions">
+                  <v-icon color="primary">$vuetify.icons.expand</v-icon>
+                </template>
+                <template slot="header">
+                  <div >
+                    <span class="text-capitalize text-truncate success--text font-weight-bold">
+                      {{truncateText(curRoom ? curRoom.title : 'Set Current Election')}}
+                    </span><br>
+                    <small class="grey--text darken-1">Swicth election</small>
+                  </div>
+                </template>
+                <v-card >
+                  <v-list class="main lighten-1" dense>
+                    <v-subheader v-if="getMyEnrolled && getMyEnrolled.length == 0">No Election</v-subheader>
+                    <v-list-tile v-for="election in getMyEnrolled" :key="election.electionId"
+                      @click="$store.dispatch('curRoom', election)">
+                      <v-list-tile-title class="text-truncate grey--text darken-1">
+                        {{election.title}}
+                      </v-list-tile-title>
+                      <v-list-tile-action v-if="curRoom && curRoom.electionId == election.electionId">
+                        <v-icon color="success">check</v-icon>
+                      </v-list-tile-action>
+                    </v-list-tile>
+                  </v-list>
+                </v-card>
+              </v-expansion-panel-content>
+            </v-expansion-panel>
 
-              <!--v-list-group no-action class="mb-3" style="background:rgba(51, 54, 78, 0.9);border-bottom:1px solid rgba(76, 79, 105, 0.9); border-top:1px solid rgba(76, 79, 105, 0.9);">
-                <v-list-tile slot="activator">
-                  <v-list-tile-action>
-                    <v-icon color="">swap_horiz</v-icon>
-                  </v-list-tile-action>
-                  <v-list-tile-title class="text-capitalize">Switch Elections</v-list-tile-title>
-                </v-list-tile>
-
-                <v-list-tile  @click="''">
-                  <v-list-tile-title>Election 1</v-list-tile-title>
-                </v-list-tile>
-
-                <v-list-tile @click="''">
-                  <v-list-tile-title>Election 2</v-list-tile-title>
-                </v-list-tile>
-              </v-list-group-->
-
-              <v-menu v-model="menu" lazy :position-x="40" :position-y="50">
-                <view-profile :user='getUser'></view-profile>
-              </v-menu>
-
-              <v-list-tile to="/" exact >
+            <v-list dense style="background-color:#1c1f35;color:bfbbbb;padding-top:0;" v-if="getUser" class="home_list">
+        
+              <v-list-tile to="/home" exact >
                 <v-list-tile-action>
                   <v-icon>home</v-icon>
                 </v-list-tile-action>
                 <v-list-tile-title>Home</v-list-tile-title>
               </v-list-tile>
 
-              <v-list-tile @click="show_private_msg_list = true">
+              <!-- FORUM -->
+              <v-list-tile :to="curRoom ? `/forum` : '/#forum'">
                 <v-list-tile-action>
-                  <v-icon small color="grey lighten-1">messages</v-icon>
+                  <v-icon color="">forum</v-icon>
                 </v-list-tile-action>
-                <v-list-tile-title>
-                  Messages
-                </v-list-tile-title>
-                <v-list-tile-action v-if="getUnreadPMsgs.length > 0">
-                  <v-badge right color="success">
-                    <span class="caption" slot="badge">{{getUnreadPMsgs.length}}</span>
-                  </v-badge>
-                </v-list-tile-action>
+                <v-list-tile-title>Forum</v-list-tile-title>
               </v-list-tile>
 
-              <v-menu offset-y offset-x open-on-hover close-on-click class="d-block" min-width="200" max-width="250" dark content-class="round">
-                <loading-bar v-if="fetching_enrolled" background="dark" spinnerType="circle" height="10px"></loading-bar>
-                <v-subheader v-if="!fetching_enrolled && getMyEnrolled.length == 0">No groups to show</v-subheader>
-                
-                <v-list-tile slot="activator" v-else>
-                  <v-list-tile-action>
-                    <v-icon>forum</v-icon>
-                  </v-list-tile-action>
-                  <v-list-tile-title>Forum</v-list-tile-title>
-                </v-list-tile>
-                <v-list dense>
-                  <v-list-tile v-for="election in getMyEnrolled" :key="election.electionId"
-                  :to="`/forum/${election.electionId}`" exact>
-                    <v-list-tile-title class="text-truncate">{{election.title}}</v-list-tile-title>
-                  </v-list-tile>
-                </v-list>
-              </v-menu>
-              
-
-              <v-list-tile :to="menu.link" exact v-for="menu in navmenus" :key="menu.icon">
-                <v-list-tile-action>
-                  <v-icon :color="menu.icon_color">{{menu.icon}}</v-icon>
-                </v-list-tile-action>
-                <v-list-tile-title>{{menu.title}}</v-list-tile-title>
-              </v-list-tile>
-
-              <v-list-group prepend-icon="hdr_strong" no-action color="success">
+              <!-- Messages -->
+              <v-list-group prepend-icon="message" no-action :value="true">
                 <v-list-tile slot="activator">
-                  <v-list-tile-title>Contest</v-list-tile-title>
+                  <v-list-tile-title>Messages</v-list-tile-title>
                 </v-list-tile>
-                <v-list-tile  to="/contest">
+                <v-list-tile @click="show_private_msg_list = true">
                   <v-list-tile-action>
-                    <v-icon color="success">hdr_strong</v-icon>
+                    <v-icon color="success">mail</v-icon>
                   </v-list-tile-action>
-                  <v-list-tile-title>Contest</v-list-tile-title>
+                  <v-list-tile-title>Inbox</v-list-tile-title>
+                  <v-list-tile-action v-if="no_of_unread_msgs > 0">
+                    <v-badge right color="red">
+                      <span class="caption" slot="badge">{{no_of_unread_msgs}}</span>
+                    </v-badge>
+                    <!-- <span class="red px-2 round">new</span> -->
+                  </v-list-tile-action>
                 </v-list-tile>
-                <v-list-tile to="/manifesto/create">
+
+                <template v-if="isSuperUser">
+                  <v-list-tile @click="new_broadcast = true" :disabled="!isSuperUser">
                     <v-list-tile-action>
-                      <v-icon color="success">add_box</v-icon>
+                      <v-icon color="">record_voice_over</v-icon>
                     </v-list-tile-action>
-                  <v-list-tile-title>Create manifesto</v-list-tile-title>
-                </v-list-tile>
-                <v-list-tile to="/manifesto/edit">
-                    <v-list-tile-action>
-                      <v-icon color="success">business_center</v-icon>
-                    </v-list-tile-action>
-                  <v-list-tile-title>Edit manifesto</v-list-tile-title>
-                </v-list-tile>
+                    <v-list-tile-title>New Broadcast</v-list-tile-title>
+                  </v-list-tile>
+                </template>
+
+                <template v-else>
+                  <v-tooltip top>
+                    <v-list-tile slot="activator">
+                      <v-list-tile-action>
+                        <v-icon color="">record_voice_over</v-icon>
+                      </v-list-tile-action>
+                      <v-list-tile-title>New Broadcast</v-list-tile-title>
+                    </v-list-tile>
+                    <span>This feature requires a premium account</span>
+                  </v-tooltip>
+                </template>
               </v-list-group>
 
-              <v-list-group prepend-icon="poll" no-action>
+              <!-- ELECTIONS -->
+              <v-list-group prepend-icon="poll" no-action :value="false">
                 <v-list-tile slot="activator">
                   <v-list-tile-title>Elections</v-list-tile-title>
                 </v-list-tile>
@@ -138,80 +109,119 @@
                   <v-list-tile-action>
                     <v-icon color="success">add_box</v-icon>
                   </v-list-tile-action>
-                  <v-list-tile-title>Create new election</v-list-tile-title>
+                  <v-list-tile-title>Create Election</v-list-tile-title>
                 </v-list-tile>
-                <v-list-tile to="/elections/manage">
-                    <v-list-tile-action>
-                      <v-icon color="success">business_center</v-icon>
-                    </v-list-tile-action>
-                  <v-list-tile-title>My elections</v-list-tile-title>
-                </v-list-tile>
-                <v-list-tile to="/elections/watch">
-                    <v-list-tile-action>
-                      <v-icon color="success">business_center</v-icon>
-                    </v-list-tile-action>
+
+                <v-list-tile :to="curRoom ? `/elections/vote` : '/#vote'">
+                  <v-list-tile-action>
+                    <v-icon color="success">how_to_vote</v-icon>
+                  </v-list-tile-action>
                   <v-list-tile-title>Vote</v-list-tile-title>
                 </v-list-tile>
-                
-              </v-list-group>
-
-              <v-list-group prepend-icon="settings" no-action value="false" >
-                <v-list-tile slot="activator">
-                  <v-list-tile-title>Settings</v-list-tile-title>
-                </v-list-tile>
-                <v-list-tile  @click="settings_dialog = !settings_dialog">
+                <v-list-tile  to="/contest">
                   <v-list-tile-action>
-                    <v-icon color="success">account_box</v-icon>
+                    <v-icon color="success">hdr_strong</v-icon>
                   </v-list-tile-action>
-                  <v-list-tile-title>Account</v-list-tile-title>
-                  <!--profile-settings :dialog='settings_dialog'></profile-settings-->
+                  <v-list-tile-title>Contest</v-list-tile-title>
                 </v-list-tile>
-                <v-list-tile to="#1">
+                <v-list-tile @click="new_manifesto_dialog = true" v-if="isSuperUser">
                     <v-list-tile-action>
-                      <v-icon color="success">payment</v-icon>
+                      <v-icon color="success">add_box</v-icon>
                     </v-list-tile-action>
-                  <v-list-tile-title>Billing</v-list-tile-title>
+                  <v-list-tile-title>New Manifesto</v-list-tile-title>
                 </v-list-tile>
-                
-              </v-list-group>
 
+                <v-tooltip right v-if="!isSuperUser">
+                  <v-list-tile disabled slot="activator">
+                    <v-list-tile-action>
+                      <v-icon color="success">add_box</v-icon>
+                    </v-list-tile-action>
+                    <v-list-tile-title>New Manifesto</v-list-tile-title>
+                  </v-list-tile>
+                  <span>This feature requires a premium account</span>
+                </v-tooltip>
+              </v-list-group>
+              
+              <v-list-tile :to="menu.link" exact v-for="menu in navmenus" :key="menu.icon">
+                <v-list-tile-action>
+                  <v-icon :color="menu.icon_color">{{menu.icon}}</v-icon>
+                </v-list-tile-action>
+                <v-list-tile-title>{{menu.title}}</v-list-tile-title>
+              </v-list-tile>
+
+              <!-- SETTINGS -->
+              <v-list-tile  @click="$eventBus.$emit('show_profile_settings')">
+                <v-list-tile-action>
+                  <v-icon color="success">settings</v-icon>
+                </v-list-tile-action>
+                <v-list-tile-title>Settings</v-list-tile-title>
+              </v-list-tile>
+
+              <!-- HELP -->
               <v-list-tile to='#2'>
                 <v-list-tile-action>
                   <v-icon color="success">help</v-icon>
                 </v-list-tile-action>
                 <v-list-tile-title>Help</v-list-tile-title>
               </v-list-tile>
+
+              <!-- NOT SUPERUSER -->
+              <v-list-tile v-if="!isSuperUser">
+                <v-list-tile-content>
+                  <v-btn color="success" block @click="upgrade = true">
+                    <v-icon color="secondary" class="mr-2">star</v-icon>
+                    Upgrade</v-btn>
+                </v-list-tile-content>
+              </v-list-tile>
+
+              <v-list-tile avatar v-if="isSuperUser" style="background: #2f324a;">
+                <v-list-tile-action>
+                  <v-icon color="orange">flash_on</v-icon>
+                </v-list-tile-action>
+                <v-list-tile-content>
+                  <v-list-tile-title>SuperUser</v-list-tile-title>
+                  <small>You've got super powers!</small>
+                </v-list-tile-content>
+              </v-list-tile>
+             
             </v-list>
           </v-navigation-drawer>
-          <v-snackbar v-model="snackbar.show" :timeout="5000" :color="snackbar.color" top>
-            {{snackbar.message}} 
+
+          <!-- SNACKBAR -->
+          <v-snackbar v-model="snackbar.show" :timeout="5000" :color="snackbar.color" top right>
+            {{snackbar.message}}
             <v-btn dark flat @click="snackbar.show = false"> Close</v-btn>
           </v-snackbar>
 
-
-          <!--v-speed-dial v-model="fab" fixed bottom
+          <!-- FAB -->
+          <v-speed-dial v-model="fab" fixed bottom
             right direction="top" open-on-hover
-            transition="slide-y-reverse-transition">
+            transition="slide-y-reverse-transition" v-if="$vuetify.breakpoint.xsOnly">
+            
             <v-btn slot="activator" v-model="fab"
-              color="blue darken-2" dark fab>
-              <v-icon>account_circle</v-icon>
-              <v-icon>close</v-icon>
+              color="orange" dark fab>
+              <v-icon large>how_to_vote</v-icon>
             </v-btn>
-            <v-btn fab dark small color="green">
-              <v-icon>edit</v-icon>
+
+            <v-btn fab dark small color="green" @click.stop="$router.push(`/elections/watch/${curRoom.electionId}`)">
+              <v-icon>how_to_vote</v-icon>
             </v-btn>
-            <v-btn fab dark small color="indigo">
-              <v-icon>add</v-icon>
+            <v-btn fab dark small color="indigo" @click.stop="$router.push(`/forum/${curRoom.electionId}`)">
+              <v-icon>forum</v-icon>
             </v-btn>
             <v-btn fab dark small color="red">
-              <v-icon>delete</v-icon>
+              <v-icon>add</v-icon>
             </v-btn>
-          </v-speed-dial-->
-
+          </v-speed-dial>
+          
           <router-view v-if="!show_loading_bar"></router-view>
-          <loading-bar v-if="show_loading_bar"></loading-bar>
+          <loading-bar v-if="show_loading_bar" color="grey"></loading-bar>
+    
         </v-flex>
       </v-layout>
+      
+      <!-- GALLERY VIEWER -->
+      <gallery :images="images" :index="index" @close="index = null"></gallery>
       
       <!-- PRIVATE MESSAGE LIST -->
       <v-dialog v-model="show_private_msg_list" max-width="500" min-width="300" 
@@ -227,10 +237,125 @@
       </v-dialog>
 
       <!-- PRIVATE CHAT WINDOW -->
-      <v-dialog v-model="show_private_chat_window" hide-overlay :max-width="$vuetify.breakpoint.smOnly ? 500 : 400" 
+      <!-- <v-dialog v-model="show_private_chat_window" hide-overlay :max-width="$vuetify.breakpoint.smOnly ? 500 : 400" 
         :fullscreen="$vuetify.breakpoint.xsOnly">
         <private-chat-window v-if="show_private_chat_window" :user='chat_user'></private-chat-window>
-      </v-dialog>
+      </v-dialog> -->
+
+      <!-- NEW MANIFESTO DIALOG -->
+    <v-dialog v-model="new_manifesto_dialog" lazy :fullscreen="$vuetify.breakpoint.xsOnly"
+      max-width="800px" transition="slide-x-reverse-transition">
+      <v-toolbar dense flat>
+        <v-btn flat icon v-if="$vuetify.breakpoint.xsOnly"
+          @click="new_manifesto_dialog = false">
+          <v-icon>chevron_left</v-icon> 
+        </v-btn>
+				<span>Create a Manifesto</span>
+				<v-spacer></v-spacer>
+				<v-btn flat icon @click="new_manifesto_dialog = false" class="hidden-xs-only">
+					<v-icon>close</v-icon>
+				</v-btn>
+			</v-toolbar>
+      <new-manifesto />
+    </v-dialog>
+    
+    <!-- NEW BROADCASTs -->
+    <new-broadcast v-if="new_broadcast" ></new-broadcast>
+
+    <!-- VIEW BROADCAST -->
+    <v-dialog v-model="show_private_chat_window" scrollable v-if="show_private_chat_window" max-width="500px" 
+      lazy>
+      <v-card class="grey lighten-3">
+        <v-toolbar card dense flat dark class="teal">
+          <v-avatar size="36" :color="$helpers.colorMinder(broadcasts.user.name.charAt(0))">
+            <img v-if="broadcasts.user.photoURL" :src="broadcasts.user.photoURL" :alt="broadcasts.user.name">
+            <span v-else>{{broadcasts.user.name.charAt(0)}}</span>
+          </v-avatar>
+
+          <v-toolbar-title>{{broadcasts.user.name}}</v-toolbar-title>
+          <v-spacer></v-spacer>
+
+          <v-btn flat icon @click="$eventBus.$emit('Close_Private_Chat_Window', '')">
+            <v-icon>close</v-icon>
+          </v-btn>
+        </v-toolbar>
+        <v-card-text style="min-height: 300px;">
+           <view-broadcasts :broadcasts="broadcasts"></view-broadcasts>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+
+    <!-- VIEW PROFILE -->
+    <v-dialog v-model="viewprofile" v-if="viewprofile" lazy :style="styleObj"
+      :fullscreen="$vuetify.breakpoint.xsOnly" width="300" hide-overlay scrollable
+        :transition="$vuetify.breakpoint.xsOnly ? 'slide-x-reverse-transition' : 'dialog-transition'">
+      <v-card flat>
+        <v-toolbar card dense dark color="teal" scroll-target="vprofile">
+          <v-btn flat icon class="hidden-sm-and-up" @click="viewprofile = false">
+            <v-icon>chevron_left</v-icon>
+          </v-btn>
+
+          <v-toolbar-title>Profile</v-toolbar-title>
+          <v-spacer></v-spacer>
+          <v-btn icon dark @click="viewprofile = false" class="hidden-xs-only">
+            <v-icon>close</v-icon>
+          </v-btn>
+        </v-toolbar>
+        <v-card-text class="pa-0">
+          <view-profile :user='voterprofile'  id="vprofile"></view-profile>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+
+    <!-- PAYMENTS -->
+    <v-dialog v-model="upgrade" lazy :persistent="procesing_payment"
+      max-width="600px" transition="dialog-transition" content-class="round_top" >
+      <v-card class="round_top" flat>
+        <v-card-title primary-title class="title secondary white--text">
+          Upgrade Account
+        </v-card-title>
+        <v-divider></v-divider>
+        <v-card-text>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Quia, unde iure, quas aliquam quaerat atque
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Quia, unde iure, quas aliquam quaerat atque
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Quia, unde iure, quas aliquam quaerat atque
+
+          <v-dialog v-model="procesing_payment"
+            persistent width="300">
+            <v-card color="secondary" dark >
+              <v-card-text>
+                Processing. Please wait...
+                <v-progress-linear
+                  indeterminate
+                  color="white"
+                  class="mb-0"
+                ></v-progress-linear>
+              </v-card-text>
+            </v-card>
+          </v-dialog>
+
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <paystack
+            :amount="plan.amount * 100"
+            :email="getUser.email"
+            :metadata="metadata"
+            :paystackkey="plan.paystack_key"
+            :reference="reference"
+            :callback="verifyTxn"
+            :close="onclose"
+            :embed="false"
+          >
+            <v-btn color="success" :loading="procesing_payment">Upgrade</v-btn>
+          </paystack>
+          
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <input type="file" name="file" id="file_img" style="visibility:hidden;position:absolute;" 
+      @change="onFileSelect($event)" accept="image/jpeg,image/png" multiple>
       <!--v-navigation-drawer right temporary v-model="right" fixed></v-navigation-drawer-->
     </v-content>
   </v-app>
@@ -241,49 +366,246 @@ export default {
   data:()=>({
     title:'Dashboard | Facevote',
     fab:false,
+    index: null, // for image gallery viewer
+    images: [], // for image gallery viewer
     menu:true,
     show_loading_bar:true,
+    new_broadcast: false,
+    broadcasts: '',
+    timestamp: Date.now(),
+    upgrade: false,
+    procesing_payment: false,
+    viewprofile: false,
+    voterprofile: {},
     show_private_chat_window:false,
     show_private_msg_list:false,
     fetching_enrolled:true,
     snackbar:{},
+    new_manifesto_dialog: false,
+    plan: {
+      title: 'SuperUser',
+      amount: 5000,
+      // plan_code: 'PLN_o4nm592fy4796k9',
+      paystack_key:'pk_test_fefaa0524871e5ff35d4ec861974c59197cb42e7',
+    },
     navmenus:[
       //{title:'Notifications', icon:'notifications', link:"#"},
       //{title:'Forum', icon:'forum', link:'/forum'},
       {title:'Enroll', icon:'fingerprint', link:'/enroll'},
       {title:'Verify Account', icon:'verified_user', link:'/verify',icon_color:'success'},
     ],
-    toolbar_items: [
-      {name:'My profile', icon:'person', link:''},
-      {name: 'Settings', icon:'settings', link:''}
-    ],
+    reference: Date.now() + btoa(Math.random()).substring(0,12),
     drawer:true,
-    settings_dialog:false,
-    someoneistyping:false,
   }),
   components:{
-    //ProfileSettings,
     ViewProfile,
     LoadingBar,
     PrivateMsgList,
     PrivateChatWindow,
-    Navigation
+    Navigation,
+    NewManifesto,
+    paystack,
+    Gallery,
+    NewBroadcast,
+    ViewBroadcasts
   },
   computed: {
     // Mix your getter(s) into computed with the object spread operator
     ...mapGetters([
-      'isAuthenticated',
-      'getToken',
       'getUser',
       'getUserInfo',
-      'getUnreadPMsgs',
+      'getRecentBroadcasts',
       'getMyEnrolled',
     ]),
+    ...mapState([
+      'isSuperUser',
+      'curRoom',
+      'curRoomId',
+      'no_of_unread_msgs'
+    ]),
+    metadata: function(){
+      return {
+        plan_type: this.plan.title,
+        orderid: this.reference,
+        custom_fields: [
+          {
+            display_name: "Plan_type",
+            variable_name: "plan",
+            value: 'SuperUser'
+          },
+          {
+            display_name: "Amount Paid",
+            variable_name: "amount_paid",
+            value: 5000
+          },
+          {
+            display_name: "Customer Name",
+            variable_name: "customer_name",
+            value: this.getUser.displayName
+          },
+          {
+            display_name: "CustomerId",
+            variable_name: "customer_id",
+            value: this.getUser.uid
+          }
+        ]
+      }
+    },
+    styleObj(){
+      if(this.$vuetify.breakpoint.xsOnly){
+        return {
+          height:'100vh',
+          backgroundColor:'#fff'
+        }
+      }
+    },
+    
+    // myContests(){
+    //   // get user contests from his enrolled elections
+    //   return this.getMyEnrolled.filter(election =>{
+    //     return election.contestants.indexOf(this.getUser.uid) != -1
+    //   })
+    // }
   },
   
   methods:{
+    onScroll (e) {
+      console.log(e.target.scrollTop)
+    },
+    setCurRoom(rooms){
+      // SETS THE DEFAULT OR CURRENT ROOM/ELECTION
+      // let dirty = this.curRoom ? this.curRoom.electionId != room.electionId : true
+
+      let found = rooms.find(room => room.electionId == this.curRoomId)
+      if(found){
+        // why? bcs malicious user can change room from localstorage (bcs its persisted).
+        // So we need to check if that room is actually valid (if it exists or user has access to it)
+        this.$store.dispatch('curRoom', found)
+      }else{
+        // either room not set or modified and not matching any valid room
+        this.$store.dispatch('curRoom', rooms[0])
+      }
+      
+      
+      // dirty ? window.location.reload() : ''
+    },
+    verifyTxn(data){
+      // verfy on the server that the transaction is ok
+      this.procesing_payment = true
+      return firebase.auth().currentUser.getIdToken()
+      .then(async (token)=>{
+        return api().post('dashboard/verifyTxn', {
+          token,
+          reference:data.reference,
+          amount:this.plan.amount * 100,
+          upgrade_user: true
+        }).then(res=>{
+          // transaction is ok
+          firebase.auth().currentUser.getIdToken(true).then(idToken=>{
+            console.log(idToken)
+            function b64DecodeUnicode(str) {
+              return decodeURIComponent(atob(str).replace(/(.)/g, function (m, p) {
+                  var code = p.charCodeAt(0).toString(16).toUpperCase();
+                  if (code.length < 2) {
+                      code = '0' + code;
+                  }
+                  return '%' + code;
+              }));
+            }
+            const payload = JSON.parse(b64DecodeUnicode(idToken.split('.')[1]));
+            console.log(payload)
+          })
+
+          this.timestamp = Date.now()
+          this.procesing_payment = false
+          this.upgrade = false
+
+          this.snackbar = {
+            show: true,
+            message: 'Account upgraded successfully',
+            color: 'success'
+          }
+          setTimeout(() => {
+            window.location.reload()
+          }, 2000);
+          
+        }).catch(error=>{
+          // avoid duplicate trxn reference
+          this.reference = Date.now() + btoa(Math.random()).substring(0,12)
+
+          this.snackbar = {
+            show:true,
+            message:error.response ? error.response.data.message : 'Transaction failed',
+            color:'error'
+          }
+          this.loading = false
+          this.timestamp = Date.now()
+          this.upgrade = false
+          this.procesing_payment = false
+          //this.creating_election_dialog = false;
+        })
+        
+      })
+      
+    },
+    truncateText(text){
+      return text ? text.replace(/(.{18})..+/, "$1...") : '';
+    },
     logout(){
       this.$store.dispatch('logout')
+    },
+    onclose(){
+      this.reference = Date.now() + btoa(Math.random()).substring(0,12)
+    },
+    onFileSelect(e){
+      // handle file selecting for all components
+      let two_mb = 2000000
+      let blob_urls = []
+      // Allow only images
+      let stop = true
+      let file_sizes = 0
+      for(let file of e.target.files){
+        if(file.type == 'image/jpeg' || 
+          file.type == 'image/jpg' || file.type == 'image/png'){
+            stop = false
+          
+        }
+        else{
+          stop = true
+          break
+        }
+        file_sizes += file.size
+      }
+
+			if(!stop){
+					
+				// limit file upload to 1mb
+				if(file_sizes < two_mb){
+          
+          for(let file of e.target.files){
+            //console.log(file)
+            blob_urls.push(URL.createObjectURL(file))
+          }
+          this.$eventBus.$emit('Selected_Files', {
+            imgSrc: blob_urls,
+            selected_files: e.target.files
+          })
+				}
+				else{
+          this.snackbar = {
+            show: true,
+            message: 'Please select an image that is less than 1mb',
+            color: 'error'
+          }
+				}
+			}
+			else{
+        this.snackbar = {
+          show: true,
+          message: 'Only images are allowed!',
+          color: 'error'
+        }
+			}
     },
     presenceWatcher(){
       // Fetch the current user's ID from Firebase Authentication.
@@ -326,111 +648,78 @@ export default {
         //console.log(msgs)
       })
     },
-    myEnrolled(user){
-      this.fetching_enrolled = true
-      return new Promise((resolve,reject)=>{
-        db.collection('elections').where('regVoters','array-contains',user.uid)
-        .get().then(docs=>{
-          let myArr = []
-          docs.forEach(doc=>{
-            myArr.push(doc.data())
-          })
-          this.$store.dispatch('setMyEnrolled',myArr)
-          this.fetching_enrolled = false
-          console.log(this.getMyEnrolled)
-        })
+    getBroadcasts(){
+      return new Promise((resolve, reject)=>{
+        if(this.curRoom){
+
+          return db.collection('broadcasts')
+          .where('elecRef', '==', this.curRoom.electionId)
+          .onSnapshot(docs =>{
+            let d = []
+            docs.forEach(doc =>{
+              doc.data().by != this.getUser.uid ?
+              d.push(doc.data()) : ''
+            })
+            this.$store.dispatch('setBroadcasts', d)
+            console.log(d)
+          }, error => console.log(error))
+        }
+        else{
+          
+        }
       })
     },
-    /*pSystem(){
-      // Fetch the current user's ID from Firebase Authentication.
-      var uid = firebase.auth().currentUser.uid;
+    userDetails(){
+      return new Promise((resolve,reject)=>{
+        db.collection('moreUserInfo').doc(this.getUser.uid).get()
+        .then(doc=>{
+          // console.log(doc.data())
+          this.$store.dispatch('setUserInfo',doc.data())
+          resolve(doc.data())
+        }).catch(err => reject(err))
+      })
+      
+    },
+    async myEnrolled(user){
+      // console.log(this.getUserInfo)
+      this.userDetails().then(async userInfo =>{
+        // console.log(userInfo.enrolled)
+        this.fetching_enrolled = true
+        let arr = []
+        for(const electionId of userInfo.enrolled){
+          // console.log(electionId)
+          let p = await db.collection('elections').doc(electionId).get()
+          arr.push(p.data())
+        }
+        this.$store.dispatch('setMyEnrolled', arr.sort((a,b)=> b.dateCreated - a.dateCreated))
 
-      // Create a reference to this user's specific status node.
-      // This is where we will store data about being online/offline.
-      var userStatusDatabaseRef = firebase.database().ref('/status/' + uid);
+        this.fetching_enrolled = false
 
-      // We'll create two constants which we will write to
-      // the Realtime database when this device is offline
-      // or online.
-      var isOfflineForDatabase = {
-          state: 'offline',
-          last_changed: firebase.database.ServerValue.TIMESTAMP,
-      };
-
-      var isOnlineForDatabase = {
-          state: 'online',
-          last_changed: firebase.database.ServerValue.TIMESTAMP,
-      };
-
-      // Create a reference to the special '.info/connected' path in
-      // Realtime Database. This path returns `true` when connected
-      // and `false` when disconnected.
-      firebase.database().ref('.info/connected').on('value', function(snapshot) {
-          // If we're not currently connected, don't do anything.
-          if (snapshot.val() == false) {
-              return;
-          };
-
-          // If we are currently connected, then use the 'onDisconnect()'
-          // method to add a set which will only trigger once this
-          // client has disconnected by closing the app,
-          // losing internet, or any other means.
-          userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function() {
-              // The promise returned from .onDisconnect().set() will
-              // resolve as soon as the server acknowledges the onDisconnect()
-              // request, NOT once we've actually disconnected:
-              // https://firebase.google.com/docs/reference/js/firebase.database.OnDisconnect
-
-              // We can now safely set ourselves as 'online' knowing that the
-              // server will mark us as offline once we lose connection.
-              userStatusDatabaseRef.set(isOnlineForDatabase);
-          });
-      });
-
-
-      // ...
-      var userStatusFirestoreRef = firebase.firestore().doc('/status/' + uid);
-
-      // Firestore uses a different server timestamp value, so we'll
-      // create two more constants for Firestore state.
-      var isOfflineForFirestore = {
-          state: 'offline',
-          last_changed: firebase.firestore.FieldValue.serverTimestamp(),
-      };
-
-      var isOnlineForFirestore = {
-          state: 'online',
-          last_changed: firebase.firestore.FieldValue.serverTimestamp(),
-      };
-
-      firebase.database().ref('.info/connected').on('value', function(snapshot) {
-          if (snapshot.val() == false) {
-              // Instead of simply returning, we'll also set Firestore's state
-              // to 'offline'. This ensures that our Firestore cache is aware
-              // of the switch to 'offline.'
-              userStatusFirestoreRef.set(isOfflineForFirestore);
-              return;
-          };
-
-          userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function() {
-              userStatusDatabaseRef.set(isOnlineForDatabase);
-
-              // We'll also add Firestore set here for when we come online.
-              userStatusFirestoreRef.set(isOnlineForFirestore);
-          });
-      });
-    }*/
+        // set current room if there is none (and if there are rooms to set)
+        if(this.getMyEnrolled && this.getMyEnrolled.length > 0){
+          this.setCurRoom(this.getMyEnrolled)
+          // console.log('setting current room by force')
+        }
+        if(this.curRoom){
+          this.getBroadcasts()
+        }
+        // console.log(arr)
+        return arr
+      })
+      
+    }
   },
   async mounted(){
     //console.log(firebase.firestore.FieldValue.serverTimestamp().seconds)
     document.getElementById('welcome_logo').style.display = 'none'
+
     this.$eventBus.$on('Toggle_Left_Drawer', data=>{
       this.drawer = !this.drawer
     })
     
     
     this.$eventBus.$on('Open_Private_Chat_Window', (data)=>{
-      this.chat_user = data
+      this.broadcasts = data
       this.show_private_chat_window = true
       this.show_private_msg_list = false
     })
@@ -438,201 +727,95 @@ export default {
       this.show_private_chat_window = false
     })
     
+    this.$eventBus.$on('OpenNewManifestoDialog', data=>{
+      this.new_manifesto_dialog = true
+    })
+    this.$eventBus.$on('CloseNewManifestoDialog', data=>{
+      this.new_manifesto_dialog = false
+    })
+
+    this.$eventBus.$on('ViewProfile', data=>{
+      this.viewprofile = true
+      this.voterprofile = data
+    })
+    this.$eventBus.$on('CloseProfile', data=>{
+      this.viewprofile = false
+    })
     
+    this.$eventBus.$on('Show_Upgrade_Dialog', data=>{
+      this.upgrade = true
+    })
+
+    this.$eventBus.$on('Open_Image_Gallery', data=>{
+      this.images = data.images
+      this.index = data.index
+    })
+    this.$eventBus.$on('Open_Upgrade_Dialog', data=>{
+      this.upgrade = true
+    })
+
+    this.$eventBus.$on('bdialog', ()=> this.new_broadcast = false)
     // show loading animation for some seconds
     setTimeout(() => {
       this.show_loading_bar = false
     }, 2500);
-
+    
+    this.$eventBus.$on('Snackbar', data =>{
+      this.snackbar = data
+    })
    
-    // if loggedin user
-    /*if(this.$store.getters.getToken){
+  //  firebase.auth().currentUser.getIdToken()
+  //   .then(async (token)=>{
+  //     api().post('dashboard/downgradeUser', {token: token}).then(data =>{
+    
+  //       firebase.auth().currentUser.getIdToken(true).then(idToken=>{
+  //         console.log(idToken)
+  //         function b64DecodeUnicode(str) {
+  //           return decodeURIComponent(atob(str).replace(/(.)/g, function (m, p) {
+  //               var code = p.charCodeAt(0).toString(16).toUpperCase();
+  //               if (code.length < 2) {
+  //                   code = '0' + code;
+  //               }
+  //               return '%' + code;
+  //           }));
+  //         }
+  //         const payload = JSON.parse(b64DecodeUnicode(idToken.split('.')[1]));
+  //         console.log(payload)
+  //       })
+  //       console.log(data)
+  //     }).catch(err => console.log(err))
+  //   })
 
-      //let chat = io.connect('localhost:3000/chat')
-      let chat = io.connect('securepoll.herokuapp.com/chat')
-      this.chat = chat // do this in order to access chat in other methods
-      //this.$store.dispatch('setChat', chat);
-      chat.once('connect', _=>{
-        console.log('connected to server successfully')
-        chat.emit('introduction',{
-          username:this.$store.getters.getUser.username,
-          userId:this.$store.getters.getUser._id
-        })
-        chat.emit('send_recent_private_msg', {username:this.$store.getters.getUser.username})
-      })
-      
-
-      // update client with latest messages 
-      chat.on('update_chat', (messagesFromDb) =>{ // update chat from db
-        // Don't update on empty mesages
-        messagesFromDb.length != 0 ? this.$store.dispatch('updateFromDb', messagesFromDb) : ''
-        //console.log('messagesFromDb: ', messagesFromDb)
-      })
-      
-      chat.on('recent_private_msg', data=>{ // client recieves recent private msgs when he just connected
-        this.$store.dispatch('savePrivateChatMessage', data) // save this msgs temporarily in the store
-        //console.log('recentPmsgs: ', data)
-      })
-      
-      
-      
-      chat.on('chat_response', (data)=> { // the chat emitted by server
-        //console.log('chat resp1: ', data)
-        this.$store.dispatch('saveChatMessage', data)
-        console.log('chat resp2: ', data)
-      });
-
-      this.$eventBus.$on('Chat_Message', data=>{ // when forum conponent sends a chat msg
-        console.log('ChatMsg: ', data)
-        chat.emit('chat_message', data)
-      })
-
-      // Add reactions to msgs
-      this.$eventBus.$on('Add_Reaction', data=>{
-        console.log('helloworld:Add_Rxn ', data)
-        chat.emit('add_reaction', data)
-      })
-
-
-      //listen when server broadcasts that some one is online
-      chat.on('those_online', (data)=>{
-        //console.log(data)
-        this.$store.dispatch('updateThoseOnline',data)
-      })
-
-      
-
-
-      this.$eventBus.$on('Open_Private_Chat_Window', data=>{
-        this.show_private_chat_window = true
-        this.chat_user = data
-
-        // mark all the msgs sent to 'to'(cur user) by 'from' as read only if the last msg is not read
-        // if the last_msg_status is 'read' then all the user's msgs to this cllient have been read
-        data.last_msg_status == 'read' ? '' :
-        chat.emit('mark_msgs_as_read', {to:this.getUser.username, from:data.username})
-      })
-
-
-
-
-
-      chat.on('mark_msgs_as_read_resp', data=>{
-        this.$store.dispatch('savePrivateChatMessage', data)
-        //console.log('recentPCM: ', data)
-        //console.log('from store: ', this.$store.state.recent_private_messages)
-      })
-
-      
-
-      // === TYPING ====
-      this.$eventBus.$on('Someone_Is_Typing', (data)=>{
-        chat.emit('is_typing', data)
-      })
-      chat.on('is_typing', data=>{
-        this.$eventBus.$emit('Update_Typing_Status', data)
-      })
-
-
-
-      // ==== PRIVATE CHAT MESSAGES ====
-      this.$eventBus.$on('PrivateChatMsg', data=>{ // emit a private chat event
-        console.log('data: ', data)
-        chat.emit('private_chat_msg', data)
-      })
-      chat.on('private_chat_resp', data=>{ // recieve the private chat event
-        console.log('privt resp ', data)
-        this.$eventBus.$emit('PrivateChatMsgResp', data)
-        if(data.from != this.$store.state.user.username){
-          this.$store.dispatch('recentPrivateMsgs', [data])
-        }
-      })
-
-      this.$eventBus.$on('Get_Conversation_History', data=>{ // get conversation history between two users
-        chat.emit('conversation_history', data)
-      })
-      chat.on('conversation_history_resp', data=>{ // the conversation history response from server
-        this.$eventBus.$emit('Conversation_History', data)
-      })
-      
-
-
-      //==== VOTING =====
-      this.$eventBus.$on('Someone_Is_Voting', data=>{
-        chat.emit('is_voting', data) // emit someone is voting to server
-        console.log('emited is_voting')
-      })
-      chat.on('voting', data=>{
-        this.$eventBus.$emit('Update_Voting_Status', data)
-        console.log(data.user.username + ' is voting')
-      })
-      this.$eventBus.$on('Submit_Vote', data=>{
-        chat.emit('submit_vote', data)
-      })
-      chat.on('submit_vote_resp', data=>{
-        this.$store.dispatch('allVotes', data.results.finalScores) // update after voting
-        this.$store.dispatch('setVotes', data.results.votes) // update after voting
-        this.$eventBus.$emit('All_Votes', data.results.votes)
-
-        // show this alert to only the person that just voted
-        data.user.username == this.$store.getters.getUser.username ? alert('you have successfuly voted.') : ''
-        //console.log(data)
-        console.log('someone voted')
-      })
-      
-      this.$eventBus.$on('Update_Votes', data=>{
-        console.log('update votes')
-        chat.emit('update_votes', data)
-      })
-      chat.on('vote_updates', data=>{ // initial update when in the /watch view
-        this.$store.dispatch('allVotes', data.results.finalScores)
-        this.$store.dispatch('setVotes', data.results.votes)
-
-        this.$eventBus.$emit('All_Votes', data.results.votes)
-        console.log(data.results.finalScores)
-        console.log('vote updates')
-      })
-      chat.on('errorMsg', data=>{
-        
-        this.snackbar = {show:true, message:data,color:'error'}
-      })
-
-      this.$eventBus.$on('Create_Broadcast', data=>{
-        console.log(data)
-        chat.emit('create_broadcast', data)
-      })
-      chat.on('create_broadcast_resp', data=>{
-        console.log('broadcast_resp: ', data)
-        this.$eventBus.$emit('Create_Broadcast_Resp', data)
-      })
-
-      
-      this.$eventBus.$on('Show_Snackbar', data=>{
-        this.snackbar = data
-      })
-    } // ==> end if
-    */
-
-
+  // api().post('dashboard/listAllUsers').then(data=>{
+  //   console.log(data)
+  // }).catch(err => console.log(err))
+   
   },
   async created(){
-    //console.log(firebase.auth().currentUser)
-    firebase.auth().onAuthStateChanged((user)=>{
+
+    firebase.auth().onAuthStateChanged(async (user)=>{
       if (user) {
         // User is signed in.
         this.$store.dispatch('setUser', user)
-        this.myEnrolled(user)
+        
+        // this.myEnrolled(user)
         this.presenceWatcher()
-        this.pUnreadMsgs()
+        this.getBroadcasts()
+
       } else {
-        console.log('No user is signed in.')
+        this.$store.dispatch('logout')
+        // eslint-disable-next-line
+        // console.log('No user is signed in.')
       }
     });
 
     firebase.auth().currentUser.getIdTokenResult()
     .then((idTokenResult) => {
       
-      //console.log(idTokenResult.claims)
+      console.log(idTokenResult.claims)
+      let state = idTokenResult.claims.superuser
+      this.$store.dispatch('subscriberState', state)
+      
     })
     .catch((error) => {
       console.log(error);
@@ -647,18 +830,22 @@ export default {
   }
 }
 
-import { mapGetters } from 'vuex'
-  //import api from '@/services/api'
+import { mapGetters, mapState } from 'vuex'
+  import api from '@/services/api'
   import ViewProfile from '@/components/ViewProfile'
   import LoadingBar from '@/spinners/LoadingBar'
   import PrivateMsgList from '@/components/PrivateMsgList'
   import PrivateChatWindow from '@/components/PrivateChatWindow'
   import Navigation from '@/components/Navigation'
+  import NewManifesto from '@/components/profile/NewManifesto'
+  import paystack from 'vue-paystack'
+  import Gallery from 'vue-gallery';
+  import NewBroadcast from '@/components/NewBroadcast'
+  import ViewBroadcasts from '@/components/ViewBroadcasts'
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style lang='scss' >
-
 @mixin borderRadius($radius) {
   border-radius: $radius;
   -webkit-border-radius:$radius;
@@ -673,6 +860,9 @@ $mainBgColor:#1c1f35;
 
 .v-dialog--fullscreen{
   background:#fff !important;
+}
+.view_dialog .v-dialog--fullscreen{
+  background: transparent !important;
 }
 h3 {
   margin: 40px 0 0;
@@ -712,6 +902,13 @@ a {
   }
 }
 
+.emoji-mart-bar{
+  background: #ececec;
+}
+.emoji-mart-scroll{
+  overflow-x: hidden;
+}
+
 .theme--light.v-text-field--outline .v-input__slot {
   border: 1px solid rgba(115, 114, 114, 0.54) !important;
 }
@@ -719,19 +916,23 @@ a {
   background:#eceff1;
 }
 
+.online_badge{
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-left: 5px;
+}
+
 /* --scrollbar --*/
 .navdrawr::-webkit-scrollbar {
-    width: 10px;
+    width: 8px;
     background-color: $mainBgColor;
     @include borderRadius(10px)
   }
-.navdrawr::-webkit-scrollbar-track {
-  box-shadow: inset 0 0 6px #eae6e6;
-  -webkit-box-shadow: inset 0 0 6px #eae6e6;
-  -moz-box-shadow: inset 0 0 6px #eae6e6;
-  -o-box-shadow: inset 0 0 6px #eae6e6;
-  background-color: $mainBgColor;
-  @include borderRadius(10px)
+.navdrawr::-webkit-scrollbar-track, .emoji-mart-scroll::-webkit-scrollbar-track {
+  background-color: white;
+  // @include borderRadius(10px)
 }
 .navdrawr::-webkit-scrollbar-thumb {
   background-color:#87899c ;

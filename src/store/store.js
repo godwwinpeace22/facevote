@@ -7,46 +7,44 @@ import router from '@/router.js'
 //import jwtDecode from 'jwt-decode'
 Vue.use(Vuex)
 
+// include states to be persisted in local storage
 const vuexLocalStorage = new VuexPersist({
   key:'vuex',
   storage:window.localStorage,
   reducer: state =>({
     //user:state.user,
-    token:state.token,
+    theme: state.theme,
+    last_read_time: state.last_read_time,
+    no_of_unread_msgs: state.no_of_unread_msgs,
     //isAuthenticated:state.isAuthenticated,
-    curRoom:state.curRoom,
-    schools:state.schools,
-    feedFilter:state.feedFilter,
+    curRoomId: state.curRoomId,
+    schools: state.schools,
     //chat_messages:state.chat_messages,
     //those_online:state.those_online,
-    //allVotes:state.allVotes,
-    curr_right_sidebar:state.curr_right_sidebar,
-    show_right_bar:state.show_right_bar,
-    private_chat_window:state.private_chat_window,
+    curr_right_sidebar: state.curr_right_sidebar,
+    show_right_bar: state.show_right_bar,
+    // private_chat_window: state.private_chat_window,
   })
 })
 export default new Vuex.Store({
   plugins:[
     vuexLocalStorage.plugin,
     createMutationsSharer({ predicate: 
-      ['logout', 'setUser','saveFeedFilter','setUserInfo', 'curRoom','saveChatMessages','updateFromDb','updateThoseOnline','allVotes'] })
+      ['logout', 'setUser', 'switchTheme','saveFeedFilter','setUserInfo', 'curRoom','saveChatMessages','updateFromDb','updateThoseOnline'] })
   ],
   state: {
     userInfo:null, // additional info for logged in user
-    logged_in_user:null, // this is the same as user but is not persisted in local storage.
-    token:null,
-    isAuthenticated:false,
-    timestamp:null,
-    curRoom:null,
-    chat_messages:[],
-    pUnreadMsgs:[],
-    private_conversations:[],
-    curElection:{},
-    curElectionContestants:[],
-    curElectionResults:[],
-    curElectionActivities:[],
+    isAuthenticated: false,
+    isSuperUser: false,
+    theme: 'light',
+    timestamp: null,
+    curRoom: null,
+    curRoomId: null, // current room id
+    broadcasts: [],
+    last_read_time: 0, // timestamp for the last broadcast msg
+    chat_messages: [],
+    pUnreadMsgs: [],
     those_online:[],
-    allVotes:[],
     curr_right_sidebar:null,
     show_right_sidebar:false,
     private_chat_window:{},
@@ -66,27 +64,40 @@ export default new Vuex.Store({
     },
     setUser(state,data){
       state.isAuthenticated = data
-      state.userInfo = null
+      // state.userInfo = null
     },
     logout(state){
+      // eslint-disable-next-line
       firebase.auth().signOut().then(function() {
         // Sign-out successful.
         state.isAuthenticated = false
         state.userInfo = null
         state.myEnrolled = []
-        state.myCreated = []
-        state.myContested = []
+        state.curRoom = null
+        state.curRoomId = null
+        // delete everything stored in localstorage for 
+        // now until find how to delete just one
+        window.localStorage.setItem('vuex', null)
         router.push('/login')
         window.location.reload()
       }).catch(function(error) {
+        // eslint-disable-next-line
         console.log(error)
       });
+    },
+    switchTheme(state){
+      state.theme == 'dark' ? state.theme = 'light' : state.theme = 'dark'
     },
     saveFeedFilter(state,data){
       state.feedFilter = data
     },
     curRoom(state,data){
       state.curRoom = data
+      state.curRoomId = data.electionId
+    },
+    setBroadcasts(state,data){
+      state.broadcasts = data
+      state.no_of_unread_msgs = state.broadcasts.filter(msg => msg.timestamp > state.last_read_time).length
     },
     saveChatMessage(state, data){
       state.chat_messages = [...state.chat_messages, data]
@@ -108,12 +119,6 @@ export default new Vuex.Store({
       //}
       
     },
-    setCurElection(state,data){
-      state.curElection = data
-    },
-    setCurElectionContestants(state,data){
-      state.curElectionContestants = data
-    },
     updateThoseOnline(state,data){
       state.those_online = data
     },
@@ -124,36 +129,34 @@ export default new Vuex.Store({
     setCurrRightSidebar(state, data){
       state.curr_right_sidebar = data
     },
-    allVotes(state,data){
-      state.allVotes = data
-    },
-    openPrivateChatWindow(state,data){
-      //console.log('dispatched')
-      state.private_chat_window = data
-    },
-    private_conversations(state,data){
-      state.private_conversations = data
-    },
+    // private_conversations(state,data){
+    //   state.private_conversations = data
+    // },
     setSchools(state,data){
       state.schools = data
     },
-    setCurElectionActivities(state,data){
-      state.curElectionActivities = data
-    },
-    setCurElectionResults(state,data){
-      state.curElectionResults = data
-    },
     setMyEnrolled(state,data){
-      state.myEnrolled = data
-    },
-    setMyCreated(state,data){
-      state.myCreated = data
-    },
-    setMyContested(state,data){
-      state.myContested = data
+      if(data.merge){
+        // e.g new election created or new enrolled
+        state.myEnrolled ? 
+        state.myEnrolled.unshift(data.election) :
+        state.myEnrolled = [data.election]
+      }else{
+        state.myEnrolled = data
+      }
+      // eslint-disable-next-line
+      console.log('firing setMyEnrolled')
+      
     },
     setVotes(state,data){
       state.votes = data
+    },
+    subscriberState(state, data){
+      state.isSuperUser = data
+    },
+    setLastReadTime(state, data){
+      state.last_read_time = data.timestamp
+      state.no_of_unread_msgs = state.no_of_unread_msgs - data.read
     }
   },
   actions:{
@@ -172,12 +175,19 @@ export default new Vuex.Store({
     saveFeedFilter({commit},data){
       commit('saveFeedFilter',data)
     },
+    switchTheme({commit},data){
+      commit('switchTheme', data)
+    },
+
     curRoom({commit}, data){
       commit('curRoom', data)
     },
-    pUnreadMsgs({commit},data){
-      commit('pUnreadMsgs',data)
+    setBroadcasts({commit}, data){
+      commit('setBroadcasts', data)
     },
+    // pUnreadMsgs({commit},data){
+    //   commit('pUnreadMsgs',data)
+    // },
     saveChatMessage({commit}, data){
       commit('saveChatMessage', data)
     },
@@ -187,90 +197,71 @@ export default new Vuex.Store({
     updateFromDb({commit},data){
       commit('updateFromDb',data)
     },
-    setCurElection({commit},data){
-      commit('setCurElection', data)
-    },
-    setCurElectionContestants({commit},data){
-      commit('setCurElectionContestants', data)
-    },
     showRightNav({commit},data){
       commit('showRightNav', data)
     },
     setCurrRightSidebar({commit}, data){
       commit('setCurrRightSidebar', data)
     },
-    allVotes({commit}, data){
-      commit('allVotes', data)
-      //console.log('allvotes action')
-    },
-    setVotes({commit}, data){
-      commit('setVotes', data)
-      //console.log('allvotes action')
-    },
-    openPrivateChatWindow({commit},data){
-      //console.log('dispatched')
-      commit('openPrivateChatWindow', data)
-    },
     setSchools({commit},data){
       commit('setSchools', data)
-    },
-    setCurElectionResults({commit},data){
-      commit('setCurElectionResults',data)
-    },
-    setCurElectionActivities({commit},data){
-      commit('setCurElectionActivities',data)
     },
     setMyEnrolled({commit}, data){
       commit('setMyEnrolled', data)
     },
-    setMyCreated({commit}, data){
-      commit('setMyCreated', data)
+    subscriberState({commit}, data){
+      commit('subscriberState', data)
     },
-    setMyContested({commit}, data){
-      commit('setMyContested', data)
+    setLastReadTime({commit}, data){
+      commit('setLastReadTime', data)
     }
   },
   getters:{
     //isAuthenticated: state => state.isAuthenticated,
+    // eslint-disable-next-line
     isLoggedIn:() => firebase.auth().currentUser,
     isAuthenticated:state => state.isAuthenticated,
-    getToken: state => state.token,
-    getUnreadPMsgs: state => {
-      let sorted = state.pUnreadMsgs.sort((a,b)=>a.timestamp - b.timestamp)
+    getRecentBroadcasts: state => {
+      let sorted = state.broadcasts.sort((a,b)=>a.tstamp - b.tstamp)
+      // the senders should not recieve their own messages
+      // sorted = sorted.filter(msg => msg.sender != state.userInfo.uid)
       let myArr = []
       let track = []
 
+      state.no_of_unread_msgs = sorted.filter(msg => msg.tstamp > state.last_read_time).length
+      // eslint-disable-next-line
+      console.log('getbroadcast runnig', state.no_of_unread_msgs)
       // get the unread private messages from the store and map each user to all his messages
       for(let item of sorted){
         // all the messages from the sender
         let msgs = sorted.filter(msg=>{
-          return msg.sender == item.sender
+          return msg.by == item.by
         })
         
         // if user has seen the last msg then he has seen all others
-        let last_msg = msgs.sort((a,b)=> a.timestamp - b.timestamp)[msgs.length -1]
-        track.indexOf(item.sender) == -1 && last_msg.status == 'unread' ? myArr.push({
-          user:item.sender,
-          name:item.name,
-          imgSrc:item.imgSrc,
-          msgs:msgs
+        // let last_msg = msgs.sort((a,b)=> a.timestamp - b.timestamp)[msgs.length -1]
+        
+        track.indexOf(item.by) == -1 ? myArr.push({
+          user: item.onr,
+          imgSrc:item.onr.photoURL,
+          msgs: msgs,
+          unread: msgs.filter(item => item.tstamp > state.last_read_time)
         }) : ''
-        track.push(item.sender)
+        track.push(item.by)
       }
       
       return myArr
     },
-    getPrivateConversations: state => state.private_conversations
-    .sort((a,b)=>a.timestamp - b.timestamp),
+    // getPrivateConversations: state => state.private_conversations
+    // .sort((a,b)=>a.timestamp - b.timestamp),
     
     getUser: state => state.isAuthenticated,
     getUserInfo:state => state.userInfo, // additional info for user
     getChatMessages:(state)=>{
-     return state.chat_messages.sort((a,b) => a.timestamp - b.timestamp)
+     return state.chat_messages.sort((a,b) => a.tstamp - b.tstamp)
     },
     getSchools: state => state.schools,
     getContestants:state => state.curElectionContestants,
-    getCurElection: state => state.curElection,
     getCurElectionResults: state => state.curElectionResults,
     getCurElectionActivities: state => state.curElectionActivities,
     getMyEnrolled: state => state.myEnrolled,

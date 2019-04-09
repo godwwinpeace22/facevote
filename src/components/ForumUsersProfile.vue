@@ -8,7 +8,7 @@
     </v-snackbar>
 
     <v-toolbar dense flat>
-      <v-btn icon :to="'/forum/' + $route.params.electionId">
+      <v-btn icon to="/forum">
         <v-icon>chevron_left</v-icon>
       </v-btn>
     </v-toolbar>
@@ -25,7 +25,7 @@
               <span id="online_badge" v-if="checkIfOnline()"></span>
             </div>
             <v-subheader v-if="user.email == currUser.email">
-              {{user.followers.length}} | Followers</v-subheader>
+              {{user.followers}} | Followers</v-subheader>
               
           </v-card-title>
           
@@ -35,21 +35,25 @@
               v-if='currUser.uid == user.uid'>
               Edit Profile
             </v-btn>
-            <v-btn flat outline small color="success" class="text-capitalize" v-else @click="openPrivateChatWindow">Message</v-btn>
-            <v-btn flat outline small color="success" class="text-capitalize" :to="`/users/${user.email}`">Explore</v-btn>
+
+            <!-- <v-btn flat outline small color="success" class="text-capitalize" v-else @click="openPrivateChatWindow">Message</v-btn> -->
             
-          </v-card-actions>
-          <v-card-actions>
+            <v-btn flat outline small color="success" class="text-capitalize" 
+              :to="`/users/${user.email}`" v-if="isSuperUser">
+              View Profile
+            </v-btn>
+            
             <v-btn flat outline small color="success" class="text-capitalize" @click="follow"
               :disabled='disabled'
               v-if="user.uid != currUser.uid">
-              {{user.followers.length}}&nbsp; | &nbsp;<span id="follow">
-                {{user.followers.indexOf(currUser.uid) == -1 ? ' Follow' : ' Following'}}</span>
+              {{user.followers}}&nbsp; | &nbsp;<span id="follow">
+                Followers</span>
             </v-btn>
+            
           </v-card-actions>
           <v-container ma-0 pa-2>
-            <v-subheader class="ma-0 pa-0" style="height:30px;"><strong>Department:&nbsp;</strong> {{user.department}}</v-subheader>
-            <v-subheader class="ma-0 pa-0" style="height:30px;"><strong>Faculty:&nbsp;</strong>{{user.faculty}}</v-subheader>
+            <v-subheader class="ma-0 pa-0" style="height:30px;"><strong>Department:&nbsp;</strong> {{user.dept}}</v-subheader>
+            <v-subheader class="ma-0 pa-0" style="height:30px;"><strong>Faculty:&nbsp;</strong>{{user.fac}}</v-subheader>
             <v-subheader class="ma-0 pa-0" style="height:30px;" v-if="getRole()"><i class="mr-1">for </i><strong class="secondary--text"> {{getRole().role}}</strong></v-subheader>
             
           </v-container>
@@ -122,6 +126,10 @@ export default {
       'getUser',
       'getUserInfo',
     ]),
+    ...mapState([
+      'isSuperUser',
+      'curRoom'
+    ]),
     isAccOwner(){
       return this.$store.getters.getUser.email == this.email ? true : false
     },
@@ -161,10 +169,10 @@ export default {
     },
     getRole(){
       if(this.user.contestsRef){
-        let res = this.user.contestsRef.find(contest=>contest.electionRef == this.thisGroup.electionId)
+        let found = this.user.contestsRef.find(contest=>contest.electionRef == this.thisGroup.electionId)
         //console.log(res)
-        let found = this.thisGroup.roles.find(role => role.value == res.role)
-        return found ? {role:found.title,contesting:'Yes'} : false
+        let role = found ? this.thisGroup.roles.find(role => role.value == found.role) : false
+        return found ? {role: role.title, contesting:'Yes'} : false
       }
       else{
         return false
@@ -302,7 +310,7 @@ export default {
 }
 //import api from "@/services/api";
 import ProfileSettings from '@/components/ProfileSettings'
-import {mapGetters} from 'vuex'
+import {mapGetters, mapState} from 'vuex'
 </script>
 <style lang="scss" scoped>
   #online_badge{

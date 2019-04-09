@@ -5,8 +5,8 @@
     />
 
     <navigation>
-      <span slot="title">Dashboard</span>
-      <h1 slot="extended_nav">Contest</h1>
+      <span slot="title">{{$vuetify.breakpoint.smAndUp ? 'Dashboard' : 'Contest'}}</span>
+      <h1 slot="extended_nav" v-if="$vuetify.breakpoint.smAndUp">Contest</h1>
     </navigation>
 
     <v-snackbar v-model="snackbar.show" :timeout="10000" :color="snackbar.color" top right>
@@ -14,18 +14,20 @@
       <v-btn dark flat @click="snackbar.show = false"> Close</v-btn>
     </v-snackbar>
 
-    <v-container grid-list-lg>
-      <v-card class="round">
-      <loading-bar v-if="!ready" height="50vh"><div slot="loading_info">Loading...</div></loading-bar>
+    <v-container grid-list-lg v-if="!ready" :pa-0="$vuetify.breakpoint.xsOnly">
+      <v-card :class="{round:$vuetify.breakpoint.smAndUp}" :style="style2">
+      <loading-bar :height="$vuetify.breakpoint.xsOnly ? '70vh' : '50vh'"><div slot="loading_info">Loading...</div></loading-bar>
       </v-card>
     </v-container>
 
     <intro v-if="ready && elections.length == 0" :text='no_elections_text'></intro>
 
-    <v-container v-if="ready && elections.length > 0" grid-list-sm>
-      <v-card class="round">
+    <v-container v-if="ready && elections.length > 0" 
+      grid-list-sm :pa-0="$vuetify.breakpoint.xsOnly">
+      
+      <v-card class="contest_main_card" :class="{round:$vuetify.breakpoint.smAndUp}">
         <v-stepper v-model="e5" dark class="white">
-          <v-stepper-header class="grey">
+          <v-stepper-header :class="{grey:$vuetify.breakpoint.smAndUp,teal:$vuetify.breakpoint.xsOnly}">
             <v-stepper-step :complete="e5 > 1" step="1">Select election</v-stepper-step>
             <v-divider></v-divider>
             <v-stepper-step :complete="e5 > 2" step="2">Choose a position</v-stepper-step>
@@ -34,15 +36,15 @@
             <v-divider></v-divider>
             <v-stepper-step :complete="e5 > 4" step="4">Finish</v-stepper-step>
           </v-stepper-header>
-          <v-stepper-items>
+          <v-stepper-items :style="style1">
             <v-stepper-content step="1">
-              <v-card class="" light color="grey lighten-5" style="min-height:250px;"  flat tile>
+              <v-card class="" light color="grey lighten-5" style="min-height:240px;"  flat tile>
                 <v-card-text>Select the election you want to contest in to continue</v-card-text>
                 <v-container>
                   <v-layout row>
                     <v-flex xs12 sm6>
                       <v-select required small v-model="selectedElection"
-                        :items="elections" color="pink"
+                        :items="elections" color="secondary" outline
                         item-text="title"
                         return-object hint='you can contest in only elections you have enrolled in'
                         persistent-hint
@@ -71,11 +73,11 @@
                 <v-container>
                   <v-layout row wrap>
                     <v-flex xs12 sm6>
-                      <v-select :items="selectedElection.roles" label="Select role" 
+                      <v-select :items="selectedElection.roles" outline label="Select role" color="secondary" 
                         v-model="selectedRole" item-text="title" return-object>
                       </v-select>
                       <span class="d-block my-4">If you are authorized to contest, you will be given a token, provide the token below</span>
-                      <v-text-field label="token" v-model="contestant.acstoken"></v-text-field>
+                      <v-text-field label="token" v-model="contestant.acstoken" outline color="secondary"></v-text-field>
                     </v-flex>
                   </v-layout>
                 </v-container>
@@ -122,16 +124,42 @@
                 <v-card-text>
                   <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic vitae architecto id veritatis deserunt molestiae eum iste porro, distinctio tenetur doloribus repellat! Soluta ex ad nesciunt ab impedit? Velit, mollitia?</p>
                 </v-card-text>
-              </v-card>
+                <v-card-actions>
 
-              <v-btn color="success" :to="`/watch/${selectedElection.electionId}`">Create Manifesto</v-btn>
-              <v-btn color="secondary" :to="`/forum/${selectedElection.electionId}`">Forum</v-btn>
+                  <v-btn color="secondary" @click="$store.dispatch('curRoom', election)"
+                    v-if="curRoom && curRoom.electionId != selectedElection.electionId">
+                    Switch current election
+                  </v-btn>
+                  <template v-if="curRoom && curRoom.electionId == selectedElection.electionId">
+                    <v-btn color="success" to="/forum">Join the conversation</v-btn>
+                    <v-btn color="success" to="/elections/vote">Vote</v-btn>
+                  </template>
+
+                </v-card-actions>
+              </v-card>
             </v-stepper-content>
           </v-stepper-items>
         </v-stepper>
       </v-card>
     </v-container>
     
+    <!-- APPLICATION FOR CONTESTANT DIALOG -->
+    <v-dialog
+      v-model="loading"
+      persistent
+      width="300"
+    >
+      <v-card color="secondary" dark flat>
+        <v-card-text>
+          Application in progress
+          <v-progress-linear
+            indeterminate
+            color="white"
+            class="mb-0"
+          ></v-progress-linear>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 <script>
@@ -154,7 +182,28 @@ export default {
     }
   }),
   computed:{
-    
+    ...mapGetters([
+      'getUser',
+      'getUserInfo',
+      'getMyEnrolled'
+    ]),
+    ...mapState([
+      'curRoom',
+    ]),
+    style1(){
+      if(this.$vuetify.breakpoint.xsOnly){
+        return {
+          "min-height": 'calc(100vh - 128px) !important'
+        }
+      }
+    },
+    style2(){
+      if(this.$vuetify.breakpoint.xsOnly){
+        return {
+          "min-height": 'calc(100vh - 56px) !important'
+        }
+      }
+    },
     disabled(){
       return !this.contestant.acstoken  || !this.selectedRole || !this.selectedElection
     }
@@ -179,11 +228,19 @@ export default {
       });
     },
     async contest(){
-  
+      let has_contested = this.getUserInfo.contests && 
+        !!this.getUserInfo.contests.find(eId => eId == this.selectedElection.electionId)
+
+      console.log(this.getUserInfo, has_contested)
       if(this.contestant.acstoken != this.selectedRole.value){
         
         this.snackbar = {
-          show:true,message:'Sorry, the token your provided is invalid',color:'error'
+          show: true, message: 'Sorry, the token your provided is invalid', color: 'error'
+        }
+      }
+      else if(has_contested){
+        this.snackbar = {
+          show: true, message:'Sorry, you are already a contestant in this election', color: 'error'
         }
       }
       else{
@@ -222,7 +279,7 @@ export default {
       }
     },
     truncateText(text){
-      console.log(text)
+      // console.log(text)
       return text ? text.replace(/(.{50})..+/, "$1...") : ''
     },
   },
@@ -231,7 +288,8 @@ export default {
       if (user) {
         // User is signed in.
         console.log(user)
-        this.getEnrolled(user)
+        this.elections = this.getMyEnrolled
+        this.ready = true
         
       } else {
         console.log('No user is signed in.')
@@ -248,6 +306,7 @@ import api from '@/services/api'
 import Navigation from '@/components/Navigation'
 import Intro from '@/components/Intro'
 import LoadingBar from '@/spinners/LoadingBar'
+import { mapGetters, mapState } from 'vuex';
 </script>
 <style lang="scss" scoped>
   //.v-stepper{

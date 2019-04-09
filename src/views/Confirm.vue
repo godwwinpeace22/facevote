@@ -133,7 +133,7 @@ export default {
         this.snackbar = {show:true,message:'Your password has been reset successfully', color:'purple'}
         app.auth().signInWithEmailAndPassword(accountEmail, newPassword);
         setTimeout(() => {
-          this.$router.push('/')
+          this.$router.push('/home')
         }, 2000);
 
       }).catch(error=> {
@@ -191,7 +191,7 @@ export default {
         this.snackbar = {show:true,message:'Your email address has been verified successfully', color:'purple'}
         
         setTimeout(() => {
-          this.$router.push('/')
+          this.$router.push('/home')
         }, 2000);
         
       }).catch(error=>{
@@ -225,6 +225,7 @@ export default {
     },
   },
   mounted(){
+    document.getElementById('welcome_logo').style.display = 'none'
     this.requestMode()
   },
   components:{

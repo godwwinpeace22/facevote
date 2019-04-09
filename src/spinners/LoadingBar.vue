@@ -6,13 +6,17 @@
           <v-layout align-center justify-center fill-height>
             <div>
               <slot name='loading_info'></slot>
-              <v-progress-circular indeterminate color="accent" v-if="spinnerType == 'circle'"></v-progress-circular>
+              <v-progress-circular indeterminate :color="color" v-if="spinnerType == 'circle'"></v-progress-circular>
               <div class="spinner" v-if="spinnerType == 'bars'">
                 <div class="rect1"></div>
                 <div class="rect2"></div>
                 <div class="rect3"></div>
                 <div class="rect4"></div>
                 <div class="rect5"></div>
+              </div>
+              <div class="spinner2" v-if="spinnerType == 'bounce'">
+                <div class="double-bounce1"></div>
+                <div class="double-bounce2"></div>
               </div>
             </div>
           </v-layout>
@@ -31,7 +35,11 @@ export default {
     },
     spinnerType:{
       type:String,
-      default:'bars'
+      default:'circle'
+    },
+    color: {
+      type: String,
+      default: 'accent'
     },
     background:{
       type:String,
@@ -108,6 +116,51 @@ export default {
   }  20% { 
     transform: scaleY(1.0);
     -webkit-transform: scaleY(1.0);
+  }
+}
+
+
+
+.spinner2 {
+  width: 40px;
+  height: 40px;
+
+  position: relative;
+  margin: 100px auto;
+}
+
+.double-bounce1, .double-bounce2 {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: #333;
+  background-color: #8BC34A;
+  opacity: 0.6;
+  position: absolute;
+  top: 0;
+  left: 0;
+  
+  -webkit-animation: sk-bounce 2.0s infinite ease-in-out;
+  animation: sk-bounce 2.0s infinite ease-in-out;
+}
+
+.double-bounce2 {
+  -webkit-animation-delay: -1.0s;
+  animation-delay: -1.0s;
+}
+
+@-webkit-keyframes sk-bounce {
+  0%, 100% { -webkit-transform: scale(0.0) }
+  50% { -webkit-transform: scale(1.0) }
+}
+
+@keyframes sk-bounce {
+  0%, 100% { 
+    transform: scale(0.0);
+    -webkit-transform: scale(0.0);
+  } 50% { 
+    transform: scale(1.0);
+    -webkit-transform: scale(1.0);
   }
 }
 </style>

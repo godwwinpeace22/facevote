@@ -12,13 +12,13 @@
     </v-container>
 
     <!-- carousel dialog -->
-    <v-dialog v-model="carousel_dialog"
+    <!-- <v-dialog v-model="carousel_dialog"
       fullscreen transition="dialog-transition">
-      <v-toolbar dense flat color="grey" tile>
+      <v-toolbar dense flat color="dark" tile>
         <v-toolbar-title class="white--text">Media files</v-toolbar-title>
         <v-spacer></v-spacer>
-        <v-btn color="" dark icon @click="carousel_dialog = false">
-          <v-icon>close</v-icon>
+        <v-btn color="" dark large icon @click="carousel_dialog = false">
+          <v-icon large>close</v-icon>
         </v-btn>
       </v-toolbar>
       <template>
@@ -30,7 +30,7 @@
                 <v-icon>chevron_left</v-icon>
               </v-btn>
             </v-flex>
-            <v-flex xs12 sm10 md8>
+            <v-flex xs12 sm10 md4>
               <v-window v-model="onboarding">
                 <v-window-item v-for="(image,n) in carousel_images" :key="`card-${n}`">
                   <v-card color="transparent" max-height="500" flat>
@@ -67,7 +67,7 @@
           </v-card-actions>
         </v-card>
       </template>
-    </v-dialog>
+    </v-dialog> -->
 
   </div>
 </template>
@@ -81,9 +81,12 @@ export default {
   props:[],
   methods:{
     carouselDialog(images,index){
-      this.carousel_dialog = true
-      this.carousel_images = images
-      this.onboarding = index
+      // this.carousel_dialog = true
+      // this.carousel_images = images
+      // this.onboarding = index
+      this.$eventBus.$emit('Open_Image_Gallery', {
+        images, index
+      })
     },
     next () {
       this.onboarding = this.onboarding + 1 === this.carousel_images.length

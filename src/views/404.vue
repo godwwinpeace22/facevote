@@ -24,6 +24,9 @@ export default {
     Navigation,
     footr:Footer
   },
+  mounted(){
+    document.getElementById('welcome_logo').style.display = 'none'
+  }
 }
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'

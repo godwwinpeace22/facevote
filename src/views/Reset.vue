@@ -112,7 +112,7 @@ export default {
     }
   },
   async mounted(){
-    
+    document.getElementById('welcome_logo').style.display = 'none'
   }
 }
 

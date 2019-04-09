@@ -16,11 +16,7 @@ global.app = firebase.initializeApp(config);
 global.db = firebase.firestore();
 global.database = firebase.database();
 
-db.settings({
-  timestampsInSnapshots: true
-});
-
-firebase.firestore().enablePersistence()
+firebase.firestore().enablePersistence({experimentalTabSynchronization:true})
 .catch(function(err) {
   if (err.code == 'failed-precondition') {
     // Multiple tabs open, persistence can only be enabled

@@ -6,8 +6,8 @@
       {{ snackbar.message }}
       <v-btn dark flat color="white" @click="snackbar = null"> Close</v-btn>
     </v-snackbar>
-
-    <v-stepper v-model="e6" vertical style="background:#fff;box-shadow:none;" class="d-block">
+    <v-subheader v-if="no_contestants">No contestants</v-subheader>
+    <v-stepper v-model="e6" vertical style="background:#fff;box-shadow:none;" class="d-block" v-if="showUi">
       <span v-for="i in steps" :key="i">
         <v-stepper-step :complete="e6 > i" :step="i" editable>
           {{roles[i-1] ? roles[i-1].title : ''}}
@@ -20,9 +20,9 @@
 
         <v-stepper-content :step="i">
           <v-card color="grey lighten-3" class="mb-5" style="min-height:200px;" 
-            v-if="contestants.length > 0 && contestantsByRoles[roles[i-1].value].length > 0">
+            v-if="contestants.length > 0 && contestantsByRoles[roles[i-1].value] && contestantsByRoles[roles[i-1].value].length > 0">
             <v-layout row wrap mt-3>
-              <v-flex sm4 md3 v-for="contestant in contestantsByRoles[roles[i-1].token]" 
+              <v-flex sm4 md3 v-for="contestant in contestantsByRoles[roles[i-1].token]"  class="pb-4"
                 @click.stop="vote(contestant,$event,roles[i-1].title)" :class="roles[i-1].title" 
                 :ref="contestant.uid" :key="contestant.uid" style="min-height:200px;">
                 
@@ -61,6 +61,8 @@ export default {
   data:()=>({
     e6:1,
     steps: 5,
+    showUi: false,
+    no_contestants: false,
     roles:'',
     myVote:{},
     contestantsByRoles:{},
@@ -112,7 +114,7 @@ export default {
         
         for(var i= 0; i<elems.length;i++){
           elems[i].style.backgroundColor = ''
-          elems[i].style.paddingBottom = ''
+          // elems[i].style.paddingBottom = ''
         }
 
         // disable vote submissin if voter has not voted for all roles
@@ -123,15 +125,15 @@ export default {
         
 
         this.$refs[contestant.uid][0].style.backgroundColor = ''
-        this.$refs[contestant.uid][0].style.paddingBottom = '23px'
+        // this.$refs[contestant.uid][0].style.paddingBottom = '23px'
       }
       else{
         for(var i= 0; i<elems.length;i++){
           elems[i].style.backgroundColor = ''
-          elems[i].style.paddingBottom = ''
+          // elems[i].style.paddingBottom = ''
         }
         this.$refs[contestant.uid][0].style.backgroundColor = 'yellow'
-        this.$refs[contestant.uid][0].style.paddingBottom = '23px'
+        // this.$refs[contestant.uid][0].style.paddingBottom = '23px'
 
         this.myVote[role] = contestant.uid
         //this.$eventBus.$emit('Someone_Is_Voting', {user:this.$store.getters.getUser, room:this.currElection.electionId})
@@ -236,13 +238,19 @@ export default {
     console.log(this.roles)
     console.log(this.contestants)
     if(this.contestants.length > 0){
+
       this.contestants.forEach(contestant=>{
       
         let thisContest = contestant.contestsRef.find(contest => contest.electionRef == this.currElection.electionId)
         this.contestantsByRoles[thisContest.role] ? '' : this.contestantsByRoles[thisContest.role] = []
       
         this.contestantsByRoles[thisContest.role].push(contestant)
+        this.showUi = true
       })
+      console.log(this.contestantsByRoles)
+    }
+    else{
+      this.no_contestants = true
     }
     
   },

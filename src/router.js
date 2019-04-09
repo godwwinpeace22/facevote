@@ -1,7 +1,6 @@
+/* global firebase: false */ // tells eslint to treat 'db' as a globally defined variable, and that it should not be written to
 import Vue from 'vue'
   import Router from 'vue-router'
-  import Home from './views/Home.vue'
-  import About from './views/About.vue'
   import Dashboard from '@/views/Dashboard'
   import Feed from '@/components/Feed'
   import ReadPost from '@/components/ReadPost'
@@ -10,75 +9,64 @@ import Vue from 'vue'
   import Contest from '@/components/Contest'
   import CreateElection from '@/components/CreateElection'
   import ManageElection from '@/components/ManageElection'
-  import EditElection from '@/components/EditElection'
-  import ElectionManager from '@/components/ElectionManager'
   import NewManifesto from '@/components/NewManifesto'
   import EditManifesto from '@/components/EditManifesto'
   import Watch from '@/components/Watch'
-  import Vote from '@/components/Vote'
-  import Results from '@/components/Results'
   import ForumUsers from '@/components/ForumUsers'
   import ForumUsersProfile from '@/components/ForumUsersProfile'
-  import SelectForum from '@/components/SelectForum'
-  import SelectElection from '@/components/SelectElection'
   import User__overview from '@/components/User__overview'
-  import User__broadcasts from '@/components/profile/User__broadcasts'
-  import User__posts from '@/components/profile/User__posts'
-  import User__manifesto from '@/components/User__manifesto'
-  import User__payments from '@/components/User__payments'
-  import User__preferences from '@/components/User__preferences'
-  import Manager__overview from '@/components/manager/Manager__overview'
-  import Manager__broadcasts from '@/components/manager/Manager__broadcasts'
-  import Manager__payments from '@/components/manager/Manager__payments'
-  import Manager__settings from '@/components/manager/Manager__settings'
-  import Default from '@/templates/Default'
   import Users from '@/views/Users'
   import Login from '@/views/Login'
   import ResetPassword from '@/views/ResetPassword'
-  //import Reset from '@/views/Reset'
   import Signup from '@/views/Signup'
   import Confirm from '@/views/Confirm'
   import Verify from '@/views/Verify'
   import NotFound from '@/views/404'
-  import store from '@/store/store'
   import NProgress from 'nprogress'
   import './plugins/firebase';
+  import $helpers from '@/helpers/helpers'
 Vue.use(Router)
 
-//console.log(firebase)
-//console.log(About)
-let isLoggedIn = firebase.auth().onAuthStateChanged((user)=>{
-  if(user){
-    return true
-  }
-  else{
-    return null
-  }
-});
-
 const requireAuth = async (to, from, next) => {
-
   firebase.auth().onAuthStateChanged((user)=>{
-    if(user){
+    if(user && user.emailVerified){
+      $helpers.myEnrolled(user, false).then(() =>{
+        next() 
+      }).catch(() => {})
       next()
     }
     else{
+      firebase.auth().signOut()
       next('/login')
     }
   });
   
 }
-const requireLogout = async (to, from, next) =>{ // if ther user is not logged in
-  console.log('islgdin: ', await isLoggedIn)
-  firebase.auth().onAuthStateChanged((user)=>{
-    if(user){
-      next('/')
-    }
-    else{
-      next()
-    }
-  });
-}
+
+
+// const requiresPremiumAccess = async (to, from, next) =>{ // if ther user is not logged in
+//   //console.log('islgdin: ', await isLoggedIn)
+//   firebase.auth().currentUser.getIdTokenResult()
+//     .then((idTokenResult) => {
+      
+//       // console.log(idTokenResult.claims)
+//       idTokenResult.claims.superuser ? next() :
+//       next('/notFound')
+      
+      
+//     })
+// }
+// const requireLogout = async (to, from, next) =>{ // if ther user is not logged in
+
+//   firebase.auth().onAuthStateChanged((user)=>{
+//     if(user){
+//       next('/')
+//     }
+//     else{
+//       next()
+//     }
+//   });
+// }
 
 // The route guard is intentionally put in each component instead of the root to allow non-loggedin users
 // to be able to see others profile
@@ -86,30 +74,31 @@ const router = new Router({
   //mode:'history',
   routes: [
     {
-      path:'/',
+      path:'/home',
       component:Dashboard,
-      beforeEnter:requireAuth,
       children:[
         
         {
           path:'',
           name:'feed',
-          component:Feed
+          component:Feed,
+          beforeEnter: requireAuth,
         },
         {
-          path:'feed/:postId',
+          path:'/feed/:postId',
           name:'readfeed',
           props:true,
-          component:ReadPost
+          component:ReadPost,
+          beforeEnter:requireAuth,
         },
         {
-          path:'enroll',
+          path:'/enroll',
           name:'enroll',
           component:Enroll,
           beforeEnter:requireAuth,
         },
         {
-          path:'verify',
+          path:'/verify',
           name:'verify_acc',
           component:Verify,
           beforeEnter:requireAuth,
@@ -125,36 +114,18 @@ const router = new Router({
           path:'/users/:email',
           component:Users,
           props:true,
+          beforeEnter: requireAuth,
           children:[
             {
               path:'',
-              component:User__overview
-            },
-            {
-              path:'broadcasts',
-              component:User__broadcasts
-            },
-            {
-              path:'posts',
-              component:User__posts
-            },
-            {
-              path:'manifesto',
-              component:User__manifesto
-            },
-            {
-              path:'payments',
-              component:User__payments
-            },
-            {
-              path:'preferences',
-              component:User__preferences
-            },
+              component:User__overview,
+              // beforeEnter: requiresPremiumAccess
+            }
           ]
         },
         
         {
-          path:'forum/:electionId',
+          path:'/forum',
           component:Forum,
           beforeEnter:requireAuth,
           children:[
@@ -178,56 +149,56 @@ const router = new Router({
           ]
         },
         {
-          path:'contest',
+          path:'/contest',
           name:'contest',
           component:Contest,
           beforeEnter:requireAuth,
         },
         {
-          path:'manifesto/create',
+          path:'/manifesto/create',
           name:'addmanifesto',
           component:NewManifesto,
           beforeEnter:requireAuth,
         },
         {
-          path:'manifesto/edit',
+          path:'/manifesto/edit',
           name:'editmanifesto',
           component:EditManifesto,
           beforeEnter:requireAuth,
         },
         {
-          path:'elections/manage',
+          path:'/elections/manage',
           name:'manage',
           component:ManageElection,
           beforeEnter:requireAuth,
         },
+        // {
+        //   path:'elections/manage/:electionId',
+        //   component:ElectionManager,
+        //   props:true,
+        //   beforeEnter:requireAuth,
+        //   children:[
+        //     {
+        //       path:'',
+        //       component:Manager__overview,
+        //       name:'edit-election',
+        //     },
+        //     {
+        //       path:'broadcasts',
+        //       component:Manager__broadcasts
+        //     },
+        //     {
+        //       path:'payments',
+        //       component:Manager__payments
+        //     },
+        //     {
+        //       path:'settings',
+        //       component:Manager__settings
+        //     }
+        //   ]
+        // },
         {
-          path:'elections/manage/:electionId',
-          component:ElectionManager,
-          props:true,
-          beforeEnter:requireAuth,
-          children:[
-            {
-              path:'',
-              component:Manager__overview,
-              name:'edit-election',
-            },
-            {
-              path:'broadcasts',
-              component:Manager__broadcasts
-            },
-            {
-              path:'payments',
-              component:Manager__payments
-            },
-            {
-              path:'settings',
-              component:Manager__settings
-            }
-          ]
-        },
-        {
-          path:'elections/create',
+          path:'/elections/create',
           name:'create_election',
           component:CreateElection,
           beforeEnter:requireAuth,
@@ -241,17 +212,10 @@ const router = new Router({
         },*/
 
         {
-          path:'elections/watch/:electionId',
+          path:'/elections/vote',
           component:Watch,
           beforeEnter:requireAuth,
           props:true,
-        },
-        {
-          path:'elections/results/:electionId',
-          name:'results',
-          component:Results,
-          beforeEnter:requireAuth,
-          props:true
         },
         {
           path:'/notFound',
@@ -264,7 +228,7 @@ const router = new Router({
       path:'/login',
       name:'login',
       component:Login,
-      beforeEnter:requireLogout
+      // beforeEnter:requireLogout
     },
     {
       path:'/signup',
@@ -304,7 +268,7 @@ router.beforeEach((to, from, next) => {
   }
 });
 
-router.afterEach((to, from) => {
+router.afterEach(() => {
   // Complete the animation of the route progress bar.
   NProgress.done()
 })

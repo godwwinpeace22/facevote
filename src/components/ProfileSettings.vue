@@ -1,14 +1,14 @@
 <template>
   <v-card tile color="grey lighten-3">
     <v-toolbar card dark color="teal">
-      <v-btn icon dark v-show="$vuetify.breakpoint.smAndUp"
+      <v-btn icon dark class="hidden-md-and-up"
         @click.native="$eventBus.$emit('hide_profile_settings', {})">
-        <v-icon>close</v-icon>
+        <v-icon>chevron_left</v-icon>
       </v-btn>
-      <v-toolbar-title>Settings</v-toolbar-title>
+      <v-toolbar-title>{{title}}</v-toolbar-title>
       <v-spacer></v-spacer>
       
-      <v-btn dark :small="$vuetify.breakpoint.xs" tile color="grey lighten-1" :disabled="loading" outline @click.native="$eventBus.$emit('hide_profile_settings', {})">Cancel</v-btn>
+      <v-btn dark :small="$vuetify.breakpoint.xs" class="hidden-sm-and-down" tile color="grey lighten-1" :disabled="loading" outline @click.native="$eventBus.$emit('hide_profile_settings', {})">Cancel</v-btn>
       <v-btn depressed color="orange" @click.native="updateProfile" :loading="loading">Save</v-btn>
     </v-toolbar>
 
@@ -18,15 +18,15 @@
       <v-btn dark flat :color="snackbar.color == 'error' ? 'black' : 'orange'" @click="snackbar.show = false"> Close</v-btn>
     </v-snackbar>
     
-    <v-card-text>
+    <v-card-text class="pa-0">
       <v-layout row wrap>
 
         <v-flex sm4 xs12 order-sm2>
-          <v-container>
+          <v-container :pa-0="$vuetify.breakpoint.xsOnly">
             <v-layout row justify-center>
               <v-flex xs12>
                 
-                <v-card tile style="min-height:400;">
+                <v-card tile :flat="$vuetify.breakpoint.xsOnly">
                   <v-hover :class="{profile_card: selected_file}">
                     <v-container slot-scope="{ hover }">
                       <v-img :src="blob_url || getUser.photoURL || `https://ui-avatars.com/api/?name=${getUser.displayName}&size=300`" max-height="250" @click="openFileSelect">
@@ -51,7 +51,7 @@
                   </v-container>
                 </v-card>
                 
-                <input type="file" style="visibility:hidden;" id="file" @change="onFileSelect($event)" accept="image/jpeg,image/png"/>
+                <input type="file" style="visibility:hidden;position: absolute;" id="file" @change="onFileSelect($event)" accept="image/jpeg,image/png"/>
               </v-flex>
             </v-layout>
           </v-container>
@@ -59,11 +59,11 @@
 
         <v-flex sm8 xs12>
 
-          <v-container grid-list-md>
+          <v-container grid-list-md :pa-0="$vuetify.breakpoint.xsOnly">
             <v-layout row wrap>
               <v-flex xs12 sm10 offset-sm1>
-                <v-card>
-                  <v-card-text>Basic Info</v-card-text>
+                <v-card :flat="$vuetify.breakpoint.xsOnly">
+                  <v-subheader>Basic Info</v-subheader>
                   <v-card-text>
                     <v-text-field class="mb-4" required small v-model="form.name" style="text-transform:capitalize"
                       color="secondary" browser-autocomplete="name" :placeholder="getUser.displayName" 
@@ -86,10 +86,10 @@
             </v-layout>
           </v-container>
 
-          <v-container>
+          <v-container :pa-0="$vuetify.breakpoint.xsOnly">
             <v-layout row wrap justify-center>
               <v-flex xs12 sm10 offset-sm-3>
-                <v-card tile>
+                <v-card tile :flat="$vuetify.breakpoint.xsOnly">
                   <v-card-title>School</v-card-title>
                   <v-card-text>
                     
@@ -103,19 +103,19 @@
                       <template v-if="getUserInfo && getUserInfo.was_once_a_student">
                         <v-flex xs8 d-flex>
                           <v-text-field class="mb-4" disabled small style="text-transform:capitalize"
-                            color="secondary" :placeholder="getUserInfo ? getUserInfo.school : ''" 
+                            color="secondary" :placeholder="getUserInfo ? getUserInfo.sch : ''" 
                             label="Your School">
                           </v-text-field>
                         </v-flex>
                         <v-flex xs8 d-flex>
                           <v-text-field class="mb-4" disabled small style="text-transform:capitalize"
-                            color="secondary" :placeholder="getUserInfo ? getUserInfo.faculty : ''" 
+                            color="secondary" :placeholder="getUserInfo ? getUserInfo.fac : ''" 
                             label="Your Faculty">
                           </v-text-field>
                         </v-flex>
                         <v-flex xs8 d-flex>
                           <v-text-field class="mb-4" disabled small style="text-transform:capitalize"
-                            color="secondary" :placeholder="getUserInfo ? getUserInfo.department : ''" 
+                            color="secondary" :placeholder="getUserInfo ? getUserInfo.dept : ''" 
                             label="Your Department">
                           </v-text-field>
                         </v-flex>
@@ -185,13 +185,17 @@ export default {
   computed: {
     // Mix your getter(s) into computed with the object spread operator
     ...mapGetters([
-      'isAuthenticated',
-      'getToken',
       'getUser',
       'getUserInfo',
       'getSchools'
       // ...
     ]),
+    ...mapState([
+      'isSuperUser',
+    ]),
+    title(){
+      return this.isSuperUser ? 'Settings' : 'My Profile'
+    }
   },
   methods:{
     openFileSelect(){
@@ -281,14 +285,14 @@ export default {
         }
         else{
           let update = await userRef.update({
-            name:this.form.name || this.getUser.displayName,
+            name: this.form.name || this.getUser.displayName,
             //email:this.form.email || this.getUser.email,
-            phone:this.form.phone || this.getUserInfo.phone,
-            is_student:this.form.is_student,
-            was_once_a_student:this.form.is_student,
-            school:this.form.school.text || this.getUserInfo.school,
-            faculty:this.form.faculty.text || this.getUserInfo.faculty,
-            department:this.form.department.text || this.getUserInfo.department
+            phone: this.form.phone || this.getUserInfo.phone,
+            is_student: this.form.is_student,
+            was_once_a_student: this.form.is_student,
+            sch: this.form.school.text || this.getUserInfo.sch,
+            fac: this.form.faculty.text || this.getUserInfo.fac,
+            deptt: this.form.department.text || this.getUserInfo.dept
           });
           console.log(update)
         }
@@ -320,7 +324,7 @@ export default {
     async setUp(data){
       try {
         if(!this.getUserInfo){
-          let userDetails = db.collection('moreUserInfo').doc(this.getUser.email);
+          let userDetails = db.collection('moreUserInfo').doc(this.getUser.uid);
           let getDoc = await userDetails.get()
           
           this.$store.dispatch('setUserInfo',getDoc.data())
@@ -348,7 +352,7 @@ export default {
 }
 
 import api from '@/services/api'
-import { mapGetters } from 'vuex'
+import { mapGetters, mapState } from 'vuex'
 </script>
 
 <style scss>

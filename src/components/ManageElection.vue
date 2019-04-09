@@ -100,7 +100,7 @@
           <v-subheader class="body-2 pl-0">Elections you contested in</v-subheader>
           <v-card class="pa-4 round" style="min-height:300px;">
             <v-layout row wrap mt-3 >
-              <v-flex xs12 sm6 md4 v-for="(contest,index) in myContestedElc" :key="index" mb-2 px-2 v-if="contest">
+              <v-flex xs12 sm6 md4 v-for="(contest,index) in myContestedElc" :key="index" mb-2 px-2>
                 <v-card color="" class="" dark height="200" hover >
                   <v-layout row>
                     <v-flex xs12>

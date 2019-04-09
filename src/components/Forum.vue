@@ -1,14 +1,30 @@
 <template>
-  <div style="background:gre;height:;overflow:hidden;margin-top:;" class="navdrawr">
+  <div style="overflow:hidden;" class="navdrawr">
     <vue-headful
       :title="title"
     />
     <navigation>
-      <span slot="title">{{$vuetify.breakpoint.smAndDown ? this_group.title : 'Forum'}}</span>
+      <span slot="title">{{this_group.title}}</span><br>
+      <span>ElectionId: {{this_group.electionId}}</span>
+
+      <v-menu offset-y slot="nav_item">
+        <v-btn icon slot="activator"
+          v-show="$vuetify.breakpoint.mdAndUp">
+          <v-icon color="">info</v-icon>
+        </v-btn>
+        <v-list dense>
+          <v-list-tile @click="media_dialog = true">
+            <v-list-tile-title>Media files</v-list-tile-title>
+          </v-list-tile>
+          <v-list-tile @click="''">
+            <v-list-tile-title>Settings</v-list-tile-title>
+          </v-list-tile>
+        </v-list>
+      </v-menu>
+
       <v-toolbar slot="extended_nav" color="teal" dark flat
-        style='background-color:#29648a;' dense>
-        <v-tabs v-model="model" color="teal" 
-          v-if="$vuetify.breakpoint.smAndDown" slider-color="yellow">
+        v-if="$vuetify.breakpoint.smAndDown" style='background-color:#29648a;' dense>
+        <v-tabs v-model="model" color="teal" slider-color="yellow">
           <v-tab
             v-for="item in ['Chat','Members','Media']"
             :key="item"
@@ -17,24 +33,6 @@
             {{ item }}
           </v-tab>
         </v-tabs>
-        <template v-else>
-          <h1>{{this_group.title}}</h1>
-          
-        </template>
-        <v-spacer></v-spacer>
-        
-        <v-menu offset-y>
-          <v-btn icon slot="activator"
-            v-show="$vuetify.breakpoint.mdAndUp">
-            <v-icon size="30">menu</v-icon>
-          </v-btn>
-          <v-list>
-            <v-list-tile @click="media_dialog = true">
-              <v-list-tile-title>Media files</v-list-tile-title>
-            </v-list-tile>
-          </v-list>
-        </v-menu>
-        
       </v-toolbar>
     </navigation>
 
@@ -58,12 +56,12 @@
         
             <v-form @submit.prevent='submit' style="margin-left:px;background:#fff;" class="px-2">
               <v-textarea v-model="message" color="deep-purple" @keyup.shift.50="mention_dialog = true" 
-                @keypress="isTyping" id="form" :disabled="!canSendMessages"
+                 id="form" :disabled="!canSendMessages"
                 :label="canSendMessages ? 'Type a message' : 'You cannot send messages in this group'" outline 
-                rows="1" auto-grow
+                rows="1" auto-grow hide-details
               >
               <v-tooltip top slot="append" v-show="!message.trim()">
-                <v-btn icon slot="activator" @click='triggerFileSelect'>
+                <v-btn icon slot="activator" @click='$helpers.trigFileSelector'>
                   <v-icon color="success">photo_camera</v-icon>
                 </v-btn>
                 <span>Send a photo</span>
@@ -82,27 +80,29 @@
               </v-tooltip>
 
               <!-- EMOJIS DIALOG-->
-              <v-menu max-width="300" :close-on-content-click='false'
-                slot="prepend-inner" max-height="300" top offset-y>
+              <v-menu max-width="380" :close-on-content-click='false'
+                slot="prepend-inner" max-height="" top offset-y>
 
                 <v-btn slot="activator" icon >
                   <v-icon color="success">mood</v-icon>
                 </v-btn>
-                <v-card class="pa-0">
-                  <v-card-text >
+                <v-card class="">
+                  <picker set="google" @select="appendEmoji" :native="true" 
+                    title="Choose Emoji" emoji="grinning"/>
+                  <!-- <v-card-text >
                     <v-btn small flat color="primary" icon v-for="(emoji,i) in emojis" :key="i" @click="appendEmoji(emoji)">
                       <span style="font-size:30px;display:block;margin-top:-7px;">{{emoji}}</span>
                     </v-btn>
-                  </v-card-text>
+                  </v-card-text> -->
                 </v-card>
               </v-menu>
 
               <!-- MENTION MEMBER -->
               <v-menu width="500"  :close-on-content-click='false' 
-                attach="chat_input" id="mention" slot="append" max-height="500" 
+               id="mention" slot="append" max-height="500" 
                 left top offset-y v-model="mention_dialog">
                 <v-card class="pa-0" flat>
-                  <v-toolbar flat dense color="cyan"></v-toolbar>
+                  <v-toolbar flat dense color="cyan" dark>Mention Someone</v-toolbar>
                   <div :style="styleMention" class="navdrawr my-1">
                     <v-list subheader dense>
                       <v-subheader v-show="members.length == 0">No results found</v-subheader>
@@ -132,8 +132,6 @@
             </v-form>
           </div>
         </div>
-        <input id="file_input" accept="image/jpeg,image/png" multiple
-          type="file" ref="file_input" style="visibility:hidden" @change="triggerFileModal($event)" />
       </v-tab-item>
       <v-tab-item value="Members" v-if="$vuetify.breakpoint.smAndDown" :style="styleForTabs">
         <router-view :members='members' v-if="ready" :thisGroup='this_group'></router-view>
@@ -260,6 +258,9 @@ export default {
         this.ready = false
         this.setCurrRoom()
       }
+    },
+    curRoom: function(){
+      this.setCurrRoom()
     }
   },
   computed: {
@@ -268,9 +269,12 @@ export default {
     },
     // Mix your getter(s) into computed with the object spread operator
     ...mapGetters([
-      'isAuthenticated',
-      'token',
-      'getUser'
+      'getUser',
+      'getUserInfo'
+    ]),
+    ...mapState([
+      'curRoom',
+      'isSuperUser'
     ]),
     canSendMessages(){
       // check if current user can send messages to current group
@@ -282,9 +286,9 @@ export default {
     },
     styleInput(){
       if(this.$vuetify.breakpoint.smAndDown){
-        return {position:'fixed',bottom:'0px',width:'100%'}
+        return {position:'fixed',bottom:'5px',width:'100%'}
       }else{
-        return {position:'fixed',bottom:'0px',width:'calc(100% - 520px)'}
+        return {position:'fixed',bottom:'5px',width:'calc(100% - 530px)'}
       }
     },
     styleMention(){
@@ -303,30 +307,18 @@ export default {
         return {height:'calc(100vh - 112px)'}
       }
       else{
-        return {height:'calc(100vh - 128px)'}
+        return {height:'calc(100vh - 91px)'}
       }
     }
     
   },
 
   methods: {
-    findARoom(){
-      return new Promise((resolve,reject)=>{
-        db.collection('elections')
-        .doc(this.$route.params.electionId).get().then(doc=>{
-          if(!doc.exists){
-            reject('No such document')
-          }else{
-            resolve(doc.data())
-          }
-          
-        }).catch(err=> reject({code:'NoDoc',message:err}))
-      })
-    },
+    
     retrieveMembers(){
       return new Promise((resolve,reject)=>{
         db.collection('moreUserInfo')
-        .where('enrolled','array-contains', this.$route.params.electionId)
+        .where('enrolled','array-contains', this.this_group.electionId)
         .limit(25)
         .onSnapshot(querySnapshot=>{
           this.members = []
@@ -334,6 +326,7 @@ export default {
             //console.log(doc.id, " => ", doc.data());
             this.members.push(doc.data())
           })
+          // console.log(this.members)
           resolve(this.members)
           //this.ready = true
         },err=>{
@@ -344,114 +337,41 @@ export default {
     // opens the chat window on select
     setCurrRoom(){
       
-      this.findARoom().then(room=>{
-        //console.log('room: ', room)
-        this.this_group = room
+      if(this.curRoom){
+        this.this_group = this.curRoom
 
         this.retrieveMembers().then(members=>{
           //console.log('members: ', members)
           this.ready = true;
         }).catch(error=>this.$router.push('/notFound'))
-      }).catch(err=>{
-        //console.log('err: ', err)
-        this.$router.push('/notFound')
-      })
-      
-    },
-    dispatchError(error){
-      console.log(error);
-    },
-    triggerFileSelect(){
-      //console.log('upload a file')
-      document.getElementById('file_input').click()
-    },
-    triggerFileModal(e){
-      let stop = true
-      let file_sizes = 0
-      for(let file of e.target.files){
-        if(file.type == 'image/jpeg' || 
-          file.type == 'image/jpg' || file.type == 'image/png'){
-            stop = false
-          
-        }
-        else{
-          stop = true
-          break
-        }
-        file_sizes += file.size
-      }
 
-      // Allow only images
-      if(!stop){
-        let one_mb = 1000000
-        // limit total file upload to 1mb
-        if(file_sizes < one_mb){
-          //console.log(e.target.files)
-          for(let file of e.target.files){
-            //console.log(file)
-            this.blob_urls.push(URL.createObjectURL(file))
-          }
-          this.files = e.target.files
-          this.file_dialog = true
-          //document.getElementById('file_input').value = ''
-         
-        }
-        else{
-          alert('Please select an image that is less than 1mb')
-        }
       }
       else{
-        alert('Only images are allowed!')
-        //this.disabled_file_btn = true
+        // this.$router.push('/notFound')
       }
+      
+      
+      
     },
     async uploadImages(){
       try {
-        this.file_dialog = false
         this.progress_dialog = true
-        let clUrl = `https://api.cloudinary.com/v1_1/${this.cloudinary.cloud_name}/upload`
-        let formData = new FormData()
-        let uploaded = []
-
-        for(let file of this.files){
-          formData.append('file', file)
-          formData.append('upload_preset',this.cloudinary.upload_preset)
-
-          let response = await api().post( clUrl,
-            formData,
-            {
-              headers: {
-                  'Content-Type': 'multipart/form-data'
-              }
-            }
-          )
-
-          uploaded.push(response.data.secure_url)
-        }
-
+        let uploaded = await this.$helpers.uploadImage(this.files, this.cloudinary)
         this.progress_dialog = false
-        this.submit(this.file_message,uploaded)
+        this.submit(this.file_message, uploaded)
         
       } catch (error) {
         this.progress_dialog = false
         //this.loading = false
-        this.snackbar.show = true
-        this.snackbar.color = 'error'
-        this.snackbar.message = 'Sorry, something went wrong, try again.'
+        this.snackbar = {
+          show: true,
+          color: 'error',
+          message: 'Sorry, something went wrong, try again.'
+        }
+        // eslint-disable-next-line
         console.log(error)
-        console.log(error.response)
       }
       
-    },
-    getSrc(voter){
-      // doing this so that when there is a profile update, the reactive user data will be updated here
-      return voter.username == this.getUser.username ? this.getUser.imgSrc : 
-      voter.imgSrc || `https://ui-avatars.com/api/?name=${voter.name}`
-    },
-    getName(voter){
-      // doing this so that when there is a profile update, the reactive user data will be updated here
-      let me = this.getUser
-      return voter.username == me.username ? me.name : voter.name
     },
     sendMessage () {
       this.submit(this.message, null)
@@ -463,44 +383,57 @@ export default {
       this.imgSrc = ''
     },
     async submit(message,images){
-      //console.log(this.$store.getters.getUser)
-      let timestamp = Date.now();
-      let msgId = btoa(Math.random()).substring(0,12)
-      let data = {
-        chat:message.trim(),
-        sender:this.$store.getters.getUser.uid,
-        name:this.$store.getters.getUser.displayName,
-        images:images, // this is for the uploaded image
-        timestamp:timestamp,
-        msgId:msgId,
-        reactions:{
-          like:[],love:[],wow:[],excited:[],haha:[],angry:[],
-        },
-        room:this.$route.params.electionId,
-        status:'unread'
+      try{
+        let docRef = db.collection('chat_messages').doc()
+        let data = {
+          onr: ['name', 'photoURL','email','sch','fac','dept','uid']
+            .reduce((a, e) => (a[e] = this.getUserInfo[e], a), {}),
+
+          tstamp: Date.now(),
+          body: message.trim(),
+          imgs: images, // this is for the uploaded image
+          docId: docRef.id,
+          elecRef: this.this_group.electionId,
+          reactions:{
+            like: 0,
+            love: 0,
+            wow: 0,
+            excited: 0,
+            haha: 0,
+            angry: 0,
+          }
+        }
+        
+        this.$store.dispatch('saveChatMessage', data)
+        
+        docRef.set(data)
+
+        this.scrollChat()
+        this.clearMessage()
+        // this.$eventBus.$emit('Scroll_Chat', 'data')
       }
-      
-      this.$store.dispatch('saveChatMessage', data)
-      db.collection('chat_messages').doc(data.msgId).set(data)
-      
-      this.clearMessage()
-      this.$eventBus.$emit('Scroll_Chat', 'data')
-    },
-    isTyping(){
-      // tell others that this user is typing.
-      this.$eventBus.$emit('Someone_Is_Typing',{
-        user:this.$store.getters.getUser.username,
-        room:this.$route.params.electionId
-      })
-      
+      catch(err){console.log(err)}
     },
     appendUser(member){
       this.message += ' @' + member.email + ' '
     },
     appendEmoji(emoji){
-      this.message += emoji
+      // console.log(emoji)
+      this.message += emoji.native
+    },
+    scrollChat(){
+       let doc = document.getElementById('chat_space')
+      doc ? doc.scrollTop = doc.scrollHeight - doc.clientHeight : ''
+      console.log(doc, doc.scrollTop)
     },
     
+  },
+  mounted(){
+    this.$eventBus.$on('Selected_Files', data=>{
+      this.file_dialog = true
+			this.files = data.selected_files,
+			this.blob_urls = data.imgSrc
+		})
   },
   created() {
     
@@ -525,11 +458,13 @@ export default {
     Navigation,
     ChatMedia,
     LoadingBar,
+    Picker,
   }
 }
 //import io from 'socket.io-client';
 import api from '@/services/api'
-  import {mapGetters} from 'vuex'
+  import {mapGetters, mapState} from 'vuex'
+  // import uuid from 'uuid/v4'
   import Settings from '@/components/Settings'
   import ForumUsers from '@/components/ForumUsers'
   import Chatwindow from '@/components/Chatwindow'
@@ -537,6 +472,7 @@ import api from '@/services/api'
   import Navigation from '@/components/Navigation'
   import ChatMedia from '@/components/ChatMedia'
   import LoadingBar from '@/spinners/LoadingBar'
+  import { Picker } from 'emoji-mart-vue'
 </script>
 <style lang="scss" scoped>
 .v-content{
@@ -572,18 +508,15 @@ nav{
 }
 
 /* --scrollbar --*/
-.navdrawr::-webkit-scrollbar {
-    width: 10px;
+.navdrawr::-webkit-scrollbar, .emoji-mart-scroll::-webkit-scrollbar {
+    width: 8px;
     background-color: #87899c ;
     @include borderRadius(10px)
   }
-.navdrawr::-webkit-scrollbar-track {
-  box-shadow: inset 0 0 6px #eae6e6;
-  -webkit-box-shadow: inset 0 0 6px #eae6e6;
-  -moz-box-shadow: inset 0 0 6px #eae6e6;
-  -o-box-shadow: inset 0 0 6px #eae6e6;
-  background-color: #f5f6fa ;
-  @include borderRadius(10px)
+.navdrawr::-webkit-scrollbar-track, .emoji-mart-scroll::-webkit-scrollbar-track {
+  
+  background-color: #ffff ;
+  // @include borderRadius(10px)
 }
 .navdrawr::-webkit-scrollbar-thumb {
   background-color:#87899c ;

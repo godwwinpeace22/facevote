@@ -2,18 +2,18 @@
   <div>
     <vue-headful :title="title" :description="description"/>
     <navigation>
-      <span slot="title">Dashboard</span>
-      <h1 slot="extended_nav">Create Election</h1>
+      <span slot="title">{{$vuetify.breakpoint.smAndUp ? 'Dashboard' : 'Create Election'}}</span>
+      <h1 slot="extended_nav" v-if="$vuetify.breakpoint.smAndUp">Create Election</h1>
     </navigation>
     <v-snackbar v-model="snackbar.show" dark :timeout="5000" :color="snackbar.color" top right>
       {{snackbar.message}}
       <v-btn dark color="white" flat @click="snackbar.show = false"> Close</v-btn>
     </v-snackbar>
 
-    <v-container :class="noPadding">
-      <v-card class="round" >
+    <v-container  :pa-0="$vuetify.breakpoint.xsOnly">
+      <v-card :class="{round:$vuetify.breakpoint.smAndUp}">
         <v-stepper v-model="e6" dark class="white">
-          <v-stepper-header class="grey">
+          <v-stepper-header :class="{grey:$vuetify.breakpoint.smAndUp,teal:$vuetify.breakpoint.xsOnly}">
             <v-stepper-step :complete="e6 > 1" step="1">
               Election info
               <small>General information about the election</small>
@@ -28,7 +28,7 @@
             <v-stepper-step :complete="e6 > 5" step="5">Done</v-stepper-step>
           </v-stepper-header>
         
-          <v-stepper-items>
+          <v-stepper-items :style="style1">
 
             <v-stepper-content step="1">
               <v-layout>
@@ -40,18 +40,19 @@
                     
                     <v-layout row wrap class="mb-3">
                       <v-flex xs12 sm4>
-                        <v-subheader class="pl-0 font-weight-bold">Title for the election</v-subheader>
+                        <v-subheader class="pl-0 font-weight-bold">Title of Election</v-subheader>
                       </v-flex>
                       <v-flex xs12 sm6>
                         <v-text-field color="secondary"
                           :rules="[rules.counter]" label="Title" outline 
-                          v-model="form.title" maxlength="100" counter small>
+                          v-model="form.title" maxlength="100" counter small
+                          hint="e.g NAPPS Elections 2019">
                         </v-text-field>
                       </v-flex>
                     </v-layout>
                     <v-layout row wrap class="mb-3">
                       <v-flex xs12 sm4>
-                        <v-subheader class="pl-0 font-weight-bold">The type of election to create</v-subheader>
+                        <v-subheader class="pl-0 font-weight-bold">Election Type</v-subheader>
                       </v-flex>
                       <v-flex xs12 sm6>
                         <v-select required
@@ -77,7 +78,7 @@
                         ></v-text-field>
                       </v-flex>
                     </v-layout>
-                    <v-layout row wrap class="mb-3">
+                    <v-layout row wrap class="mb-3" v-if="form.type == 'School' || form.type == 'Government'">
                       <v-flex xs12 sm4>
                         <v-subheader class="pl-0 font-weight-bold">Election level</v-subheader>
                       </v-flex>
@@ -120,12 +121,12 @@
             <v-stepper-content step="2">
               <v-layout>
                 <v-flex xs12 sm8>
-                  <v-card class="mb-5 mr-1 ml-1 mt-3 pa-3 orange white--text round" dark>
+                  <v-card class="mb-5 mr-1 ml-1 mt-3 pa-3 grey lighten-3 round" light>
                     <!--schedule elections --> 
                     <v-layout row >
-                      <v-flex sm10 ><v-subheader class="font-weight-bold">Create timed election</v-subheader></v-flex>
+                      <v-flex sm10 ><v-subheader class="title secondary--text">Create Timed Election</v-subheader></v-flex>
                       <v-flex sm2 style="padding-bottom:0px;">
-                        <v-switch value v-model="form.timed" color="success"></v-switch>
+                        <v-switch value v-model="form.timed" readonly color="success"></v-switch>
                       </v-flex>
                     </v-layout>
                     <v-divider v-show="form.timed"></v-divider>
@@ -141,7 +142,7 @@
                             label="Date" readonly>
                             <v-icon color="secondary" slot="prepend-inner">event</v-icon>
                           </v-text-field>
-                          <v-date-picker v-model="form.date" scrollable header-color="secondary">
+                          <v-date-picker v-model="form.date" scrollable :allowed-dates="allowedDates" header-color="secondary">
                             <v-spacer></v-spacer>
                             <v-btn flat   @click="modal = false">Cancel</v-btn>
                             <v-btn flat small outline color="success" @click="$refs.dialog.save(form.date)">OK</v-btn>
@@ -157,7 +158,7 @@
                           <v-text-field  slot="activator" v-model="form.time"  label="Time" color="secondary" readonly >
                             <v-icon color="secondary" slot="prepend-inner">access_time</v-icon>
                           </v-text-field>
-                          <v-time-picker v-if="modal2" format="ampm" v-model="form.time" header-color='secondary'>
+                          <v-time-picker v-if="modal2" format="ampm" :allowed-hours="allowedHours" v-model="form.time" header-color='secondary'>
                             <v-spacer></v-spacer>
                             <v-btn flat  @click="modal2 = false">Cancel</v-btn>
                             <v-btn flat color="success" outline @click="$refs.dialog2.save(form.time)">OK</v-btn>
@@ -173,7 +174,7 @@
                       </v-flex>
                       <v-flex sm8 mr-4>
                         <v-slider v-model="form.electionDuration" thumb-color="secondary"
-                          :thumb-size="24" thumb-label :label="form.electionDuration + ' hrs'" :min="1" :max='7'>
+                          :thumb-size="24" ticks thumb-label :label="form.electionDuration + ' hrs'" :min="1" :max='24'>
                         </v-slider>
                       </v-flex>
                     </v-layout>
@@ -205,17 +206,17 @@
                     <v-card>
                       <v-card-title primary-title class="mb-0 pb-0">Create A New Role</v-card-title>
                       <v-card-text>
-                        <v-text-field label="Role title" v-model="role_input" color="secondary"></v-text-field>
-                        <small class="grey--text">e.g president, secretary,vice-chancellor</small>
+                        <v-text-field label="Role title" v-model="role_input" color="secondary" 
+                          hint="e.g president, secretary,vice-chancellor"></v-text-field>
+                        <small class="grey--text"></small>
                         <p>
                           <small class="grey--text">* try not to use abbreviations</small>
                         </p>
                         <v-divider></v-divider>
                         <v-textarea v-model="role_input_desc"
                           label="Role description" outline
-                          name="name" color="secondary"
+                          name="name" color="secondary" hint="e.g what this role can do"
                         ></v-textarea>
-                        <small class="grey--text">e.g what this role can do</small>
                       </v-card-text>
                       <v-card-actions>
                         <v-spacer></v-spacer>
@@ -304,11 +305,14 @@
               <v-card light>
                 <v-card-text>
                   <p>Election Created successfully!</p>
-                  <p>Whats next ?</p>
+                  
                 </v-card-text>
-                <v-card-actions>
-                  <v-btn color="success" flat :to="'/elections/manage/'+ electionId">Go to election Manager</v-btn>
-                  <v-btn color="success" flat :to="'/forum/' + electionId">Go to forum</v-btn>
+                <v-card-actions v-if="form.auto_enroll_admin">
+                  <v-btn color="success" flat @click="setCurrentRoom">Set as current Election</v-btn>
+                  <template v-if="getMyEnrolled.find(elec => elec.electionId == newElec.electionId)">
+                    <v-btn color="success" to="/forum">Join the conversation</v-btn>
+                    <v-btn color="success" to="/contest">Contest</v-btn>
+                  </template>
                 </v-card-actions>
               </v-card>
             </v-stepper-content>
@@ -344,8 +348,7 @@
                       :close="close"
                       :embed="false"
                   >
-                    <v-icon color="success">payment</v-icon>
-                    Make Payment
+                    <v-btn color="success">Make Payment</v-btn>
                   </paystack>
                 </div>
               </v-card>
@@ -383,17 +386,19 @@
 </template>
 <script>
 import api from '@/services/api'
-import randomWords from 'random-words'
-import { mapGetters } from 'vuex'
-import Navigation from '@/components/Navigation'
-import paystack from 'vue-paystack';
+  import randomWords from 'random-words'
+  import { mapGetters } from 'vuex'
+  import Navigation from '@/components/Navigation'
+  import paystack from 'vue-paystack';
 //import { promisfy } from "@/helpers/promisify";
+
 export default {
   data:()=>({
     title:'Create new election',
     description:'',
     snackbar:{},
     plan_dialog:false,
+    newElec: {}, // the newly created election
     selected_plan:{},
     loading:false,
     dialog:false,
@@ -404,6 +409,7 @@ export default {
     role_input_desc:null,
     modal:false,
     modal2:false,
+    today: new Date().getTime(),
     e6:1,
     text:'Lo consequatur nostrum blanditiis expedita omnis accusantium vitae veritatis aut?',
     electionId:null,
@@ -433,9 +439,9 @@ export default {
     },
     electionTypes:[
       {text:'School',disabled:false},
+      {text:'Organizations',disabled:false},
+      {text:'Others',disabled:false},
       {text:'Governement - comming soon',disabled:true},
-      {text:'Organizations - comming soon',disabled:true},
-      {text:'Others - comming soon',disabled:true}
     ],
     levels:[
       ['General', 'Faculty','Department'],
@@ -443,21 +449,23 @@ export default {
     ],
     rules:{
       counter: value => value.length <= 100 || 'Max 100 characters',
-    }
+    },
+    reference: Date.now() + btoa(Math.random()).substring(0,12)
 
   }),
   computed:{
-    noPadding(){
-      return this.$vuetify.breakpoint.xsOnly ? ['px-1'] : ''
+    style1(){
+      if(this.$vuetify.breakpoint.xsOnly){
+        return {
+          "min-height": 'calc(100vh - 128px) !important'
+        }
+      }
     },
     currDate(){
       let d = new Date()
       let date = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
       console.log(date)
       return date.toString()   
-    },
-    reference(){
-      return this.getUser.uid +Date.now() + btoa(Math.random()).substring(0,12)
     },
     Plans(){
       return [
@@ -496,7 +504,8 @@ export default {
       }
     },
     disabled_step_one(){
-      return !this.form.title.trim() || this.form.title.trim().length > 100 || !this.form.type || !this.form.level || 
+      return !this.form.title.trim() || this.form.title.trim().length > 100 || !this.form.type || 
+      (this.form.type == 'School' && !this.form.level) || (this.form.type == 'Governement' && !this.form.level) || 
       (this.form.type == 'School' && !this.form.school) ||
       (this.form.level == 'Faculty' && !this.form.faculty) ||
       (this.form.level == 'Department' && !this.form.department)
@@ -513,16 +522,30 @@ export default {
       return true
     },
     ...mapGetters([
-      'isAuthenticated',
-      'getToken',
       'getUser',
       'getSchools',
       'getUserInfo',
-      // ...
+      'getMyEnrolled'
     ]),
   },
   methods:{
-    
+    setCurrentRoom(){
+      this.$store.dispatch('curRoom', this.newElec)
+    },
+    allowedDates(val){
+			// only allow dates greater than or equal to today
+			let today = this.today
+
+			let toAllow = new Date(val).getTime()
+	
+			return today - toAllow - 24 * 60 * 60 * 1000 <= 0
+    },
+    allowedHours(val){
+      // only allow hours that are not yet past
+      let curHour = new Date().getHours()
+      // console.log(curHour, val)
+      return curHour < val
+    },
     addrole(){
       if(this.role_input.length == 0){
         alert("Text should not be empty")
@@ -560,8 +583,9 @@ export default {
         })
 
         console.log(electionId)
-        let electionRef = db.collection('elections')
-        electionRef.doc(electionId).set({
+        let electionRef = db.collection('elections').doc(electionId)
+
+        electionRef.set({
           title:this.form.title,
           type:this.form.type,
           level:this.form.level,
@@ -569,10 +593,13 @@ export default {
           electionId:electionId,
           admin:this.getUser.uid,
           admins:[this.getUser.uid],
-          followers:[this.getUser.uid],
-          school:this.form.school,
-          faculty:this.form.faculty,
-          department:this.form.department,
+          moderators: [this.getUser.uid], // moderators in chat room
+          followers: 1, // the creator is a follower
+          voters: this.form.auto_enroll_admin ? 1 : 0, // voters count
+          contestants: 0,
+          sch:this.form.school,
+          fac:this.form.faculty,
+          dept:this.form.department,
           startDate:this.form.date,
           startTime:this.form.time,
           duration:this.form.electionDuration,
@@ -581,23 +608,33 @@ export default {
           roles:temp_role,
           dateCreated:Date.now(),
           status:'inRegistration',
-          contestants:[],
-          regVoters:this.form.auto_enroll_admin ? [this.getUser.uid] : [],
-          voted:[],
           public:this.form.public,
         })
 
         // create new activity
         db.collection('activities').add({
           type:'election_created',
-          by:this.getUser.uid,
-          dateCreated:Date.now(),
-          text:'created this election',
-          electionRef:electionId
-        }).then(done=>{
+          onr:['name', 'photoURL','email','sch','fac','dept','uid']
+            .reduce((a, e) => (a[e] = this.getUserInfo[e], a), {}),
+          tstamp: Date.now(), // timestamp
+          body: 'created this election',
+          elecRef:electionId
+        }).then(async done=>{
+          // follow the election
+          db.collection('moreUserInfo').doc(this.getUser.uid)
+          .update({
+            // follow_electn: firebase.firestore.FieldValue.arrayUnion(electionId),
+            created: firebase.firestore.FieldValue.arrayUnion(electionId),
+          })
+
+          let newElec = await electionRef.get()
+          this.newElec = newElec.data()
+          
+
           if(this.form.auto_enroll_admin){
-            this.enrollAdmin(electionId,this.getUser.uid).then(d=>{
+            this.enrollAdmin(electionId,this.getUser.uid).then(async d=>{
               console.log('resolved d: ', d)
+              this.$store.dispatch('setMyEnrolled', {election: this.newElec, merge: true})
 
               this.creating_election_dialog = false;
               this.plan_dialog = false;
@@ -639,15 +676,17 @@ export default {
         //update User details
         db.collection('moreUserInfo').doc(uid)
         .update({
-          enrolled:firebase.firestore.FieldValue.arrayUnion(electionId)
+          enrolled:firebase.firestore.FieldValue.arrayUnion(electionId),
+          // follow_electn: firebase.firestore.FieldValue.arrayUnion(electionId),
         }).then(result=>{
           // create new activity
           db.collection('activities').add({
             type:'voter_registered',
-            by:uid,
-            dateCreated:Date.now(),
-            text:'enrolled for this election',
-            electionRef:electionId
+            onr:['name', 'photoURL','email','sch','fac','dept','uid']
+            .reduce((a, e) => (a[e] = this.getUserInfo[e], a), {}),
+            tstamp: Date.now(),
+            body: 'enrolled for this election',
+            elecRef:electionId
           }).then(reslt=>{
             resolve([result,reslt])
           }).catch(err=> reject(err))
@@ -655,10 +694,10 @@ export default {
       })
     },
     prefillForm(user){
-      this.form.school = user.school
-      this.form.faculty = user.faculty
+      this.form.school = user.sch
+      this.form.faculty = user.fac
 
-      this.form.department = user.department
+      this.form.department = user.dept
     },
     async setThingsUp(){
       let this_user
@@ -698,6 +737,7 @@ export default {
     },
     close(res){
       console.log('closed dialog')
+      this.reference = Date.now() + btoa(Math.random()).substring(0,12)
     },
     createPaymentRef(data){
       return new Promise((resolve,reject)=>{
@@ -726,6 +766,9 @@ export default {
           this.create(data)
           
         }).catch(error=>{
+          // resets the reference to prevent duplicate trxn reference
+          this.reference = Date.now() + btoa(Math.random()).substring(0,12)
+
           this.snackbar = {
             show:true,
             message:error.response ? error.response.data.message : 'Transaction failed',
@@ -744,6 +787,7 @@ export default {
       else{
         this.createPaymentRef(data).then(doc=>{
           console.log(doc);
+          this.reference = Date.now() + btoa(Math.random()).substring(0,12)
           this.createElection()
         })
       }

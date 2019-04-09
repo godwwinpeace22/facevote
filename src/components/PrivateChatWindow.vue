@@ -53,7 +53,8 @@
           
       </v-card>
     </v-container>
-    <div class="white--text pb-0 pl-2 pr-4" style='padding-top:10px;width:100%;position:absolute;bottom:0;background:#fff'>
+
+    <!-- <div class="white--text pb-0 pl-2 pr-4" style='padding-top:10px;width:100%;position:absolute;bottom:0;background:#fff'>
       
       <v-textarea v-model="message" box color="deep-purple" @keypress="isTyping"
         label="Type a message" outline
@@ -61,7 +62,8 @@
         @click:append-outer="sendMessage"
         rows="1" auto-grow
       ></v-textarea>
-    </div>
+    </div> -->
+    
   </v-card>
 </template>
 <script>
@@ -99,6 +101,9 @@ export default {
       'getUser',
       'getPrivateConversations',
     ]),
+    ...mapState([
+      'isSuperUser'
+    ])
   },
   props:['user'],
   methods:{
@@ -153,7 +158,7 @@ export default {
       
     },
     sendMessage(){
-      //console.log(this.$store.state.chat)
+      console.log(this.$store.state.chat)
       let msgId = btoa(Math.random()).substring(0,12) + Date.now()
       let data = {
         message:this.message.trim(),
@@ -168,6 +173,8 @@ export default {
         status:'unread'
       }
 
+      console.log(data)
+      console.log(this.user)
       db.collection('private_conversations').doc(data.msgId).set(data)
       this.clearMessage()
   
@@ -181,7 +188,7 @@ export default {
     //LoadingBar,
   },
   mounted(){
-    
+    console.log(this.user)
     db.collection('private_conversations')
       .where('parties','==',[this.getUser.uid,this.user.uid].sort().join('-'))
       .onSnapshot(async snapshot=>{
@@ -198,7 +205,7 @@ export default {
       })
   }
 }
-import { mapGetters } from 'vuex'
+import { mapGetters, mapState } from 'vuex'
   //import LoadingBar from '@/spinners/LoadingBar'
 </script>
 
@@ -269,7 +276,7 @@ $mainBgColor:#1c1f35;
   }
 }
 
-.v-text-field__details{
+.private_chat_home .v-text-field__details{
   display:none;
 }
 #private_chat_nav .v-toolbar__content{

@@ -23,10 +23,10 @@
       </v-list-tile>
     </v-list>
     <v-divider></v-divider>
-    <div style="height:calc(100% - 50px);overflow-y:auto;" class="navdrawr">
+    <div style="height:calc(100% - 50px);overflow-y:auto;" class="navdrawr" :class="{thin_scrollbar:$vuetify.breakpoint.smAndDown}">
       <v-list subheader dense two-line>
         <v-subheader v-show="filteredList.length == 0">No results found</v-subheader>
-        <v-list-tile v-for="member in filteredList" :key="member.uid" avatar :to="$route.params.electionId + '/profile/' + member.email">
+        <v-list-tile v-for="member in filteredList" :key="member.uid" avatar :to="'forum/profile/' + member.email">
           
           <v-list-tile-avatar>
             <!-- prefer to user loggedin user's info rather than his info from voters list -->
@@ -39,6 +39,7 @@
           <v-list-tile-content>
             <v-list-tile-title class="text-capitalize">{{member.name}}</v-list-tile-title>
             <v-list-tile-sub-title v-if="getRole(member)"><i>for</i> {{getRole(member)}}</v-list-tile-sub-title>
+            <v-list-tile-sub-title v-else>{{member.dept}}</v-list-tile-sub-title>
           </v-list-tile-content>
           <v-list-tile-action>
             <v-icon :color="member.online ? 'success' : 'grey'" small>lens</v-icon>
@@ -63,7 +64,7 @@ export default {
   props:['members', 'thisGroup'],
   computed: {
     filteredList() {
-      console.log(this.members)
+      // console.log(this.members)
       if(this.members && this.members.length > 0){
         //console.log(this.members)
         // let those online appear first, at the top
@@ -82,15 +83,13 @@ export default {
     },
     // Mix your getter(s) into computed with the object spread operator
     ...mapGetters([
-      'isAuthenticated',
-      'token',
       'getUser'
     ]),
   },
   methods:{
     nextDocs(lastVisible){
       db.collection("moreUserInfo")
-        .where('enrolled','array-contains', this.$route.params.electionId)
+        .where('enrolled','array-contains', this.thisGroup.electionId)
         .startAfter(lastVisible)
         .limit(25).get().then(docs=>{
           docs.forEach(doc=>{
@@ -111,9 +110,9 @@ export default {
     },*/
     getRole(member){ // return the role a user is contesting for
       if(member.contestsRef){
-        let res = member.contestsRef.find(contest=>contest.electionRef == this.thisGroup.electionId)
+        let found = member.contestsRef.find(contest=>contest.electionRef == this.thisGroup.electionId)
         //console.log(res)
-        return this.thisGroup.roles.find(role => role.value == res.role).title
+        return found ? this.thisGroup.roles.find(role => role.value == found.role).title : false
       }else{
         return false
       }
@@ -125,7 +124,7 @@ export default {
     },*/
   },
   async mounted(){
-    
+    // console.log(this.members)
   },
 
   destroyed(){
@@ -166,17 +165,20 @@ import {mapGetters} from 'vuex'
 
   /* --style the scrollbar --*/
 .navdrawr::-webkit-scrollbar {
-    width: 10px;
+    width: 8px;
     background-color: #87899c ;
     @include borderRadius(10px)
   }
+  .thin_scrollbar::-webkit-scrollbar{
+    width: 2px;
+  }
 .navdrawr::-webkit-scrollbar-track {
-  box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-  -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-  -moz-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-  -o-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-  background-color: #f5f6fa ;
-  @include borderRadius(10px)
+  // box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+  // -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+  // -moz-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+  // -o-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+  background-color: #fff ;
+  // @include borderRadius(10px)
 }
 .navdrawr::-webkit-scrollbar-thumb {
   background-color:#87899c ;

@@ -1,9 +1,11 @@
 <template>
   <div>
+
     <navigation>
-      <span slot="title">Dashboard</span>
-      <h1 slot="extended_nav">Watch</h1>
+      <span slot="title">Vote</span>
+      <h1 slot="extended_nav" v-if="$vuetify.breakpoint.smAndUp && currElection">{{currElection.title}}</h1>
     </navigation>
+
     <vue-headful
       :title="title"
       :description="description"
@@ -13,8 +15,8 @@
 
 
     <!-- ==DETAILS== -->
-    <v-container :grid-list-sm='$vuetify.breakpoint.xsOnly' v-if="show_when_ready">
-      <v-card >
+    <v-container v-if="show_when_ready" :pa-0="$vuetify.breakpoint.xsOnly">
+      <v-card :flat="$vuetify.breakpoint.xsOnly">
         <v-layout row wrap>
           <v-flex xs12 sm8 d-flex class="mb-0">
             <v-card dark flat tile class="ma-0">
@@ -22,9 +24,9 @@
               <small class="pl-3 d-block" style="color:#eee;">Election Id: {{currElection.electionId}}</small>
               
               <loading-bar spinnerType='circle' height="40vh" v-if="!timer_ready"></loading-bar>
-              <v-card-text v-if="timer_ready && currElection.timed">
+              <v-card-text v-if="timer_ready">
 
-                <v-card-actions class="mt-0 pt-0">
+                <!-- <v-card-actions class="mt-0 pt-0">
                   <span>{{currElection.followers? currElection.followers.length : ''}}</span>
                   <v-divider inset vertical class="mx-2"></v-divider>
                   <v-btn flat small class="white-text">Followers</v-btn>
@@ -32,60 +34,68 @@
                     :disabled='!!disabled.find(id => id == getUser.uid)'>
                     {{follow_election_text}}
                   </v-btn>
-                </v-card-actions>
+                </v-card-actions> -->
 
-                <h4  v-if="not_started">Election starts in</h4>
-                <h4  v-if="inprogress">Election in progress</h4>
+                <h4  v-if="status.not_started">Election starts in</h4>
+                <h4  v-if="status.inprogress" class="title error--text lighten-4">Election in progress</h4>
+
                 <v-container justify-center fill-height>
                   <v-layout align-center justify-center>
                     <v-flex xs12 sm12>
                       <v-card-text class="pa-0">
                         <div id="time" class="d-block">
-                          <div class="verticalChart" v-if="not_started || inprogress">
 
-                            <div class="singleBar">
-                              <div class="bar">
-                                <div class="value elevation-4" style="height: 38%;background:teal;">
-                                  <span id="ontop">{{electionTime.days}}</span>
-                                  <span>DAYS</span>
-                                </div>
-                              </div>
-                            </div>
+                          <vac :end-time="endTime" ref="countdown" :start-time="start" @onFinish="onFinish" @onProcess="onProcess">
 
-                            <div class="singleBar">
-                              <div class="bar">
-                                <div class="value" style="height: 70%;background:#8bc34a;">
-                                  <span id="ontop">{{electionTime.hours}}</span>
-                                  <span>HOURS</span>
-                                </div>
-                              </div>
-                            </div>
-                            <div class="singleBar">
-                              <div class="bar">
-                                <div class="value" style="height: 90%;background:#ee44aa;">
-                                  <span  id="ontop">{{electionTime.minutes}}</span>
-                                  <span>MINUTES</span>
-                                </div>
-                              </div>
-                            </div>
-                            <div class="singleBar">
-                              <div class="bar">
-                                <div class="value" style="height: 50%;background:#5192c5;">
-                                  <span id="ontop">{{electionTime.seconds}}</span>
-                                  <span>SECONDS</span>
-                                </div>
-                              </div>
-                            </div>
-                            <div class="clearfix"></div>
-                          </div>
+                            <span slot="process" slot-scope="{ timeObj }">
 
-                          <template v-else>
-                            <div class="text-xs-left py-5" style="display:table;margin:auto;">
-                              <h3 class="display-1">Election Ended</h3>
-                              <small v-if="election_ended">at 
-                              {{new Date(countDownDate).toLocaleString('en-Us',date_options)}}</small>
-                            </div>
-                          </template>
+                              <div class="verticalChart">
+
+                                <div class="singleBar">
+                                  <div class="bar">
+                                    <div class="value elevation-4" style="height: 38%;background:teal;">
+                                      <span id="ontop">{{timeObj.d}}</span>
+                                      <span>DAYS</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div class="singleBar">
+                                  <div class="bar">
+                                    <div class="value" style="height: 70%;background:#8bc34a;">
+                                      <span id="ontop">{{timeObj.h}}</span>
+                                      <span>HOURS</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div class="singleBar">
+                                  <div class="bar">
+                                    <div class="value" style="height: 90%;background:#ee44aa;">
+                                      <span  id="ontop">{{timeObj.m}}</span>
+                                      <span>MINUTES</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div class="singleBar">
+                                  <div class="bar">
+                                    <div class="value" style="height: 50%;background:#5192c5;">
+                                      <span id="ontop">{{timeObj.s}}</span>
+                                      <span>SECONDS</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                            </span>
+                            <span slot="finish">
+                              <div class="text-xs-left py-5" style="display:table;margin:auto;">
+                                <h3 class="display-1">Election Ended</h3>
+                                <small>at 
+                                {{new Date(endTime).toLocaleString('en-Us',date_options)}}</small>
+                              </div>
+                            </span>
+                          </vac>
+                         
                         </div>
                         
                       </v-card-text>
@@ -93,28 +103,28 @@
                   </v-layout>
                 </v-container>
 
-                <v-btn fixed dark fab bottom right color="pink" ><v-icon>home</v-icon></v-btn>
               </v-card-text>
-
+              
+              <!-- VOTE, ENROLL, FORUM, ACTIONS -->
               <v-card-actions v-if="timer_ready">
                 <v-btn @click="show_results_dialog = true" color="pink" class="mr-3"
-                   dark v-if="inprogress || election_ended" small>
-                  See results
+                   dark v-if="!status.not_started" small>
+                  View Results
                 </v-btn>
                 <v-btn  color="teal" class="mr-3" dark @click="show_voting_dialog = true" small
                    v-if="canVote">
                   Vote 
                 </v-btn>
-                <v-tooltip top v-if="not_started" class="mr-3">
+                <v-tooltip right v-if="status.not_started" class="mr-3">
                   <v-btn  color="success" slot="activator" small dark :to="`/enroll`" 
-                      v-if="not_started && !hasEnrolled">
+                      v-if="status.not_started && !hasEnrolled">
                     Enroll
                   </v-btn>
                   <span>Enroll to vote</span>
                 </v-tooltip>
-                <v-tooltip top >
+                <v-tooltip right>
                   <v-btn  color="success" slot="activator" small dark 
-                    :to="`/forum/${currElection.electionId}`">
+                    to="/forum">
                     <v-icon>forum</v-icon>
                     <span class="ml-2">Forum</span>
                   </v-btn>
@@ -132,18 +142,18 @@
           <!-- Election DETAILS> -->
           <v-flex xs12 sm4 d-flex class="mb-0">
             <v-card flat tile>
-              <v-toolbar color="teal" class="white--text" flat dense>
-                Election Details
+              <v-toolbar color="success" class="white--text" flat dense>
+                <v-toolbar-title>Election Info</v-toolbar-title>
               </v-toolbar>
               <v-list dense>
-                <v-list-tile :to="`/users/${getAdmin.email}`">
-                  <v-flex xs4>
+                <!-- <v-list-tile :to="`/users/${getAdmin.email}`">
+                  <v-flex xs6 sm4>
                     <v-icon color="teal">person</v-icon>
                     Admin </v-flex>
-                  <v-flex xs8 class="text-capitalize">
+                  <v-flex xs6 sm8 class="text-capitalize">
                     {{getAdmin.name}}
                   </v-flex>
-                </v-list-tile>
+                </v-list-tile> -->
                 <v-list-tile v-if="currElection.timed">
                   <v-flex xs4>
                     <v-icon color="teal">schedule</v-icon>
@@ -162,14 +172,14 @@
                     Status</v-flex>
                   <v-flex xs8>
                     <span v-if="!timer_ready">Checking...</span>
-                    <span v-else>{{not_started ? 'Not started' : inprogress ? 'In progress' : 'Ended'}}</span>
+                    <span v-else>{{status.not_started ? 'Not started' : status.inprogress ? 'In progress' : 'Ended'}}</span>
                   </v-flex>
                 </v-list-tile>
                 <v-list-tile v-if="currElection.type == 'School'">
                   <v-flex xs4>
                     <v-icon color="teal">school</v-icon>
                     School</v-flex>
-                  <v-flex xs8 class="text-capitalize"> {{currElection.school}}</v-flex>
+                  <v-flex xs8 class="text-capitalize"> {{currElection.sch}}</v-flex>
                 </v-list-tile>
                 <v-list-tile>
                   <v-flex xs4>
@@ -182,97 +192,67 @@
                   <v-flex xs4>
                     <v-icon color="teal">domain</v-icon>
                     Faculty</v-flex>
-                  <v-flex xs8 class="text-capitalize">{{currElection.faculty}}</v-flex>
+                  <v-flex xs8 class="text-capitalize">{{currElection.fac}}</v-flex>
                 </v-list-tile>
                 <v-list-tile v-if="currElection.level == 'Department'">
                   <v-flex xs4>Department</v-flex>
-                  <v-flex xs8 class="text-capitalize">{{currElection.department}}</v-flex>
+                  <v-flex xs8 class="text-capitalize">{{currElection.dept}}</v-flex>
                 </v-list-tile>
               </v-list>
-              <!--v-container grid-list-xs>
-                <v-layout row wrap>
-                  <v-flex xs4 justify-center>
-                    <v-progress-circular style="display:block;margin:auto;"
-                      :value="100" 
-                      color="secondary"
-                    >{{regVoters.length}}</v-progress-circular>
-                    <div style="margin:auto;width:fit-content">Voters</div>
-                  </v-flex>
-                  <v-flex xs4 justify-center>
-                    <v-progress-circular style="display:block;margin:auto;"
-                      :value="100"
-                      color="success"
-                    >{{currElection.contestants.length}}</v-progress-circular>
-                    <div style="margin:auto;width:fit-content">Contestants</div>
-                  </v-flex>
-                  <v-flex xs4 justify-center>
-                    <v-progress-circular style="display:block;margin:auto;"
-                      :value="allVotes.length/regVoters.length * 100"
-                      color="purple">
-                      {{allVotes.length}}
-                      </v-progress-circular>
-                    <div style="margin:auto;width:fit-content">Votes</div>
-                    
-                  </v-flex>
-                </v-layout>
-              </v-container-->
-              
             </v-card>
           </v-flex>
+
         </v-layout>
       </v-card>
     </v-container>
-    
-    <v-dialog v-model="show_voting_dialog" v-if="show_voting_dialog" lazy fullscreen transition="dialog-bottom-transition">
+    <v-divider class="hidden-sm-and-up"></v-divider>
+
+    <!-- VOTE -->
+    <v-dialog v-model="show_voting_dialog" v-if="show_voting_dialog" lazy scrollable fullscreen transition="dialog-bottom-transition">
       <v-card>
-        <v-toolbar clipped-left card dark color="success" scroll-target="vote_target">
+        <v-toolbar clipped-left card dark color="success">
           <v-btn icon dark @click.native="isNotVoting; show_voting_dialog = false;">
-            <v-icon>close</v-icon>
+            <v-icon>chevron_left</v-icon>
           </v-btn>
           <v-toolbar-title>Vote: {{currElection.title}}</v-toolbar-title>
           <v-spacer></v-spacer>
-          <v-toolbar-items v-if="$vuetify.breakpoint.width > 350">
+          <v-toolbar-items v-if="$vuetify.breakpoint.smAndUp">
             <v-btn dark flat @click.native="isNotVoting; show_voting_dialog = false;">Cancel</v-btn>
           </v-toolbar-items>
         </v-toolbar>
-        <vote id="vote_target" :currElection='currElection' :contestants='contestants' :rawVotes='rawVotes'></vote>
+        <v-card-text class="pa-0">
+          <vote :currElection='currElection' :contestants='contestants' :rawVotes='rawVotes'></vote>
+        </v-card-text>
+        
       </v-card>
     </v-dialog>
 
+    <!-- RESULTS -->
+    <v-dialog v-model="show_results_dialog" scrollable
+      fullscreen transition="dialog-bottom-transition" lazy>
+      <v-card flat>
+        <v-toolbar clipped-left card flat dark color="success">
+          <v-btn flat icon v-if="$vuetify.breakpoint.xsOnly"
+            @click.native="show_results_dialog = false;">
+            <v-icon>chevron_left</v-icon> 
+          </v-btn>
+          <v-divider vertical inset light></v-divider>
 
-    <v-dialog v-model="show_results_dialog" v-if="show_results_dialog" 
-      fullscreen transition="dialog-bottom-transition" scrollable>
-      <v-card>
-        <v-toolbar clipped-left flat dark color="success" scroll-target="result_dialog">
-          <v-toolbar-title>Results: {{currElection.title}}</v-toolbar-title>
+          <v-toolbar-title >Results: {{currElection.title}}</v-toolbar-title>
           <v-spacer></v-spacer>
-          <v-toolbar-items v-if="$vuetify.breakpoint.width > 350">
+          <v-toolbar-items v-if="$vuetify.breakpoint.smAndUp">
             <v-btn icon @click.native="show_results_dialog = false;">
               <v-icon >close</v-icon>
             </v-btn>
           </v-toolbar-items>
         </v-toolbar>
-        <div id='result_dialog' lazy>
-          <results :id='currElection._id' :chartData3='chartData' :allVotes='allVotes' :currElection='currElection' 
-          :contestants='contestants' :regVoters='regVoters' :roles='currElection.roles' 
-          :inprogress="inprogress" :electionEnded="election_ended">
+        <v-card-text>
+          <results v-if="!status.not_started" :id='currElection._id' :chartData3='chartData' :allVotes='allVotes' :currElection='currElection' 
+          :contestants='contestants' :regVoters='regVoters' :roles='currElection.roles' :rawVotes="rawVotes"
+          :status="status" :startTime="startDate" :endTime="endTime">
           </results>
-        </div>
+        </v-card-text>
       </v-card>
-    </v-dialog>
-
-    <v-dialog v-model="viewprofile" v-if="viewprofile" lazy :style="styleObj"
-      :fullscreen="$vuetify.breakpoint.smAndDown" width="300" hide-overlay>
-      
-      <v-toolbar  dense dark color="teal" scroll-target="vprofile">
-        <v-toolbar-title>Profile</v-toolbar-title>
-        <v-spacer></v-spacer>
-        <v-btn icon dark @click="viewprofile = false">
-          <v-icon>close</v-icon>
-        </v-btn>
-      </v-toolbar>
-
-      <view-profile :user='voterprofile'  id="vprofile"></view-profile>
     </v-dialog>
 
 
@@ -280,7 +260,7 @@
     <v-dialog v-model="show_manifesto_dialog" v-if="show_manifesto_dialog" 
       fullscreen transition="dialog-bottom-transition" lazy>
       <v-card dark>
-        <v-toolbar flat dark dense scroll-target="result_dialog">
+        <v-toolbar flat dark dense>
           <v-toolbar-title>{{manifesto_spotlight.name}}</v-toolbar-title>
           <v-spacer></v-spacer>
           <v-toolbar-items>
@@ -295,13 +275,14 @@
 
 
     <!-- ==SMALL CARDS== -->
-    <v-container grid-list-xl v-if="show_when_ready">
+    <v-container :grid-list-xl="$vuetify.breakpoint.smAndUp" v-if="show_when_ready" 
+      :class="{white: $vuetify.breakpoint.xsOnly}">
       <v-layout row wrap>
         <v-flex xs12 sm4 md3 v-for="(flashNumber,i) in flashNumbers" :key="i">
-          <v-card class="mt-3 mx-auto round">
+          <v-card class="mt-3 mx-auto round" :class="{'mt-4': $vuetify.breakpoint.xsOnly}">
             <v-sheet
-              class="v-sheet--offset ml-3" :class="{'orange':i==0,'primary':i==1,'success':i==2,'cyan':i==3}"
-              color="" elevation="3"
+              class="v-sheet--offset ml-3" 
+              :color="flashNumber.color" elevation="3"
               max-width="35%" height="80">
               <v-icon class='mx-auto d-block ma-auto' 
                 style="width:50px;padding-top:15%;" size="50" color="white">
@@ -321,11 +302,11 @@
       </v-layout>
     </v-container>
 
-
-    <v-container class='election_details' v-if="show_when_ready">
+     <!-- VOTERS, ACTIVITIES, ACTIONS -->
+    <v-container class='election_details' :grid-list-lg="$vuetify.breakpoint.smAndUp" v-if="show_when_ready" :class="{'pa-0': $vuetify.breakpoint.xsOnly}">
       <v-layout row wrap>
-        <v-flex xs12 sm3 d-flex pl-1 pr-2>
-          <v-card>
+        <v-flex sm12 md3 d-flex  mb-0>
+          <v-card :flat="$vuetify.breakpoint.xsOnly">
             <v-tabs left color="teal" dark show-arrows>
               <v-tabs-slider color="orange"></v-tabs-slider>
 
@@ -337,57 +318,74 @@
 
               <v-tab-item value="tab-1">
                 
-                <v-container style="height:320px;overflow-y:auto;" class="scrollbar my-2 pt-1 pl-0 pr-3">
-                  
-                  <v-list two-line dense>
-                    <div v-if="regVoters.length > 0" v-for="(voter, index) in regVoters" :key="index">
-                      <v-list-tile  :key="voter.name" avatar @click="viewprofile = true; voterprofile = voter" :color="voter.online ? 'default' : 'grey'">
-                        <v-list-tile-avatar>
+                <v-container class="my-2 pt-1 px-1">
+                  <div style="height:320px;overflow-y:auto;" 
+                    :class="{scrollbar: $vuetify.breakpoint.smAndUp, scrollbar_thin:$vuetify.breakpoint.xsOnly}">
+                    <v-list two-line dense v-if="regVoters.length > 0" >
+                      <template v-for="(voter, index) in regVoters">
+                        <v-list-tile  :key="voter.name + 'reg_voters'" avatar @click="$eventBus.$emit('ViewProfile', voter)" :color="voter.online ? 'default' : 'grey'">
                           
-                          <v-badge overlap color="transparent">
-                            <v-icon slot="badge" color="success" small v-if="voter.online">lens</v-icon>
-                            <v-avatar v-if="voter.photoURL" size="40">
-                              <img  :src="voter.photoURL">
-                            </v-avatar>
-                            <v-avatar v-else  :color="$helpers.colorMinder(voter.name.charAt(0))" size="40">
-                              <span class="white--text headline">{{voter.name.charAt(0)}}</span>
-                            </v-avatar>
-                          </v-badge>
-                        </v-list-tile-avatar>
+                          <v-list-tile-avatar :color="$helpers.colorMinder(voter.name.charAt(0))">
+                            <img  :src="voter.photoURL" v-if="voter.photoURL">
+                            
+                            <span v-else class="white--text headline">{{voter.name.charAt(0)}}</span>
+                            
+                          </v-list-tile-avatar>
 
-                        <v-list-tile-content>
-                          <v-list-tile-title  class="text-capitalize text-truncate">{{voter.name}}</v-list-tile-title>
-                          <!--v-list-tile-sub-title v-html="voter.username" ></v-list-tile-sub-title-->
-                          <v-list-tile-sub-title v-if="!isVoting(voter.uid)"><span style=''>{{voted(voter.uid) ? 'Voted' : 'Not Voted'}}</span></v-list-tile-sub-title>
-                          <v-list-tile-sub-title v-else color="green"><span style='color:green;'>voting...</span></v-list-tile-sub-title>
-                        </v-list-tile-content>
-                      </v-list-tile>
-                      <v-divider  :inset="true" :key="index"></v-divider>
-                    </div>
-                  </v-list>
+                          <v-list-tile-content>
+                            <v-list-tile-title  class="text-capitalize text-truncate">
+                              <span class="online_badge" :class="voter.online ? 'success' : 'orange'"></span>
+                              {{voter.name}}
+                            </v-list-tile-title>
+                            <!--v-list-tile-sub-title v-html="voter.username" ></v-list-tile-sub-title-->
+                            <v-list-tile-sub-title v-if="!isVoting(voter.uid)">
+                              <span style=''>
+                                {{voted(voter) ? 'Voted' : 'Not Voted'}}
+                              </span>
+                              
+                            </v-list-tile-sub-title>
+                            <v-list-tile-sub-title v-else color="green"><span style='color:green;'>voting...</span></v-list-tile-sub-title>
+                          </v-list-tile-content>
+                        </v-list-tile>
+                        <v-divider  :inset="true" :key="index"></v-divider>
+                      </template>
+                    </v-list>
+                    <v-btn color="secondary" flat small @click="moreVoters" v-if="regVoters.length > 25 && currElection.voters > regVoters.length"
+                      :loading="loading_more_voters" style="text-transform: initial">
+                      See more
+                    </v-btn>
+                  </div>
                 </v-container>
               </v-tab-item>
               
               <v-tab-item value="tab-2">
                 <v-subheader>Recent activities</v-subheader>
                 <v-divider></v-divider>
-                <div class="pt-2 scrollbar my-2" style="height:350px;overflow:auto;">
-                  <v-timeline align-top dense>
-                    <v-timeline-item :color="getColor(activity)" small v-for="activity in activities" :key="activity.id">
-                      <v-layout pt-3>
-                        <v-flex>
-                          <strong>
-                            <span class="secondary--text linkify" @click="viewprofile = true; voterprofile = extractVoter(activity.by)">{{activity.by == currElection.admin ? 'Admin' : 
-                              extractVoter(activity.by).name}}
-                            </span>
-                            {{activity.text}}</strong>
-                          <div class="caption">{{new Date(activity.dateCreated).toDateString('en-Us',{day:'numeric'})}}</div>
-                        </v-flex>
-                      </v-layout>
-                    </v-timeline-item>
-                  </v-timeline>
+                <div class="pt-2 scrollbar my-2 px-1">
+                  <div class="scrollbar" style="height:350px;overflow:auto;">
+                    <v-timeline align-top dense>
+                      <v-timeline-item :color="getColor(activity)" small v-for="activity in activities" :key="activity.tstamp">
+                        <v-layout pt-3>
+                          <v-flex>
+                            <strong>
+                              <span class="secondary--text linkify" @click="$eventBus.$emit('ViewProfile', activity.onr)">
+                                {{activity.onr.uid == currElection.admin ? 'Admin' : 
+                                activity.onr.name}}
+                              </span>
+                              {{activity.body}}</strong>
+                            <div class="caption">{{new Date(activity.tstamp).toDateString('en-Us',{day:'numeric'})}}</div>
+                          </v-flex>
+                        </v-layout>
+                      </v-timeline-item>
+                    </v-timeline>
+                  </div>
+                  <v-btn color="secondary" flat small @click="moreActivities" v-if="activities.length > 25"
+                    :loading="loading_more_activities" style="text-transform: initial">
+                    See more
+                  </v-btn>
                 </div>
               </v-tab-item>
+
               <v-tab-item value="tab-3">
                 <v-container class="pa-0">
                   <v-subheader>Actions</v-subheader>
@@ -408,17 +406,18 @@
                   </v-list>
                 </v-container>
               </v-tab-item>
+
             </v-tabs>
             
           </v-card>
         </v-flex>
-        <v-flex xs12 sm9  d-flex pl-1 pr-2>
-          <v-card style="min-height:400px;width:100%;">
+        <v-flex sm12 md9  d-flex mb-0>
+          <v-card :flat="$vuetify.breakpoint.xsOnly" style="min-height:400px;width:100%;">
             <v-container>
               <v-toolbar flat dense color="white">
                 <v-toolbar-title><h5><v-icon color="orange">equalizer</v-icon> Stats</h5></v-toolbar-title>
                 <v-spacer></v-spacer>
-                <v-btn small flat color="success" outline  @click="show_results_dialog = true" :disabled="!inprogress || !election_ended"> more charts</v-btn>
+                <v-btn small flat color="success" outline  @click="show_results_dialog = true" :disabled="!status.inprogress || !status.election_ended"> more charts</v-btn>
                 
               </v-toolbar>
               <bar-chart :chart-data="chartData" :options="chartOptions" ></bar-chart>
@@ -429,74 +428,56 @@
     </v-container>
 
     <!-- ===CONTESTANTS=== -->
-    <v-container grid-list-md v-if="show_when_ready">
-      <v-card class="round pa-4" style="min-height:150px;">
+    <v-container grid-list-md v-if="show_when_ready" :class="{'pa-0': $vuetify.breakpoint.xsOnly}">
+      <v-card class="pa-4" :flat="$vuetify.breakpoint.xsOnly" :class="{round:$vuetify.breakpoint.smAndUp}" style="min-height:150px;">
         <v-subheader class="font-weight-bold">Contestants</v-subheader>
-        
-        <carousel v-if="showCarousel" :nav='true' :responsive="{0:{items:1,nav:false},600:{items:3,nav:true},800:{items:4,nav:true}}" >
-          
-          <v-subheader v-if="contestants && contestants.length == 0">No contestants</v-subheader>
-          <v-card  :class="$helpers.colorMinder(contestant.name.charAt(0))" class="round mr-2"
-            dark height="300" v-if="contestants.length > 0" 
-            v-for="contestant in contestants" :key="contestant.email">
-            
-            <v-img  class="hover"
-              :src="contestant.photoURL || `https://ui-avatars.com/api/?name=${contestant.name}&size=300`"
-              height="185px">
-              <v-layout column fill-height>
-                <v-card-title class="px-1">
-                  <v-spacer></v-spacer>
-                  <v-menu offset-y v-if="hasManifesto(contestant)">
-                    <v-btn dark icon slot="activator">
-                      <v-icon color="secondary">more_vert</v-icon>
-                    </v-btn>
-                    <v-list dense dark>
-                      <v-list-tile @click="viewManifesto(contestant)">
-                        <v-list-tile-title>
-                          View {{contestant.name}}'s manifesto
-                        </v-list-tile-title>
-                      </v-list-tile>
-                    </v-list>
-                  </v-menu>
-                  
-                </v-card-title>
-                <v-card-actions>
-                  <!--span>{{contestant.followers.length}}</span-->
-                  <v-spacer></v-spacer>
-                  <v-btn color="secondary" style="margin-top:120px;" class="text-capitalize follow" v-if="contestant.email != getUser.email" 
-                    :disabled='!!disabled.find(email => email == contestant.email)'
-                    small @click="follow($event,contestant)" :id="contestant.email">
-                    {{isFollowing(contestant) ? 'Following' : 'Follow'}}
-                  </v-btn>
-                </v-card-actions>
-              </v-layout>
-            </v-img>
+        <v-subheader v-if="contestants && contestants.length == 0">No contestants</v-subheader>
 
-            <v-card-text style="cursor:-webkit-grab;cursor:grab;" class="px-1">
-              <v-list two-line light>
-                <v-list-tile>
-                  <v-list-tile-content>
-                    <v-list-tile-title @click="viewprofile = true; voterprofile = contestant"
-                      class="subheading font-weight-bold mb-0 text-capitalize .text-truncate hover">
-                      {{contestant.name}}
-                      <span id="online_badge" v-if="contestant.online"></span>
-                    </v-list-tile-title>
-                    <v-list-tile-sub-title>
-                      <i>for</i> {{getRole(contestant)}}
-                    </v-list-tile-sub-title>
-                    <!--v-list-tile-sub-title>
-                      {{contestant.followers.length}} Followers
-                    </v-list-tile-sub-title-->
-                  </v-list-tile-content>
-                </v-list-tile>
-              </v-list>
+        <carousel v-if="showCarousel && contestants && contestants.length > 0" :nav='true' :responsive="{0:{items:1,nav:false},600:{items:3,nav:true},800:{items:5,nav:true}}" >
+  
+          <v-card class="round_top mr-2 mb-2 grey lighten-4"
+            height="300" v-for="contestant in contestants" :key="contestant.email" style="position: relative">
+            <v-sheet width="100%" height="80" :color="$helpers.colorMinder(contestant.name.charAt(0)) + ' lighten-3'">
+
+            </v-sheet>
+            <v-sheet width="61%" height="120" style="position: absolute;top: 25px;left: 20%;" color="transparent">
+              <v-avatar class="d-block mx-auto"
+                size="120"
+                :color="$helpers.colorMinder(contestant.name.charAt(0))"
+              >
+                <img :src="contestant.photoURL" :alt="contestant.name" v-if="contestant.photoURL">
+                <span v-else class="white--text display-2">{{contestant.name.charAt(0)}}</span>
+              </v-avatar>
+            </v-sheet>
+
+            <v-card-text style="margin-top: 60px;" class="px-1 text-xs-center" 
+               @click.stop="$eventBus.$emit('ViewProfile', contestant)">
+               <div class="subheading font-weight-bold mb-0 text-capitalize .text-truncate hover">
+                 {{contestant.name}}
+                 <span class="online_badge success" v-if="contestant.online"></span>
+               </div>
+               <div>
+                 <i>for</i> {{getRole(contestant)}}
+               </div>
             </v-card-text>
-            
+            <v-card-actions>
+
+              <v-tooltip top class="mx-auto">
+                <v-btn :color="$helpers.colorMinder(contestant.name.charAt(0))" slot="activator" outline dark 
+                  class="mx-auto text-capitalize" v-if="contestant.uid != getUser.uid" 
+                  :disabled='!!disabled.find(uid => uid == contestant.uid)'
+                  @click="follow($event,contestant)" :id="contestant.uid">
+                  {{contestant.followers}} Followers
+                </v-btn>
+                <span :ref="contestant.uid">{{contestant.followers}} Followers</span>
+              </v-tooltip>
+            </v-card-actions>
           </v-card>
           
         </carousel>
       </v-card>
     </v-container>
+
   </div>
 </template>
 <script>
@@ -506,16 +487,25 @@ export default {
     description:'',
     show_when_ready:false,
     timer_ready:false,
+    time_lag: 0,
+    endTime: 0,
+    start: 0,
+    voters_offset: '',
+    activities_offset: '',
+    loading_more_voters: false,
+    loading_more_activities: false,
     show_btn:false, // just to hide the btn initially - I don't want to see 'vote' and then 'show results' later after processing
     disabled:[],
-    user:{}, // currently logged in user
     allVotes:[],
     myEnrolledElc:[], 
     elecRef:'', // primarilly to detatch listeners
     moreUserInfoRef:'', // primarilly to detatch listeners
     votesRef:'', // primarilly to detatch listeners
-    //currElection:{}, // contains the current election
+    contestantsRef: '',
+    activityRef: '', // primarilly to detatch listeners
+    currElection:{}, // contains the current election
     regVoters:[], // contains registered voters for the current election
+    activities: [],
     startDate:'',
     countDownDate:'',
     interval:'',
@@ -528,9 +518,7 @@ export default {
       hour:'numeric', 
       minute:'numeric'
     },
-    not_started:true,
-    inprogress:false, // tells the timer whether the election is in progress or not
-    election_ended:true, // tells the timer whether the election  has ended or not
+    status: {}, // the election progress - notstarted, inprogress, ended
     voterprofile:{},
     //activities:[],
     contestants:[], // all the contestants for this election
@@ -540,7 +528,7 @@ export default {
     show_results_dialog:false, // whether to show the results window/ dialog
     show_manifesto_dialog:false,
     manifesto_spotlight:{},
-    viewprofile:false,
+    //viewprofile:false,
     chartData:null,
     data:[],
     labels:[],
@@ -560,11 +548,14 @@ export default {
             }
           }]
       }
-    }
+    },
   }),
   props:['electionId'], // this prop is from the vue-router params
   watch:{
     $route:function(to,from){
+      
+    },
+    curRoom: function(){
       this.contestants = []
       this.setup()
       // Rerender the contestants carousel
@@ -578,10 +569,31 @@ export default {
     },
     flashNumbers(){
       return [
-        {text:'Registerd voters',number:this.regVoters.length,icon1:'equalizer',icon2:'timer',sub:this.lastRegistration},
-        {text:'Contestants', number:this.contestants.length,icon1:'spa',icon2:'block',sub:this.suspendedContestants},
-        {text:'Votes',number:this.allVotes.length,icon1:'trending_up',icon2:'timer',sub:this.lastVotedTime},
-        {text:'Followers',number:this.currElection.followers.length,icon1:'people',icon2:'timer',sub:'opps sub'}
+        {
+          text:'Registerd voters',
+          number: this.currElection.voters,
+          icon1: 'equalizer',
+          icon2: 'timer',
+          sub: this.lastRegistration,
+          color: 'teal'
+        },
+        {
+          text:'Contestants',
+          number: this.contestants.length,
+          icon1: 'spa',
+          icon2: 'block',
+          sub: this.suspendedContestants,
+          color: 'orange'
+        },
+        {
+          text: 'Votes',
+          number: this.allVotes.length,
+          icon1: 'trending_up',
+          icon2: 'timer',
+          sub: this.lastVotedTime,
+          color: 'primary'
+        },
+        // {text:'Followers',number:this.currElection.followers.length,icon1:'people',icon2:'timer',sub:'opps sub'}
       ]
     },
     lastRegistration(){
@@ -591,7 +603,7 @@ export default {
       ////console.log(regActivities[0])
 
       if(regActivities && regActivities.length > 0){
-        let the_last_reg_time = regActivities[0].dateCreated
+        let the_last_reg_time = regActivities[0].tstamp
         let now = Date.now()
         let oneMin = 60*1000
         let oneHour = 60*oneMin
@@ -604,7 +616,7 @@ export default {
         time_difference < oneHour ? 'Last registration ' + Math.floor(time_difference/oneMin) + ' minutes ago' :
         time_difference < oneDay ? 'Last registration ' + Math.floor(time_difference/oneHour) + ' hours ago' :
         time_difference < oneWeek ? 'Last registration ' + Math.floor(time_difference/oneDay) + ' days ago' :
-        'Last registration ' + new Date(the_last_reg_time).toLocaleString('en-Us',{hour:'numeric',minute:'numeric'})
+        'Last registration ' + new Date(the_last_reg_time).toLocaleString('en-Us',{year:'numeric', month: 'short', hour:'numeric',minute:'numeric'})
       }
       else{
         return 'No registrations yet'
@@ -620,8 +632,8 @@ export default {
     },
     lastVotedTime(){
       if(this.rawVotes && this.rawVotes.length > 0){
-        let sortedVotes = this.rawVotes.sort((a,b)=>b.createdAt - a.createdAt)
-        let the_last_vote_time = sortedVotes[0].createdAt
+        let sortedVotes = this.rawVotes.sort((a,b)=>b.tstamp - a.tstamp)
+        let the_last_vote_time = sortedVotes[0].tstamp
         let now = Date.now()
         let oneMin = 60*1000
         let oneHour = 60*oneMin
@@ -634,7 +646,7 @@ export default {
         time_difference < oneHour ? 'Last vote ' + Math.floor(time_difference/oneMin) + ' minutes ago' :
         time_difference < oneDay ? 'Last vote ' + Math.floor(time_difference/oneHour) + ' hours ago' :
         time_difference < oneWeek ? 'Last vote ' + Math.floor(time_difference/oneDay) + ' days ago' :
-        'Last vote ' + new Date(the_last_vote_time).toLocaleString('en-Us',{hour:'numeric',minute:'numeric'})
+        'Last vote ' + new Date(the_last_vote_time).toLocaleString('en-Us',{year:'numeric', month: 'short',hour:'numeric',minute:'numeric'})
       }
       else{
         return 'No votes yet'
@@ -650,9 +662,9 @@ export default {
       }
     },
     canVote(){
-      return this.inprogress && 
-      !this.voted(getUser.uid) &&
-      this.hasEnrolled()
+      return this.status.inprogress && 
+      !this.voted(this.getUserInfo) &&
+      this.hasEnrolled
     },
     getAdmin(){
       //console.log(this.regVoters)
@@ -661,61 +673,37 @@ export default {
     },
     hasEnrolled(){
       ////console.log(this.regVoters)
-      return this.regVoters.find(voter => voter.uid == this.getUser.uid) ? true : false
-    },
-    follow_election_text(){
-      return this.currElection.followers.find(id => id == this.getUser.uid) ? 
-      'Following' : 'Follow'
+      return this.getUserInfo.enrolled.find(elec => elec == this.currElection.electionId) ? true : false
     },
     ...mapGetters([
-      'isAuthenticated',
       'getUser',
+      'getUserInfo',
       'getSchools',
-      'getContestants',
-      'getCurElection',
-      'getCurElectionResults',
-      'getCurElectionActivities',
-      'getVotes',
       // ...
     ]),
-    currElection(){
-      return this.getCurElection
-    },
-    activities(){
-      return this.getCurElectionActivities
-    },
-    votes(){
-      return this.getVotes
-    }
+    ...mapState([
+      'curRoom',
+    ])
   },
   methods:{
     async setup(){
       // get election
-      let elecRef = db.collection('elections').doc(this.$route.params.electionId)
-      this.elecRef = await elecRef.onSnapshot(async (doc)=>{
-        if(doc.exists){
-          this.$store.dispatch('setCurElection', doc.data())
-        }
-        else{
-          this.$router.push('/notFound')
-        }
-        
-        //console.log('currElection: ', doc.data())
-      }, error=>{
-        console.log(error)
-      })
-      
 
+      this.currElection = this.curRoom
+      
       // get registered voters
-      this.moreUserInfoRef = db.collection('moreUserInfo').where('enrolled','array-contains', this.$route.params.electionId)
+      this.moreUserInfoRef = db.collection('moreUserInfo')
+      .where('enrolled','array-contains', this.currElection.electionId)
+      .limit(25)
       .onSnapshot(async querySnapshot=>{
         this.regVoters = []
         querySnapshot.forEach(doc=>{
           //console.log(doc.id, " => ", doc.data());
           this.regVoters.push(doc.data())
         })
+        this.voters_offset = querySnapshot.docs[querySnapshot.docs.length -1]
         await this.allContestants()
-        console.log('allcontestants')
+        //console.log('allcontestants')
         this.open()
       }, function(err){
         // handle listening errors
@@ -725,50 +713,58 @@ export default {
 
       // get raw votes for this election
       this.votesRef = db.collection('votes')
-      .where('electionRef', '==', this.$route.params.electionId)
+      .where('elecRef', '==', this.currElection.electionId)
       .onSnapshot(async querySnapshot=>{
         let arr = []
         querySnapshot.forEach(doc=>{
           arr.push(doc.data())
         })
         this.rawVotes = arr // the raw votes
-        //console.log(this.rawVotes)
+        // console.log(this.rawVotes)
         this.allVotes = await this.getScores(await this.sortByRoles(this.rawVotes))
-        //console.log(this.allVotes)
-        this.getLabels()
-        this.$store.dispatch('allVotes', arr)
+        // console.log(this.allVotes)
+        // this.getLabels()
+        // this.$store.dispatch('allVotes', arr)
       }, error=>{
         console.log(error)
       })
       
 
       // Get activities
-      db.collection('activities')
-      .orderBy('dateCreated', 'desc')
-      .where('electionRef','==',this.$route.params.electionId).onSnapshot(async querySnapshot=>{
+      this.activityRef = db.collection('activities')
+      .limit(25)
+      .orderBy('tstamp', 'desc')
+      .where('elecRef','==',this.currElection.electionId).onSnapshot(async querySnapshot=>{
         let acts = []
         querySnapshot.forEach(doc=>{
           acts.push(doc.data())
         })
-        this.$store.dispatch('setCurElectionActivities', acts)
+        this.activities_offset = querySnapshot.docs[querySnapshot.docs.length - 1]
+        this.activities = acts
       })
       
 
       
     },
-    async allContestants(voters){
+    async allContestants(){
       // get contestants
-      let contestants = []
-      this.regVoters.forEach(voter=>{
-        if(voter.contests && voter.contests.find(id => id == this.$route.params.electionId)){
-          contestants.push(voter)
-        }
+      
+      let contestantsRef = db.collection('moreUserInfo')
+      .where('contests', 'array-contains', this.currElection.electionId)
+      .onSnapshot(querySnapshot =>{
+        let contestants = []
+        querySnapshot.forEach(doc =>{
+          contestants.push(doc.data())
+        })
+
+        this.contestants = contestants
+        this.getLabels()
       })
+
+      
       //console.log(contestants)
       // show only contestants that are not suspended. therefore they can't be voted for
       //contestants = contestants.data.filter(item => item.suspended == false)
-      this.contestants = contestants
-      //this.$store.dispatch('setCurElectionContestants', contestants)
     },
     async sortByRoles(votes){
       let resultsByRoles = {};
@@ -815,34 +811,60 @@ export default {
       //console.log('scores: ', scores)
       return scores;
     },
-    updateCarousel(e){
-      console.log(e)
-    },
     async open(){
       try{
         if(this.currElection.timed){
+          this.timer_ready = false;
           // if the election is a timed election
           this.getServerTime().then(resp=>{
           //console.log(resp.time - Date.now())
           let serverTime = resp.time
           let time_lag = serverTime - Date.now()
-          
-          this.countDownTimer(time_lag)
+          this.time_lag = time_lag
+
+          this.countDownTimer()
         }).catch(err=>console.log(err,err.response))
         }else{
-          this.inprogress = true;
-          this.not_started = false;
+          this.status = {
+            inprogress: true,
+            not_started: false
+          }
         }
         
-        //this.getLabels()
+        // this.getLabels()
         this.show_when_ready = true
       }catch(error){
         console.log(error)
       }
 
     },
-    extractVoter(uid){
-      return this.regVoters.find(voter=> voter.uid == uid)
+    moreVoters(){
+
+      this.loading_more_voters = true
+      db.collection('moreUserInfo')
+      .where('enrolled','array-contains', this.currElection.electionId)
+      .startAfter(this.voters_offset).limit(25)
+      .get().then(querySnapshot =>{
+        querySnapshot.forEach(doc =>{
+          this.regVoters.push(doc.data())
+        })
+        this.voters_offset = querySnapshot.docs[querySnapshot.docs.length -1]
+        this.loading_more_voters = false
+      })
+    },
+    moreActivities(){
+
+      this.loading_more_activities = true
+      db.collection('moreUserInfo')
+      .where('enrolled','array-contains', this.currElection.electionId)
+      .startAfter(this.activities_offset).limit(25)
+      .get().then(querySnapshot =>{
+        querySnapshot.forEach(doc =>{
+          this.activities.push(doc.data())
+        })
+        this.activities_offset = querySnapshot.docs[querySnapshot.docs.length - 1]
+        this.loading_more_activities = false
+      })
     },
     getRole(contestant){
       let ref = contestant.contestsRef
@@ -859,69 +881,126 @@ export default {
       })
       
     },
-    countDownTimer(time_lag){
-      this.startDate = new Date(this.currElection.startDate + ' ' + this.currElection.startTime).getTime();
-      this.countDownDate = this.startDate + this.currElection.duration * 1000 * 60 * 60
-      let count = this.startDate
-      //console.log(this.startDate)
-			this.interval = setInterval(()=>{
-        var now = new Date().getTime() + time_lag;
-        let distance = count - now;
-        let days = Math.floor(distance/(1000*60*60*24));
-        let hours = Math.floor((distance % (1000*60*60*24))/(1000*60*60));
-        let minutes = Math.floor((distance % (1000*60*60))/(1000*60));
-        let seconds = Math.floor((distance % (1000*60))/1000);
-      
-        days = days < 10 ? days = `0${days}` : days
-        hours = hours < 10 ? hours = `0${hours}` : hours
-        minutes = minutes < 10 ? minutes = `0${minutes}` : minutes
-        seconds = seconds < 10 ? seconds = `0${seconds}` : seconds
+    onFinish(v){
+      let newDate = this.startDate + this.currElection.duration * 1000 * 60 * 60
+      let now = new Date().getTime() + this.time_lag;
+      console.log('finished', now)
+      if(now > newDate){
+        console.log('completed')
+        this.status = {
+          inprogress: false,
+          not_started: false,
+          election_ended: true
+        }
+      }
+      // if(this.currElection.voters >= this.rawVotes.length){
+        
+      //   this.timer_ready = false;
+      //   let timeout = setTimeout(()=>{
+      //     console.log('all caught-up')
+      //     this.endTime = new Date('2001-01-01').getTime()
+      //     this.status = {
+      //       inprogress: false,
+      //       not_started: false,
+      //       election_ended: true
+      //     }
+      //     this.timer_ready = true
+      //     // this.$refs.countdown.startCountdown('restart')
+      //   }, 1000)
+      // }
+      else{
+        this.timer_ready = false;
+        let timeout = setTimeout(()=>{
+          console.log('progress')
+          this.endTime = newDate
+          this.start = new Date().getTime() + this.time_lag;
+          this.status = {
+            inprogress: true,
+            not_started: false,
+            election_ended: false
+          }
+          this.timer_ready = true
+          // this.$refs.countdown.startCountdown('restart')
+        }, 2000)
 
-        this.electionTime = {days:days, hours:hours, minutes:minutes, seconds:seconds}
         
-        let lent = Object.keys(this.regVoters).length
-        
-        if(this.getVotes && this.getVotes.length != 0 && lent == this.getVotes.length){
-          // all voters have voted, stop the election
-          clearInterval(this.interval)
-          this.not_started = false
-          this.election_ended = true
-          this.inprogress = false
-          this.show_btn = true
-        }
-        else if(distance <= 0 && this.countDownDate <= now){ 
-          // election duration is reached
-          clearInterval(this.interval)
-          this.inprogress = false
-          this.not_started = false
-          this.election_ended = true
-          this.show_btn = true
-        }
-        else if(distance <= 0 && this.startDate <= now){
-          // count down to start time. Election just started
-          count = this.countDownDate
-          this.not_started = false
-          this.election_ended = false
-          this.inprogress = true
-          this.electionTime = {days:days, hours:hours, minutes:minutes, seconds:seconds}
-          this.show_btn = true
-        }
-        
-        
-        else{ // election not yet started
-          //console.log('step4')
-          this.not_started = true
-          this.inprogress = false
-          this.election_ended = false
-          this.show_btn = true
-        }
-        
-        this.timer_ready = true
-      }, 1000);
+      }
+      
     },
-    voted(id){
+    onProcess(v){
+      // console.log(v)
+      let now = new Date().getTime() + this.time_lag;
+
+      if(now < this.startDate){ // not started yet
+        this.status = {
+          inprogress: false,
+          not_started: true,
+          election_ended: false
+        }
+      }
+      if(now > this.startDate && v.timeObj.leftTime > 0){ // started
+       
+        this.status = {
+          inprogress: true,
+          not_started: false,
+          election_ended: false
+        }
+      }
+      // if(this.currElection.voters == this.rawVotes.length){
+      //   this.$refs.countdown.stopCountdown()
+      //   this.timer_ready = false;
+      //   let timeout = setTimeout(()=>{
+      //     console.log('all caught-up', this.$refs)
+      //     this.endTime = new Date('2001-01-01').getTime()
+      //     this.status = {
+      //       inprogress: false,
+      //       not_started: false,
+      //       election_ended: true
+      //     }
+      //     this.timer_ready = true
+          
+      //   }, 1000)
+      // }
+    },
+    countDownTimer(){
+      this.startDate = new Date(this.currElection.startDate + ' ' + this.currElection.startTime).getTime();
+      let now = new Date().getTime()
+
+      if(this.startDate > Date.now()){
+        console.log('not_started')
+        this.endTime = this.startDate
+
+        this.status = {
+          inprogress: false,
+          not_started: true,
+          election_ended: false
+        }
+      }
+      if(now > this.startDate){
+        console.log('completed')
+        this.status = {
+          inprogress: false,
+          not_started: false,
+          election_ended: true
+        }
+      }
+      else{
+        console.log('inprogress')
+        this.endTime = this.startDate + this.currElection.duration * 1000 * 60 * 60
+        this.status = {
+          inprogress: true,
+          not_started: false,
+          election_ended: false
+        }
+      }
+      
+      this.start = now + this.time_lag;
+      
+      this.timer_ready = true
+    },
+    voted(voter){
       if(this.currElection){
-        let voted = this.currElection.voted.find(item => item == id)
+        let voted = voter.voted ? voter.voted.find(eId => eId == this.currElection.electionId) : false
         return voted ? true : false
       }
       else{
@@ -936,32 +1015,29 @@ export default {
       return text.replace(/(.{18})..+/, "$1...");
     },
     getLabels(){
-      console.log('getLabels fired')
+      
       this.labels = []
       this.data = []
       this.bgdColor = []
-      this.contestants.map(d=>{
+      console.log(this.contestants)
+      this.contestants.map(contestant=>{
         if(this.allVotes && this.contestants.length > 0){ // if there are votes
-
+        
         // get votes for a particular contestant
         let foo = this.allVotes.filter(vote=> {
-          return d.uid == vote.id
+          return contestant.uid == vote.id
         })
-        ////console.log(item)
-        //console.log(d)
-        this.labels.push(this.$helpers.truncateText(d.name))
-        //this.labels = labels
+        this.labels.push(this.$helpers.truncateText(contestant.name))
+
         this.data.push(foo[0] ? foo[0].score > 0 ? foo[0].score : 0 : 0)
-        //this.data = data
+        
         let random1 = Math.floor(Math.random() * Math.floor(255))
         let random2 = Math.floor(Math.random() * Math.floor(255))
         let random3 = Math.floor(Math.random() * Math.floor(255))
         this.bgdColor.push(`rgba(${random1}, ${random2},  ${random3}, 0.5)`)
-        //this.bgdColor = bgdColor
+        
         }
       })
-      //console.log('chartdata: ', data)
-      //console.log('chart labels: ', labels)
       this.renderChart()
     },
     renderChart(){
@@ -1010,7 +1086,7 @@ export default {
       if(contestant.manifestos){
         let index = contestant.manifestos.indexOf(
         this.getUser.uid + this.currElection.electionId)
-        console.log(index)
+        //console.log(index)
         if(index != -1){
           return true;
         }
@@ -1019,48 +1095,27 @@ export default {
       
     },
     follow(event,contestant){
-      ////console.log(contestant)
-      if(contestant.followers.indexOf(this.getUser.uid) == -1){
-        this.disabled.push(contestant.uid)
-        contestant.followers.push(this.getUser.uid)
 
-        db.collection('moreUserInfo').doc(contestant.uid).update({
-          followers:firebase.firestore.FieldValue.arrayUnion(this.getUser.uid)
-        }).then(async res=>{
-          await db.collection('moreUserInfo').doc(this.getUser.uid).update({
-            following:firebase.firestore.FieldValue.arrayUnion(contestant.uid)
-          })
-          if(res){
-            //this.contestants = res.data,
-            this.disabled.splice(this.disabled.indexOf(contestant.uid),1)
-            this.$refs[contestant.uid][0].innerText = `you are following ${contestant.name}`
-            ////console.log(res.data)
-            this.disabled.splice(this.disabled.indexOf(contestant.uid),1)
-          }
-        })
-      }
-      else{
-        this.disabled.push(contestant.uid)
-        contestant.followers.splice(contestant.followers.indexOf(this.getUser.uid), 1)
-        
-        //event.target.innerText = `(${contestant.followers.length - 1})  follow`
-        db.collection('moreUserInfo').doc(contestant.uid).update({
-          followers:firebase.firestore.FieldValue.arrayRemove(this.getUser.uid)
-        }).then(async res=>{
-          await db.collection('moreUserInfo').doc(this.getUser.uid).update({
-            following:firebase.firestore.FieldValue.arrayRemove(contestant.uid)
-          })
-          if(res){
-            this.$refs[contestant.uid][0].innerText = `Follow ${contestant.name}`
-            ////console.log(res.data)
-            this.disabled.splice(this.disabled.indexOf(contestant.uid),1)
-          }
-        }).catch(err=>{
-          //console.log(err)
-        })
-      }
-      
-      
+      this.disabled.push(contestant.uid)
+
+      this.$helpers.followUser(this.getUserInfo, contestant)
+      .then(data =>{
+        this.disabled.splice(this.disabled.indexOf(contestant.uid),1)
+        console.log(this.$refs)
+        if(data.following){
+          // contestant.followers += 1
+
+          this.$refs[contestant.uid][0].innerText = `You are following ${contestant.name}`
+        }
+        else{
+          // contestant.followers -= 1
+          this.$refs[contestant.uid][0].innerText = `Follow ${contestant.name}`
+        }
+      })
+      .catch(err => {
+        console.log(err)
+      })
+       
     },
     follow_election(){
       ////console.log(this.getUser)
@@ -1091,27 +1146,24 @@ export default {
     isVoting(id){
       return this.votingList.indexOf(id) == -1 ? false : true
     },
-    checkIfOnline(user){
-      let those_online = this.$store.state.those_online
-      let foo = []
-      let found = those_online.find(data => data.username == user.username)
-      return found ? true : false
-    },
     viewManifesto(contestant){
-      this.show_manifesto_dialog = true;
       this.manifesto_spotlight = contestant
+      this.show_manifesto_dialog = true;
     },
     isContestant(voterId){
-      let found = this.currElection.contestants.find(contId =>
+      let found = this.contestants.find(contId =>
       contId == voterId)
       return !!found
     }
+  },
+  mounted(){
+    // console.log(this.$parent)
   },
   async created(){
     // get the elections the user enrolled in
     try {
       
-      this.setup()
+      this.curRoom ? this.setup() : ''
       
       this.$eventBus.$on('Hide_Profile', data=>{
         this.viewprofile = false
@@ -1127,12 +1179,12 @@ export default {
     }
   },
   destroyed(){
-    this.elecRef()
+    this.elecRef ? this.elecRef() : ''
     this.moreUserInfoRef();
     this.votesRef();
   },
   components:{
-    ViewProfile,
+    //ViewProfile,
     LoadingBar,
     Vote,
     Results,
@@ -1143,8 +1195,8 @@ export default {
   },
 }
 import api from '@/services/api'
-  import {mapGetters} from 'vuex'
-  import ViewProfile from '@/components/ViewProfile'
+  import {mapGetters, mapState} from 'vuex'
+  //import ViewProfile from '@/components/ViewProfile'
   import Results from '@/components/Results'
   import Vote from '@/components/Vote'
   import BarChart from '@/charts/barchart'
@@ -1191,9 +1243,8 @@ import api from '@/services/api'
     }
     
   }
-  #online_badge{
+  .online_badge{
     display: inline-block;
-    background: green;
     width: 10px;
     height: 10px;
     border-radius: 50%;
@@ -1272,7 +1323,12 @@ import api from '@/services/api'
 
   /* --scrollbar --*/
 .scrollbar::-webkit-scrollbar {
-    width: 10px;
+    width: 8px;
+    background-color: #d7d7df ;
+    @include borderRadius(10px)
+  }
+.scrollbar_thin::-webkit-scrollbar {
+    width: 2px;
     background-color: #d7d7df ;
     @include borderRadius(10px)
   }

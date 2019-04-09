@@ -1,4 +1,5 @@
 import Vue from 'vue'
+// import '@mdi/font/css/materialdesignicons.css'
 import directives from 'vuetify/es5/directives';
 import {
   Vuetify,
@@ -48,12 +49,13 @@ import {
   VSparkline,
   VSheet
 } from 'vuetify'
-import api from '@/services/api'
+//import api from '@/services/api'
 import 'vuetify/src/stylus/app.styl'
+import colors from 'vuetify/lib/util/colors';
 
 
 Vue.use(Vuetify, {
-  //iconfont: 'mdi',
+  // iconfont: 'mdi',
   components: {
     VApp,
     transitions,
@@ -97,6 +99,7 @@ Vue.use(Vuetify, {
     VAutocomplete,
     VDataTable,
     VExpansionPanel,
+    VDataIterator,
     VSparkline,
     VSheet,
   },
@@ -105,10 +108,12 @@ Vue.use(Vuetify, {
     primary: '#ee44aa',
     secondary: '#1867c0',
     //accent: '#82B1FF',
+    accent: colors.blue.darken2,
     error: '#FF5252',
     info: '#2196F3',
     success: '#4CAF50',
     warning: '#FFC107',
-    dark:'#424242'
+    dark:'#424242',
+    main: '#1c1f35'
   },
 })

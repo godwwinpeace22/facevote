@@ -22,7 +22,14 @@
                 <v-toolbar-item class="text-xs-center">Login</v-toolbar-item>
               </v-toolbar-->
               <v-card-text>
-                
+
+                <template v-if="can_resend_verification">
+                  <p class="error--text text-xs-center">A link has been sent to your email. Click on that link to verify your email</p>
+                  <p class="error--text text-xs-center">Didn't get the link ? 
+                    <v-btn color="info" @click="sendVerificationLInk" :disabled="sending" flat>Resend link</v-btn>
+                  </p>
+                </template>
+
                 <v-form v-model="valid" ref="form">
                   <v-text-field label="Email" color="teal" outline class="mb-2" 
                     v-model="form.email" :rules="nameRules" browser-autocomplete="email"
@@ -40,7 +47,7 @@
               <v-card-actions class="px-3">
                 <v-btn type="submit" block :dark="valid"  @click.prevent="submit" color="success" :disabled="!valid" 
                    :loading="loading">
-                  Continue
+                  Login
                 </v-btn>
                 
               </v-card-actions>
@@ -65,6 +72,8 @@ export default {
     title:'Login | Facevote',
     app_title:'Facevote',
     loading:false,
+    sending:false,
+    can_resend_verification: false,
     snackbar:{},
     show_spinner:false,
     form:{
@@ -92,6 +101,23 @@ export default {
       
     },
   methods:{
+    sendVerificationLInk(){
+      this.sending = true
+      return new Promise((resolve, reject)=>{
+        firebase.auth().currentUser.sendEmailVerification().then(done=>{
+          resolve(done)
+          
+          this.disabled = true;
+          this.sending = false
+
+          this.snackbar = {
+            show: true,
+            message: 'Email verification link resent',
+            color: 'purple'
+          }
+        }).catch(err => reject(err))
+      })
+    },
     async submit(){
       try{
         if(this.$refs.form.validate()){
@@ -103,9 +129,14 @@ export default {
             
             firebase.auth().onAuthStateChanged((user)=>{
               if (user) {
-                // User is signed in.
-                this.$store.dispatch('setUser', result.user)
-                this.$router.push('/')
+                if(user.emailVerified){
+                  this.$store.dispatch('setUser', result.user)
+                  this.$router.push('/home')
+                }
+                else{
+                  this.can_resend_verification = true
+                }
+                
                 this.loading = false
               } else {
                 // No user is signed in.
@@ -168,7 +199,7 @@ export default {
     }
   },
   mounted(){
-    
+    document.getElementById('welcome_logo').style.display = 'none'
   }
 }
 
