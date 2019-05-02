@@ -64,7 +64,7 @@ export default {
     }
   },
   mounted(){
-    console.log(this.broadcasts)
+    // console.log(this.broadcasts)
     this.$store.dispatch('setLastReadTime', {
       timestamp: Date.now(),
       read: this.broadcasts.msgs.length
