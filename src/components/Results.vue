@@ -74,14 +74,14 @@
                       :value="100" :size="$vuetify.breakpoint.sm ? 55 : 95"
                       color="teal"
                     >{{no_of_voters}}</v-progress-circular>
-                    <div style="margin:auto;width:fit-content">Voters</div>
+                    <div style="margin:auto;display:table;">Voters</div>
                   </v-flex>
                   <v-flex xs4 justify-center>
                     <v-progress-circular style="display:block;margin:auto;"
                       :value="100" :size="$vuetify.breakpoint.sm ? 55 : 95"
                       color="success"
                     >{{no_of_contestant}}</v-progress-circular>
-                    <div style="margin:auto;width:fit-content">Contestants</div>
+                    <div style="margin:auto;display:table;">Contestants</div>
                   </v-flex>
                   <v-flex xs4 justify-center>
                     <v-progress-circular style="display:block;margin:auto;"
@@ -89,7 +89,7 @@
                       color="purple" :size="$vuetify.breakpoint.sm ? 55 : 95">
                       {{no_of_votes}}
                       </v-progress-circular>
-                    <div style="margin:auto;width:fit-content">Votes</div>
+                    <div style="margin:auto;display:table;">Votes</div>
                     
                   </v-flex>
                 </v-layout>
@@ -111,9 +111,9 @@
                 <div v-for="(winnersInEachRole,i) in winners" :key="winnersInEachRole.length + Math.random() * i">
                   
                   <v-list-tile avatar v-for="winner in winnersInEachRole" :key="winner.id">
-                    <v-list-tile-avatar>
+                    <v-list-tile-avatar :color="$helpers.colorMinder(getName(winner.id).charAt(0))">
                       <img :src="getDetail(winner.id).photoURL" v-if="getDetail(winner.id).photoURL">
-                      <span class="white--text" v-else>{{winner.name}}</span>
+                      <span class="white--text" v-else>{{getName(winner.id).charAt(0)}}</span>
                     </v-list-tile-avatar>
                     <v-list-tile-content class='font-weight-bold'>
                       {{getName(winner.id)}}
@@ -175,7 +175,7 @@
           <vue-headful
             :title="title"
           />
-          <v-flex xs12 sm6 md4 v-for="result in sortedResults" :key="result.role" mb-3>
+          <v-flex d-flex xs12 sm6 md4 v-for="result in sortedResults" :key="result.role" mb-3>
             <v-card :flat="$vuetify.breakpoint.xsOnly">
               <v-card-text class="title text-capitalize">
                 {{result.role}}
@@ -188,8 +188,8 @@
                 </v-list-tile>
               </v-list>
               <v-divider></v-divider>
-              <v-list>
-                
+              <v-list dense>
+                <v-subheader v-if="result.contestants && result.contestants.length == 0">No contestants</v-subheader>
                 <v-list-tile avatar v-for="(contestant,i) in result.contestants" :key="contestant.id">
                   
                   <v-list-tile-avatar>
@@ -200,10 +200,11 @@
                       <template v-if="i != 0 && result.contestants[i].score != result.contestants[i-1].score">{{i+1}}</template>
                     </template>
                   </v-list-tile-avatar>
-                  <v-list-tile-avatar>
-                    <img :src="contestant.photoURL || `https://ui-avatars.com/api/?name=${contestant.name}`">
+                  <v-list-tile-avatar :color="contestant.photoURL ? '' : $helpers.colorMinder(contestant.name.charAt(0))">
+                    <img :src="contestant.photoURL" v-if="contestant.photoURL">
+                    <span v-else class="white--text">{{contestant.name.charAt(0)}}</span>
                   </v-list-tile-avatar>
-                  <v-list-tile-content>{{contestant.name}}
+                  <v-list-tile-content>{{$helpers.truncateText(contestant.name, 20)}}
                     <v-progress-linear color="secondary" :value="percentage_score(contestant,result.role)"></v-progress-linear>
                   </v-list-tile-content>
                   <span class="align-end mr-3" style="font-size:15px;"> {{contestant.position  }}  </span>
@@ -275,11 +276,12 @@
               <v-layout row wrap justify-space-around>
                 <!-- Your Share of All Votes -->
 
-                <v-flex xs12 d-flex :sm4="this.currElection.type == 'School'" :sm8="this.currElection.type != 'School'" >
+                <v-flex xs12 :sm4="this.currElection.type == 'School'" :sm8="this.currElection.type != 'School'" >
                   <v-card class="round_top">
                     <v-toolbar dense flat card class="white" light>
-                      <v-subheader class="pa-0 ma-0 font-weight-bold">Your Share of All Votes</v-subheader>
+                      <v-subheader class="pa-0 text-xs-center ma-0 font-weight-bold">Your Share of All Votes</v-subheader>
                     </v-toolbar>
+                    <div class="text-xs-center secondary--text"><small>You got {{percentage_share}}% of all votes casted</small></div>
                     <pie-chart class="pt-4" :chart-data="chartData5" :options="chartOptions3"></pie-chart>
                   </v-card>
                 </v-flex>
@@ -327,6 +329,7 @@ export default {
     valueDeterminate:50,
     items:[],
     sortedResults:[],
+    percentage_share: '', // Contestant's % share of all votes
     winners:[],
     chartData:{},
     chartOptions:{
@@ -391,7 +394,7 @@ export default {
     },
     no_of_voters(){
       if(this.regVoters){
-        let len = 20000000
+        let len = this.currElection.voters
         
         switch (true){
           case len > 1000000:
@@ -407,7 +410,7 @@ export default {
     // it with above as a method bcs it should be reactive
     no_of_contestant(){
       if(this.contestants){
-        let len = 200
+        let len = this.contestants.length
         
         switch (true){
           case len > 1000000:
@@ -421,7 +424,7 @@ export default {
     },
     no_of_votes(){
       if(this.allVotes){
-        let len = 2000000
+        let len = this.totalVotes
         
         switch (true){
           case len > 1000000:
@@ -432,6 +435,13 @@ export default {
             return len
         }
       }
+    },
+    totalVotes(){
+      let totalVotes = 0
+      this.allVotes.forEach(vote =>{
+        totalVotes += vote.score
+      })
+      return totalVotes
     },
     ...mapGetters([
       'getUser',
@@ -500,7 +510,7 @@ export default {
       return total_score_for_role ?  contestant.score/total_score_for_role * 100 : ''
     },
     getImgSrc(id){
-      console.log(this.contestants)
+      // console.log(this.contestants)
       return this.contestants.filter(item=> item.uid == id)[0].photoURL
     },
     sortResults(){
@@ -591,6 +601,9 @@ export default {
       this.allVotes.forEach(vote =>{
         totalVotes += vote.score
       })
+      
+      this.percentage_share = (votesForContestant / totalVotes * 100).toFixed(2)
+
       this.chartData5 = {
         datasets: [{
           label:"Contestant's share of all votes",
@@ -719,7 +732,7 @@ export default {
       
       this.rawVotes.forEach(vote=>{
         let votes = this.rawVotes.filter(v => v.dept == vote.dept)
-        votersByFaculty[vote.dept] = votes.length
+        votersByDept[vote.dept] = votes.length
       })
 
       //console.log(votersByDept)
@@ -767,7 +780,7 @@ export default {
     
   },
   mounted(){
-    console.log(this.$parent)
+    // console.log(this.$parent)
   },
   async created(){
     

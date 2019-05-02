@@ -132,53 +132,64 @@ export default {
       }
     },
     async newPost(){
+      // Create a new posts
       try{
         this.loading = true
         let images = this.selected_files.length > 0 ? 
         await this.$helpers.uploadImage(this.selected_files, this.cloudinary) : []
-        console.log(images)
+        // console.log(images)
 
         let postRef = db.collection('posts').doc()
         let userRef = db.collection('moreUserInfo').doc(this.getUser.uid)
+        let {name, photoURL = false, email, sch=false, fac=false, dept=false, uid, is_student} = this.getUserInfo
+        let onr = {
+          name,
+          photoURL,
+          email,
+          sch,
+          fac,
+          dept,
+          uid,
+          is_student
+        }
+
         let post = {
           docId: postRef.id,
           body: this.form.message,
           imgs: images,
           elecRef: this.curRoom.electionId,
-          tstamp: Date.now(),
+          tstamp: firebase.firestore.FieldValue.serverTimestamp(),
           type: this.type,
           reactions: 0,
           comments: 0,
           dept: this.user.dept,
           fac: this.user.fac,
           sch: this.user.sch,
-          onr: ['name', 'photoURL','email','sch','fac','dept','uid']
-            .reduce((a, e) => (a[e] = this.getUserInfo[e], a), {}),
+          onr: onr
         }
+
+        // Get a new write batch
+        let batch = db.batch()
+
+        batch.set(postRef, post)
+        batch.update(userRef, {
+          posts: firebase.firestore.FieldValue.increment(1)
+        })
         
-        let res = postRef.set(post).then(()=>{
-          userRef.update({
-            posts: this.getUserInfo.posts ? this.getUserInfo.posts * 1 + 1 : 1
-          }).then(()=> {
-            this.loading = false
+        batch.commit().then(()=>{
+          this.loading = false
           
-            this.$eventBus.$emit('HideNewPostDialog',true)
-            this.$eventBus.$emit('PushNewPost',post)
-            
-            this.e14 = 1;
-            this.form = {message:'',group:''}
-            
-            this.$eventBus.$emit('ShowSnackbar',{
-              show:true,
-              color:'success',
-              message:'Post was created successfully'
-            })
-          }).catch(err => {
-            this.loading = false
-            console.log(err)
+          this.$eventBus.$emit('HideNewPostDialog',true)
+          this.$eventBus.$emit('PushNewPost',post)
+          
+          this.e14 = 1;
+          this.form = {message:'',group:''}
+          
+          this.$eventBus.$emit('ShowSnackbar',{
+            show:true,
+            color:'success',
+            message:'Post was created successfully'
           })
-          
-          
         })
         
         

@@ -244,7 +244,13 @@ export default {
             }
           )
 
-          console.log(response)
+          // console.log(response)
+
+          // await this.otherUpdates({
+          //   photoURL: response
+          // }).then((done) => console.log(done))
+          // .catch(err => console.log(err))
+
           firebase.auth().currentUser.getIdToken(true);
           this.selected_file = null
           this.upload_text = 'Update photo'
@@ -253,11 +259,11 @@ export default {
 
           let docRef = db.collection('moreUserInfo').doc(this.getUser.uid)
           let doc = await docRef.get()
-          console.log(doc.data())
+          // console.log(doc.data())
           this.$store.dispatch('setUserInfo',doc.data())
 
         } catch (error) {
-          console.log(error)
+          // console.log(error)
           
           this.snackbar = {show:true,message:"Upload failed. Please try again",color:"error"}
           this.upload_text = 'Update photo'
@@ -269,55 +275,147 @@ export default {
     async updateProfile(){
       try {
         this.loading = true
-        await firebase.auth().currentUser.updateProfile({
+        firebase.auth().currentUser.updateProfile({
           displayName: this.form.name || this.getUser.displayName
+        }).then(() => {
+
+          let userRef = db.collection('moreUserInfo').doc(this.getUser.uid);
+          if(this.getUserInfo.was_once_a_student){
+            let data = {
+              name: this.form.name || this.getUser.displayName,
+              phone: this.form.phone || this.getUserInfo.phone,
+              is_student: this.form.is_student
+            }
+            userRef.update({
+              ...data
+            }).then(async () => {
+
+              // await this.otherUpdates({
+              //   ...data,
+              // }).then((done) => {
+              //   console.log(done)
+              // }).catch(err => console.log(err))
+
+              let doc = await userRef.get()
+          
+              firebase.auth().onAuthStateChanged((user) => {
+                if(user){
+                  this.$store.dispatch('setUser', user)
+                  this.$store.dispatch('setUserInfo',doc.data())
+
+                  this.snackbar = {show:true,message:'Profile updated successfully', color:'black'}
+                  this.loading = false
+                }
+      
+              })
+            })
+            
+          }
+          else{
+            let data = {
+              name: this.form.name || this.getUser.displayName,
+              //email:this.form.email || this.getUser.email,
+              phone: this.form.phone || this.getUserInfo.phone,
+              is_student: this.form.is_student,
+              was_once_a_student: this.form.is_student,
+              sch: this.form.school.text || this.getUserInfo.sch,
+              fac: this.form.faculty.text || this.getUserInfo.fac,
+              dept: this.form.department.text || this.getUserInfo.dept
+            }
+            userRef.update(data).then( async () => {
+
+              // await this.otherUpdates({
+              //   ...data,
+              // }).then((done) => {
+              //   console.log(done)
+              // }).catch(err => console.log(err))
+
+              let doc = await userRef.get()
+          
+              firebase.auth().onAuthStateChanged((user) => {
+                if(user){
+                  this.$store.dispatch('setUser', user)
+                  this.$store.dispatch('setUserInfo',doc.data())
+                  
+                  this.snackbar = {show:true,message:'Profile updated successfully', color:'black'}
+                  this.loading = false
+                }
+
+      
+              })
+            })
+            // console.log(update)
+          }
+          
+          
         })
-
-        let userRef = db.collection('moreUserInfo').doc(this.getUser.uid);
-        if(this.getUserInfo.was_once_a_student){
-          let update = await userRef.update({
-            name:this.form.name || this.getUser.displayName,
-            //email:this.form.email || this.getUser.email,
-            phone:this.form.phone || this.getUserInfo.phone,
-            is_student:this.form.is_student
-          });
-          console.log(update)
-        }
-        else{
-          let update = await userRef.update({
-            name: this.form.name || this.getUser.displayName,
-            //email:this.form.email || this.getUser.email,
-            phone: this.form.phone || this.getUserInfo.phone,
-            is_student: this.form.is_student,
-            was_once_a_student: this.form.is_student,
-            sch: this.form.school.text || this.getUserInfo.sch,
-            fac: this.form.faculty.text || this.getUserInfo.fac,
-            deptt: this.form.department.text || this.getUserInfo.dept
-          });
-          console.log(update)
-        }
         
-        // doing this for convinience
-        let doc = await userRef.get()
-        console.log(doc.data())
-        this.$store.dispatch('setUserInfo',doc.data())
-        
-
-        this.snackbar = {show:true,message:'Profile updated successfully', color:'black'}
-        this.loading = false
-        console.log('saved success')
       } catch (error) {
-        console.log(error)
+        // console.log(error)
         this.snackbar = {show:true,message:'Something went wrong', color:'error'}
         this.loading = false
       }
+    },
+    otherUpdates(onr){
+      // get reference to all users posts
+      // get reference to all users manifestos
+      // get reference to all users broadcasts
+      // update moreuserinfo
+      return new Promise(( resolve, reject ) => {
+
+        let postIds = []
+        db.collection('posts').where('onr.uid','==',getUser.uid)
+        .get().then(docs => {
+          docs.forEach(doc => {
+            postIds.push(doc.data().docId)
+          })
+        })
+
+        let manifestoIds = []
+        db.collection('manifestos').where('onr.uid','==',getUser.uid)
+        .get().then(docs => {
+          docs.forEach(doc => {
+            manifestoIds.push(doc.data().docId)
+          })
+        })
+
+        let broadcastIds = []
+        db.collection('broadcasts').where('onr.uid','==',getUser.uid)
+        .get().then(docs => {
+          docs.forEach(doc => {
+            broadcastIds.push(doc.data().docId)
+          })
+        })
+
+
+        let batch = db.batch();
+
+        postIds.forEach(docId => {
+          let postRef = db.collection('posts').doc(docId)
+          batch.update(postRef, onr)
+        })
+        manifestoIds.forEach(docId => {
+          let manifestoRef = db.collection('posts').doc(docId)
+          batch.update(manifestoRef, onr)
+        })
+        broadcastIds.forEach(docId => {
+          let Ref = db.collection('broadcasts').doc(docId)
+          batch.update(broadcastRef, onr)
+        })
+
+        batch.commit().then(() => {
+          resolve('success')
+        }).catch(err => reject('failed'))
+      })
+
+
     },
     async allSchools(){
       try {
         let schls = await api().post('dashboard/getSchools')
         this.$store.dispatch('setSchools', schls.data)
       } catch (error) {
-        console.log(error)
+        // console.log(error)
         $NProgress.done()
       }
     },
@@ -337,7 +435,7 @@ export default {
           
         }
       } catch (error) {
-        console.log(error)
+        // console.log(error)
       }
       
     }

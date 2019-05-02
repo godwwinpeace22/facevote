@@ -7,7 +7,7 @@
       <v-btn dark flat @click.native="snackbar = {}">Close</v-btn>
     </v-snackbar>
 
-    <v-toolbar dense flat>
+    <v-toolbar dense flat class="hidden-sm-and-down">
       <v-btn icon to="/forum">
         <v-icon>chevron_left</v-icon>
       </v-btn>
@@ -16,22 +16,22 @@
       <v-flex xs12 px-2 v-if="show_profile">
         <v-card flat>
           <v-img :alt="`${user.name}'s profile_img`" 
-            :src="user.photoURL ||  `https://ui-avatars.com/api/?name=${user.name}&size=300`" 
+            :src="user.photoURL ||  require('@/assets/avatar.png')" 
             :height="$vuetify.breakpoint.xsOnly ? 300 : $vuetify.breakpoint.smOnly ? 400 : 200" aspect-ratio="2.75">
           </v-img>
-          <v-card-title primary-title>
-            <div class="d-block">
-              <span class="title mb-0 text-capitalize success--text">{{user.name}}</span>
-              <span id="online_badge" v-if="checkIfOnline()"></span>
-            </div>
-            <v-subheader v-if="user.email == currUser.email">
-              {{user.followers}} | Followers</v-subheader>
-              
+
+          <v-card-title>
+            <span class="title mb-0 text-capitalize success--text">{{user.name}}</span>
+            <span id="online_badge" v-if="user.online"></span>
           </v-card-title>
-          
+
+          <v-btn class="mt-0" v-if="user.email == currUser.email" depressed>
+            {{user.followers}} Followers
+          </v-btn>
+
           <v-card-actions>
             <v-btn flat outline small color="success" 
-              class="text-capitalize" dark @click="dialog = true" 
+              class="text-capitalize" dark @click="$eventBus.$emit('show_profile_settings')" 
               v-if='currUser.uid == user.uid'>
               Edit Profile
             </v-btn>
@@ -39,7 +39,7 @@
             <!-- <v-btn flat outline small color="success" class="text-capitalize" v-else @click="openPrivateChatWindow">Message</v-btn> -->
             
             <v-btn flat outline small color="success" class="text-capitalize" 
-              :to="`/users/${user.email}`" v-if="isSuperUser">
+              :to="`/users/${user.email}`" >
               View Profile
             </v-btn>
             
@@ -57,7 +57,7 @@
             <v-subheader class="ma-0 pa-0" style="height:30px;" v-if="getRole()"><i class="mr-1">for </i><strong class="secondary--text"> {{getRole().role}}</strong></v-subheader>
             
           </v-container>
-          <v-card-actions v-if="isModerator(getUser.uid) && !isModerator(user.uid)">
+          <!-- <v-card-actions v-if="isModerator(getUser.uid) && !isModerator(user.uid)">
             <v-btn v-if="!banned(user.uid)" color="orange" outline small @click="suspend_member_dialog = {show:true,user:user}">
               <v-icon small class="mr-2">block</v-icon>
               Suspend
@@ -67,17 +67,17 @@
               Restore
             </v-btn>
             <v-btn color="success" small outline @click="makeModerator(user)" :loading="making_moderator">Make admin</v-btn>
-          </v-card-actions>
-          <v-dialog v-model="dialog" v-if="dialog" fullscreen hide-overlay transition="dialog-bottom-transition" scrollable>
+          </v-card-actions> -->
+          <!-- <v-dialog v-model="dialog" v-if="dialog" fullscreen hide-overlay transition="dialog-bottom-transition" scrollable>
             <profile-settings :dialog='dialog'></profile-settings>
-          </v-dialog>
+          </v-dialog> -->
           <v-divider></v-divider>
         </v-card>
       </v-flex>
     </v-layout>
 
     <!-- BAN USER FROM CURRENT ROOM DIALOG-->
-    <v-dialog v-model="suspend_member_dialog.show"
+    <!-- <v-dialog v-model="suspend_member_dialog.show"
       :fullscreen="$vuetify.breakpoint.xsOnly"
       max-width="500px" persistent
       transition="dialog-transition" >
@@ -99,25 +99,24 @@
           <v-btn v-else color="orange" small @click="suspend" :loading="loading">suspend</v-btn>
         </v-card-actions>
       </v-card>
-    </v-dialog>
+    </v-dialog> -->
   </div>
 </template>
 <script>
 export default {
   data:()=>({
-    show_profile:false, // hides this view temporarily until required data is available
+    show_profile: false, // hides this view temporarily until required data is available
     drawerRight: true,
     right: null,
     left: null,
-    right_sidebar:true,
+    right_sidebar: true,
     snackbar:{},
     user:'', // NOTE: this is not neccesarily the curr logged in user, but the user who's profile is bein viewed
     currUser:{}, // this is the logged in user, used here primarily for convenience
-    dialog:false,
-    suspend_member_dialog:{},
-    loading:false,
-    making_moderator:false,
-    disabled:false,
+    // suspend_member_dialog:{},
+    loading: false,
+    // making_moderator: false,
+    disabled: false,
     members2:'', //just to avoid directly mutating the members prop
   }),
   props:['email','members', 'thisGroup'],
@@ -131,7 +130,7 @@ export default {
       'curRoom'
     ]),
     isAccOwner(){
-      return this.$store.getters.getUser.email == this.email ? true : false
+      return this.getUser.email == this.email ? true : false
     },
     
   },
@@ -251,38 +250,21 @@ export default {
       })
     },
     follow(event){
-      if(this.user.followers.indexOf(this.currUser.uid) == -1){
-        this.disabled = true
-        //console.log(event)
-        this.user.followers.push(this.currUser.uid)
-        document.getElementById('follow').innerText = 'following'
-
-        db.collection('moreUserInfo').doc(this.user.uid).update({
-          followers:firebase.firestore.FieldValue.arrayUnion(this.currUser.uid)
-        }).then(async res=>{
-          await db.collection('moreUserInfo').doc(this.currUser.uid).update({
-            following:firebase.firestore.FieldValue.arrayUnion(this.user.uid)
-          })
-          this.disabled = false
-          
-        })
-      }
-      else{
-        this.disabled = true
-        this.user.followers.splice(this.user.followers.indexOf(this.currUser.uid), 1)
-        
-        document.getElementById('follow').innerText = 'follow'
-
-        db.collection('moreUserInfo').doc(this.user.uid).update({
-          followers:firebase.firestore.FieldValue.arrayRemove(this.currUser.uid)
-        }).then(async res=>{
-          await db.collection('moreUserInfo').doc(this.currUser.uid).update({
-            following:firebase.firestore.FieldValue.arrayRemove(this.user.uid)
-          })
-          
-          this.disabled = false
-        })
-      }
+      this.disabled = true;
+      this.$helpers.followUser(this.getUserInfo, this.user).then(done =>{
+      
+        if(done.following){
+          this.user.followers++
+        }
+        if(!done.following){
+          this.user.followers--
+        }
+        this.disabled = false
+      })
+      .catch(err => {
+        this.disabled = false
+        console.log(err)
+      })
     },
   },
   watch: {

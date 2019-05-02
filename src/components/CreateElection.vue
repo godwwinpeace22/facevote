@@ -11,9 +11,9 @@
     </v-snackbar>
 
     <v-container  :pa-0="$vuetify.breakpoint.xsOnly">
-      <v-card :class="{round:$vuetify.breakpoint.smAndUp}">
-        <v-stepper v-model="e6" dark class="white">
-          <v-stepper-header :class="{grey:$vuetify.breakpoint.smAndUp,teal:$vuetify.breakpoint.xsOnly}">
+      <v-card :class="{round: $vuetify.breakpoint.smAndUp}">
+        <v-stepper v-model="e6" class="white">
+          <v-stepper-header :class="{'grey lighten-3':$vuetify.breakpoint.smAndUp, teal: $vuetify.breakpoint.xsOnly}">
             <v-stepper-step :complete="e6 > 1" step="1">
               Election info
               <small>General information about the election</small>
@@ -34,9 +34,9 @@
               <v-layout>
                 <v-flex xs12 sm10>
                   <v-card class="mb-5 ma-2" flat light>
-                    <v-card-text class="pl-0">{{text}}
+                    <!-- <v-card-text class="pl-0">{{text}}
                       <v-divider></v-divider>
-                    </v-card-text>
+                    </v-card-text> -->
                     
                     <v-layout row wrap class="mb-3">
                       <v-flex xs12 sm4>
@@ -158,7 +158,7 @@
                           <v-text-field  slot="activator" v-model="form.time"  label="Time" color="secondary" readonly >
                             <v-icon color="secondary" slot="prepend-inner">access_time</v-icon>
                           </v-text-field>
-                          <v-time-picker v-if="modal2" format="ampm" :allowed-hours="allowedHours" v-model="form.time" header-color='secondary'>
+                          <v-time-picker v-if="modal2" format="ampm" v-model="form.time" header-color='secondary'>
                             <v-spacer></v-spacer>
                             <v-btn flat  @click="modal2 = false">Cancel</v-btn>
                             <v-btn flat color="success" outline @click="$refs.dialog2.save(form.time)">OK</v-btn>
@@ -259,17 +259,17 @@
               <v-card color="grey lighten-3" flat class="mb-5" light>
                 <v-card-text>
                   <v-card-title>
-                    Select a payment plan based on the number of voters you are expecting
+                    Click to select a payment plan based on the number of voters you are expecting
                   </v-card-title>
 
                   <!-- ==SMALL CARDS== -->
-                  <v-container grid-list-xl :class="$vuetify.breakpoint.xsOnly ? ['px-0'] : ''">
+                  <v-container grid-list-md :class="$vuetify.breakpoint.xsOnly ? ['px-0'] : ''">
                     <v-layout row wrap>
                       <v-flex xs12 sm4 md3 d-flex v-for="(plan,i) in Plans" :key="i">
                         <v-card class="mt-3 mx-auto round" hover @click="selectPlan(plan)">
                           <v-sheet
-                            class="v-sheet--offset ml-3" :class="{'orange':i==0,'primary':i==1,'success':i==2,'cyan':i==3}"
-                            color="" elevation="2"
+                            class="v-sheet--offset ml-3"
+                            :color="plan.color" elevation="1"
                             max-width="35%" height="80">
                             <v-icon class='mx-auto d-block ma-auto' 
                               style="width:50px;padding-top:15%;" size="50" color="white">
@@ -279,10 +279,17 @@
 
                           <v-card-text class="pt-0">
                             <div class="subheading font-weight-light grey--text mb-2">{{plan.range}} max voters</div>
-                            <div class="subheading font-weight-light text-xs-right">{{plan.amount}}</div>
+                            <div class="subheading font-weight-light text-xs-right">₦ {{plan.amount.toLocaleString()}}</div>
                             <v-divider class="my-2"></v-divider>
-                            <v-icon class="mr-2" small></v-icon>
-                            <span class="caption grey--text font-weight-light">Plan: {{plan.title}}</span>
+                            <span class="caption grey--text font-weight-light">
+                              <v-btn color="secondary" 
+                                style="text-transform: initial;" 
+                                small class="px-0 ml-0" 
+                                flat>
+                                <span style="text-decoration:;">Learn more</span>
+                                <v-icon small>open_in_new</v-icon>
+                              </v-btn>
+                            </span>
                           </v-card-text>
                         </v-card>
                       </v-flex>
@@ -295,9 +302,6 @@
                 <v-icon small>chevron_left</v-icon>
                 Previous
               </v-btn>
-              <!--v-btn color="success" @click="e6 = 5" >
-                Next step <v-icon small>chevron_right</v-icon>
-              </v-btn-->
 
             </v-stepper-content>
 
@@ -308,8 +312,10 @@
                   
                 </v-card-text>
                 <v-card-actions v-if="form.auto_enroll_admin">
-                  <v-btn color="success" flat @click="setCurrentRoom">Set as current Election</v-btn>
-                  <template v-if="getMyEnrolled.find(elec => elec.electionId == newElec.electionId)">
+                  <v-btn color="success" flat @click="setCurrentRoom"
+                    v-if="curRoom.electionId != newElec.electionId">Set as current Election</v-btn>
+                  <template v-if="getMyEnrolled.find(elec => elec.electionId == newElec.electionId)
+                    && newElec.electionId == curRoom.electionId">
                     <v-btn color="success" to="/forum">Join the conversation</v-btn>
                     <v-btn color="success" to="/contest">Contest</v-btn>
                   </template>
@@ -324,37 +330,36 @@
     
     <v-dialog
       v-model="plan_dialog"
-      max-width="600px"
+      max-width="400px"
       transition="dialog-transition"
+      lazy
     >
-      <v-card height="350" flat>
-        <v-container grid-list-xs fluid>
-          <v-layout align-center justify-center fill-height>
-            <v-flex xs12 height="150">
-              <v-card flat>
-                <v-card-text>
-                  You have selected the {{selected_plan.title}} plan.
-                  <p>Amount: {{selected_plan.amount}}</p>
-                </v-card-text>
-                <div class="" style="width:fit-content">
-                  <v-btn color="success" v-if="selected_plan.title == 'Basic'" @click="create">Create Election</v-btn>
-                  <paystack v-else
-                      :amount="selected_plan.amount * 100"
-                      :email="getUser.email"
-                      :metadata="metadata"
-                      :paystackkey="paystack_key"
-                      :reference="reference"
-                      :callback="callback"
-                      :close="close"
-                      :embed="false"
-                  >
-                    <v-btn color="success">Make Payment</v-btn>
-                  </paystack>
-                </div>
-              </v-card>
-            </v-flex>
-          </v-layout>
-        </v-container>
+      <v-card height="" flat>
+        <v-toolbar color="teal" card dark>
+          <span class="title">Selected Plan</span>
+        </v-toolbar>
+        <v-card-text v-if="selected_plan.title">
+          <div class="title mb-3">Your selection</div>
+          <p><strong>Maximum voters</strong>: {{selected_plan.range}}</p>
+          <p><strong>Amount</strong>: ₦ {{selected_plan.amount.toLocaleString()}}</p>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="success" v-if="selected_plan.title == 'Basic'" @click="create">Create Election</v-btn>
+          <paystack v-else
+              :amount="selected_plan.amount * 100"
+              :email="getUser.email"
+              :metadata="metadata"
+              :paystackkey="paystack_key"
+              :reference="reference"
+              :callback="callback"
+              :close="close"
+              :embed="false"
+          >
+            <v-btn color="success">Make Payment</v-btn>
+          </paystack>
+        </v-card-actions>
+        
       </v-card>
     </v-dialog>
 
@@ -387,46 +392,46 @@
 <script>
 import api from '@/services/api'
   import randomWords from 'random-words'
-  import { mapGetters } from 'vuex'
+  import { mapGetters, mapState } from 'vuex'
   import Navigation from '@/components/Navigation'
   import paystack from 'vue-paystack';
 //import { promisfy } from "@/helpers/promisify";
 
 export default {
-  data:()=>({
-    title:'Create new election',
+  data: ()=>({
+    title:'Create new election - Facevote',
     description:'',
-    snackbar:{},
-    plan_dialog:false,
+    snackbar: {},
+    plan_dialog: false,
     newElec: {}, // the newly created election
-    selected_plan:{},
-    loading:false,
-    dialog:false,
-    p_text:'Verifying...',
-    creating_election_dialog:false,
-    paystack_key:'pk_test_fefaa0524871e5ff35d4ec861974c59197cb42e7',
-    role_input:null,
-    role_input_desc:null,
-    modal:false,
-    modal2:false,
+    selected_plan: {},
+    loading: false,
+    dialog: false,
+    p_text: 'Verifying...',
+    creating_election_dialog: false,
+    paystack_key: 'pk_test_fefaa0524871e5ff35d4ec861974c59197cb42e7',
+    role_input: null,
+    role_input_desc: null,
+    modal: false,
+    modal2: false,
     today: new Date().getTime(),
-    e6:1,
-    text:'Lo consequatur nostrum blanditiis expedita omnis accusantium vitae veritatis aut?',
-    electionId:null,
-    form:{
-      title:'',
-      type:'',
-      school:'',
-      level:'',
-      timed:true,
-      faculty:'',
-      department:'',
-      date:'',
-      time:'',
-      electionDuration:5,
-      auto_enroll_admin:true,
-      public:true,
-      roles:[
+    e6: 1,
+    text: 'Lo consequatur nostrum blanditiis expedita omnis accusantium vitae veritatis aut?',
+    electionId: null,
+    form: {
+      title: '',
+      type: '',
+      school: '',
+      level: '',
+      timed: true,
+      faculty: '',
+      department: '',
+      date: '',
+      time: '',
+      electionDuration: 5,
+      auto_enroll_admin: true,
+      public: true,
+      roles: [
         {title:'president', value:'president', description:''},
         {title:'secretary', value:'secretary', description:''},
         {title:'treasurer', value:'treasurer', description:''},
@@ -437,23 +442,23 @@ export default {
         {title:'director of socials', value:'director or socials', description:''}
       ]
     },
-    electionTypes:[
+    electionTypes: [
       {text:'School',disabled:false},
       {text:'Organizations',disabled:false},
       {text:'Others',disabled:false},
       {text:'Governement - comming soon',disabled:true},
     ],
-    levels:[
+    levels: [
       ['General', 'Faculty','Department'],
       ['Federal', 'State','Local governement']
     ],
-    rules:{
+    rules: {
       counter: value => value.length <= 100 || 'Max 100 characters',
     },
     reference: Date.now() + btoa(Math.random()).substring(0,12)
 
   }),
-  computed:{
+  computed: {
     style1(){
       if(this.$vuetify.breakpoint.xsOnly){
         return {
@@ -464,15 +469,15 @@ export default {
     currDate(){
       let d = new Date()
       let date = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-      console.log(date)
+      // console.log(date)
       return date.toString()   
     },
     Plans(){
       return [
-        {range:'0 - 500',max_voters:500, amount:'Free',title:'Basic'},
-        {range:'500 - 1500', max_voters:1500, amount:14999,title:'Spark'},
-        {range:'1500 - 5000', max_voters:5000, amount:24999,title:'Chubby'},
-        {range:'5000 - 10000', max_voters:10000, amount:34999,title:'Robbust'},
+        {range:'0 - 400',max_voters:500, amount:'0 (Free)',title:'Basic', color: 'orange'},
+        {range:'400 - 1000', max_voters:1500, amount: 9999,title:'Spark', color: 'primary'},
+        {range:'1001 - 10,000', max_voters:5000, amount: 39999,title:'Chubby', color: 'success'},
+        {range:'10,000 - 50,000', max_voters:10000, amount: 249999,title:'Robbust', color: 'cyan'},
       ]
     },
     metadata(){
@@ -527,6 +532,10 @@ export default {
       'getUserInfo',
       'getMyEnrolled'
     ]),
+    ...mapState([
+      'curRoom',
+      'isSuperUser'
+    ])
   },
   methods:{
     setCurrentRoom(){
@@ -566,132 +575,135 @@ export default {
 
       this.creating_election_dialog = true
       this.p_text = 'Creating Election...'
-     
-      try {
 
-        let electionId = randomWords({ exactly: 2, join: '-' })
-        this.electionId = electionId
-        let temp_role = []
-        this.form.roles.forEach(role=>{
-          let new_token = randomWords({exactly:2, join: '-'})
-          temp_role.push({
-            title:role.title,
-            description:role.description,
-            value:new_token,
-            token:new_token
-          })
+      let electionId = randomWords({ exactly: 2, join: '-' })
+      this.electionId = electionId
+      let temp_role = []
+      this.form.roles.forEach(role=>{
+        let new_token = randomWords({exactly:2, join: '-'})
+        temp_role.push({
+          title: role.title,
+          description: role.description,
+          value: new_token,
+          token: new_token
+        })
+      })
+
+      let electionRef = db.collection('elections').doc(electionId)
+      let activityRef = db.collection('activities').doc()
+      let userRef = db.collection('moreUserInfo').doc(this.getUser.uid)
+      let {name, photoURL = false, email, sch=false, fac=false, dept=false, uid, is_student} = this.getUserInfo
+      let onr = {
+        name,
+        photoURL,
+        email,
+        sch,
+        fac,
+        dept,
+        uid,
+        is_student
+      }
+
+      // Create a new write batch
+      let batch = db.batch();
+
+      batch.set(electionRef, {
+        title: this.form.title,
+        type: this.form.type,
+        level: this.form.level,
+        timed: this.form.timed,
+        electionId: electionId,
+        admin: this.getUser.uid,
+        admins: [this.getUser.uid],
+        moderators: [this.getUser.uid], // moderators in chat room
+        followers: 1, // the creator is a follower
+        // voters: this.form.auto_enroll_admin ? 1 : 0, // voters count
+        contestants: 0,
+        sch: this.form.school,
+        fac: this.form.faculty,
+        dept: this.form.department,
+        startDate: this.form.date,
+        startTime: this.form.time,
+        duration: this.form.electionDuration,
+        voterSize: this.selected_plan.max_voters,
+        plan: this.selected_plan,
+        roles: temp_role,
+        dateCreated: firebase.firestore.FieldValue.serverTimestamp(),
+        status: 'inRegistration',
+        public: this.form.public,
+      })
+
+      batch.set(activityRef, {
+        type: 'election_created',
+        onr: onr,
+        tstamp: firebase.firestore.FieldValue.serverTimestamp(), // timestamp
+        body: 'created this election',
+        elecRef: electionId
+      })
+
+      if(this.form.auto_enroll_admin){
+        this.p_text = 'Enrolling Admin...'
+
+        batch.update(userRef, {
+          created: firebase.firestore.FieldValue.arrayUnion(electionId),
+          enrolled: firebase.firestore.FieldValue.arrayUnion(electionId)
         })
 
-        console.log(electionId)
-        let electionRef = db.collection('elections').doc(electionId)
-
-        electionRef.set({
-          title:this.form.title,
-          type:this.form.type,
-          level:this.form.level,
-          timed:this.form.timed,
-          electionId:electionId,
-          admin:this.getUser.uid,
-          admins:[this.getUser.uid],
-          moderators: [this.getUser.uid], // moderators in chat room
-          followers: 1, // the creator is a follower
-          voters: this.form.auto_enroll_admin ? 1 : 0, // voters count
-          contestants: 0,
-          sch:this.form.school,
-          fac:this.form.faculty,
-          dept:this.form.department,
-          startDate:this.form.date,
-          startTime:this.form.time,
-          duration:this.form.electionDuration,
-          voterSize:this.selected_plan.max_voters,
-          plan:this.selected_plan,
-          roles:temp_role,
-          dateCreated:Date.now(),
-          status:'inRegistration',
-          public:this.form.public,
+        let str = `votersByDept.${onr.dept}`
+        batch.update(electionRef, {
+          voters: 1,
+          [str]: 1
         })
 
-        // create new activity
-        db.collection('activities').add({
-          type:'election_created',
-          onr:['name', 'photoURL','email','sch','fac','dept','uid']
-            .reduce((a, e) => (a[e] = this.getUserInfo[e], a), {}),
-          tstamp: Date.now(), // timestamp
-          body: 'created this election',
-          elecRef:electionId
-        }).then(async done=>{
-          // follow the election
-          db.collection('moreUserInfo').doc(this.getUser.uid)
-          .update({
-            // follow_electn: firebase.firestore.FieldValue.arrayUnion(electionId),
-            created: firebase.firestore.FieldValue.arrayUnion(electionId),
-          })
+        let activityRef2 = db.collection('activities').doc()
+        batch.set(activityRef2, {
+          type: 'voter_registered',
+          onr: onr,
+          tstamp: firebase.firestore.FieldValue.serverTimestamp(),
+          body: 'enrolled for this election',
+          elecRef: electionId
+        })
+      }
+
+      else{
+        batch.update(userRef, {
+          created: firebase.firestore.FieldValue.arrayUnion(electionId)
+        })
+      }
+
+      batch.commit().then(async () => {
+        if(this.form.auto_enroll_admin){
 
           let newElec = await electionRef.get()
           this.newElec = newElec.data()
-          
+          this.$store.dispatch('setMyEnrolled', {
+            election: this.newElec,
+            merge: true
+          })
+        }
 
-          if(this.form.auto_enroll_admin){
-            this.enrollAdmin(electionId,this.getUser.uid).then(async d=>{
-              console.log('resolved d: ', d)
-              this.$store.dispatch('setMyEnrolled', {election: this.newElec, merge: true})
+        this.creating_election_dialog = false;
+        this.plan_dialog = false;
 
-              this.creating_election_dialog = false;
-              this.plan_dialog = false;
-
-              //this.loading = !this.loading
-              this.snackbar = {
-                show:true,
-                message:'Election created successfully',
-                //color:'success'
-              }
-              this.e6 = 5
-            })
-          }else{
-            this.creating_election_dialog = false;
-            this.plan_dialog = false;
-
-            //this.loading = !this.loading
-            this.snackbar = {
-              show:true,
-              message:'Election created successfully',
-              color:'success'
-            }
-            this.e6 = 5
-          }
-          
-        })
-      } catch (error) {
+        //this.loading = !this.loading
+        this.snackbar = {
+          show:true,
+          message:'Election created successfully',
+          color:'success'
+        }
+        this.e6 = 5
+      })
+      .catch(err => {
         this.snackbar = {
           show:true,
           message:'Something went wrong, try again',
           color:'error'
         }
-      }
-      
-    },
-    enrollAdmin(electionId,uid){
-      return new Promise((resolve,reject)=>{
-        this.p_text = 'Enrolling Admin...'
-        //update User details
-        db.collection('moreUserInfo').doc(uid)
-        .update({
-          enrolled:firebase.firestore.FieldValue.arrayUnion(electionId),
-          // follow_electn: firebase.firestore.FieldValue.arrayUnion(electionId),
-        }).then(result=>{
-          // create new activity
-          db.collection('activities').add({
-            type:'voter_registered',
-            onr:['name', 'photoURL','email','sch','fac','dept','uid']
-            .reduce((a, e) => (a[e] = this.getUserInfo[e], a), {}),
-            tstamp: Date.now(),
-            body: 'enrolled for this election',
-            elecRef:electionId
-          }).then(reslt=>{
-            resolve([result,reslt])
-          }).catch(err=> reject(err))
-        }).catch(err => reject(err))
       })
+
+        
+      
+      
     },
     prefillForm(user){
       this.form.school = user.sch
@@ -717,18 +729,18 @@ export default {
               this.$store.dispatch('setUserInfo', getDoc.data())
               this.prefillForm(this_user)
             }catch (error) {
-              console.log(error)
+              // console.log(error)
             }
             
           }
           
         } else {
-          console.log('No user is signed in.')
+          // console.log('No user is signed in.')
         }
       });   
     },
     selectPlan(plan){
-      console.log(plan)
+      // console.log(plan)
       this.selected_plan = plan
       this.plan_dialog = true
     },
@@ -736,7 +748,7 @@ export default {
       this.verifyTxn(res)
     },
     close(res){
-      console.log('closed dialog')
+      // console.log('closed dialog')
       this.reference = Date.now() + btoa(Math.random()).substring(0,12)
     },
     createPaymentRef(data){
@@ -744,10 +756,10 @@ export default {
         this.p_text = 'Initializing...'
         db.collection('paymentRefs').add({
           ...data,
-          by:this.getUser.uid,
-          plan_type:this.selected_plan.title,
-          plan_amount:this.selected_plan.amount,
-          trxn_date:Date.now()
+          by: this.getUser.uid,
+          plan_type: this.selected_plan.title,
+          plan_amount: this.selected_plan.amount,
+          trxn_date: Date.now()
         }).then(doc=>resolve(doc))
         .catch(err=> reject(err))
       })
@@ -780,13 +792,13 @@ export default {
       })
     },
     create(data){
-      console.log(data)
+      // console.log(data)
       if(this.selected_plan.title == 'Basic'){
         this.createElection()
       }
       else{
         this.createPaymentRef(data).then(doc=>{
-          console.log(doc);
+          // console.log(doc);
           this.reference = Date.now() + btoa(Math.random()).substring(0,12)
           this.createElection()
         })

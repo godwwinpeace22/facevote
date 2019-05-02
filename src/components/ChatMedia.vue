@@ -1,18 +1,18 @@
 <template>
-  <div>
-    <v-container grid-list-sm>
-      <v-layout row wrap>
-        <v-subheader v-show="$store.getters.getChatMedia.length == 0">No items</v-subheader>
-        <v-flex xs6 sm4 md2 v-for="(image,i) in $store.getters.getChatMedia" :key="i">
-          <v-card height="150" class="mb-1" flat>
-            <v-img :src='image' height="150" @click="carouselDialog($store.getters.getChatMedia,i)"></v-img>
-          </v-card>
-        </v-flex>
-      </v-layout>
-    </v-container>
+	<div>
+		<v-container grid-list-sm class="white">
+			<v-layout row wrap>
+				<v-subheader v-show="allMedia.length == 0">No items</v-subheader>
+				<v-flex xs6 sm4 md2 v-for="(image,i) in allMedia" :key="i">
+					<v-card height="150" class="mb-1 linkify" flat>
+						<v-img :src="image" height="150" @click="carouselDialog(allMedia,i)"></v-img>
+					</v-card>
+				</v-flex>
+			</v-layout>
+		</v-container>
 
-    <!-- carousel dialog -->
-    <!-- <v-dialog v-model="carousel_dialog"
+		<!-- carousel dialog -->
+		<!-- <v-dialog v-model="carousel_dialog"
       fullscreen transition="dialog-transition">
       <v-toolbar dense flat color="dark" tile>
         <v-toolbar-title class="white--text">Media files</v-toolbar-title>
@@ -67,40 +67,41 @@
           </v-card-actions>
         </v-card>
       </template>
-    </v-dialog> -->
-
-  </div>
+		</v-dialog>-->
+	</div>
 </template>
 <script>
 export default {
-  data:()=>({
-    carousel_dialog:false,
-    carousel_images:[],
-    onboarding:0,
-  }),
-  props:[],
-  methods:{
-    carouselDialog(images,index){
-      // this.carousel_dialog = true
-      // this.carousel_images = images
-      // this.onboarding = index
-      this.$eventBus.$emit('Open_Image_Gallery', {
-        images, index
+	data: () => ({
+		carousel_dialog: false,
+		carousel_images: [],
+		onboarding: 0
+	}),
+  props: [],
+  computed: {
+    allMedia(){
+      let photos = this.$store.state.chat_messages.map(msg => {
+        if(msg.imgs){
+          return msg.imgs
+        }
       })
-    },
-    next () {
-      this.onboarding = this.onboarding + 1 === this.carousel_images.length
-        ? 0
-        : this.onboarding + 1
-    },
-    prev () {
-      this.onboarding = this.onboarding - 1 < 0
-        ? this.carousel_images.length - 1
-        : this.onboarding - 1
-    },
+      let newArr = [].concat(...photos)
+      newArr = Array.from(new Set(newArr)) // removes duplicate values
+      return newArr.filter(item => !!item) // remove null or undefined values
+      
+    }
   },
-  mounted(){
-
-  }
-}
+	methods: {
+		carouselDialog(images, index) {
+			this.$eventBus.$emit("Open_Image_Gallery", {
+				images,
+				index
+			});
+		}
+	},
+	mounted() {
+    // console.log(this.$store.getters.getChatMedia);
+    // console.log(this.allMedia)
+	}
+};
 </script>

@@ -7,6 +7,7 @@
             <div>
               <slot name='loading_info'></slot>
               <v-progress-circular indeterminate :color="color" v-if="spinnerType == 'circle'"></v-progress-circular>
+              
               <div class="spinner" v-if="spinnerType == 'bars'">
                 <div class="rect1"></div>
                 <div class="rect2"></div>
@@ -14,9 +15,11 @@
                 <div class="rect4"></div>
                 <div class="rect5"></div>
               </div>
-              <div class="spinner2" v-if="spinnerType == 'bounce'">
-                <div class="double-bounce1"></div>
-                <div class="double-bounce2"></div>
+              
+              <div class="spinners mt-3" v-if="spinnerType == 'double_circles'">
+                <div class="spinner-block">
+                  <div class="spinner spinner-1"></div>
+                </div>
               </div>
             </div>
           </v-layout>
@@ -31,11 +34,11 @@ export default {
   props:{
     height:{
       type:String,
-      default:'70vh'
+      default:'97vh'
     },
     spinnerType:{
       type:String,
-      default:'circle'
+      default:'double_circles'
     },
     color: {
       type: String,
@@ -49,7 +52,7 @@ export default {
   computed:{
     styleObj(){
       return {
-        height:this.height ? this.height : '70vh',
+        height: this.height ? this.height : '97vh',
       }
     }
   }
@@ -120,47 +123,81 @@ export default {
 }
 
 
+//variables
+  $bg-color: #fff; //container background-color;
+  $basic-dark-color: #212121; //color of the spinner
+  $outer-color: #4caf50; //color of the spinner
+  $inner-color: #008080;
+  $border-width: 4px; //width of spinners border
+  $basic-spinner-dimensions: 70px; //width and height of spinner
+  $main-spinner-dimensions: $basic-spinner-dimensions - $border-width * 2; //width and height of bigger circle
+  $small-spinner-dimensions: $main-spinner-dimensions * 0.7; //width and height of smaller circle
 
-.spinner2 {
-  width: 40px;
-  height: 40px;
+.spinners {
 
-  position: relative;
-  margin: 100px auto;
-}
 
-.double-bounce1, .double-bounce2 {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background-color: #333;
-  background-color: #8BC34A;
-  opacity: 0.6;
-  position: absolute;
-  top: 0;
-  left: 0;
-  
-  -webkit-animation: sk-bounce 2.0s infinite ease-in-out;
-  animation: sk-bounce 2.0s infinite ease-in-out;
-}
+  .spinner {
+      position: relative;
+      width: $basic-spinner-dimensions;
+      height: $basic-spinner-dimensions;
 
-.double-bounce2 {
-  -webkit-animation-delay: -1.0s;
-  animation-delay: -1.0s;
-}
+      &:before,
+      &:after {
+        content: "";
+        display: block;
+        position: absolute;
+        border-width: 4px;
+        border-style: solid;
+        border-radius: 50%;
+      }
+    }
 
-@-webkit-keyframes sk-bounce {
-  0%, 100% { -webkit-transform: scale(0.0) }
-  50% { -webkit-transform: scale(1.0) }
-}
+  /* spinner-1 styles */
+  .spinner.spinner-1 {
+    
+      @keyframes rotate-animation {
+      0% {
+        transform: rotate(0deg);
+      }
 
-@keyframes sk-bounce {
-  0%, 100% { 
-    transform: scale(0.0);
-    -webkit-transform: scale(0.0);
-  } 50% { 
-    transform: scale(1.0);
-    -webkit-transform: scale(1.0);
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes anti-rotate-animation {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(-360deg);
+      }
+    }
+    
+    &:before {
+      width: $main-spinner-dimensions;
+      height: $main-spinner-dimensions;
+      border-bottom-color: $outer-color;
+      border-right-color: $outer-color;
+      border-top-color: rgba($basic-dark-color, 0);
+      border-left-color: rgba($basic-dark-color, 0);
+      top: 0px;
+      left: 0px;
+      animation: rotate-animation 1s linear 0s infinite;
+    }
+    
+    &:after {
+      width: $small-spinner-dimensions;
+      height: $small-spinner-dimensions;
+      border-bottom-color: $inner-color;
+      border-right-color: $inner-color;
+      border-top-color: rgba($basic-dark-color, 0);
+      border-left-color: rgba($basic-dark-color, 0);
+      top: ($main-spinner-dimensions - $small-spinner-dimensions) / 2;
+      left: ($main-spinner-dimensions - $small-spinner-dimensions) / 2;
+      animation: anti-rotate-animation 0.85s linear 0s infinite;
+    }
   }
 }
 </style>

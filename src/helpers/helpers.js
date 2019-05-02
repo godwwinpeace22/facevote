@@ -1,11 +1,12 @@
 /* global db: false */ // tells eslint to treat 'db' as a globally defined variable, and that it should not be written to
+/* global firebase: false */
 
 import $store from '../store/store'
 export default {
 
   /**
    * Get a color base on the letter of the alphabet supplied.
-   * @param char - the letter of the alphabet (e.g. a)
+   * @param {String} char - the letter of the alphabet (e.g. a)
    * @return A string representing the color (e.g. "yellow")
    */
   colorMinder(char){
@@ -24,6 +25,11 @@ export default {
   // truncateText(text,length=18){
   //   return text.replace(/(.{length})..+/, "$1...");
   // },
+  capitalize(text){
+    return text ? text.toLowerCase().split(' ')
+      .map( w =>  w.substring(0,1).toUpperCase()+ w.substring(1)).join(' ') : 
+      text
+  },
   truncateText(text, length=18){
     return typeof text === 'string' ?
       text.length > length ?
@@ -37,6 +43,9 @@ export default {
   parseDate(timestamp, show_date=false){
     // show_date is used to control which type of date to return - full date or only time
     // USING CLIENT TIME. MAYBE USE SERVER TIME ?
+    // handle firebase timestamp object
+    timestamp = typeof timestamp == 'object' ? timestamp.toMillis() : timestamp
+
     let d = new Date(timestamp)
     let now = Date.now()
     let diff = now - timestamp
@@ -48,7 +57,7 @@ export default {
 
     let options = {hour:'numeric', minute:'numeric' };
     let options2 = {
-      weekday: 'short', 
+      day: 'numeric', 
       year: 'numeric', 
       month: 'short', 
       hour:'numeric', 
@@ -164,8 +173,8 @@ export default {
           $store.dispatch('setMyEnrolled', arr.sort((a,b)=> b.dateCreated - a.dateCreated))
 
           // set current room if there is none (and if there are rooms to set)
-          if($store.state.myEnrolled && $store.state.myEnrolled.length > 0){
-            this.setCurRoom($store.state.myEnrolled).then(() => resolve(true))
+          if(arr && arr.length > 0){
+            this.setCurRoom(arr).then(() => resolve(true))
           }
           else{ resolve(false) }
           
@@ -198,8 +207,8 @@ export default {
           $store.dispatch('setMyEnrolled', arr.sort((a,b)=> b.dateCreated - a.dateCreated))
 
           // set current room if there is none (and if there are rooms to set)
-          if($store.state.myEnrolled && $store.state.myEnrolled.length > 0){
-            this.setCurRoom($store.state.myEnrolled).then(() => resolve(true))
+          if(arr && arr.length > 0){
+            this.setCurRoom(arr).then(() => resolve(true))
           }
           else{ resolve(false) }
           
@@ -223,6 +232,17 @@ export default {
       let docId = `${follower.uid}-${followee.uid}-fol`
       let followerRef = db.collection('ufollowers').doc(docId)
       let userRef = db.collection('moreUserInfo').doc(followee.uid)
+      let {name, photoURL = false, email, sch=false, fac=false, dept=false, uid, is_student} = follower
+      let onr = {
+        name,
+        photoURL,
+        email,
+        sch,
+        fac,
+        dept,
+        uid,
+        is_student
+      }
 
       let is_following = followerRef.get()
         .then(doc =>{
@@ -232,29 +252,33 @@ export default {
       if(await is_following){
         // unfollow
 
-        followerRef.delete()
-        .then(()=>{
-          userRef.update({
-            followers: followee.followers * 1 - 1
-          }).then(()=> resolve({following: false}))
+        let batch = db.batch();
+        batch.delete(followerRef)
+        
+        batch.update(userRef, {
+          followers: firebase.firestore.FieldValue.increment(-1)
         })
+
+        batch.commit().then(()=> resolve({following: false}))
         .catch(err => reject(err))
       }
 
       else{
-       
-        followerRef.set({
-          onr: ['name', 'photoURL','email','sch','fac','dept','uid']
-          .reduce((a, e) => (a[e] = follower[e], a), {}),
 
+        let batch = db.batch();
+
+        batch.set(followerRef, {
+          onr: onr,
           follower: follower.uid, // add this for convenience
           followee: followee.uid,
-          tstamp: Date.now()
-        }).then(()=> {
-          userRef.update({
-            followers: followee.followers * 1 + 1
-          }).then(()=> resolve({following: true}))
+          tstamp: firebase.firestore.FieldValue.serverTimestamp()
         })
+
+        batch.update(userRef, {
+          followers: firebase.firestore.FieldValue.increment(1)
+        })
+
+        batch.commit().then(()=> resolve({following: true}))
         .catch(err => reject(err))
       }
     })
@@ -276,26 +300,32 @@ export default {
 
       if(await has_reacted){
         // un react
+        let batch = db.batch();
 
-        postRxnRef.delete()
-        .then(()=>{
-          postRef.update({
-            reactions: post.reactions * 1 - 1
-          }).then(()=> resolve({reacted: false}))
+        batch.delete(postRxnRef)
+        batch.update(postRef, {
+          reactions: firebase.firestore.FieldValue.increment(-1)
         })
+
+        batch.commit().then(()=> resolve({reacted: false}))
         .catch(err => reject(err))
+        
       }
 
       else{
        
-        postRxnRef.set({
+        let batch = db.batch()
+
+        batch.set(postRxnRef, {
           onr: user.uid,
           postRef: post.docId
-        }).then(()=> {
-          postRef.update({
-            reactions: post.reactions * 1 + 1
-          }).then(()=> resolve({reacted: true}))
         })
+
+        batch.update(postRef, {
+          reactions: firebase.firestore.FieldValue.increment(1)
+        })
+
+        batch.commit().then(()=> resolve({reacted: true}))
         .catch(err => reject(err))
       }
     })
@@ -303,9 +333,12 @@ export default {
   },
 
   profileViewsCounter(viewer, viewee){
+    /* eslint-disable-next-line */
+    console.log({viewee,viewer})
     // update profile views count
     return new Promise(async (resolve, reject)=>{
       let docId = `${viewer.uid}-${viewee.uid}-pviews`
+      /* eslint-disable-next-line */
       // console.log(docId)
       let vieweeRef = db.collection('moreUserInfo').doc(viewee.uid)
       let profileViewsRef = db.collection('profile_views').doc(docId)
@@ -318,17 +351,33 @@ export default {
         resolve({success: false})
       }
       else{
-        profileViewsRef.set({
-          onr: ['name', 'photoURL','email','sch','fac','dept','uid']
-          .reduce((a, e) => (a[e] = viewer[e], a), {}),
+        let {name, photoURL = false, email, sch=false, fac=false, dept=false, uid, is_student} = viewer
+        let onr = {
+          name,
+          photoURL,
+          email,
+          sch,
+          fac,
+          dept,
+          uid,
+          is_student
+        }
+
+        // New batch operating
+        let batch = db.batch()
+        batch.set(profileViewsRef, {
+          onr: onr,
           viewer: viewer.uid,
           viewee: viewee.uid,
-          tstamp: Date.now()
-        }).then(()=>{
-          vieweeRef.update({
-            profile_views: viewee.profile_views ? viewee.profile_views * 1 + 1 : 1
-          }).then(()=> resolve({success: true})).catch(err => reject(err))
-        }).catch(err => reject(err))
+          tstamp: firebase.firestore.FieldValue.serverTimestamp()
+        })
+        batch.update(vieweeRef, {
+          profile_views: firebase.firestore.FieldValue.increment(1)
+        })
+        batch.commit().then(()=>{
+          resolve({success: true})
+        })
+        .catch(err => reject(err))
       }
     })
   },
@@ -340,6 +389,17 @@ export default {
       let docId = `${viewer.uid}-${campaign.docId}-camp`
       let campaignRef = db.collection('campaigns').doc(campaign.docId)
       let campaignViewsRef = db.collection('profile_views').doc(docId)
+      let {name, photoURL = false, email, sch=false, fac=false, dept=false, uid, is_student} = viewer
+      let onr = {
+        name,
+        photoURL,
+        email,
+        sch,
+        fac,
+        dept,
+        uid,
+        is_student
+      }
 
       let has_viewed = campaignViewsRef.get().then(doc=>{
         return doc.exists
@@ -349,17 +409,23 @@ export default {
         resolve({success: false})
       }
       else{
-        campaignViewsRef.set({
-          onr: ['name', 'photoURL','email','sch','fac','dept','uid']
-          .reduce((a, e) => (a[e] = viewer[e], a), {}),
+
+        // Create new write batch
+        let batch = db.batch()
+
+        batch.set(campaignViewsRef, {
+          onr: onr,
           viewer: viewer.uid,
           campaignRef: campaign.docId,
-          tstamp: Date.now()
-        }).then(()=>{
-          campaignRef.update({
-            views: campaign.views * 1 + 1
-          }).then(()=> resolve({success: true})).catch(err => reject(err))
-        }).catch(err => reject(err))
+          tstamp: firebase.firestore.FieldValue.serverTimestamp()
+        })
+
+        batch.update(campaignRef, {
+          views: firebase.firestore.FieldValue.increment(1)
+        })
+        
+        batch.commit().then(()=> resolve({success: true}))
+        .catch(err => reject(err))
       }
     })
   }

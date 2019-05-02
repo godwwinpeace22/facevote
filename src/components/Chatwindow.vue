@@ -1,10 +1,10 @@
 <template>
-  <loading-bar v-if='loading_messages'>
-    <v-subheader slot='loading_info' class='d-block mx-auto' style='width:fit-content;'>Loading messages...</v-subheader>
+  <loading-bar v-if='loading_messages' height="75vh">
+    <v-subheader slot='loading_info' class='mx-auto' style='display: table'>Loading messages...</v-subheader>
   </loading-bar>
 
   
-  <div v-else style="background:#fff;" class="pa-0 px-1 chat_home chat_space" id="chat_home">
+  <div v-else style="background:#fff;" class="pa-0 px-1 chat_home" id="chat_home">
     <v-snackbar v-model="snackbar.show" :timeout="5000" :color="snackbar.color" 
       class="white--text" top right>
       {{snackbar.message}} 
@@ -13,17 +13,28 @@
 
     <!-- NO DATA -->
     <v-subheader class="text-xs-center" v-if="!getChatMessages || getChatMessages.length == 0">No recent messages</v-subheader>
-
-    <div flat pa-0 id="chat_space" v-on:scroll="scroll" class="chat_space thick_scrollbar" :class="{thin_scrollbar:$vuetify.breakpoint.smAndDown}">
+    
+    <div flat pa-0 id="chat_space" v-on:scroll="scroll">
       
-      <div id="chat_space_content" v-if="getChatMessages.length > 0">
-        <div v-for="(msg,i) in getChatMessages" :key="i">
+      <div class="chat_space_content" 
+        v-if="getChatMessages.length > 0 && $vuetify.breakpoint.mdAndUp"
+        style="background: white;" :style="styleForChatSpaceContent">
 
+        <v-btn flat small @click="moreMessages()"
+          color="secondary" v-if="offset != null"
+          class="d-block mx-auto text-capitalize" 
+          :loading="loading_more_msgs">
+          See older messages
+        </v-btn>
+
+        <div v-for="(msg,i) in getChatMessages" :key="i">
           <!-- DATE DIVIDER -->
-          <div v-if="divide(msg.tstamp, getChatMessages[i-1])" style="background:oldlace;font-weight:bold;text-align:center;">
+          <div v-if="divide(msg.tstamp, getChatMessages[i-1])" class="divide">
             {{divide(msg.tstamp, getChatMessages[i-1])}}
           </div>
+
           <div class="chat_rectangle ">
+
             <div class="chat_avartar">
               <v-avatar
                 size="40" tile
@@ -65,7 +76,7 @@
                 </template>
                 
                 <!-- ACTIONS FOR ADMINS OR MODERATORS -->
-                <div id="moderator_actions" v-if="isModerator(getUser.uid)">
+                <div id="moderator_actions" v-if="isAdmin">
                   <v-menu offset-y>
                     <v-btn flat icon slot="activator">
                       <v-icon>more_vert</v-icon>
@@ -81,11 +92,11 @@
 
                 <!-- UPLOADED IMAGES -->
                 <v-container grid-list-md v-if="msg.imgs">
-                  <v-layout row wrap>
-                    <v-flex v-for="(image,i) in msg.imgs" :key="i"
-                      :class="{'xs3': msg.imgs.length >=3,'xs12': msg.imgs.length == 1,'xs6': msg.imgs.length == 2}">
+                  <v-layout row wrap justify-center>
+                    <v-flex v-for="(image,i) in msg.imgs.slice(0,3)" :key="i"
+                      :class="{'xs3': msg.imgs.length >=3,'xs6': msg.imgs.length < 3}">
                       <v-card class="mb-1" flat id="msg_img"
-                        max-height="500px" :height="msg.imgs.length == 1 ? 'initial' : $vuetify.breakpoint.xsOnly ? 100 : '200'">
+                        max-height="500px" :height="$vuetify.breakpoint.xsOnly ? 100 : '200'">
                         <v-img :src='image' :lazy-src="`https://picsum.photos/10/6?image=${i * 5 + 10}`" height="100%" max-height="500px" @click="carouselDialog(msg.imgs,i)">
                           <v-layout slot="placeholder" fill-height align-center justify-center ma-0>
                             <v-progress-circular indeterminate color="grey lighten-5"></v-progress-circular>
@@ -93,11 +104,18 @@
                         </v-img>
                       </v-card>
                     </v-flex>
+                    <v-flex xs3>
+                      <v-card id="more_images" v-if="msg.imgs.length >= 4"
+                        :height="msg.imgs.length == 1 ? '100%' : $vuetify.breakpoint.xsOnly ? 100 : '200'" 
+                        class="mb-3 linkify" dark @click="carouselDialog(msg.imgs, 3)">
+                        <div class="title text-xs-center" style="padding-top: 55%;">+ {{msg.imgs.length - 3}} more</div>
+                      </v-card>
+                    </v-flex>
                   </v-layout>
                 </v-container>
               </div>
               
-              <div class="show_reactions">
+              <!-- <div class="show_reactions">
                 <div class="reactions">
                   <v-btn icon small @click="add_reaction(msg,'like')">
                     <img alt="Thumbs Up" width=30 height=30 src="@/assets/thumbs-up.gif">
@@ -145,10 +163,102 @@
                 <v-btn icon small @click="add_reaction(msg,'excited')" v-show="msg.reactions.excited > 0">
                   {{msg.reactions.excited}}<img alt="Big Dancing Banana" width=20 height=20 src="@/assets/dancing-banana.gif">
                 </v-btn>
+              </div> -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div v-if="getChatMessages.length > 0 && $vuetify.breakpoint.smAndDown" class="chat_space_content"
+        :style="styleForChatSpaceContent">
+       
+        <v-btn flat small @click="moreMessages()"
+          color="secondary" v-if="offset != null"
+          class="d-block mx-auto text-capitalize" 
+          :loading="loading_more_msgs">
+          See older messages
+        </v-btn>
+
+        <template v-for="(msg,i) in getChatMessages">
+          <div v-if="divide(msg.tstamp, getChatMessages[i-1])" class="divide" :key="i">
+            {{divide(msg.tstamp, getChatMessages[i-1])}}
+          </div>
+
+          <div class="me" v-if="msg.onr.uid == getUser.uid" :key="i + 'me'">
+            <div class="me_inner elevation-1" :class="[msg.imgs ? 'msg_inner_imgs': 'msg_inner']">
+              <div class="body">
+                {{msg.body}}
+
+                <!-- UPLOADED IMAGES -->
+                <v-container grid-list-xs v-if="msg.imgs">
+                  <v-layout row wrap justify-center>
+                    <v-flex v-for="(image,i) in msg.imgs.slice(0,3)" :key="i"
+                      :class="{'xs3': msg.imgs.length >=3,'xs6': msg.imgs.length < 3}">
+                      <v-card class="mb-1" flat id="msg_img"
+                        max-height="500px" :height="$vuetify.breakpoint.xsOnly ? 100 : '200'">
+                        <v-img :src='image' :lazy-src="`https://picsum.photos/10/6?image=${i * 5 + 10}`" height="100%" max-height="500px" @click="carouselDialog(msg.imgs,i)">
+                          <v-layout slot="placeholder" fill-height align-center justify-center ma-0>
+                            <v-progress-circular indeterminate color="grey lighten-5"></v-progress-circular>
+                          </v-layout>
+                        </v-img>
+                      </v-card>
+                    </v-flex>
+                    <v-flex xs3>
+                      <v-card id="more_images" v-if="msg.imgs.length >= 4"
+                        :height="msg.imgs.length == 1 ? '100%' : $vuetify.breakpoint.xsOnly ? 100 : '200'" 
+                        class="mb-3 linkify" dark @click="carouselDialog(msg.imgs, 3)">
+                        <div class="title text-xs-center" style="padding-top: 55%;"><small>+ {{msg.imgs.length - 3}} more</small></div>
+                      </v-card>
+                    </v-flex>
+                  </v-layout>
+                </v-container>
+              </div>
+              <div class="meta2">
+                {{(new Date(msg.tstamp)).toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'}) }}
               </div>
             </div>
           </div>
-        </div>
+
+          <div class="thm" v-else :key="i + 'thm'">
+            <div class="thm_inner elevation-1" :class="[msg.imgs ? 'msg_inner_imgs': 'msg_inner']">
+              <div class="meta1" :class="[$helpers.colorMinder(msg.onr.name.charAt(0)) + '--text']">
+                {{msg.onr.name}}
+              </div>
+              <div class="body">
+                {{msg.body}}
+
+                <!-- UPLOADED IMAGES -->
+                <v-container grid-list-xs v-if="msg.imgs">
+                  <v-layout row wrap justify-center>
+                    <v-flex v-for="(image,i) in msg.imgs.slice(0,3)" :key="i"
+                      :class="{'xs3': msg.imgs.length >=3,'xs6': msg.imgs.length < 3}">
+                      <v-card class="mb-1" flat id="msg_img"
+                        max-height="500px" :height="$vuetify.breakpoint.xsOnly ? 100 : '200'">
+                        <v-img :src='image' :lazy-src="`https://picsum.photos/10/6?image=${i * 5 + 10}`" height="100%" max-height="500px" @click="carouselDialog(msg.imgs,i)">
+                          <v-layout slot="placeholder" fill-height align-center justify-center ma-0>
+                            <v-progress-circular indeterminate color="grey lighten-5"></v-progress-circular>
+                          </v-layout>
+                        </v-img>
+                      </v-card>
+                    </v-flex>
+                    <v-flex xs3>
+                      <v-card id="more_images" v-if="msg.imgs.length >= 4"
+                        :height="msg.imgs.length == 1 ? '100%' : $vuetify.breakpoint.xsOnly ? 100 : '200'" 
+                        class="mb-3 linkify" dark @click="carouselDialog(msg.imgs, 3)">
+                        <div class="title text-xs-center" style="padding-top: 55%;"><small>+ {{msg.imgs.length - 3}} more</small></div>
+                      </v-card>
+                    </v-flex>
+                  </v-layout>
+                </v-container>
+              </div>
+              <div class="meta2">
+                <strong>{{(new Date(msg.tstamp)).toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'}) }}</strong>
+              </div>
+            </div>
+          </div>
+
+        </template>
       </div>
 
     </div>
@@ -160,25 +270,16 @@
 
 export default {
   data:()=>({
-    password: 'Password',
     show_reactions:false,
     reactions: {}, // temp holds reactions for quick feedback
-    snackbar:{},
-    carousel_dialog:false,
-    carousel_images:[],
-    onboarding:0,
+    snackbar: {},
+    carousel_images: [],
+    onboarding: 0,
     drawer: null,
-    message: 'Hey!',
-    chat_messages:[],
-    basemsgs:[],
-    marker: true,
-    iconIndex: 0,
+    message: 'Type a message',
+    chat_messages: [],
     offset: '',
     loading_more_msgs: false,
-    menu:false,
-    chat:'',
-    fab:true,
-    curr_date:null,
     loading_messages:true,
   }),
   props:['members','room','thisGroup'],
@@ -190,9 +291,6 @@ export default {
     }
   },
   computed: {
-    icon () {
-      return this.icons[this.iconIndex]
-    },
     ...mapGetters([
       'getUser',
       'getUserInfo',
@@ -201,7 +299,21 @@ export default {
     ...mapState([
       'curRoom',
       'isSuperUser'
-    ])
+    ]),
+    breakpoint(){
+      return this.$vuetify.breakpoint
+    },
+    isAdmin(){
+      return this.curRoom.admins.includes(this.getUser.uid)
+    },
+    styleForChatSpaceContent(){
+      if(this.breakpoint.smAndDown){
+        return {height:'calc(100% - 47px)'}
+      }
+      else{
+        return {height: 'calc(100% - 56px)'}
+      }
+    }
   },
 
   methods: {
@@ -211,7 +323,18 @@ export default {
       })
     },
     scroll(e){
-      console.log(e)
+      let scrolled_to_bottom = e.target.scrollTop === (e.target.scrollHeight - e.target.offsetHeight)
+      let scrolled_to_top = e.target.scrollTop === 0
+      // console.log(e.target.offsetHeight/6)
+      if(scrolled_to_bottom){
+        // console.log('scrolled to bottom')
+      }
+      if(scrolled_to_top){
+        // console.log('scrolled to top')
+        // this.moreMessages(e)
+        
+        
+      }
     },
     findAMember(memberEmail){
       let member = this.members.find(member=> member.email == memberEmail)
@@ -221,7 +344,7 @@ export default {
       return chat.replace(/@([\w]+)/g,'<router-link to="/tag/$1">#$1</router-link>')
     },
     goto(item,room){
-      console.log(item,room)
+      // console.log(item,room)
       if(this.members.find(member => member.email == item.slice(1))){
         this.$router.push(`/forum/profile/${item.slice(1)}`)
         this.$eventBus.$emit('Toggle_drawerRight', true)
@@ -231,19 +354,19 @@ export default {
     },
     deleteMessage(msg){
       // Delete an inappropriate msg
-      db.collection('chat_messages').doc(msg.docId)
-      .delete().then(done=>{
-        this.snackbar = {show:true,message:'Message deleted',color:'dark'}
-      }).catch(err=>{
-        this.snackbar = {show:true,message:'Something went wrong',color:'error'}
-      })
-    },
-    isModerator(userId){
-      //console.log(userId,this.thisGroup.moderators)
-      let found = this.thisGroup.moderators ?
-      this.thisGroup.moderators.find(id => id == userId) : false
-      //console.log(found,this.thisGroup)
-      return found ? true : false
+      if(this.isAdmin){
+
+        db.collection('chat_messages').doc(msg.docId)
+        .delete().then(done=>{
+          // remove the message from the store
+          let msgIndex = this.getChatMessages.findIndex(v => v.docId == msg.docId)
+          this.getChatMessages.splice(msgIndex, 1)
+          this.snackbar = {show:true,message:'Message deleted',color:'dark'}
+        }).catch(err=>{
+          console.log(err)
+          this.snackbar = {show:true,message:'Something went wrong',color:'error'}
+        })
+      }
     },
     divide(timestamp,prev){
       let options = {year: 'numeric', month: 'numeric', day: 'numeric' };
@@ -359,22 +482,27 @@ export default {
       doc ? doc.scrollTop = doc.scrollHeight - doc.clientHeight : ''
       //console.log(doc.scrollTop)
     },
-    moreMessages(){
-      this.loading_more_msgs = true
+    moreMessages(e){
+      if(this.offset != undefined){
+        this.loading_more_msgs = true
 
-      db.collection('chat_messages')
-        .where('elecRef','==',this.curRoom.electionId)
-        .orderBy('tstamp', 'desc')
-        .limit(100).get().then(querySnapshot =>{
-          let msgs = []
-          querySnapshot.forEach(doc =>{
-            msgs.unshift(doc.data())
+        db.collection('chat_messages')
+          .where('elecRef','==',this.curRoom.electionId)
+          .orderBy('tstamp', 'desc')
+          .startAfter(this.offset)
+          .limit(25).get().then(querySnapshot =>{
+            let msgs = []
+            querySnapshot.forEach(doc =>{
+              msgs.unshift(doc.data())
+            })
+            this.offset = querySnapshot.docs[querySnapshot.docs.length - 1]
+            // this.last_doc_length = querySnapshot.docs.length
+  
+            this.$store.dispatch('updateFromDb', [...this.getChatMessages, ...msgs])
+            this.loading_more_msgs = false
+            e ? e.target.scrollTop = 100 : ''
           })
-          this.offset = querySnapshot.docs[querySnapshot.docs.length - 1]
-
-          this.$store.dispatch('saveChatMessage', msgs)
-          this.loading_more_msgs = false
-        })
+      }
     },
     chatUpdate(){
       
@@ -383,13 +511,25 @@ export default {
         this.updateRef = db.collection('chat_messages')
         .where('elecRef','==',this.curRoom.electionId)
         .orderBy('tstamp', 'desc')
-        .limit(3)
+        .limit(25)
         .onSnapshot(snapshot=>{
           let msgs = []
-          snapshot.forEach(doc=>{
-            msgs.push(doc.data())
+          // snapshot.forEach(doc=>{
+          //   msgs.push(doc.data())
             
-          })
+          // })
+          snapshot.docChanges().forEach(function(change) {
+            if (change.type === "added") {
+                // console.log("New", change.doc.data());
+                msgs.push(change.doc.data())
+            }
+            // if (change.type === "modified") {
+            //     console.log("Modified ", change.doc.data());
+            // }
+            // if (change.type === "removed") {
+            //     console.log("Removed", change.doc.data());
+            // }
+        })
 
           this.offset = snapshot.docs[snapshot.docs.length - 1]
 
@@ -410,14 +550,14 @@ export default {
         this.chatUpdate()
         
       } else {
-        console.log('No user is signed in.')
+        // console.log('No user is signed in.')
       }
     });
     
 
     this.$eventBus.$on('Scroll_Chat', data=>{
       //this.scrollChat()
-      console.log(data)
+      // console.log(data)
     })
     
   },
@@ -425,13 +565,11 @@ export default {
     this.chatUpdate()
   },
   components:{
-    'settings':Settings,
     LoadingBar,
     //'users':Users,
   }
 }
 import {mapGetters, mapState} from 'vuex'
-  import Settings from '@/components/Settings'
   import LoadingBar from '@/spinners/LoadingBar'
   
 </script>
@@ -443,8 +581,8 @@ import {mapGetters, mapState} from 'vuex'
   -moz-border-radius:$radius;
   -o-border-radius:$radius;
 }
-$mainBgColor:#1c1f35;
-$secondary:#1867c0;
+$mainBgColor: #1c1f35;
+$secondary: #1867c0;
 
 a{
   color:$secondary;
@@ -452,24 +590,92 @@ a{
 
 .chat_home{
   //background-image:url('../assets/chat_wallpaper.jpg');
-  background-size:cover;
+  background-size: cover;
   background-position: center;
-  height:calc(100% - 50px);
+  height: 100%;
+  background: #f3f2f1;
   //background-color: #00aabb;
 }
 .chat_avartar{
-  width:40px;
+  width: 40px;
   height: 40px;
-  border-radius:5px;
+  border-radius: 5px;
   //float:left;
   //display:inline-block;
-  margin-right:1%;
-  float:left;
+  margin-right: 1%;
+  float: left;
   img{
-    width:100%;
-    height:100%;
-    border-radius:5px;
+    width: 100%;
+    height: 100%;
+    border-radius: 5px;
   }
+}
+
+.me, .thm {
+  width: 97vw;
+  // background: blue;
+  overflow: auto;
+  margin: 15px 0px 15px 0px;
+}
+.msg_inner {
+  min-width: 50px;
+  max-width: 85%;
+  // width: 100%;
+  padding: 10px;
+  display: block;
+  position: relative;
+  @include borderRadius(10px);
+  border-top-right-radius: 0px;
+}
+.msg_inner_imgs {
+  min-width: 50px;
+  max-width: 85%;
+  width: 100%;
+  padding: 10px;
+  display: block;
+  position: relative;
+  @include borderRadius(10px);
+  border-top-right-radius: 0px;
+}
+
+.me_inner {
+  background: #e5f9cd;
+  text-align: right;
+  margin-right: 15px;
+  float: right;
+}
+
+.me_inner:before {
+  content: "";
+  width: 0px;
+  height: 0px;
+  position: absolute;
+  border-left: 10px solid #e5f9cd;
+  border-right: 10px solid transparent;
+  border-top: 10px solid #e5f9cd;
+  border-bottom: 10px solid transparent;
+  right: -19px;
+  top: 6px;
+}
+
+.thm_inner {
+  background: white;
+  text-align: left;
+  margin-left: 15px;
+  float: left;
+}
+
+.thm_inner:before {
+  content: "";
+  width: 0px;
+  height: 0px;
+  position: absolute;
+  border-left: 10px solid transparent;
+  border-right: 10px solid #fff;
+  border-top: 10px solid #fff;
+  border-bottom: 10px solid transparent;
+  left: -19px;
+  top: 6px;
 }
 @media (min-width: 960){
   .chat_avartar{
@@ -477,29 +683,38 @@ a{
   }
 }
 .chat_content{
-  display:inline-block;
+  display: inline-block;
   //background:yellow;
-  width:calc(100% - 50px);
+  width: calc(100% - 50px);
   min-height: 40px;
 }
 .chat_rectangle {
-  padding:5px 15px;
+  padding: 5px 15px;
   margin-bottom: 5px;
 	//position: relative;
 	//background: #00aabb;
 	text-align: left;
-  text-overflow:wrap;
-  width:100%;
+  text-overflow: wrap;
+  width: 100%;
   word-wrap: break-word;
   &:hover{
-    background-color:rgb(241, 241, 241);
+    background-color: rgb(241, 241, 241);
   }
   a{
-    text-decoration:none;
-    color:#00aabb;
+    text-decoration: none;
+    color: #00aabb;
   }
 }
 
+.divide {
+  display: table;
+  padding: 5px;
+  margin: auto;
+  @include borderRadius(8px);
+  background: oldlace;
+  font-weight: bold;
+  text-align: center;
+}
 #moderator_actions{
   float:right;
   margin-top: -30px;
@@ -511,13 +726,16 @@ a{
 }
 
 #chat_space{
-  height:100%;
-  overflow-y:auto;
-  visibility: hidden;
+  height: 100%;
 }
-#chat_space_content, #chat_space:hover, #chat_space:focus {
-  visibility: visible;
+.chat_space_content {
+  background: #f3f2f1;
+  overflow: auto;
+  // height: 100%;
 }
+// .chat_space_content, #chat_space:hover, #chat_space:focus {
+//   visibility: visible;
+// }
 
 #msg_img:hover{
   cursor: pointer;

@@ -27,14 +27,14 @@
                   <v-form ref="form" v-model="valid" class="text-xs-center pa-3">
                     <p class="text-xs-center">Lorem ipsum dolor, sit amet consectetur </p>
                     <v-text-field
-                      label="Full Name" class="mb-2" browser-autocomplete="name"
+                      label="Full Name" class="mb-0" browser-autocomplete="name"
                       v-model="form.name" outline
                       :rules="nameRules" color="secondary" required>
                       <v-icon slot="prepend" color="teal">person</v-icon>
                     </v-text-field>
 
                     <v-text-field 
-                      label="Email" class="mb-2" browser-autocomplete="email"
+                      label="Email" class="mb-0" browser-autocomplete="email"
                       v-model="form.email" outline
                       :rules="emailRules" color="secondary"
                       required type="email">
@@ -42,14 +42,14 @@
                     </v-text-field>
 
                     <v-text-field
-                      label="Phone Number" class="mb-2"
+                      label="Phone Number" class="mb-0"
                       v-model="form.phone" type="tel" outline browser-autocomplete="tel"
                       :rules="phoneRules" color="secondary"
                       required >
                       <v-icon slot="prepend" color="teal">phone</v-icon>
                     </v-text-field>
 
-                    <v-text-field class="mb-2"
+                    <v-text-field class="mb-0"
                       v-model="form.password" outline
                       :rules="passwordRules" color="secondary"
                       type="password" label="Password" 
@@ -71,7 +71,7 @@
 
               <v-window-item :value="2">
                 <v-card-text>
-                  <v-subheader class="px-4">Are you a student? </v-subheader>
+                  <!-- <v-subheader class="px-4">Are you a student? </v-subheader> -->
                   <v-radio-group v-model="form.is_student" row class="px-3">
                     <v-radio label="I am a student" :value="true"></v-radio>
                     <v-radio label="I am not a student" :value="false"></v-radio>
@@ -79,18 +79,18 @@
                   <v-form ref="form2" v-if="form.is_student == true" v-model="valid2" class="text-xs-center pa-3">
                     <v-autocomplete
                       v-model="mySchool" hint="Select your school"
-                      :items="schools" return-object item-text="text" hide-no-data outline class="mb-2"
+                      :items="schools" return-object item-text="text" hide-no-data outline class="mb-0"
                       label="School" persistent-hint color="secondary">
                       <v-icon slot="prepend" color="teal">school</v-icon>
                     </v-autocomplete>
 
                     <v-autocomplete color="secondary"
                       label="Faculty"  v-model="myFaculty" :items="mySchool.faculties"
-                      return-object item-text="text" outline class="mb-2" hide-no-data
+                      return-object item-text="text" outline class="mb-0" hide-no-data
                       :rules="nameRules" required >
                       <v-icon slot="prepend" color="teal">domain</v-icon>
                     </v-autocomplete>
-                    <v-autocomplete label="Department" outline class="mb-2" hide-no-data
+                    <v-autocomplete label="Department" outline class="mb-0" hide-no-data
                       v-model="myDepartment" :items="myFaculty.departments" required
                       return-object item-text="text" :rules="nameRules" color="secondary">
                       <v-icon slot="prepend" color="teal">place</v-icon>
@@ -100,7 +100,7 @@
                   <span class="caption grey--text text--darken-1">
                     * Please note that you need to be a student to paticipate in student elections
                   </span><br>
-                  <small class="grey--text text--darken-1">By signing up, you agree with Contesr's </small><br>
+                  <small class="grey--text text--darken-1">By signing up, you agree with our </small><br>
                   <small class="grey--text text--darken-1">
                     <router-link to="#">Terms of Use</router-link> and <router-link to="#"> Privacy Policy</router-link></small>
                   </div>
@@ -211,7 +211,7 @@ export default {
   computed: {
     currentTitle () {
       switch (this.step) {
-        case 1: return 'Create Your Account'
+        case 1: return 'Sign Up For Free'
         case 2: return 'Almost done...'
         default: return 'Account created'
       }

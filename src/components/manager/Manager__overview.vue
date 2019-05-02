@@ -51,34 +51,16 @@
     <!-- ==STATS CARDS== -->
     <v-container grid-list-xl fluid class="secondary pb-5 pt-4" v-if="ready">
       <v-layout row wrap justify-center align-center pb-5>
-        <v-flex xs3 v-for="stat in stats" :key="stat.title">
-          <v-card class="round elevation-1 text-xs-center" height="120">
-            
-            <v-list two-line>
-              <v-list-tile avatar>
-                
-                <v-list-tile-content>
-                  <v-list-tile-sub-title class="font-weight-bold">{{stat.title}}</v-list-tile-sub-title>
-                  <v-list-tile-title class="font-weight-bold">{{stat.value}},000</v-list-tile-title>
-                </v-list-tile-content>
-                <v-list-tile-avatar>
-                  <v-icon large  :color="stat.iconColor">{{stat.icon}}</v-icon>
-                </v-list-tile-avatar>
-              </v-list-tile>
-              <v-subheader class="font-weight-light">{{stat.text}}</v-subheader>
-            </v-list>
-          </v-card>
-          
-        </v-flex>
+        
       </v-layout>
     </v-container>
 
     <!-- ==DETAILS AND CHARTS== -->
-    <v-container grid-list-xl fluid class="pb-0" v-if="ready">
+    <v-container grid-list-xl fluid class="pb-0">
       <v-layout row wrap>
         <v-flex xs12 sm8 d-flex>
-          <v-card dark class="round v-card--offset" height="300" elevation="3">
-            <v-card-text class="pt-0">
+          <v-card dark color="cyan" class="round_top v-card--offset" height="400" elevation="3">
+            <!-- <v-card-text class="pt-0">
               <v-subheader class="title font-weight-light">
                 {{currElection.title}}
               </v-subheader>
@@ -92,12 +74,170 @@
                   </v-flex>
                 </v-list-tile>
               </v-list>
-            </v-card-text>
+            </v-card-text> -->
+            <!-- ==STATS CARDS== -->
+            <!-- <v-container grid-list-xl fluid class="pb-0 pt-4" v-if="ready">
+              <v-layout row wrap justify-space-around align-center pb-5>
+                <v-flex xs3 v-for="stat in stats" :key="stat.title">
+                  <v-card class="round elevation-1 text-xs-center" height="120" light>
+                    
+                    <v-list two-line>
+                      <v-list-tile avatar>
+                        
+                        <v-list-tile-content>
+                          <v-list-tile-sub-title class="font-weight-bold">{{stat.title}}</v-list-tile-sub-title>
+                          <v-list-tile-title class="font-weight-bold">{{stat.value}},000</v-list-tile-title>
+                        </v-list-tile-content>
+                        <v-list-tile-avatar>
+                          <v-icon large  :color="stat.iconColor">{{stat.icon}}</v-icon>
+                        </v-list-tile-avatar>
+                      </v-list-tile>
+                      <v-subheader class="font-weight-light">{{stat.text}}</v-subheader>
+                    </v-list>
+                  </v-card>
+                  
+                </v-flex>
+              </v-layout>
+            </v-container> -->
+            <v-card-title primary-title>
+              {{currElection.title}}
+            </v-card-title>
+            <v-sheet
+                class="mx-auto"
+                style="" flat
+                color="dark"
+                elevation=""
+                max-width="calc(100% - 32px)"
+              >
+                <v-sparkline
+                  :labels="labels"
+                  :value="value"
+                  color="orange"
+                  line-width="2"
+                  padding="16"
+                  height="100"
+                ></v-sparkline>
+                <v-subheader>User Registrations</v-subheader>
+              </v-sheet>
           </v-card>
         </v-flex>
         <v-flex xs12 sm4 d-flex>
           <v-card class="round v-card--offset">
-            
+            <v-card
+              class="mt-3 mx-auto"
+              max-width="400" flat
+            >
+              
+
+              <v-card-text class="pt-0">
+                <div class="title font-weight-light mb-2">{{$helpers.truncateText(currElection.title, 35)}} </div>
+                <small>Created on {{currElection.dateCreated.toDate().toLocaleString()}}</small>
+                <!-- <div class="subheading font-weight-light grey--text">Election Details</div> -->
+                <v-divider class="my-2"></v-divider>
+
+                <v-list dense >
+                  <v-list-tile>
+                    <v-list-tile-action>
+                      <v-icon color="teal">access_time</v-icon>
+                    </v-list-tile-action>
+                    <v-list-tile-title class="ml-0">
+                      <span class="mr-3">Start Date</span>
+                      <span>{{electionStartDate}}</span>
+                    </v-list-tile-title>
+                  </v-list-tile>
+                  <v-list-tile>
+                    <v-list-tile-action>
+                      <v-icon color="teal">timer</v-icon>
+                    </v-list-tile-action>
+                    <v-list-tile-title class="ml-0">
+                      <span class="mr-3">Duration</span>
+                      <span>{{currElection.duration}} hrs</span>
+                    </v-list-tile-title>
+                  </v-list-tile>
+                  
+                  <v-list-tile>
+                    <v-list-tile-action>
+                      <v-icon color="teal">school</v-icon>
+                    </v-list-tile-action>
+                    <v-list-tile-title class="ml-0">
+                      <span class="mr-3">School</span>
+                      <span>{{currElection.sch}}</span>
+                    </v-list-tile-title>
+                    <v-list-tile-action>
+                    </v-list-tile-action>
+                  </v-list-tile>
+
+                  <v-list-tile v-if="currElection.level == 'Faculty'">
+                    <v-list-tile-action>
+                      <v-icon color="teal">business</v-icon>
+                    </v-list-tile-action>
+                    <v-list-tile-title class="ml-0">
+                      <span class="mr-3">Faculty</span>
+                      <span>{{currElection.fac}}</span>
+                    </v-list-tile-title>
+                  </v-list-tile>
+
+                  <v-list-tile v-if="currElection.level == 'Department'">
+                    <v-list-tile-action>
+                      <v-icon color="teal">people</v-icon>
+                    </v-list-tile-action>
+                    <v-list-tile-title class="ml-0">
+                      <span class="mr-3">Department</span>
+                      <span>{{currElection.dept}}</span>
+                    </v-list-tile-title>
+                  </v-list-tile>
+
+                  <v-list-tile>
+                    <v-list-tile-action>
+                      <v-icon color="teal">adjust</v-icon>
+                    </v-list-tile-action>
+                    <v-list-tile-title class="ml-0">
+                      <span class="mr-3">Status</span>
+                      <span :class="[electionStatus[1] + '--text']">
+                        {{electionStatus[0]}}
+                      </span>
+                    </v-list-tile-title>
+                  </v-list-tile>
+
+                </v-list>
+
+              </v-card-text>
+
+              <v-card-actions>
+                <v-layout row wrap justify-center>
+                  
+                  <v-flex shrink class="mr-4">
+                    <v-progress-circular
+                      :value="100" class=""
+                      size="60"
+                      color="success"
+                    >
+                    {{currElection.voters}}
+                    </v-progress-circular>
+                  </v-flex>
+
+                  <v-flex shrink class="mr-4">
+                    <v-progress-circular
+                      :value="80" size="60" class=""
+                      color="purple lighten-2"
+                    >
+                    {{currElection.contestants}}
+                    </v-progress-circular>
+                  </v-flex>
+
+                  <v-flex shrink>
+                    <v-progress-circular
+                      :value="60" size="60"
+                      color="teal" class=""
+                    >
+                    {{currElection.votes ? currElection.votes : 0}}
+                    </v-progress-circular>
+                  </v-flex>
+
+                </v-layout>
+              </v-card-actions>
+
+            </v-card>
           </v-card>
         </v-flex>
       </v-layout>
@@ -106,152 +246,141 @@
     <!-- VOTERS, FOLLOWERS, AND ADMINS -->
     <v-container grid-list-xl  fluid class="pt-0" v-if="ready">
       <v-layout row wrap>
-        <!-- VOTERS -->
-        <v-flex xs12 sm6 md4 d-flex>
-          <v-card class="round">
-            <v-list dense>
-              <v-list-tile avatar>
+        <!-- VOTERS, ACTIVITIES -->
+        <v-flex xs12 sm4 md4 d-flex>
+          <v-card class="round_top" height="350" style="overflow: hidden;">
 
-                Registered voters
-                <v-text-field hide-details v-model="search_voters"
-                  append-icon="search" color="secondary" single-line
-                  label="Search voters..."
-                ></v-text-field>
-              </v-list-tile>
-            </v-list>
-            <v-divider></v-divider>
-            <div style="max-height:350px;overflow-y:auto;" class="scrollbar my-3 mr-1">
-              <v-expansion-panel>
-                <v-expansion-panel-content v-for="(voter, index) in filteredList" :key="index">
-                  <template slot="actions">
-                    <v-icon :color="voterSuspended(voter) ? 'error' : 'secondary'">{{voterSuspended(voter) ? 'info' : $vuetify.icons.expand}}</v-icon>
-                  </template>
-                  <template slot="header">
-                    <v-list dense>
-                      <v-list-tile avatar>
-                        <v-list-tile-avatar :color="$helpers.colorMinder(voter.name.charAt(0))">
+            <v-tabs left color="teal" dark show-arrows>
+              <v-tabs-slider color="orange"></v-tabs-slider>
+
+              <v-tab href="#tab-1" class="text-capitalize"> Voters </v-tab>
+
+              <v-tab href="#tab-2" class="text-capitalize"> Activity </v-tab>
+
+              <v-tab-item value="tab-1">
+                <div style="max-height:250px;overflow-y:auto;" class="scrollbar my-3 mr-1">
+                  <v-expansion-panel>
+                    <v-expansion-panel-content v-for="(voter, index) in filteredList" :key="index">
+                      <template slot="actions">
+                        <v-icon :color="voterSuspended(voter) ? 'error' : 'secondary'">{{voterSuspended(voter) ? 'info' : $vuetify.icons.expand}}</v-icon>
+                      </template>
+                      <template slot="header">
+                        <v-list dense>
+                          <v-list-tile avatar>
+                            <v-list-tile-avatar :color="$helpers.colorMinder(voter.name.charAt(0))">
+                              <img :src="voter.photoURL" v-if="voter.photoURL">
+                              <span class="white--text" v-else>
+                                {{voter.name.charAt(0)}}
+                              </span>
+                            </v-list-tile-avatar>
+                            <v-list-tile-content>
+                              <v-list-tile-title  class="text-capitalize secondary--text" 
+                                @click.stop="$eventBus.$emit('ViewProfile', voter)">{{voter.name}}</v-list-tile-title>
+                              <v-list-tile-sub-title v-if="isContestant(voter.uid)" class="text--primary">Contestant</v-list-tile-sub-title>
+                              <!-- <v-list-tile-sub-title>
+                                <span class="error--text" v-if="voterSuspended(voter)">suspended</span> .
+                                <span class="error--text" v-if="voter.flaggedBy && voter.flaggedBy.length > 0"> flagged</span>
+                              </v-list-tile-sub-title> -->
+                            </v-list-tile-content>
+                          </v-list-tile>
+                        </v-list>
+                      </template>
+                      <v-card>
+                        <v-card-text class="grey lighten-2">
+                          Lorem ipsum dolor sit amet consectetur adipisicing elit. Laudantium facilis neque reiciendis nostrum ex laboriosa
+                        </v-card-text>
+                        <v-card-actions class="grey lighten-2">
+                          <v-btn color="success" depressed small v-if="!voterSuspended(voter)">Make admin</v-btn>
+                          <v-btn color="orange" depressed small @click="suspendVoter(voter)" 
+                            v-if="!voterSuspended(voter)" :loading="loading">Suspend voter</v-btn>
+                          <v-btn color="orange" flat small depressed @click="restoreVoter(voter)" v-else :loading="loading">Restore voter</v-btn>
+                        </v-card-actions>
+                      </v-card>
+                    </v-expansion-panel-content>
+                  </v-expansion-panel>
+                  <!-- <v-list three-line dense>
+                    <v-subheader v-if="regVoters.length == 0">No registered voters yet</v-subheader>
+                    <v-subheader v-if="filteredList.length == 0  && regVoters.length != 0">No results found</v-subheader>
+                    <div v-for="(voter, index) in filteredList" :key="index">
+                      
+                      <v-list-tile  :key="voter.name" avatar color="'default'">
+                        <v-list-tile-avatar>
                           <img :src="voter.photoURL" v-if="voter.photoURL">
-                          <span class="white--text" v-else>
+                          <v-avatar size="38" class="white--text" :color="$helpers.colorMinder(voter.name.charAt(0))" v-else>
                             {{voter.name.charAt(0)}}
-                          </span>
+                          </v-avatar>
                         </v-list-tile-avatar>
+
                         <v-list-tile-content>
                           <v-list-tile-title  class="text-capitalize secondary--text" 
                             @click.stop="$eventBus.$emit('ViewProfile', voter)">{{voter.name}}</v-list-tile-title>
                           <v-list-tile-sub-title v-if="isContestant(voter.uid)" class="text--primary">Contestant</v-list-tile-sub-title>
-                          <!-- <v-list-tile-sub-title>
+                          <v-list-tile-sub-title>
                             <span class="error--text" v-if="voterSuspended(voter)">suspended</span> .
                             <span class="error--text" v-if="voter.flaggedBy && voter.flaggedBy.length > 0"> flagged</span>
-                          </v-list-tile-sub-title> -->
+                          </v-list-tile-sub-title>
                         </v-list-tile-content>
+                        <v-list-tile-action>
+                          <v-menu bottom offset-y>
+                            <v-btn icon  dark slot="activator">
+                              <v-icon color="secondary">more_vert</v-icon>
+                            </v-btn>
+                            <v-list dense>
+                              <v-list-tile  @click.stop="''">
+                                <v-list-tile-title>Make admin</v-list-tile-title>
+                              </v-list-tile>
+                              <v-list-tile  @click.stop="''" v-if="voterSuspended(voter)">
+                                <v-list-tile-title>Restore</v-list-tile-title>
+                              </v-list-tile>
+                            </v-list>
+                          </v-menu>
+
+                          <v-tooltip top>
+                            <v-btn slot="activator" v-if="voter.flaggedBy && voter.flaggedBy.length > 0" 
+                              icon small @click.stop="flagged_user_dialog = true; flagged_user = voter">
+                              <v-icon color="error" small>flag</v-icon>
+                            </v-btn>
+                            <span>This user has been flagged as suspicious</span>
+                          </v-tooltip>
+
+                          
+                          v-btn color="success" class="d-inline text-lowercase"  depressed small>contestant</v-btn
+                        </v-list-tile-action>
                       </v-list-tile>
-                    </v-list>
-                  </template>
-                  <v-card>
-                    <v-card-text class="grey lighten-2">
-                      Lorem ipsum dolor sit amet consectetur adipisicing elit. Laudantium facilis neque reiciendis nostrum ex laboriosa
-                    </v-card-text>
-                    <v-card-actions class="grey lighten-2">
-                      <v-btn color="success" depressed small v-if="!voterSuspended(voter)">Make admin</v-btn>
-                      <v-btn color="orange" depressed small @click="suspendVoter(voter)" 
-                        v-if="!voterSuspended(voter)" :loading="loading">Suspend voter</v-btn>
-                      <v-btn color="orange" flat small depressed @click="restoreVoter(voter)" v-else :loading="loading">Restore voter</v-btn>
-                    </v-card-actions>
-                  </v-card>
-                </v-expansion-panel-content>
-              </v-expansion-panel>
-              <!-- <v-list three-line dense>
-                <v-subheader v-if="regVoters.length == 0">No registered voters yet</v-subheader>
-                <v-subheader v-if="filteredList.length == 0  && regVoters.length != 0">No results found</v-subheader>
-                <div v-for="(voter, index) in filteredList" :key="index">
-                  
-                  <v-list-tile  :key="voter.name" avatar color="'default'">
-                    <v-list-tile-avatar>
-                      <img :src="voter.photoURL" v-if="voter.photoURL">
-                      <v-avatar size="38" class="white--text" :color="$helpers.colorMinder(voter.name.charAt(0))" v-else>
-                        {{voter.name.charAt(0)}}
-                      </v-avatar>
-                    </v-list-tile-avatar>
-
-                    <v-list-tile-content>
-                      <v-list-tile-title  class="text-capitalize secondary--text" 
-                        @click.stop="$eventBus.$emit('ViewProfile', voter)">{{voter.name}}</v-list-tile-title>
-                      <v-list-tile-sub-title v-if="isContestant(voter.uid)" class="text--primary">Contestant</v-list-tile-sub-title>
-                      <v-list-tile-sub-title>
-                        <span class="error--text" v-if="voterSuspended(voter)">suspended</span> .
-                        <span class="error--text" v-if="voter.flaggedBy && voter.flaggedBy.length > 0"> flagged</span>
-                      </v-list-tile-sub-title>
-                    </v-list-tile-content>
-                    <v-list-tile-action>
-                      <v-menu bottom offset-y>
-                        <v-btn icon  dark slot="activator">
-                          <v-icon color="secondary">more_vert</v-icon>
-                        </v-btn>
-                        <v-list dense>
-                          <v-list-tile  @click.stop="''">
-                            <v-list-tile-title>Make admin</v-list-tile-title>
-                          </v-list-tile>
-                          <v-list-tile  @click.stop="''" v-if="voterSuspended(voter)">
-                            <v-list-tile-title>Restore</v-list-tile-title>
-                          </v-list-tile>
-                        </v-list>
-                      </v-menu>
-
-                      <v-tooltip top>
-                        <v-btn slot="activator" v-if="voter.flaggedBy && voter.flaggedBy.length > 0" 
-                           icon small @click.stop="flagged_user_dialog = true; flagged_user = voter">
-                          <v-icon color="error" small>flag</v-icon>
-                        </v-btn>
-                        <span>This user has been flagged as suspicious</span>
-                      </v-tooltip>
-
-                      
-                      v-btn color="success" class="d-inline text-lowercase"  depressed small>contestant</v-btn
-                    </v-list-tile-action>
-                  </v-list-tile>
-                  <v-divider  :inset="true" :key="index"></v-divider>
+                      <v-divider  :inset="true" :key="index"></v-divider>
+                    </div>
+                  </v-list> -->
                 </div>
-              </v-list> -->
-            </div>
-          </v-card>
-        </v-flex>
-        <!-- FOLLOWERS -->
-        <v-flex xs12 sm6 md4 d-flex>
-          <v-card class="round">
-            <v-list dense>
-              <v-list-tile avatar>
-                Followers
-              </v-list-tile>
-            </v-list>
+              </v-tab-item>
+
+              <v-tab-item value="tab-2">
+                <div class="scrollbar my-3 mr-1" style="max-height:250px;overflow-y:auto;overflow-x:hidden;">
+                  <v-timeline align-top dense class="" >
+                    <v-timeline-item :color="getColor(activity)" small v-for="(activity, i) in activities" :key="i + 'activity'">
+                      <v-layout pt-3>
+                        <v-flex xs3>
+                          <strong>{{$helpers.parseDate(activity.tstamp)}}</strong>
+                        </v-flex>
+                        <v-flex>
+                          <strong>
+                            <span class="secondary--text linkify" @click="$eventBus.$emit('ViewProfile', activity.onr)">
+                              {{activity.onr.uid == getUser.uid ? 'Admin' : activity.onr.name}}
+                            </span> 
+                            {{activity.body}}</strong>
+                          <div class="caption">Mobile App</div>
+                        </v-flex>
+                      </v-layout>
+                    </v-timeline-item>
+                  </v-timeline>
+                </div>
+              </v-tab-item>
+            </v-tabs>
             <v-divider></v-divider>
-            <div style="max-height:350px;overflow-y:auto;" class="scrollbar my-3 mr-1">
-              <v-list two-line dense>
-                <v-subheader v-if="followers.length == 0">No followers</v-subheader>
-                <div v-for="(follower, index) in followers" :key="index">
-                  <v-list-tile  :key="follower.name" avatar @click="$eventBus.$emit('ViewProfile', follower)" color="'default'">
-                    <v-list-tile-avatar>
-                      <img :src="follower.photoURL" v-if="follower.photoURL">
-                      <v-avatar size="38" class="white--text" :color="$helpers.colorMinder(follower.name.charAt(0))" v-else>
-                        {{follower.name.charAt(0)}}
-                      </v-avatar>
-                    </v-list-tile-avatar>
-
-                    <v-list-tile-content>
-                      <v-list-tile-title  class="text-capitalize secondary--text">{{follower.name}}</v-list-tile-title>
-                      <v-list-tile-sub-title>
-                        <v-icon small :color="follower.online ? 'success' : 'orange'">fiber_manual_record</v-icon>
-                        {{follower.online ? 'online' : 'offline'}}
-                      </v-list-tile-sub-title>
-                    </v-list-tile-content>
-                  </v-list-tile>
-                  <v-divider  :inset="true" :key="index"></v-divider>
-                </div>
-              </v-list>
-            </div>
           </v-card>
         </v-flex>
+        
         <!-- ADMINS -->
-        <v-flex xs12 sm6 md4 d-flex>
+        <v-flex xs12 sm4 md4 d-flex>
           <v-card class="round">
             <v-list dense>
               <v-list-tile avatar>
@@ -296,44 +425,13 @@
             </div>
           </v-card>
         </v-flex>
-      </v-layout>
-    </v-container>
-    <!-- ACTIVITY AND TOKENS -->
-    <v-container grid-list-md fluid v-if="ready">
-      <v-layout row wrap>
-        <!-- ACTIVITY -->
-        <v-flex xs12 sm5 d-flex>
-          <v-card class="round">
-            <v-list dense>
-              <v-list-tile avatar>
-                <span class="font-weight-bold">Activity</span>
-              </v-list-tile>
-            </v-list>
-            <v-divider></v-divider>
-            <div class="scrollbar my-3 mr-1" style="max-height:230px;overflow-y:auto;overflow-x:hidden;">
-              <v-timeline align-top dense class="scrollbar" >
-                <v-timeline-item :color="getColor(activity)" small v-for="activity in activities" :key="activity._id">
-                  <v-layout pt-3>
-                    <v-flex xs3>
-                      <strong>{{new Date(activity.dateCreated).toDateString('en-Us',{day:'numeric'})}}</strong>
-                    </v-flex>
-                    <v-flex>
-                      <strong>{{activity.by == $store.getters.getUser.uid ? 'Admin' : extractVoter(activity.by).name}} 
-                        {{activity.text}}</strong>
-                      <div class="caption">Mobile App</div>
-                    </v-flex>
-                  </v-layout>
-                </v-timeline-item>
-              </v-timeline>
-            </div>
-          </v-card>
-        </v-flex>
+
         <!-- TOKENS -->
-        <v-flex xs12 sm7 d-flex>
+        <v-flex xs12 sm4 d-flex>
           <v-card class="round">
-            <v-list dense>
-              <v-list-tile>
-                <v-list-tile-title>Tokens</v-list-tile-title>
+            <v-list dense class="grey lighten-4">
+              <v-list-tile >
+                <span class="font-weight-bold">Tokens</span>
               </v-list-tile>
             </v-list>
             <v-divider></v-divider>
@@ -354,6 +452,18 @@
             </v-expansion-panel>
           </v-card>
         </v-flex>
+
+      </v-layout>
+    </v-container>
+
+    <!-- ACTIVITY AND TOKENS -->
+    <v-container grid-list-md fluid v-if="ready">
+      <v-layout row wrap>
+        <!-- ACTIVITY -->
+        <v-flex xs12 sm5 d-flex>
+          
+        </v-flex>
+        
       </v-layout>
     </v-container>
     
@@ -389,23 +499,26 @@
                 <td class="text-xs-left">{{ props.item.department }}</td>
                 <td class="text-xs-left">{{ props.item.faculty }}</td>
                 <td class="justify-center layout">
-                  <v-icon class="mt-3" color="secondary" small @click="culprit = props.item; suspend_dialog = true">
-                    block
-                  </v-icon>
+                  <v-tooltip top>
+                    <v-icon slot="activator" class="mt-3" color="error" small @click="culprit = props.item; suspend_dialog = true">
+                      block
+                    </v-icon>
+                    <span>Suspend contestant</span>
+                  </v-tooltip>
                 </td>
               </template>
             </v-data-table>
           </v-card>
         </v-flex>
         <v-flex sm3 d-flex>
-          <v-card class="round">
+          <v-card class="round_top">
             
             <v-toolbar flat tile dense>
               <v-icon color="error" small class="d-inline">block</v-icon>
               <v-toolbar-title class="d-inline subtitle">Suspended</v-toolbar-title>
             </v-toolbar>
             <v-divider></v-divider>
-            <v-subheader v-if="tabledata.filter(item => item.suspended == true).length == 0">non suspended</v-subheader>
+            <v-subheader v-if="tabledata.filter(item => item.suspended == true).length == 0">0 suspended contestants</v-subheader>
             <v-list dense>
               <template v-for="contestant in tabledata">
                 <v-list-tile :key="contestant.contId">
@@ -499,6 +612,27 @@
 <script>
 export default {
   data:()=>({
+
+    labels: [
+        '12am',
+        '3am',
+        '6am',
+        '9am',
+        '12pm',
+        '3pm',
+        '6pm',
+        '9pm'
+      ],
+      value: [
+        200,
+        675,
+        410,
+        390,
+        310,
+        460,
+        250,
+        240
+      ],
     ready:false,
     flagged_user_dialog:false,
     flagged_user:{},
@@ -547,7 +681,7 @@ export default {
       cloudName: 'unplugged'
     },
   }),
-  props:['electionid'],
+  props:['electionid', 'election', 'acts', 'voters'],
   filters: {
     capitalize: function (value) {
       if (!value) return ''
@@ -563,19 +697,29 @@ export default {
     //EditElection,
   },
   computed:{
+    ...mapGetters([
+      'getUser',
+      'getUserInfo'
+    ]),
+    ...mapState([
+      'isSuperUser',
+      'curRoom'
+    ]),
     stats(){
       return [
-        {title:'Followers', value: this.currElection.followers, text: '65 new this week', icon: 'lens',iconColor:'secondary'},
+        // {title:'Followers', value: this.currElection.followers, text: '65 new this week', icon: 'lens',iconColor:'secondary'},
         {title:'Voters', value: this.regVoters.length, text: 'Since last month', icon:'group', iconColor:'purple'},
         {title:'Contestants', value: this.contestants.length, text: '5 roles/positions', icon: 'hdr_strong', iconColor:'success'},
-        {title:'Total Trafic', value: '103,000', text: 'Since last month', icon: 'equalizer', iconColor: 'cyan'}
+        {title:'Total Votes', value: '103,000', text: 'Since last month', icon: 'how_to_vote', iconColor: 'cyan'}
       ]
     },
     overviewItems(){
       return [
         ['Election title',this.currElection.title],
-        ['Creation Date',new Date(this.currElection.dateCreated).toDateString('en-Us',{day:'numeric'})],
-        ['Followers',this.currElection.followers],
+        ['Creation Date', this.currElection.dateCreated.toDate().toDateString('en-Us',{day:'numeric'})],
+        ['School',this.currElection.sch],
+        ['Faculty',this.currElection.fac],
+        ['Department',this.currElection.dept],
         ['Start Time',new Date(this.getStartDate).toDateString('en-Us',this.date_options)],
       ]
     },
@@ -585,6 +729,33 @@ export default {
           return voter.name.toLowerCase().includes(this.search_voters.toLowerCase())
         })
       }
+    },
+    electionStartDate(){
+      let d = new Date(this.currElection.startDate + ' ' + this.currElection.startTime);
+      return d.toLocaleString('en-US',{
+        month: 'short',
+        day: 'numeric',
+        'year': 'numeric',
+        hour: 'numeric',
+        minute: 'numeric'
+      })
+    },
+    electionStatus(){
+      // BEWARE THIS FUNCTION USES LOCAL TIME, WHICH MIGHT BE INACCURATE
+      // Get the status of the current election
+    
+      let start = new Date(this.currElection.startDate + ' ' + this.currElection.startTime).getTime();
+      let one_hour = 1000 * 60 * 60
+      if(start > Date.now()){
+        return ['Not Started', 'secondary'] // not started
+      }
+      else if(start + this.currElection.duration * one_hour > Date.now()){
+        return ['In Progress', 'success'] // in progress
+      }
+      else{
+        return ['Ended','error'] // ended
+      }
+      
     },
     adminList(){
       if(this.regVoters){
@@ -627,7 +798,14 @@ export default {
       try {
 
         // Get current election
-        db.collection('elections')
+
+        if(this.election){
+          this.currElection = this.election
+        }
+
+        else{
+
+          db.collection('elections')
           .doc(this.electionid)
           .get().then(doc=>{
             
@@ -648,8 +826,7 @@ export default {
             console.log(err)
           })
 
-        // Get regvoters
-        db.collection('moreUserInfo')
+          db.collection('moreUserInfo')
           .where('enrolled','array-contains',this.electionid)
           .get().then(querySnapshot=>{
             let myArr = []
@@ -676,6 +853,10 @@ export default {
           }).catch(err=>{
             console.log(err)
           })
+        }
+
+
+        // Get regvoters
         
       } catch (error) {
         console.log(error)
@@ -702,35 +883,22 @@ export default {
     },
     getActivities(){
       // Get activities
-      db.collection('activities')
-      .where('electionRef','==',this.electionid)
-      .get().then(querySnapshot=>{
-        let acts = []
-        querySnapshot.forEach(doc=>{
-          acts.push(doc.data())
-        })
-        this.activities = acts
-        console.log('activities: ', acts)
-      })
-    },
-    async follow(){
-      if(this.user.followers.indexOf(this.currUser._id) == -1){
-        // not following user, follow this user
-        this.disabled = true
-        this.user.followers.push(this.currUser._id)
-        await api().post(`dashboard/followContestant/${this.user._id}/${this.currUser._id}`, {
-          token:this.$store.getters.getToken
-        })
-        this.disabled = false
+      if(this.acts){
+        this.activities = this.acts
       }
-      else{
-        // is following the user, unfollow
-        this.disabled = true
-        await api().post(`dashboard/unfollowContestant/${this.user._id}/${this.currUser._id}`, {
-          token:this.$store.getters.getToken
+      else {
+
+        db.collection('activities')
+        .where('elecRef','==',this.electionid)
+        .orderBy('tstamp', 'desc')
+        .get().then(querySnapshot=>{
+          let acts = []
+          querySnapshot.forEach(doc=>{
+            acts.push(doc.data())
+          })
+          this.activities = acts
+          console.log('activities: ', acts)
         })
-        this.user.followers.splice(this.user.followers.indexOf(this.currUser._id),1)
-        this.disabled = false
       }
     },
     isContestant(id){
@@ -876,9 +1044,13 @@ export default {
   }
 }
 import api from '@/services/api'
+import {mapGetters, mapState} from 'vuex'
   //import EditElection from '@/components/EditElection'
 </script>
 <style scopped>
+  .linkify{
+    cursor: pointer;
+  }
   .v-card--offset {
     top: -70px;
     position: relative;

@@ -20,7 +20,7 @@
                 </v-flex>
                 <v-flex xs12 sm4>
                   <v-card flat>
-                    <bar-chart :chart-data="chartdata2" :chartOptions="chartOptions2"></bar-chart>
+                    <bar-chart :chart-data="chartdata2" :options="chartOptions2"></bar-chart>
                   </v-card>
                 </v-flex>
                 <v-flex xs12 sm4>
@@ -40,7 +40,7 @@
                             </v-list-tile-avatar>
                             <v-list-tile-content>
                               <v-list-tile-title >
-                                {{item.onr.name}}
+                                {{$helpers.capitalize(item.onr.name)}}
                               </v-list-tile-title>
                               <v-list-tile-sub-title>
                                 {{item.onr.dept}}
@@ -63,7 +63,7 @@
               </v-layout>
               <v-divider></v-divider>
 
-              <v-layout row wrap>
+              <!-- <v-layout row wrap>
                 <v-flex sm12>
                   <v-card
                     flat
@@ -92,7 +92,7 @@
                     </v-sheet>
                   </v-card>
                 </v-flex>
-              </v-layout>
+              </v-layout> -->
             </v-container>
           </v-card>
         </v-flex>
@@ -227,7 +227,7 @@ export default {
       this.profileViews.forEach(view =>{
         
         byDept[view.onr.dept] ? 
-        byDept[view.onr.dept] = byDept[view.onr.dept].length + 1 : 
+        byDept[view.onr.dept] = byDept[view.onr.dept]++ : 
         byDept[view.onr.dept] = 1
       })
 
@@ -252,7 +252,7 @@ export default {
       this.profileViews.forEach(view =>{
         
         byFac[view.onr.fac] ? 
-        byFac[view.onr.fac] = byDept[view.onr.fac].length + 1 : 
+        byFac[view.onr.fac] = byFac[view.onr.fac]++ : 
         byFac[view.onr.fac] = 1
       })
 
@@ -260,7 +260,7 @@ export default {
         labels: Object.keys(byFac).map(item =>{
           return this.$helpers.truncateText(item)
         }),
-     
+
         datasets: [
         {
           label: 'Your profile views by faculty',

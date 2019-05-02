@@ -2,7 +2,7 @@
   <div>
     <v-layout row justify-center>
       <v-dialog v-model="bdialog" lazy persistent scrollable
-        :fullscreen="$vuetify.breakpoint.xsOnly" transition="dialog-bottom-transition" 
+        :fullscreen="$vuetify.breakpoint.xsOnly" :transition="switchTransition2" 
         :overlay="false" max-width="500">
         <v-card>
           <v-toolbar dark color="teal" dense flat>
@@ -52,21 +52,36 @@ export default {
     ]),
     disabled(){
       return !this.message.trim()
-    }
+    },
+    switchTransition2(){
+      return this.$vuetify.breakpoint.xsOnly ? 
+      'slide-x-reverse-transition' : 
+      'dialog-transition'
+    },
+    
   },
   methods: {
     newBroadcast(){
       this.loading = true
       // create new broadcast message
       let broadcastRef = db.collection('broadcasts').doc()
+      let {name, photoURL = false, email, sch=false, fac=false, dept=false, uid, is_student} = this.getUserInfo
 
       let data = {
-        onr: ['name', 'photoURL','email','sch','fac','dept','uid']
-          .reduce((a, e) => (a[e] = this.getUserInfo[e], a), {}),
+        onr: {
+          name,
+          photoURL,
+          email,
+          sch,
+          fac,
+          dept,
+          uid,
+          is_student
+        },
 
         body: this.message.trim(),
         type: 'broadcast', // can be 'default' or 'broadcast'
-        tstamp: Date.now(),
+        tstamp: firebase.firestore.FieldValue.serverTimestamp(),
         by: this.getUserInfo.uid,
         docId: broadcastRef.id,
         elecRef: this.curRoom.electionId

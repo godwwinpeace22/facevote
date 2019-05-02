@@ -7,23 +7,14 @@
       <span slot="title">{{this_group.title}}</span><br>
       <span>ElectionId: {{this_group.electionId}}</span>
 
-      <v-menu offset-y slot="nav_item">
-        <v-btn icon slot="activator"
-          v-show="$vuetify.breakpoint.mdAndUp">
-          <v-icon color="">info</v-icon>
-        </v-btn>
-        <v-list dense>
-          <v-list-tile @click="media_dialog = true">
-            <v-list-tile-title>Media files</v-list-tile-title>
-          </v-list-tile>
-          <v-list-tile @click="''">
-            <v-list-tile-title>Settings</v-list-tile-title>
-          </v-list-tile>
-        </v-list>
-      </v-menu>
+      <v-spacer></v-spacer>
+      <v-btn icon slot="nav_item" @click="media_dialog = true"
+        v-if="breakpoint.mdAndUp">
+        <v-icon color="">photo_library</v-icon>
+      </v-btn>
 
       <v-toolbar slot="extended_nav" color="teal" dark flat
-        v-if="$vuetify.breakpoint.smAndDown" style='background-color:#29648a;' dense>
+        v-if="breakpoint.smAndDown" style='background-color:#29648a;' dense>
         <v-tabs v-model="model" color="teal" slider-color="yellow">
           <v-tab
             v-for="item in ['Chat','Members','Media']"
@@ -36,7 +27,7 @@
       </v-toolbar>
     </navigation>
 
-    <v-navigation-drawer fixed v-model="drawerRight" v-if="$vuetify.breakpoint.mdAndUp" 
+    <v-navigation-drawer fixed v-model="drawerRight" v-if="breakpoint.mdAndUp" 
       :mobile-break-point="960" style="overflow:hidden;"
       right hide-overlay clipped app width="300" class='user_presence_sidebar navdrawr pr-1'>
       
@@ -45,17 +36,20 @@
       
     </v-navigation-drawer>
 
-    <loading-bar v-if="!ready"><div slot="loading_info">Loading...</div></loading-bar>
+    <loading-bar v-if="!ready">
+      <div class='mx-auto' style="display: table" slot="loading_info">Loading...</div>
+    </loading-bar>
 
-    <v-tabs-items v-model="model" class="" style="background:#fff;" v-else>
+    <v-tabs-items v-model="model" class="" style="background:#fff;" v-if="ready">
       <v-tab-item value="Chat" :style="styleForTabs">
-        <chatwindow :members='members' :room='this_group.electionId' :thisGroup='this_group' v-if="ready"></chatwindow>
+        <chatwindow :members='members' :room='this_group.electionId' :thisGroup='this_group'></chatwindow>
         <!-- Textarea -->
         <div v-show="model == 'Chat'" v-if="ready" :style="styleInput" style="display:;">
           <div class="chat_input white--text" id="chat_input" style='width:100%;background:#fff;z-index:0;'>
         
-            <v-form @submit.prevent='submit' style="margin-left:px;background:#fff;" class="px-2">
-              <v-textarea v-model="message" color="deep-purple" @keyup.shift.50="mention_dialog = true" 
+            <v-form style="margin-left:px;background:#fff;" class="px-2">
+              <v-textarea v-model="message" v-on:keyup.enter="sendMessage" color="deep-purple" 
+                @keyup.shift.50="mention_dialog = true" 
                  id="form" :disabled="!canSendMessages"
                 :label="canSendMessages ? 'Type a message' : 'You cannot send messages in this group'" outline 
                 rows="1" auto-grow hide-details
@@ -66,12 +60,7 @@
                 </v-btn>
                 <span>Send a photo</span>
               </v-tooltip>
-              <v-tooltip top slot="append">
-                <v-btn icon slot="activator" @click='mention_dialog = true'>
-                  <span color="success" style="color:green;margin-top:-3px;font-size:18px;">@</span>
-                </v-btn>
-                <span>Mention someone</span>
-              </v-tooltip>
+              
               <v-tooltip top slot="append-outer" v-if="message.trim()">
                 <v-btn icon slot="activator" @click="sendMessage">
                   <v-icon color="teal">{{message.trim() ? 'send' : '' }}</v-icon>
@@ -87,20 +76,28 @@
                   <v-icon color="success">mood</v-icon>
                 </v-btn>
                 <v-card class="">
-                  <picker set="google" @select="appendEmoji" :native="true" 
-                    title="Choose Emoji" emoji="grinning"/>
-                  <!-- <v-card-text >
+                  <!-- <picker set="google" @select="appendEmoji" :native="true" 
+                    title="Choose Emoji" emoji="grinning"/> -->
+                  <v-card-text >
                     <v-btn small flat color="primary" icon v-for="(emoji,i) in emojis" :key="i" @click="appendEmoji(emoji)">
                       <span style="font-size:30px;display:block;margin-top:-7px;">{{emoji}}</span>
                     </v-btn>
-                  </v-card-text> -->
+                  </v-card-text>
                 </v-card>
               </v-menu>
 
               <!-- MENTION MEMBER -->
               <v-menu width="500"  :close-on-content-click='false' 
-               id="mention" slot="append" max-height="500" 
+               id="mention"  max-height="500" slot="append"
                 left top offset-y v-model="mention_dialog">
+
+                <v-tooltip top slot="activator">
+                  <v-btn icon slot="activator">
+                    <span color="success" style="color:green;margin-top:-3px;font-size:18px;">@</span>
+                  </v-btn>
+                  <span>Mention someone</span>
+                </v-tooltip>
+
                 <v-card class="pa-0" flat>
                   <v-toolbar flat dense color="cyan" dark>Mention Someone</v-toolbar>
                   <div :style="styleMention" class="navdrawr my-1">
@@ -108,11 +105,11 @@
                       <v-subheader v-show="members.length == 0">No results found</v-subheader>
                       <v-list-tile v-for="member in members" :key="member.uid" avatar @click="appendUser(member)">
                         
-                        <v-list-tile-avatar>
+                        <v-list-tile-avatar size="38"  :color="$helpers.colorMinder(member.name.charAt(0))">
                           <img :src="member.photoURL" v-if="member.photoURL">
-                          <v-avatar v-else size="38" class="white--text" :color="$helpers.colorMinder(member.name.charAt(0))">
-                            <span >{{member.name.charAt(0)}}</span>
-                          </v-avatar>
+                          <span v-else  class="white--text" >
+                            {{member.name.charAt(0)}}
+                          </span>
                           
                         </v-list-tile-avatar>
 
@@ -133,30 +130,34 @@
           </div>
         </div>
       </v-tab-item>
-      <v-tab-item value="Members" v-if="$vuetify.breakpoint.smAndDown" :style="styleForTabs">
-        <router-view :members='members' v-if="ready" :thisGroup='this_group'></router-view>
+      <v-tab-item value="Members" v-if="breakpoint.smAndDown" :style="styleForTabs">
+        <router-view :members='members'  :thisGroup='this_group'></router-view>
       </v-tab-item>
-      <v-tab-item value="Media" v-if="ready && $vuetify.breakpoint.smAndDown" class="" :style="styleForTabs">
+      <v-tab-item value="Media" v-if="breakpoint.smAndDown" class="" :style="styleForTabs2">
         <chat-media></chat-media>
       </v-tab-item>
     </v-tabs-items>
  
 
     <!-- CHAT MEDIA DIALOG -->
-    <v-dialog v-model="media_dialog" fullscreen
-      transition="dialog-transition">
-      <v-toolbar color="teal" flat dense dark>
-        Chat Media
-        <v-spacer></v-spacer>
-        <v-btn color="" outline @click="media_dialog = false">close</v-btn>
-      </v-toolbar>
-      <chat-media></chat-media>
+    <v-dialog v-model="media_dialog" scrollable fullscreen
+      transition="dialog-transition" style="background:#fff;">
+      <v-card>
+        <v-toolbar card color="teal" flat dense dark>
+          Chat Media
+          <v-spacer></v-spacer>
+          <v-btn color="" outline @click="media_dialog = false">close</v-btn>
+        </v-toolbar>
+        <v-card-text> 
+          <chat-media></chat-media>
+        </v-card-text>
+      </v-card>
     </v-dialog>
 
 
     <!-- FILE DIALOG -->
     <v-dialog v-model="file_dialog" style="background:#fff;" 
-      max-width="600" hide-overlay :fullscreen="$vuetify.breakpoint.smAndDown">
+      max-width="600" hide-overlay :fullscreen="breakpoint.xsOnly">
       <v-toolbar dense flat>
         <v-toolbar-title>Upload a file</v-toolbar-title>
         <v-spacer></v-spacer>
@@ -203,71 +204,69 @@
           </v-btn>
         </v-card-actions>
         <v-container class="mt-0">
-          <v-subheader >Uploading file</v-subheader>
+          <v-subheader >Uploading images</v-subheader>
           <v-progress-linear :indeterminate="true" ></v-progress-linear>
         </v-container>
       
       </v-card>
     </v-dialog>
+
   </div>
 </template>
 <script>
 export default {
-  data:()=>({
+  data: ()=>({
     title:'Forum | Facevote',
     password: 'Password',
     drawerRight: true,
-    model:'Chat',
+    model: 'Chat',
     left: null,
-    ready:false,
-    emojis:[
-      '😀','😂','😁','😃','😄','😅','😆','😉','😊','😋','😎','😍','😘','😐',
-      '😶','😏','😣','😯','😪','😛','😜','😒','😲','😟',
+    ready: false,
+    emojis: [
+      '😀','😂','😁','😈','😃','😄','😅','😆','😉','😊','😋','😎','😍','😘','😐',
+      '😶','😏','😣','😯','😪','😛','😜','😒','😲','😟','💋','👽','👌','👍','✌️','👋','❤️','💘','💕',
+      '✔️','☑️','🔥','🎯','🎤'
     ],
-    message:"",
-    file_message:'',
-    files:[],
-    mention_dialog:false,
-    file_dialog:false,
-    carousel_dialog:false,
-    media_dialog:false,
-    progress_dialog:false,
-    snackbar:{},
-    blob_urls:[],
-    menu:false,
-    regElec:[],
-    members:[],
-    this_group:[], // the current group
-    contestants:[],
-    toshow:0,
-    someoneistyping:false,
-    timeDistance:0,
-    show_imojis:false,
-    members_dialog:false,
-    cloudinary:{
-      cloud_name:'unplugged',
-      upload_preset:'pe4iolek'
+    message: "",
+    file_message: '',
+    files: [],
+    mention_dialog: false,
+    file_dialog: false,
+    carousel_dialog: false,
+    media_dialog: false,
+    progress_dialog: false,
+    snackbar: {},
+    blob_urls: [],
+    menu: false,
+    regElec: [],
+    members: [],
+    this_group: [], // the current group
+    contestants: [],
+    toshow: 0,
+    someoneistyping: false,
+    timeDistance: 0,
+    show_imojis: false,
+    members_dialog: false,
+    cloudinary: {
+      cloud_name: 'unplugged',
+      upload_preset: 'pe4iolek'
     },
   }),
   watch: {
-    '$route' (to, from) {
-      // react to route changes...
-      this.drawerRight = true
-      //console.log(to,from)
-      if(to.name =='members' && from.name == 'members'){
-        this.ready = false
-        this.setCurrRoom()
-      }
-    },
+    // '$route' (to, from) {
+    //   // react to route changes...
+    //   this.drawerRight = true
+    //   //console.log(to,from)
+    //   if(to.name =='members' && from.name == 'members'){
+    //     this.ready = false
+    //     this.setCurrRoom()
+    //   }
+    // },
     curRoom: function(){
       this.setCurrRoom()
     }
   },
   computed: {
-    toolbarStatus(){
-      return 'Your connected groups'
-    },
-    // Mix your getter(s) into computed with the object spread operator
     ...mapGetters([
       'getUser',
       'getUserInfo'
@@ -276,26 +275,29 @@ export default {
       'curRoom',
       'isSuperUser'
     ]),
+    breakpoint(){
+      return this.$vuetify.breakpoint
+    },
     canSendMessages(){
       // check if current user can send messages to current group
-      let can = this.members.find(member => member.uid == this.getUser.uid)
+      let enrolled = this.getUserInfo.enrolled.find(electionId => electionId == this.this_group.electionId)
       let banned = this.this_group.bif ?
       this.this_group.bif.find(memberId => memberId == this.getUser.uid) : false
-      return can && !banned ? true : false
+      return enrolled && !banned ? true : false
        
     },
     styleInput(){
-      if(this.$vuetify.breakpoint.smAndDown){
+      if(this.breakpoint.smAndDown){
         return {position:'fixed',bottom:'5px',width:'100%'}
       }else{
         return {position:'fixed',bottom:'5px',width:'calc(100% - 530px)'}
       }
     },
     styleMention(){
-      if(this.$vuetify.breakpoint.xsOnly){
+      if(this.breakpoint.xsOnly){
         return {height:'200px',overflowY:'auto',width:'270px'}
       }
-      else if(this.$vuetify.breakpoint.smAndDown){
+      else if(this.breakpoint.smAndDown){
         return {height:'200px',overflowY:'auto',width:'300px'}
       }
       else{
@@ -303,8 +305,16 @@ export default {
       }
     },
     styleForTabs(){
-      if(this.$vuetify.breakpoint.smAndDown){
-        return {height:'calc(100vh - 112px)'}
+      if(this.breakpoint.smAndDown){
+        return {height:'calc(100vh - 113px)'}
+      }
+      else{
+        return {height:'calc(100vh - 91px)'}
+      }
+    },
+    styleForTabs2(){
+      if(this.breakpoint.smAndDown){
+        return {height:'calc(100vh - 113px)', overflowY: 'auto'}
       }
       else{
         return {height:'calc(100vh - 91px)'}
@@ -358,10 +368,12 @@ export default {
         this.progress_dialog = true
         let uploaded = await this.$helpers.uploadImage(this.files, this.cloudinary)
         this.progress_dialog = false
+        this.file_dialog = false
         this.submit(this.file_message, uploaded)
         
       } catch (error) {
         this.progress_dialog = false
+        this.file_dialog = false
         //this.loading = false
         this.snackbar = {
           show: true,
@@ -374,7 +386,9 @@ export default {
       
     },
     sendMessage () {
-      this.submit(this.message, null)
+      if(this.message.trim()){
+        this.submit(this.message, null)
+      }
     },
     clearMessage () {
       this.message = ''
@@ -385,10 +399,20 @@ export default {
     async submit(message,images){
       try{
         let docRef = db.collection('chat_messages').doc()
-        let data = {
-          onr: ['name', 'photoURL','email','sch','fac','dept','uid']
-            .reduce((a, e) => (a[e] = this.getUserInfo[e], a), {}),
+        let {name, photoURL = false, email, sch=false, fac=false, dept=false, uid, is_student} = this.getUserInfo
+        let onr = {
+            name,
+            photoURL,
+            email,
+            sch,
+            fac,
+            dept,
+            uid,
+            is_student
+          }
 
+        let data = {
+          onr: onr,
           tstamp: Date.now(),
           body: message.trim(),
           imgs: images, // this is for the uploaded image
@@ -404,7 +428,7 @@ export default {
           }
         }
         
-        this.$store.dispatch('saveChatMessage', data)
+        // this.$store.dispatch('saveChatMessage', data)
         
         docRef.set(data)
 
@@ -419,12 +443,12 @@ export default {
     },
     appendEmoji(emoji){
       // console.log(emoji)
-      this.message += emoji.native
+      this.message += emoji
     },
     scrollChat(){
        let doc = document.getElementById('chat_space')
       doc ? doc.scrollTop = doc.scrollHeight - doc.clientHeight : ''
-      console.log(doc, doc.scrollTop)
+      // console.log(doc, doc.scrollTop)
     },
     
   },
@@ -445,15 +469,18 @@ export default {
     })
 
   },
+  beforeDestroy(){
+    // console.log('before destroy')
+  },
   destroyed(){
+    // console.log('destroyed')
     //this.$eventBus.$emit('show_right_sidebar',null);
     // hide the nav, hide the btn trigger [nav,btn]
-    this.$store.dispatch('showRightNav', [false,false])
-    this.$eventBus.$emit('change_title','FaceVote');
+    // this.$store.dispatch('showRightNav', [false,false])
+    // this.$eventBus.$emit('change_title','FaceVote');
   },
   components:{
     'chatwindow':Chatwindow,
-    'settings':Settings,
     'users':ForumUsers,
     Navigation,
     ChatMedia,
@@ -462,10 +489,9 @@ export default {
   }
 }
 //import io from 'socket.io-client';
-import api from '@/services/api'
+// import api from '@/services/api'
   import {mapGetters, mapState} from 'vuex'
   // import uuid from 'uuid/v4'
-  import Settings from '@/components/Settings'
   import ForumUsers from '@/components/ForumUsers'
   import Chatwindow from '@/components/Chatwindow'
   import ChatwindowVue from './Chatwindow.vue'
@@ -486,9 +512,9 @@ import api from '@/services/api'
 }
 $mainBgColor:#1c1f35;
 
-.v-dialog--fullscreen{
-  background:#fff !important;
-}
+// .v-dialog--fullscreen{
+//   background:#fff !important;
+// }
 .chat_home{
   //background-image:url('../assets/chat_wallpaper.jpg');
   background-size:cover;

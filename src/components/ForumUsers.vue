@@ -26,7 +26,7 @@
     <div style="height:calc(100% - 50px);overflow-y:auto;" class="navdrawr" :class="{thin_scrollbar:$vuetify.breakpoint.smAndDown}">
       <v-list subheader dense two-line>
         <v-subheader v-show="filteredList.length == 0">No results found</v-subheader>
-        <v-list-tile v-for="member in filteredList" :key="member.uid" avatar :to="'forum/profile/' + member.email">
+        <v-list-tile v-for="member in filteredList" :key="member.uid" avatar :to="'/forum/profile/' + member.email">
           
           <v-list-tile-avatar>
             <!-- prefer to user loggedin user's info rather than his info from voters list -->
@@ -42,7 +42,8 @@
             <v-list-tile-sub-title v-else>{{member.dept}}</v-list-tile-sub-title>
           </v-list-tile-content>
           <v-list-tile-action>
-            <v-icon :color="member.online ? 'success' : 'grey'" small>lens</v-icon>
+            <!-- <v-icon :color="member.online ? 'success' : 'grey'" small>lens</v-icon> -->
+            <span class="online_badge" :class="[member.online ? 'success' : 'orange']"></span>
           </v-list-tile-action>
         </v-list-tile>
       </v-list>
@@ -154,9 +155,8 @@ import {mapGetters} from 'vuex'
       font-size: 14px;
     }
   }
-  #online_badge{
+  .online_badge{
     display: inline-block;
-    background: green;
     width: 10px;
     height: 10px;
     border-radius: 50%;

@@ -135,9 +135,9 @@ export default {
                 }
                 else{
                   this.can_resend_verification = true
+                  this.loading = false
                 }
                 
-                this.loading = false
               } else {
                 // No user is signed in.
               }

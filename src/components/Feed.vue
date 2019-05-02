@@ -4,9 +4,9 @@
 
     <navigation>
       <v-toolbar slot="extended_nav" color="teal" dark flat
-        style='background-color:#29648a;' dense v-if="$vuetify.breakpoint.smAndDown">
+        style='background-color:#29648a;' dense v-if="breakpoint.smAndDown">
         <v-tabs v-model="feed_model" color="teal" 
-          v-if="$vuetify.breakpoint.smAndDown" slider-color="yellow">
+          v-if="breakpoint.smAndDown" slider-color="yellow">
           <v-tab
             v-for="item in ['Feed','Campaigns']"
             :key="item"
@@ -18,13 +18,13 @@
       </v-toolbar>
     </navigation>
 
-    <!-- POPULAR ELECTIONS -->
+    <!-- SPONSORED -->
     <v-navigation-drawer width='250' right hide-overlay clipped app style="background:#eceff1;">
       <v-subheader class="font-weight-bold">Sponsored</v-subheader>
       <v-container grid-list-xs px-2 py-1>
         <v-layout row wrap>
           <v-flex xs12>
-            <v-card height="200" dark flat>
+            <v-card height="200" color="grey lighten-2" flat>
               
             </v-card>
           </v-flex>
@@ -41,332 +41,391 @@
       <v-btn dark flat @click="snackbar.show = false"> Close</v-btn>
     </v-snackbar>
 
-    <!-- LOADING WIREFRAME -->
-    <v-container grid-list-xl v-if="!ready" fluid>
-      <v-layout row wrap justify-space-between>
-        <v-flex xs12 sm12 md4 order-md2>
-          <v-card :height="$vuetify.breakpoint.smAndDown ? 150 : 400" flat class="elevation-0" elevation-0>
-            <v-list two-line dense>
-              <v-list-tile avatar>
-                <v-list-tile-avatar>
-                  
-                  <v-avatar color="grey lighten-3" size="40" tile>
+    <transition name="fade" mode="out-in">
+      <!-- LOADING WIREFRAME -->
+      <v-container grid-list-xl v-if="!ready" fluid>
+        <v-layout row wrap justify-space-between>
+          <v-flex xs12 sm12 md4 order-md2>
+            <v-card :height="breakpoint.smAndDown ? 150 : 400" flat class="elevation-0" elevation-0>
+              <v-list two-line dense>
+                <v-list-tile avatar>
+                  <v-list-tile-avatar>
                     
-                  </v-avatar>
-                </v-list-tile-avatar>
-                <v-list-tile-content class="px-0">
-                  <div class="grey lighten-3 wireframe mb-2" style="width:40%;height:12px;"></div>
-                  <div class="grey lighten-3 wireframe" style="width:30%;height:12px;"></div>
-                </v-list-tile-content>
-              </v-list-tile>
-            </v-list>
-          </v-card>
-        </v-flex>
-        <v-flex xs12 sm12 md7 >
-          <v-card  v-for="(post,i) in 2" :key="i" flat
-            height="250" class="mb-3 pb-2">
-            
-            <v-list two-line dense>
-              <v-list-tile avatar>
-                <v-list-tile-avatar>
-                  
-                  <v-avatar color="grey lighten-3" size="40">
-                    
-                  </v-avatar>
-                </v-list-tile-avatar>
-                <v-list-tile-content class="px-0">
-                  <div class="grey lighten-3 wireframe mb-2" style="width:40%;height:12px;"></div>
-                  <div class="grey lighten-3 wireframe" style="width:30%;height:12px;"></div>
-                </v-list-tile-content>
-              </v-list-tile>
-            </v-list>
-
-            <div class="grey lighten-3 wireframe mx-3 mb-3 mt-4" style="width:70%;height:12px;"></div>
-            <div class="grey lighten-3 wireframe mx-3 mb-3" style="width:90%;height:12px;"></div>
-            <div class="grey lighten-3 wireframe mx-3 mb-3" style="width:50%;height:12px;"></div>
-           
-          </v-card>
-        </v-flex>
-        
-      </v-layout>
-    </v-container>
-    
-    <!-- NO DATA -->
-    <v-container grid-list-xl v-if="nodata" mt-5>
-      <v-layout row wrap>
-        <v-flex xs6>
-          <v-card class="round secondary lighten-3" height="400">
-            
-          </v-card> 
-        </v-flex>
-        <v-flex xs6>
-          <v-card class="round purple lighten-2" height="400">
-            
-          </v-card> 
-        </v-flex>
-      </v-layout>
-    </v-container>
-
-    <!-- MAIN CONTENT -->
-    <v-container grid-list-sm  :class="{'px-1':$vuetify.breakpoint.smAndDown, 'white': feed_model == 'Campaigns'}" 
-      v-if="ready && !nodata">
-      <v-layout row wrap justify-space-between>
-        <v-flex xs12 md8 >
-          <v-tabs-items v-model="feed_model" class="">
-            <v-tab-item value="Feed" :style="styleForTabs">
-
-              <!-- ADS ON SMALL SCREENS-->
-              <v-container grid-list-xs pa-0 v-if="$vuetify.breakpoint.smAndDown">
-                <span class="pl-3 grey--text lighten-3">Sponsored</span>
-                <v-layout row wrap>
-                  <v-flex xs12 sm3>
-                    <v-card dark height="150">
+                    <v-avatar color="grey lighten-3" size="40" tile>
                       
-                    </v-card>
-                  </v-flex>
-                </v-layout>
-              </v-container>
+                    </v-avatar>
+                  </v-list-tile-avatar>
+                  <v-list-tile-content class="px-0">
+                    <div class="grey lighten-3 wireframe mb-2" style="width:40%;height:12px;"></div>
+                    <div class="grey lighten-3 wireframe" style="width:30%;height:12px;"></div>
+                  </v-list-tile-content>
+                </v-list-tile>
+              </v-list>
+            </v-card>
+          </v-flex>
+          <v-flex xs12 sm12 md7 >
+            <v-card  v-for="(post,i) in 2" :key="i" flat
+              height="250" class="mb-3 pb-2">
+              
+              <v-list two-line dense>
+                <v-list-tile avatar>
+                  <v-list-tile-avatar>
+                    
+                    <v-avatar color="grey lighten-3" size="40">
+                      
+                    </v-avatar>
+                  </v-list-tile-avatar>
+                  <v-list-tile-content class="px-0">
+                    <div class="grey lighten-3 wireframe mb-2" style="width:40%;height:12px;"></div>
+                    <div class="grey lighten-3 wireframe" style="width:30%;height:12px;"></div>
+                  </v-list-tile-content>
+                </v-list-tile>
+              </v-list>
 
-              <!-- POSTS AND POSTS ACTIONS -->
-              <v-container pa-0 >
-                <v-layout row wrap>
-                  
-                  <!-- POST ACTIONS -->
-                  <v-flex sm12 md12 pb-1>
-                    <v-card class="round_top pt-1" height="50" color="" flat :dark="$store.state.theme == 'dark'">
-                      <v-btn color="teal" dark depressed v-if="isSuperUser" text-color="white" class="linkify" 
-                        @click="new_post_dialog = true">      
-                        <v-icon class="pr-2">add_circle</v-icon>
-                        New Post
-                      </v-btn>
-                      <v-tooltip right v-else>
-                        <v-btn color="teal" slot="activator" disabled text-color="white" class="linkify">
+              <div class="grey lighten-3 wireframe mx-3 mb-3 mt-4" style="width:70%;height:12px;"></div>
+              <div class="grey lighten-3 wireframe mx-3 mb-3" style="width:90%;height:12px;"></div>
+              <div class="grey lighten-3 wireframe mx-3 mb-3" style="width:50%;height:12px;"></div>
+            
+            </v-card>
+          </v-flex>
+          
+        </v-layout>
+      </v-container>
+    
+      <!-- NO DATA -->
+      <v-container grid-list-xl v-if="ready && nodata" mt-5>
+        <v-layout row wrap>
+          <v-flex xs6>
+            <v-card class="round secondary lighten-3" height="400">
+              
+            </v-card> 
+          </v-flex>
+          <v-flex xs6>
+            <v-card class="round purple lighten-2" height="400">
+              
+            </v-card> 
+          </v-flex>
+        </v-layout>
+      </v-container>
+
+      <!-- MAIN CONTENT -->
+      <v-container grid-list-sm  :class="{'px-1':breakpoint.smAndDown, 'white': feed_model == 'Campaigns'}" 
+        v-if="ready && !nodata">
+        <v-layout row wrap justify-space-between>
+          <v-flex xs12 md8 >
+            <v-tabs-items v-model="feed_model" class="">
+              <v-tab-item value="Feed" :style="styleForTabs">
+
+                <!-- ADS ON SMALL SCREENS-->
+                <!-- <v-container grid-list-xs pa-0 v-if="breakpoint.smAndDown">
+                  <span class="pl-3 grey--text lighten-3">Sponsored</span>
+                  <v-layout row wrap>
+                    <v-flex xs12 sm3>
+                      <v-card dark height="150">
+                        
+                      </v-card>
+                    </v-flex>
+                  </v-layout>
+                </v-container> -->
+
+                <!-- POSTS AND POSTS ACTIONS -->
+                <v-container pa-0 >
+                  <v-layout row wrap>
+                    
+                    <!-- POST ACTIONS -->
+                    <v-flex sm12 md12 pb-1>
+                      <v-card class="round_top pt-1" height="50" color="" flat :dark="$store.state.theme == 'dark'">
+                        <v-btn color="secondary lighten-2" dark depressed v-if="isSuperUser" text-color="white" class="linkify" 
+                          @click="new_post_dialog = true">      
                           <v-icon class="pr-2">add_circle</v-icon>
                           New Post
                         </v-btn>
-                        <span>This feature requires a premium account</span>
-                      </v-tooltip>
+                        <v-tooltip right v-else>
+                          <v-btn color="teal" slot="activator" disabled text-color="white" class="linkify">
+                            <v-icon class="pr-2">add_circle</v-icon>
+                            New Post
+                          </v-btn>
+                          <span>This feature requires a premium account</span>
+                        </v-tooltip>
 
-                      <!-- <v-chip color="teal" text-color="white" class="linkify" @click="$store.dispatch('switchTheme','true')">
-                        <v-avatar>
-                          <v-btn icon dark><v-icon>brightness_5</v-icon></v-btn>
-                        </v-avatar>
-                        <span class="pr-1 text-capitalize">{{$store.state.theme }} </span> theme
-                      </v-chip> -->
-
-                      <!-- <v-menu offset-y content-class="round">
-                        <v-chip color="secondary" slot="activator" class="linkify" text-color="white">
+                        <!-- <v-chip color="teal" text-color="white" class="linkify" @click="$store.dispatch('switchTheme','true')">
                           <v-avatar>
-                            <v-icon>filter_list</v-icon>
+                            <v-btn icon dark><v-icon>brightness_5</v-icon></v-btn>
                           </v-avatar>
-                          Filter Posts
-                        </v-chip>
-                        <v-list dense dark class="">
-                          <v-list-tile class="orange--text">
-                            <v-list-tile-title>Show posts from:</v-list-tile-title>
-                          </v-list-tile>
-                          <v-divider></v-divider>
-                          <v-list-tile v-for="item in filter_items"
-                            :key="item.key" @click="filterPostsBy(item.val)">
-                            <v-list-tile-title>{{ item.text }}
-                              <v-icon v-if="getFeedFilter && item.val == getFeedFilter.key" small color="success">check</v-icon>
-                            </v-list-tile-title>
+                          <span class="pr-1 text-capitalize">{{$store.state.theme }} </span> theme
+                        </v-chip> -->
+
+                        <!-- <v-menu offset-y content-class="round">
+                          <v-chip color="secondary" slot="activator" class="linkify" text-color="white">
+                            <v-avatar>
+                              <v-icon>filter_list</v-icon>
+                            </v-avatar>
+                            Filter Posts
+                          </v-chip>
+                          <v-list dense dark class="">
+                            <v-list-tile class="orange--text">
+                              <v-list-tile-title>Show posts from:</v-list-tile-title>
+                            </v-list-tile>
+                            <v-divider></v-divider>
+                            <v-list-tile v-for="item in filter_items"
+                              :key="item.key" @click="filterPostsBy(item.val)">
+                              <v-list-tile-title>{{ item.text }}
+                                <v-icon v-if="getFeedFilter && item.val == getFeedFilter.key" small color="success">check</v-icon>
+                              </v-list-tile-title>
+                            </v-list-tile>
+                          </v-list>
+                        </v-menu> -->
+                        
+                      </v-card>
+                    </v-flex>
+
+                    <!-- POSTS -->
+                    <v-flex xs12 sm12 md12 pt-0>
+                      <v-subheader v-if="posts.length == 0">No posts for the current election or applied filter</v-subheader>
+                      <v-card flat v-for="(post,i) in posts" :key="i + '_posts'" :dark="$store.state.theme == 'dark'"
+                        height="" class="mb-3 pb-2 ">
+                        
+                        <v-list two-line dense>
+                          <v-list-tile avatar>
+                            <v-list-tile-avatar :color="$helpers.colorMinder(post.onr.name.charAt(0))">
+                              <img :src="post.onr.photoURL" v-if="post.onr.photoURL">
+                              <span class="white--text headline" v-else>{{post.onr.name.charAt(0)}}</span>
+                            </v-list-tile-avatar>
+                            <v-list-tile-content>
+                              <v-list-tile-title class="secondary--text text-capitalize font-weight-bold linkify" style="width:fit-content" 
+                                @click="$eventBus.$emit('ViewProfile', post.onr)">
+                                {{post.onr.name}}
+                              </v-list-tile-title>
+                              <v-list-tile-sub-title>{{$helpers.parseDate(post.tstamp.toMillis(), true)}}</v-list-tile-sub-title>
+                            </v-list-tile-content>
+                            <!-- <v-list-tile-action>
+                              <v-progress-circular v-if="waiting" :value="10"  class="d-inline-block" color="grey" indeterminate></v-progress-circular>
+                              <v-menu offset-y top left>
+                              <v-icon color="grey" slot="activator">more_horiz</v-icon>
+                                
+                              </v-menu>
+                            </v-list-tile-action> -->
                           </v-list-tile>
                         </v-list>
-                      </v-menu> -->
-                      
-                    </v-card>
-                  </v-flex>
 
-                  <!-- POSTS -->
-                  <v-flex xs12 sm12 md12 pt-0>
-                    <v-subheader v-if="posts.length == 0">No posts for the current election or applied filter</v-subheader>
-                    <v-card  v-for="(post,i) in posts" :key="i + '_posts'" :dark="$store.state.theme == 'dark'"
-                      height="" elevation-1 class="mb-3 pb-2 " :flat="$vuetify.breakpoint.xsOnly">
-                      
-                      <v-list two-line dense>
-                        <v-list-tile avatar>
-                          <v-list-tile-avatar>
-                            <img :src="post.onr.photoURL" v-if="post.onr.photoURL">
-                            <v-avatar v-else :color="$helpers.colorMinder(post.onr.name.charAt(0))" size="40">
-                              <span class="white--text headline">{{post.onr.name.charAt(0)}}</span>
-                            </v-avatar>
-                          </v-list-tile-avatar>
-                          <v-list-tile-content>
-                            <v-list-tile-title class="secondary--text text-capitalize font-weight-bold linkify" style="width:fit-content" 
-                              @click="$eventBus.$emit('ViewProfile', post.onr)">
-                              {{post.onr.name}}
-                            </v-list-tile-title>
-                            <v-list-tile-sub-title>{{$helpers.parseDate(post.tstamp, true)}}</v-list-tile-sub-title>
-                          </v-list-tile-content>
-                          <v-list-tile-action>
-                            <v-progress-circular v-if="waiting" :value="10"  class="d-inline-block" color="grey" indeterminate></v-progress-circular>
-                            <v-menu offset-y top left>
-                            <v-icon color="grey" slot="activator">more_horiz</v-icon>
-                              
-                            </v-menu>
-                          </v-list-tile-action>
-                        </v-list-tile>
-                      </v-list>
+                        <v-card-text>
+                          <span style="white-space: pre-wrap;" v-if="readmore.find(id=>id == post.docId)">{{post.body}}</span>
+                          <span v-else style="white-space: pre-wrap;">{{$helpers.truncateText(post.body, 350)}}</span>
+                          <span @click="readmore.push(post.docId)" class="secondary--text linkify" 
+                            style="text-decoration:none;" v-show="post.body.length > 350 && !readmore.find(id=>id == post.docId)">
+                            Read more
+                          </span>
 
-                      <v-card-text>
-                        <span v-if="readmore.find(id=>id == post.docId)">{{post.body}}</span>
-                        <span v-else>{{$helpers.truncateText(post.body, 200)}}</span>
-                        <span @click="readmore.push(post.docId)" class="secondary--text linkify" 
-                          style="text-decoration:none;" v-show="post.body.length > 200 && !readmore.find(id=>id == post.docId)">
-                          Read more
-                        </span>
-
-                        <!-- POST IMAGES -->
-                        <v-container grid-list-sm class="px-0" v-if="post.imgs.length > 0">
-                          <v-layout row wrap>
-                            <v-flex v-for="(image,i) in post.imgs.slice(0,4)" :key="i" class="" 
-                              :class="{'xs3': post.imgs.length >=3,'xs12': post.imgs.length == 1,'xs6': post.imgs.length == 2}">
-                              <v-card flat dark max-height="500px" :height="post.imgs.length == 1 ? '100%' : $vuetify.breakpoint.xsOnly ? 100 : '200'" class="mb-3">
-                                <v-img :src="image" :lazy-src="`https://picsum.photos/10/6?image=${i * 5 + 10}`" 
-                                  alt="" class="grey lighten-2 linkify" height="100%" width="100%"
-                                  @click="carouselDialog(post.imgs,i)">
-                                  
-                                  <v-layout slot="placeholder" fill-height align-center justify-center ma-0>
-                                    <v-progress-circular indeterminate color="grey lighten-5"></v-progress-circular>
-                                  </v-layout>
-                                </v-img>
-                              </v-card>
-                            </v-flex>
-                            <v-flex xs3>
-                              <v-card id="more_images" v-if="post.imgs.length > 4" :style="moreImages"
-                                :height="post.imgs.length == 1 ? '100%' : $vuetify.breakpoint.xsOnly ? 100 : '200'" 
-                                class="mb-3 linkify" dark @click="carouselDialog(post.imgs, post.imgs.length - 2)">
-                                <div class="title text-xs-center" :style="moreImagesText">+ {{post.imgs.length - 4}} more</div>
-                              </v-card>
-                            </v-flex>
-                          </v-layout>
-                        </v-container>
-                      </v-card-text>
-
-                      <v-divider class="mx-3"></v-divider>
-                      <v-card-actions>
-                        <div style="width:fit-content;" class="text-xs-center">
-                          
-                          <v-btn depressed icon class="ml-1" small :disabled="!!disabled_btns.find(id => id == post.docId)" @click.native="add_reaction(post)">
-                            <v-icon color="secondary" small>thumb_up</v-icon>
-                          </v-btn>
-                          <span class="">{{post.reactions}} Likes</span>
-
-                          <v-btn icon dark class="ml-3" depressed small
-                            @click.native="expand(i)">
-                            <v-icon color="secondary" small>insert_comment</v-icon>
-                          </v-btn>
-                          <span class="linkify" @click="expand(post, i);">{{post.comments}} Comments</span>
-
-                        </div>
-                      </v-card-actions>
-
-                      <!-- COMMENTS -->
-                      <v-expand-transition>
-                        <div v-if="expanded.indexOf(i) != -1">
-                          <v-container class="px-1">
-                            <v-card flat>
-                              <v-card-text class="px-2">
-                                <v-textarea auto-grow color="secondary" rows="1" v-model="body[post.docId]"
-                                  name="comment" outline
-                                  label="Add a comment" :ref="post.docId"
-                                >
-                                <v-btn icon slot="append-outer" :disabled="!!loading.find(id => id == post.docId)"
-                                  @click.native="submitComment(post)" v-if="body[post.docId] && body[post.docId].trim()">
-                                  <v-icon color="secondary" >send</v-icon>
-                                </v-btn>
-                                <!-- EMOJIS DIALOG-->
-                                <v-menu max-width="380" :close-on-content-click='false'
-                                  slot="prepend-inner" max-height="" top offset-y>
-
-                                  <v-btn slot="activator" icon >
-                                    <v-icon color="success">mood</v-icon>
-                                  </v-btn>
-                                  <v-card class="">
-                                    <picker set="google" @select="appendEmoji($event,post)" :native="true" 
-                                      title="Choose Emoji" emoji="grinning"/>
-                                  </v-card>
-                                </v-menu>
-                                </v-textarea>
-                              </v-card-text>
-                              <v-card-actions>
-                                
-                              </v-card-actions>
-
-                              <v-divider></v-divider>
-
-                              <v-card-title class="font-weight-bold px-2">Comments</v-card-title>
-                              <v-progress-circular indeterminate color="grey lighten-1" 
-                                size="20" class="d-block mx-auto" v-if="loading_comments.find(id => id == post.docId)">
-                              </v-progress-circular>
-
-                              <v-subheader v-if="!loading_comments.find(id => id == post.docId) && comments[post.docId] && comments[post.docId].length == 0">No comments</v-subheader>
-
-                              <v-card-text class="px-0" v-else>
-                                <v-container grid-list-md py-0>
-                                  <v-layout row wrap>
-                                    <v-flex xs12 v-for="(comment,i) in comments[post.docId]" :key="'comment' + i">
-                                      <v-card flat class="grey lighten-3 round">
-                                        <v-list dense two-line class="grey lighten-3">
-                                          <v-list-tile avatar @click="$eventBus.$emit('ViewProfile', comment.onr)">
-                                            <v-list-tile-avatar :color="$helpers.colorMinder(comment.onr.name.charAt(0))" class="white--text">
-                                              <img :src="comment.onr.photoURL" v-if="comment.onr.photoURL" alt="alt">
-                                              <span v-else>{{comment.onr.name.charAt(0)}}</span>
-                                            </v-list-tile-avatar>
-                                            <v-list-tile-content>
-                                              <v-list-tile-title style="" class="secondary--text">
-                                                {{comment.onr.name}}
-                                              </v-list-tile-title>
-                                              <v-list-tile-sub-title>{{$helpers.parseDate(comment.tstamp,true)}}</v-list-tile-sub-title>
-                                            </v-list-tile-content>
-                                          </v-list-tile>
-                                        </v-list>
-
-                                        <v-card-text>
-                                          {{comment.body}}
-                                        </v-card-text>
-                                      </v-card>
-                                    </v-flex>
-                                  </v-layout>
-                                </v-container>
-                                
-                              </v-card-text>
-
-                              <template v-if="comments[post.docId] && comments[post.docId].length >= 4 && comments[post.docId].length < post.comments">
-                                <v-btn 
-                                  color="secondary" class="d-block mx-auto" 
-                                  style="text-transform: initial" 
-                                  :loading="!!loading_more_comments.find(id => id == post.docId)" 
-                                  flat small @click="moreComments(post)">
-                                  See more comments
-                                </v-btn>
-                              </template>
-                            </v-card>
+                          <!-- POST IMAGES -->
+                          <v-container grid-list-sm class="px-0" v-if="post.imgs.length > 0">
+                            <v-layout row wrap>
+                              <v-flex v-for="(image,i) in post.imgs.slice(0,3)" :key="i" class="" 
+                                :class="{'xs3': post.imgs.length >=3,'xs6': post.imgs.length < 3}">
+                                <v-card flat dark max-height="500px" :height="post.imgs.length == 1 ? '70%' : breakpoint.xsOnly ? 100 : '200'" class="mb-3">
+                                  <v-img :src="image" :lazy-src="`https://picsum.photos/10/6?image=${i * 5 + 10}`" 
+                                    alt="" class="grey lighten-2 linkify" height="100%" width="100%"
+                                    @click="carouselDialog(post.imgs,i)">
+                                    
+                                    <v-layout slot="placeholder" fill-height align-center justify-center ma-0>
+                                      <v-progress-circular indeterminate color="grey lighten-5"></v-progress-circular>
+                                    </v-layout>
+                                  </v-img>
+                                </v-card>
+                              </v-flex>
+                              <v-flex xs3>
+                                <v-card  v-if="post.imgs.length >= 4" 
+                                  :height="post.imgs.length == 1 ? '100%' : breakpoint.xsOnly ? 100 : '200'" 
+                                  class="mb-3 linkify" dark @click="carouselDialog(post.imgs, 3)">
+                                  <div class="title text-xs-center" style="padding-top: 55%;">+ {{post.imgs.length - 3}} more</div>
+                                </v-card>
+                              </v-flex>
+                            </v-layout>
                           </v-container>
-                          
-                        </div>
-                      </v-expand-transition>
+                        </v-card-text>
+
+                        <v-divider class="mx-3"></v-divider>
+                        <v-card-actions>
+                          <div style="width:fit-content;" class="text-xs-center">
+                            
+                            <v-btn depressed icon class="ml-1" small :disabled="!!disabled_btns.find(id => id == post.docId)" @click.native="add_reaction(post)">
+                              <v-icon color="secondary" small>thumb_up</v-icon>
+                            </v-btn>
+                            <span class="">{{post.reactions}} Likes</span>
+
+                            <v-btn icon dark class="ml-3" depressed small
+                              @click.native="expand(i)">
+                              <v-icon color="secondary" small>insert_comment</v-icon>
+                            </v-btn>
+                            <span class="linkify" @click="expand(post, i);">{{post.comments}} Comments</span>
+
+                          </div>
+                        </v-card-actions>
+
+                        <!-- COMMENTS -->
+                        <v-expand-transition>
+                          <div v-if="expanded.indexOf(i) != -1">
+                            <v-container class="px-1">
+                              <v-card flat>
+                                <v-card-text class="px-2">
+                                  <v-textarea auto-grow color="secondary" rows="1" v-model="body[post.docId]"
+                                    name="comment" outline @keyup.enter="submitComment(post)"
+                                    label="Add a comment" :ref="post.docId"
+                                  >
+                                  <v-btn icon slot="append-outer" :disabled="!!loading.find(id => id == post.docId)"
+                                    @click.native="submitComment(post)" v-if="body[post.docId] && body[post.docId].trim()">
+                                    <v-icon color="secondary" >send</v-icon>
+                                  </v-btn>
+                                  <!-- EMOJIS DIALOG-->
+                                  <v-menu max-width="380" :close-on-content-click='false'
+                                    slot="prepend-inner" max-height="" top offset-y>
+
+                                    <v-btn slot="activator" icon >
+                                      <v-icon color="success">mood</v-icon>
+                                    </v-btn>
+                                    <v-card class="">
+                                      <!-- <picker set="google" @select="appendEmoji($event,post)" :native="true" 
+                                        title="Choose Emoji" emoji="grinning"/> -->
+                                        <v-card-text >
+                                          <v-btn small flat color="primary" icon v-for="(emoji,i) in emojis" :key="i" @click="appendEmoji(emoji,post)">
+                                            <span style="font-size:30px;display:block;margin-top:-7px;">{{emoji}}</span>
+                                          </v-btn>
+                                        </v-card-text>
+                                    </v-card>
+                                  </v-menu>
+                                  </v-textarea>
+                                </v-card-text>
+                                <v-card-actions>
+                                  
+                                </v-card-actions>
+
+                                <v-divider></v-divider>
+
+                                <v-card-title class="font-weight-bold px-2">Comments</v-card-title>
+                                <v-progress-circular indeterminate color="grey lighten-1" 
+                                  size="20" class="d-block mx-auto" v-if="loading_comments.find(id => id == post.docId)">
+                                </v-progress-circular>
+
+                                <v-subheader v-if="!loading_comments.find(id => id == post.docId) && comments[post.docId] && comments[post.docId].length == 0">No comments</v-subheader>
+
+                                <v-card-text class="px-0" v-else>
+                                  <v-container grid-list-md py-0>
+                                    <v-layout row wrap>
+                                      <v-flex xs12 v-for="(comment,i) in comments[post.docId]" :key="'comment' + i">
+                                        <v-card flat class="grey lighten-3 round">
+                                          <v-list dense two-line class="grey lighten-3">
+                                            <v-list-tile avatar @click="$eventBus.$emit('ViewProfile', comment.onr)">
+                                              <v-list-tile-avatar :color="$helpers.colorMinder(comment.onr.name.charAt(0))" class="white--text">
+                                                <img :src="comment.onr.photoURL" v-if="comment.onr.photoURL" alt="alt">
+                                                <span v-else>{{comment.onr.name.charAt(0)}}</span>
+                                              </v-list-tile-avatar>
+                                              <v-list-tile-content>
+                                                <v-list-tile-title style="" class="secondary--text">
+                                                  {{comment.onr.name}}
+                                                </v-list-tile-title>
+                                                <v-list-tile-sub-title>{{$helpers.parseDate(comment.tstamp.toMillis(),true)}}</v-list-tile-sub-title>
+                                              </v-list-tile-content>
+                                            </v-list-tile>
+                                          </v-list>
+
+                                          <v-card-text>
+                                            {{comment.body}}
+                                          </v-card-text>
+                                        </v-card>
+                                      </v-flex>
+                                    </v-layout>
+                                  </v-container>
+                                  
+                                </v-card-text>
+
+                                <template v-if="comments[post.docId] && comments[post.docId].length >= 4 && comments[post.docId].length < post.comments">
+                                  <v-btn 
+                                    color="secondary" class="d-block mx-auto" 
+                                    style="text-transform: initial" 
+                                    :loading="!!loading_more_comments.find(id => id == post.docId)" 
+                                    flat small @click="moreComments(post)">
+                                    See more comments
+                                  </v-btn>
+                                </template>
+                                <v-divider></v-divider>
+                              </v-card>
+                            </v-container>
+                            
+                          </div>
+                        </v-expand-transition>
+                      </v-card>
+                      <v-btn v-if="posts.length >= 25" color="secondary" style="text-transform: initial;" :loading="loading_more_posts"
+                        @click="morePosts" class="d-block mx-auto" flat small >
+                        See More
+                      </v-btn>
+                    </v-flex>
+
+                  </v-layout>
+                </v-container>
+              </v-tab-item>
+
+              <v-tab-item value="Campaigns" v-if="breakpoint.smAndDown" :style="styleForTabs">
+                <v-container grid-list-xs pa-0>
+                  <v-layout column fill-height>
+                    <v-flex xs12>
+                      <v-card flat class="elevation-0" elevation-0 :dark="$store.state.theme == 'dark'">
+                        <v-subheader class="font-weight-bold">Featured Campaigns</v-subheader>
+                        <v-list three-line dense >
+                          <v-list-tile avatar @click="newCampaign" v-if="isSuperUser">
+                            <v-list-tile-avatar color="grey">
+                              <v-avatar size="45" color="grey">
+                                <v-icon small color="white">add</v-icon>
+                              </v-avatar>
+                            </v-list-tile-avatar>
+                            <v-list-tile-content>
+                              <v-list-tile-title class="secondary--text">
+                                Add Your Campaign</v-list-tile-title>
+                              <v-list-tile-sub-title>Add a campaign that disappears in 24 hours</v-list-tile-sub-title>
+                            </v-list-tile-content>
+                          </v-list-tile>
+                        </v-list>
+
+                        <v-list two-line dense  v-if="getCampaigns.length > 0">
+                          <v-list-tile avatar v-for="(campaign,i) in sorted" :key="i" @click="selectCampaign(i)">
+                            <v-list-tile-avatar :color="$helpers.colorMinder(campaign.onr.name.charAt(0))">
+                              <v-avatar size="45" :color="$helpers.colorMinder(campaign.onr.name.charAt(0))">
+                                <img :src="campaign.onr.photoURL" v-if="campaign.onr.photoURL" alt="alt">
+                                <v-icon v-else small color="white">{{campaign.onr.name.charAt(0)}}</v-icon>
+                              </v-avatar>
+                            </v-list-tile-avatar>
+                            <v-list-tile-content>
+                              <v-list-tile-title class="secondary--text text-capitalize">
+                                {{campaign.onr.name}}</v-list-tile-title>
+                              <v-list-tile-sub-title>
+                                {{$helpers.parseDate(campaign.tstamp)}}
+                                <v-icon small color="primary" class="pr-1">data_usage</v-icon>{{campaign.count}}
+                              </v-list-tile-sub-title>
+                            </v-list-tile-content>
+                          </v-list-tile>
+                          <v-subheader v-if="campaignsLimit && getCampaigns.length > campaignsLimit">
+                            <v-btn small flat @click="campaignsLimit = null" class="text-capitalize" color="secondary">see more</v-btn>
+                          </v-subheader>
+                        </v-list>
+                      </v-card>
+                    </v-flex>
+                  </v-layout>
+                </v-container>
+              </v-tab-item>
+
+            </v-tabs-items>
+          </v-flex>
+
+          <!-- ADS AND CAMPAIGNS ON LARGE SCREENS-->
+          <v-flex xs12 md4 order-sm2 v-if="breakpoint.mdAndUp">
+            
+            <v-container grid-list-xs pa-0>
+              <v-layout column>
+                <v-flex xs12>
+                  <v-card flat class="elevation-0 round_top" elevation-0 :dark="$store.state.theme == 'dark'">
+                    <div style="overflow-y:auto;">
+                      <v-subheader class="font-weight-bold">Campaigns</v-subheader>
                       
-                    </v-card>
-                    <v-btn color="secondary" style="text-transform: initial;" :loading="loading_more_posts"
-                      @click="morePosts" class="d-block mx-auto" flat small >
-                      See More
-                    </v-btn>
-                  </v-flex>
-
-                </v-layout>
-              </v-container>
-            </v-tab-item>
-
-            <v-tab-item value="Campaigns" v-if="$vuetify.breakpoint.smAndDown" :style="styleForTabs">
-              <v-container grid-list-xs pa-0>
-                <v-layout column fill-height>
-                  <v-flex xs12>
-                    <v-card flat class="elevation-0" elevation-0 :dark="$store.state.theme == 'dark'">
-                      <v-subheader class="font-weight-bold">Featured Campaigns</v-subheader>
-                      <v-list three-line dense>
-                        <v-list-tile avatar @click="new_campaign = true">
+                      <v-list three-line dense >
+                        <v-list-tile avatar @click="newCampaign" v-if="isSuperUser">
                           <v-list-tile-avatar color="grey">
                             <v-avatar size="45" color="grey">
                               <v-icon small color="white">add</v-icon>
@@ -379,8 +438,9 @@
                           </v-list-tile-content>
                         </v-list-tile>
                       </v-list>
+
                       <v-list two-line dense  v-if="getCampaigns.length > 0">
-                        <v-list-tile avatar v-for="campaign in getCampaigns" :key="campaign.docId" @click="selected_campaign = campaign; view_campaign = true;">
+                        <v-list-tile avatar v-for="(campaign,i) in sorted" :key="i" @click="selectCampaign(campaign)">
                           <v-list-tile-avatar :color="$helpers.colorMinder(campaign.onr.name.charAt(0))">
                             <v-avatar size="45" :color="$helpers.colorMinder(campaign.onr.name.charAt(0))">
                               <img :src="campaign.onr.photoURL" v-if="campaign.onr.photoURL" alt="alt">
@@ -388,98 +448,33 @@
                             </v-avatar>
                           </v-list-tile-avatar>
                           <v-list-tile-content>
-                            <v-list-tile-title class="secondary--text">
+                            <v-list-tile-title class="secondary--text text-capitalize">
                               {{campaign.onr.name}}</v-list-tile-title>
-                            <v-list-tile-sub-title>{{campaign.onr.dept}}</v-list-tile-sub-title>
+                            <v-list-tile-sub-title>
+                              {{$helpers.parseDate(campaign.latest)}}
+                              <v-icon small color="primary" class="pr-1">data_usage</v-icon>{{campaign.count}}
+                            </v-list-tile-sub-title>
                           </v-list-tile-content>
                         </v-list-tile>
-                        <v-subheader v-if="campaignsLimit && getCampaigns.length > campaignsLimit">
+                        <!-- <v-subheader v-if="campaignsLimit && getCampaigns.length > campaignsLimit">
                           <v-btn small flat @click="campaignsLimit = null" class="text-capitalize" color="secondary">see more</v-btn>
-                        </v-subheader>
+                        </v-subheader> -->
                       </v-list>
-                    </v-card>
-                  </v-flex>
-                </v-layout>
-              </v-container>
-            </v-tab-item>
-          </v-tabs-items>
-        </v-flex>
+                    </div>
+                  </v-card>
+                </v-flex>
+                
+              </v-layout>
+            </v-container>
+          </v-flex>
 
-        <!-- ADS AND CAMPAIGNS ON LARGE SCREENS-->
-        <v-flex xs12 md4 order-sm2 v-if="$vuetify.breakpoint.mdAndUp">
-          
-          <v-container grid-list-xs pa-0>
-            <v-layout column>
-              <v-flex xs12>
-                <v-card flat class="elevation-0 round_top" elevation-0 :dark="$store.state.theme == 'dark'">
-                  <div style="overflow-y:auto;">
-                    <v-subheader class="font-weight-bold">Campaigns</v-subheader>
-                    
-                    <v-list three-line dense >
-                      <v-list-tile avatar @click="newCampaign" v-if="isSuperUser">
-                        <v-list-tile-avatar color="grey">
-                          <v-avatar size="45" color="grey">
-                            <v-icon small color="white">add</v-icon>
-                          </v-avatar>
-                        </v-list-tile-avatar>
-                        <v-list-tile-content>
-                          <v-list-tile-title class="secondary--text">
-                            Add Your Campaign</v-list-tile-title>
-                          <v-list-tile-sub-title>Add a campaign that disappears in 24 hours</v-list-tile-sub-title>
-                        </v-list-tile-content>
-                      </v-list-tile>
-
-                      <!-- <v-tooltip top v-else>
-                        <v-list-tile avatar @click="newCampaign" slot="activator" disabled class="grey lighten-3">
-                          <v-list-tile-avatar color="grey">
-                            <v-avatar size="45" color="grey">
-                              <v-icon small color="white">add</v-icon>
-                            </v-avatar>
-                          </v-list-tile-avatar>
-                          <v-list-tile-content>
-                            <v-list-tile-title class="grey--text">
-                              Add Your Campaign</v-list-tile-title>
-                            <v-list-tile-sub-title>Add a campaign that disappears in 24 hours</v-list-tile-sub-title>
-                          </v-list-tile-content>
-                        </v-list-tile>
-                        <span>This feature requires a premium account</span>
-                      </v-tooltip> -->
-                    </v-list>
-
-                    <v-list two-line dense  v-if="getCampaigns.length > 0">
-                      <v-list-tile avatar v-for="(campaign,i) in sortCampaigns" :key="i" @click="selectCampaign(i)">
-                        <v-list-tile-avatar :color="$helpers.colorMinder(campaign.onr.name.charAt(0))">
-                          <v-avatar size="45" :color="$helpers.colorMinder(campaign.onr.name.charAt(0))">
-                            <img :src="campaign.onr.photoURL" v-if="campaign.onr.photoURL" alt="alt">
-                            <v-icon v-else small color="white">{{campaign.onr.name.charAt(0)}}</v-icon>
-                          </v-avatar>
-                        </v-list-tile-avatar>
-                        <v-list-tile-content>
-                          <v-list-tile-title class="secondary--text text-capitalize">
-                            {{campaign.onr.name}}</v-list-tile-title>
-                          <v-list-tile-sub-title>
-                            {{new Date(campaign.tstamp).toLocaleString('en-Us', {weekday:'short',hour:'numeric'})}}
-                            <v-icon small color="primary" class="pr-1">data_usage</v-icon>{{campaign.count}}
-                          </v-list-tile-sub-title>
-                        </v-list-tile-content>
-                      </v-list-tile>
-                      <v-subheader v-if="campaignsLimit && getCampaigns.length > campaignsLimit">
-                        <v-btn small flat @click="campaignsLimit = null" class="text-capitalize" color="secondary">see more</v-btn>
-                      </v-subheader>
-                    </v-list>
-                  </div>
-                </v-card>
-              </v-flex>
-              
-            </v-layout>
-          </v-container>
-        </v-flex>
-      </v-layout>
-    </v-container>
-
+        </v-layout>
+      </v-container>
+    </transition>
+    
     <!-- NEW CAMPAIGN DIALOG -->
     <v-dialog v-model="new_campaign" lazy scrollable
-      max-width="500px" transition="slide-x-transition">
+      max-width="500px" :transition="switchTransition" :fullscreen="breakpoint.smAndDown">
       <v-card flat>
         <v-toolbar card dense flat>
           <span>Create a Campaign</span>
@@ -502,8 +497,8 @@
 
     <!-- VIEW CAMPAIGN -->
     <v-dialog v-model="view_campaign" content-class="white view_dialog" 
-      v-if="view_campaign" max-width="500" lazy transition="slide-x-reverse-transition"
-      :fullscreen="$vuetify.breakpoint.smAndDown" scrollable>
+      v-if="view_campaign" max-width="500" lazy :transition="switchTransition"
+      :fullscreen="breakpoint.smAndDown" scrollable>
 
       <view-campaign :selectedcampaign="selected_campaign" :campaigns='getCampaigns'/>
         
@@ -514,12 +509,13 @@
     <v-dialog
       v-model="new_post_dialog"
       scrollable lazy
-      persistent :fullscreen='$vuetify.breakpoint.smAndDown'
+      persistent :fullscreen='breakpoint.smAndDown'
       max-width="650px"
-      transition="slide-x-reverse-transition">
+      :transition="switchTransition">
 
       <new-post :user='getUserInfo'></new-post>
     </v-dialog>
+
   </div>
 </template>
 <script>
@@ -530,6 +526,11 @@ export default {
     snackbar: false,
     feed_model: 'Feed',
     elections: [],
+    emojis:[
+      '😀','😂','😁','😈','😃','😄','😅','😆','😉','😊','😋','😎','😍','😘','😐',
+      '😶','😏','😣','😯','😪','😛','😜','😒','😲','😟','💋','👽','👌','👍','✌️','👋','❤️','💘','💕',
+      '✔️','☑️','🔥','🎯','🎤'
+    ],
     expanded: [],
     offset: '',
     posts_offset: '',
@@ -540,7 +541,9 @@ export default {
     loading_more_posts: false,
     new_campaign: false,
     disabled_btns: [],
+    sorted: [],
     campaigns: [],
+    campRef: '', // for listener
     view_campaign: false,
     selected_campaign: 0,
     waiting: false,
@@ -553,11 +556,9 @@ export default {
     nodata: false
   }),
   watch: {
-    getMyEnrolled: function(){
-      this.getPosts()
-    },
-    curRoom: function(){
-      this.getPosts()
+    'curRoom': function(){
+      this.latestPosts()
+      this.latestCampaigns()
     }
   },
   components:{
@@ -566,7 +567,7 @@ export default {
     NewPost,
     NewCampaign,
     ViewCampaign,
-    Picker
+    // Picker
   },
   computed:{
     ...mapGetters([
@@ -580,21 +581,29 @@ export default {
       'curRoom',
       'curRoomId'
     ]),
+    breakpoint(){
+      return this.$vuetify.breakpoint
+    },
+    switchTransition(){
+      return this.breakpoint.smAndDown ? 
+      'slide-x-reverse-transition' : 
+      'dialog-bottom-transition'
+    },
     styleForTabs(){
-      if(this.$vuetify.breakpoint.xsOnly){
+      if(this.breakpoint.xsOnly){
         return {height:'calc(100vh - 112px)'}
       }
       
     },
     moreImages(){
-      return this.$vuetify.breakpoint.xsOnly ? {
+      return this.breakpoint.xsOnly ? {
         top:'34%'
       } : {
         top:'27%'
       }
     },
     moreImagesText(){
-      return this.$vuetify.breakpoint.xsOnly ? {
+      return this.breakpoint.xsOnly ? {
         marginTop:'42%'
       } : {
         marginTop:'90%'
@@ -602,26 +611,10 @@ export default {
     },
     getCampaigns(){
       let sorted = this.campaigns.sort((a,b)=>
-        a.onr.name.toLowerCase() - b.onr.name.toLowerCase()
+       
+        b.tstamp.toMillis() - a.tstamp.toMillis()
       )
-      console.log(sorted)
-      return this.campaignsLimit ? 
-      sorted.slice(0,this.campaignsLimit) :
-      sorted
-    },
-    sortCampaigns(){
-      // group campaigns by user
-      let uniques = []
-      this.getCampaigns.forEach((item,i) =>{
-        if(!uniques.find(camp => camp.onr.uid == item.onr.uid)){
-          uniques.push({
-            ...item,
-            count: this.getCampaigns.filter(u => u.onr.uid == item.onr.uid).length // number of 
-            // campaigns by this user
-          })
-        }
-      })
-      return uniques
+      return sorted
     },
     filter_items(){
       return [
@@ -660,30 +653,53 @@ export default {
       this.$eventBus.$emit('Open_Upgrade_Dialog')
     },
     appendEmoji(emoji,post){
-      console.log(emoji,post)
-      console.log(this.body)
-      this.body[post.docId] += emoji.native
+      this.body[post.docId] += emoji
     },
     async filterPostsBy(filter){
       
-      let args = {
-        key: filter,
-        value: filter == 'dept' ? this.getUserInfo.department : 
-        filter == 'fac' ? this.getUserInfo.faculty : 
-        filter == 'sch' ? this.getUserInfo.school : this.curRoom.electionId,
-        u:this.getUser.uid
-      }
-      // save the filter chosen in local storage
-      this.$store.dispatch('saveFeedFilter', args)
+      // let args = {
+      //   key: filter,
+      //   value: filter == 'dept' ? this.getUserInfo.department : 
+      //   filter == 'fac' ? this.getUserInfo.faculty : 
+      //   filter == 'sch' ? this.getUserInfo.school : this.curRoom.electionId,
+      //   u:this.getUser.uid
+      // }
+      // // save the filter chosen in local storage
+      // this.$store.dispatch('saveFeedFilter', args)
       
-      // filter the posts from the feed
+      // // filter the posts from the feed
       
-      this.ready = false
-      await this.latestPosts(args.key, args.value)
-      await this.latestCampaigns(args.key, args.value)
+      // this.ready = false
+      // await this.latestPosts(args.key, args.value)
+      // await this.latestCampaigns(args.key, args.value)
     },
-    selectCampaign(i){
-      this.selected_campaign = i == 0 ? i : this.sortCampaigns[i-1].count;
+    sortByUid(){
+			return this.campaigns.sort((a,b) => b.onr.uid - a.onr.uid)
+		},
+    sortCampaigns(){
+      // group campaigns by user
+      let uniques = []
+      this.getCampaigns.forEach((item,i) =>{
+        if(!uniques.find(camp => camp.onr.uid == item.onr.uid)){
+          let user_campaigns = this.getCampaigns.filter(u => u.onr.uid == item.onr.uid)
+          uniques.push({
+            ...item,
+            latest: user_campaigns[user_campaigns.length -1].tstamp, // the latest by the user
+            count: user_campaigns.length // number of 
+            // campaigns by this user
+          })
+        }
+      })
+      this.sorted = uniques
+      return uniques
+    },
+    selectCampaign(campaign){
+      
+      let index = this.getCampaigns.findIndex(camp => {
+        return camp.onr.uid == campaign.onr.uid
+      })
+      // console.log({campaign, index})
+      this.selected_campaign = index
       this.view_campaign = true;
     },
     async submitComment(post){
@@ -691,31 +707,41 @@ export default {
       this.loading.push(docId)
       let postRef = db.collection('posts').doc(docId)
       let commentRef = db.collection('comments').doc()
-      
-      // let currPost = this.posts.find(post=>post.id == docId)
-      // currPost ? currPost.comments.push({
-      //   by:this.getUser.uid,
-      //   message:this.comment,
-      //   dateCreated:Date.now(),
-      // }) : ''
-      
-      commentRef.set({
-        onr: ['name', 'photoURL','email','sch','fac','dept','uid']
-          .reduce((a, e) => (a[e] = this.getUserInfo[e], a), {}),
-        postRef: docId,
-        body: this.body[docId],
-        tstamp: Date.now()
-      }).then(()=>{
-        postRef.update({
-          comments: post.comments ? post.comments * 1 + 1 : 1
-        }).then(()=>{
+
+      let {name, photoURL = false, email, sch=false, fac=false, dept=false, uid, is_student} = this.getUserInfo
+      let onr = {
+          name,
+          photoURL,
+          email,
+          sch,
+          fac,
+          dept,
+          uid,
+          is_student
+        }
+
+        // Create a batch operation
+        let batch = db.batch();
+
+        batch.set(commentRef, {
+          onr: onr,
+          postRef: docId,
+          body: this.body[docId],
+          tstamp: firebase.firestore.FieldValue.serverTimestamp()
+        })
+
+        batch.update(postRef, {
+          comments: firebase.firestore.FieldValue.increment(1)
+        })
+
+        batch.commit().then(()=>{
           this.body[docId] = ''
           this.loading.splice(this.loading.indexOf(docId),1)
         })
-      })
       
     },
     moreComments(post){
+      // Load more, older comments for a post
       this.loading_more_comments.push(post.docId)
 
       db.collection('comments').where('postRef', '==', post.docId)
@@ -732,9 +758,11 @@ export default {
         this.comments[post.docId] = [...this.comments[post.docId], ...comments] :
         this.comments[post.docId] = comments
 
-        console.log(comments)
+        // console.log(comments)
         this.loading_more_comments.splice(this.loading_more_comments.indexOf(post.docId),1)
-      }).catch(err => console.log(err))
+      }).catch(err => {
+        // console.log(err)
+      })
     },
     async getComments(post){
       
@@ -744,7 +772,7 @@ export default {
 
         return db.collection('comments')
           .where('postRef', '==', post.docId)
-          .orderBy('tstamp', 'desc').limit(4)
+          .orderBy('tstamp', 'desc').limit(25)
           .onSnapshot(querySnapshot =>{
             let comments = []
             querySnapshot.forEach(doc =>{
@@ -756,30 +784,14 @@ export default {
             this.loading_comments.splice(this.loading_comments.indexOf(post.docId),1)
             return comments
 
-          }, err => console.log(err))
+          }, err => {
+            // console.log(err)
+          })
       }
       
     },
-    async getPosts(){
-      this.ready = false
-
-      let user = this.getUserInfo
-      let key, val;
-      if(this.getMyEnrolled && this.getMyEnrolled.length > 0){
-        
-        key = 'elecRef'
-        val = this.curRoom.electionId
-        await this.latestPosts(key,val).catch(err => console.log(err))
-        await this.latestCampaigns(key, val)
-          
-      }else{
-        
-        this.ready = true
-        this.nodata = true
-        
-      }
-    },
     morePosts(){
+      // Load more, older posts
       this.loading_more_posts = true
 
       db.collection('posts').where('elecRef','==', this.curRoom.electionId)
@@ -795,57 +807,83 @@ export default {
       })
 
     },
-    latestPosts(key,val){
+    latestPosts(){
       return new Promise((resolve,reject)=>{
-        
-        let docRef = db.collection('posts').where(key,'==',val)
-        .orderBy('tstamp','desc').limit(2)
-        docRef.onSnapshot(querySnapshot=>{
-          let posts = []
-          querySnapshot.forEach(doc => {
-            //console.log(doc.data().id)
-            posts.push(doc.data())
-          });
+        if(this.curRoom){
 
-          this.posts_offset = querySnapshot.docs[querySnapshot.docs.length-1]
-          // this.posts = posts.sort((a,b)=> b.tstamp - a.tstamp)
-          this.posts = posts
-
+          let docRef = db.collection('posts')
+          .where('elecRef','==',this.curRoom.electionId)
+          .orderBy('tstamp','desc').limit(25)
+          docRef.onSnapshot(querySnapshot=>{
+            let posts = []
+            querySnapshot.forEach(doc => {
+              //console.log(doc.data().id)
+              posts.push(doc.data())
+            });
+  
+            this.posts_offset = querySnapshot.docs[querySnapshot.docs.length-1]
+            // this.posts = posts.sort((a,b)=> b.tstamp - a.tstamp)
+            this.posts = posts
+  
+            this.ready = true;
+            this.nodata = false
+            resolve(this.posts)
+          }, err=> {
+            // console.log(err)
+          })
+        }
+        else{
           this.ready = true;
-          resolve(this.posts)
-        }, err=> reject(err))
+          this.nodata = true
+        }
        
       })
     },
-    allElections(user){
-      // Elections in user school
-      db.collection('elections').where('school','==',user.school)
-      .where('public','==',true)
-      .get().then(docs=>{
-        this.elections = [];
-        docs.forEach(doc=>{
-          this.elections.push(doc.data())
-        })
-      })
-    },
-    latestCampaigns(key, val){
+    latestCampaigns(){
       return new Promise((resolve,reject)=>{
-        let myArr = []
-        let day = new Date().getTime()  - 24 * 60 * 60 * 1000
-        db.collection('campaign_posts').where(key,'==',val)
-        .where('tstamp', '>', day)
-        // .orderBy("by")
-        .onSnapshot(docs=>{
-          docs.forEach(doc=>{
-            myArr.push(doc.data())
-          })
-          
-          this.campaigns = []
-          this.campaigns = myArr
-          // console.log(this.campaigns, myArr)
-        },(err)=> reject(err))
-     
-        resolve(myArr)
+        if(this.curRoom){
+
+          let now = Date.now()
+          let twenty4hrs = 24 * 60 * 60 * 1000
+          this.campRef = db.collection('campaign_posts')
+          .where('elecRef','==', this.curRoom.electionId)
+          .where('expires_in', '>', now)
+          .orderBy("expires_in")
+          // .limit(100)
+          .onSnapshot(docs=>{
+            let myArr = []
+
+            // docs.forEach(doc=>{
+            //   myArr.push(doc.data())
+            // })
+
+            docs.docChanges().forEach(function(change) {
+              if (change.type === "added") {
+                  // console.log("New", change.doc.data());
+                  myArr.push(change.doc.data())
+              }
+              if (change.type === "modified") {
+                  // console.log("Modified ", change.doc.data());
+              }
+              if (change.type === "removed") {
+                  // console.log("Removed", change.doc.data());
+              }
+            })
+            
+            // console.log(myArr)
+            this.campaigns = myArr.filter(campaign => {
+              let pass = now - campaign.tstamp.toMillis() < twenty4hrs
+              // console.log({pass, campaign})
+              return pass
+            })
+
+            this.sortCampaigns()
+            this.ready = true;
+            this.nodata = false
+          },(err)=> reject(err))
+       
+          resolve(this.campaigns)
+        }
       })
     },
     async add_reaction(post){
@@ -855,78 +893,9 @@ export default {
       this.$helpers.likePost(this.getUser, post)
       .then(data=>{
         this.disabled_btns.splice(this.disabled_btns.indexOf(post.docId),1)
-      }).catch(err => console.log(err))
-
-
-      // try {
-      //   console.log(post,reaction)
-      //   let a_reaction = post.reactions[reaction]
-      //   //console.log(a_reaction)
-      //   let me = this.getUser.uid
-
-      //   if(a_reaction.indexOf(me) != -1){ // if current user has reacted in same way before
-          
-      //     a_reaction.splice(a_reaction.indexOf(me)) // this is reactive, so views are updated immediately
-          
-          
-      //     db.collection('posts').doc(post.id).update({
-      //       reactions:post.reactions
-      //     })
-      //   }
-      //   else if(a_reaction.indexOf(me) == -1){ // if current user hasn't reacted same way before
-      //     a_reaction.push(this.getUser.uid) // this is reactive, so view are updated immediately
-      //     db.collection('posts').doc(post.id).update({
-      //       reactions:post.reactions
-      //     })
-      //     //$('chat_home').scrollTop($('#chat_home')[0].scrollHeight);
-      //   }
-      //   else{}
-  
-      // } catch(err) {
-      //   console.log(err)
-      // }
-    },
-    isFollowing(user){
-      return user.followers.indexOf(this.getUser.uid) == -1 ? false : true
-    },
-    followUser(event,userId){
-      let user = this.extractStudent(userId)
-      console.log(event)
-      if(this.isFollowing(user)){
-        //this.disabled.push(user.uid)
-        user.followers.push(this.getUser.uid)
-
-        db.collection('moreUserInfo').doc(user.uid).update({
-          followers:firebase.firestore.FieldValue.arrayUnion(this.getUser.uid)
-        }).then(async res=>{
-          await db.collection('moreUserInfo').doc(this.getUser.uid).update({
-            following:firebase.firestore.FieldValue.arrayUnion(user.uid)
-          })
-          
-          event.target.innerHTML = 'Following ' + user.name
-          //this.disabled.splice(this.disabled.indexOf(user.uid),1)
-          //this.$refs[user.uid][0].innerText = `you are following ${user.name}`
-          ////console.log(res.data)
-          //this.disabled.splice(this.disabled.indexOf(user.uid),1)
-          
-        })
-      }
-      else{
-        //this.disabled.push(user.uid)
-        user.followers.splice(user.followers.indexOf(this.getUser.uid), 1)
-        
-        //event.target.innerText = `(${user.followers.length - 1})  follow`
-        db.collection('moreUserInfo').doc(user.uid).update({
-          followers:firebase.firestore.FieldValue.arrayRemove(this.getUser.uid)
-        }).then(async res=>{
-          await db.collection('moreUserInfo').doc(this.getUser.uid).update({
-            following:firebase.firestore.FieldValue.arrayRemove(user.uid)
-          })
-          event.target.innerHTML = 'Follow ' + user.name
-        }).catch(err=>{
-          console.log(err)
-        })
-      }
+      }).catch(err => {
+        // console.log(err)
+      })
     },
     carouselDialog(images,index){
       this.$eventBus.$emit('Open_Image_Gallery', {
@@ -956,15 +925,18 @@ export default {
   async created(){
     firebase.auth().onAuthStateChanged(async (user)=>{
       if (user) {
-        await this.getPosts(this.getUserInfo)
-        
+        await this.latestPosts()
+        await this.latestCampaigns()
         // this.getUserInfo.is_student ? this.allElections(this.getUserInfo) : ''
       
       } else {
-        console.log('No user is signed in.')
+        // console.log('No user is signed in.')
       }
     });
 
+  },
+  destroyed(){
+    // this.campRef()
   }
 }
 import Navigation from '@/components/Navigation'

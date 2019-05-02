@@ -3,96 +3,19 @@
     <navigation>
       <span>Dashboard</span>
     </navigation>
-
-  
-    <v-stepper v-model="e5" d-flex style="">
-      <v-stepper-header class="teal white--text">
-        <v-stepper-step :complete="e5 > 1" step="1">Verify your account</v-stepper-step>
-        <v-divider></v-divider>
-        <v-stepper-step step="2">Finish</v-stepper-step>
-      </v-stepper-header>
-      <v-stepper-items>
-
-        <v-stepper-content step="1">
-          <v-card class="mb-5" color="grey lighten-5" style="min-height:200px;"  flat tile>
-            <v-card-text>
-              <div v-if="$store.getters.getUser.isVerified">Your account is verified</div>
-              <template v-else>
-                Lorem, ipsum dolor sit amet consectetur adipisicing elit. Temporibus animi quibusdam ad consequuntur laborum qui eaque ducimus aut alias id tenetur commodi, recusandae quos pariatur magni cupiditate sint perferendis eius!
-                You will need to do this only once
-              </template>
-            </v-card-text>
-            <v-card-actions>
-              <v-btn color="secondary" @click="verify_dialog = true; startCamera()">Next</v-btn>
-            </v-card-actions>
+    
+    <v-container grid-list-xs>
+      <v-layout row wrap>
+        <v-flex>
+          <v-card class="text-xs-center pt-5" flat height="400">
+            Verify your account to allow you to enroll in elections
+            <h3>...COMING SOON...</h3>
           </v-card>
-        </v-stepper-content>
+        </v-flex>
+      </v-layout>
+    </v-container>
 
-        <v-stepper-content step="2">
-          <v-card class="mb-5" color="grey lighten-5" style="min-height:200px;" flat tile>
-            <v-card-text >
-              <span class="subheading"></span>
-              <v-divider></v-divider>
-              </v-card-text>
-              <v-spacer></v-spacer>
-            <v-card-text>
-              <p>Verification Done!</p>
-              
-              
-            </v-card-text>
-          </v-card>
 
-          <v-btn flat @click="e5 = 2">Previous</v-btn>
-          <v-btn color="primary" @click="e5 = 2"> Finish</v-btn>
-        </v-stepper-content>
-      </v-stepper-items>
-    </v-stepper>
-
-    <v-layout row justify-center>
-      <v-dialog v-model="verify_dialog" fullscreen transition="dialog-bottom-transition" :overlay="false">
-        <v-card>
-          <v-toolbar dark color="secondary">
-            <v-btn icon @click.native="verify_dialog = false" dark>
-              <v-icon>close</v-icon>
-            </v-btn>
-            <v-toolbar-title>Verify Account</v-toolbar-title>
-            <v-spacer></v-spacer>
-            <v-toolbar-items>
-              <v-btn dark flat @click.native="verify_dialog = false; ctrack.stop();">Close</v-btn>
-            </v-toolbar-items>
-          </v-toolbar>
-          
-          <v-card class="mb-5" color="grey lighten-5"  style="min-height:200px;" flat tile>
-            <v-card-text>
-              <div class="text-xs-center">Position your face on the box</div>
-            </v-card-text>
-            <v-container grid-list-xs>
-              <v-layout row wrap justify-center justify-space-around>
-                <v-flex xs12 sm4>
-                  <v-card>
-                    
-                    <!--div id="video-container">
-                      <video id="camera-stream" autoplay width="100%"></video>
-                    </div>
-                    <canvas style="display:none"></canvas>
-                    <img src="" alt="" id="canvasImg"-->
-
-                    <video id="videoel" width="400" height="300" preload="auto" loop playsinline autoplay>
-                    </video>
-                    <canvas id="overlay" width="400" height="300"></canvas>
-
-                    <v-card-actions>
-                      <v-btn color="secondary" @click="startVideo" :loading="loading">Capture</v-btn>
-                    </v-card-actions>
-                  </v-card>
-                </v-flex>
-              </v-layout>
-            </v-container>
-          </v-card>
-
-        </v-card>
-      </v-dialog>
-    </v-layout>
   </div>
 </template>
 <script>
@@ -391,11 +314,11 @@ export default {
     Navigation
   }
 }
-import api from '@/services/api'
-import axios from 'axios'
+// import api from '@/services/api'
+// import axios from 'axios'
 import Navigation from '@/components/Navigation'
-import unirest from 'unirest'
-import clm from 'clmtrackr'
+// import unirest from 'unirest'
+// import clm from 'clmtrackr'
 //const Kairos =  require('@/assets/kairos.js')
 //import { promisfy } from "@/helpers/promisify";
 </script>

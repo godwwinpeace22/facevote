@@ -7,7 +7,7 @@
 
 		<v-card flat tile>
 			<v-card-text>
-				<v-radio-group v-model="manifesto_type" row class="mt-0">
+				<!-- <v-radio-group v-model="manifesto_type" row class="mt-0">
 					<v-radio class="mr-2"
 						label="Text"
 						color="teal"
@@ -18,24 +18,16 @@
 						color="secondary"
 						value="photo"
 					></v-radio>
-					<v-radio class="mr-0"
-						label="Video"
-						color="secondary"
-						value="video"
-					></v-radio>
-				</v-radio-group>
+				</v-radio-group> -->
 				<v-text-field	label="Manifesto title" class="mb-3" v-model="manifesto_title" color="secondary" outline>
 
 				</v-text-field>
 
 				<template v-if="manifesto_type == 'text'">
 					<quill v-model="manifesto_text" :config="config" output="html"></quill>
-					<!--v-textarea v-model="manifesto_text" outline auto-grow	label="Type your manifesto" rows="3">
-
-					</v-textarea-->
 					
         </template>
-				<template v-if="manifesto_type == 'photo'">
+				<!-- <template v-if="manifesto_type == 'photo'">
 					<v-card flat contenteditable="false" v-if="imgSrc" color="" class="mb-2 jusity-center fill-height" height="200">
 						<v-img height="100%" width="80%" style="margin:auto;" :src="imgSrc"/>
 					</v-card>
@@ -45,17 +37,8 @@
 							<span class="d-block white--text">Add photo</span>
 						</div>
 					</v-btn>
-					<v-text-field outline
-						label="Add a caption"
-						name="caption" v-model="img_caption"
-					></v-text-field>
-				</template>
+				</template> -->
 
-				<template v-if="manifesto_type == 'video'">
-					<v-text-field v-model="video_link" outline color="secondary"
-						label="Enter your video link for the manifesto"
-					></v-text-field>
-				</template>
 			</v-card-text>
 			<v-card-actions>
 				<v-spacer></v-spacer>
@@ -112,12 +95,12 @@ export default {
 			if(this.manifesto_type == 'text'){
 				return !this.manifesto_text.trim() || !this.manifesto_title.trim()
 			}
-			if(this.manifesto_type == 'photo'){
-				return !this.imgSrc || !this.manifesto_title.trim()
-			}
-			if(this.manifesto_type == 'video'){
-				return !this.video_link.trim() || !this.manifesto_title.trim()
-			}
+			// if(this.manifesto_type == 'photo'){
+			// 	return !this.imgSrc || !this.manifesto_title.trim()
+			// }
+			// if(this.manifesto_type == 'video'){
+			// 	return !this.video_link.trim() || !this.manifesto_title.trim()
+			// }
 		},
 		...mapGetters([
       'isAuthenticated',
@@ -145,22 +128,26 @@ export default {
 			}
 		},
 		createManifesto(image){
-			let docRef = db.collection('manifestos').doc(this.curRoom.electionId + '-' + this.getUser.uid)
-			
+			let docRef = db.collection('manifestos').doc(`${this.getUser.uid}-${this.curRoom.electionId}-man`)
+			let {name, photoURL = false, email, sch=false, fac=false, dept=false, uid, is_student} = this.getUserInfo
+			let onr = {
+				name,
+				photoURL,
+				email,
+				sch,
+				fac,
+				dept,
+				uid,
+				is_student
+			}
+
 			docRef.set({
-			docId: docRef.id,
-			title: this.manifesto_title.trim(),
-			imgSrc: image ? image : '',
-			video_link: this.manifesto_type == 'video' ? this.video_link.trim() : '',
-			img_caption: this.manifesto_type == 'photo' ? this.img_caption.trim() : '',
-			manifesto_text: this.manifesto_type == 'text' ? this.manifesto_text.trim() : '',
-			manifesto_type: this.manifesto_type,
-			sch: this.getUserInfo.school,
-			dept: this.getUserInfo.department,
-			fac: this.getUserInfo.faculty,
-			group: this.curRoom.electionId,
-			by:this.getUserInfo.uid,
-			dateCreated: Date.now()
+				onr: onr,
+				tstamp: firebase.firestore.FieldValue.serverTimestamp(),
+				elecRef: this.curRoom.electionId,
+				body: this.manifesto_text.trim(),
+				title: this.manifesto_title
+				
 			}).then(done=>{
 				this.loading = false
 				this.$eventBus.$emit('CloseNewManifestoDialog')

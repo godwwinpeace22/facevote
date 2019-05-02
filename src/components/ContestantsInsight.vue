@@ -14,7 +14,7 @@
               <v-layout row wrap>
                 <v-flex xs12 sm4>
                   <v-card flat>
-                    <bar-chart v-if="spyReady" :chart-data="chartdata" :chartOptions="chartOptions2"></bar-chart>
+                    <bar-chart v-if="spyReady" :chart-data="chartdata" :options="chartOptions2"></bar-chart>
                   </v-card>
                 </v-flex>
 
@@ -25,7 +25,7 @@
                       <v-subheader class="pl-0 font-weight-bold black--text">Your Opponents</v-subheader>
                     </v-toolbar>
                     <v-card-text class="pa-0" style="height: 300px; overflow:auto;">
-                      <v-list two-line>
+                      <v-list two-line dense>
                         <v-subheader v-if="myOpponents.length == 0">No opponents</v-subheader>
                         <template v-for="(item, index) in myOpponents">
                           <v-list-tile avatar :key="index + 'opponent'" @click="$eventBus.$emit('ViewProfile', item)">
@@ -34,7 +34,9 @@
                               <span v-else class="white--text">{{item.name.charAt(0)}}</span>
                             </v-list-tile-avatar>
                             <v-list-tile-content>
-                              <v-list-tile-title v-text="item.name"></v-list-tile-title>
+                              <v-list-tile-title class="text-capitalize">
+                                {{item.name}}
+                              </v-list-tile-title>
                               <v-list-tile-sub-title >
                                 <span class="online_badge" :class="item.online ? 'success' : 'orange'"></span>
                                 {{item.online ? 'online' : 'offline'}}
@@ -64,7 +66,7 @@
                               <span v-else class="white--text">{{item.name.charAt(0)}}</span>
                             </v-list-tile-avatar>
                             <v-list-tile-content>
-                              <v-list-tile-title >
+                              <v-list-tile-title class="text-capitalize">
                                 {{item.name}}
                                 <span class="online_badge" :class="item.online ? 'success' : 'orange'"></span>
                               </v-list-tile-title>
@@ -77,7 +79,7 @@
                   </v-card>
                 </v-flex>
 
-                <v-flex sm12 d-flex>
+                <!-- <v-flex sm12 d-flex>
                   <div class="mt-3 text-xs-center text-sm-left">
                     <v-progress-circular
                       :value="100" class="mr-3"
@@ -95,7 +97,7 @@
                       color="teal" class="mr-3"
                     ></v-progress-circular>
                   </div>
-                </v-flex>
+                </v-flex> -->
               </v-layout>
 
               <v-layout row wrap>
@@ -123,28 +125,30 @@ export default {
     
       datasets: []
     },
-    chartOptions:{
-      responsive: true, maintainAspectRatio: false
-    },
-    chartOptions2:{
+    chartOptions2: {
       responsive: true, maintainAspectRatio: false,
       scales: {
-          yAxes: [{
-            ticks: {
-                beginAtZero: true,
-            }
-          }],
-          xAxes: [{
-            ticks: {
-                beginAtZero: true,
-                autoSkip:false,
-            }
-          }]
+        yAxes: [{
+          ticks: {
+            beginAtZero: true
+          }
+        }],
+        xAxes: [{
+          ticks: {
+            beginAtZero: true,
+            autoSkip: false,
+          }
+        }]
       }
     },
     spyReady: false,
     
   }),
+  watch: {
+    'curRoom': function(from,to){
+      this.setContestantMonitor()
+    }
+  },
   computed: {
     ...mapGetters([
       'getUser',
@@ -158,7 +162,7 @@ export default {
       
       let myRole = this.getRole(this.getUserInfo)
       let opponents = this.contestantsByRoles.filter(cont =>{
-        return myRole ? cont.role == myRole && cont.uid != this.getUser.uid : []
+        return cont.role == myRole && cont.uid != this.getUser.uid
       })
       return opponents
     },
@@ -182,7 +186,7 @@ export default {
   methods: {
     getRole(contestant){
       // console.log(contestant)
-      if(contestant.contestants){
+      if(contestant.contestsRef){
 
         let ref = contestant.contestsRef
         .find(item=>item.electionRef == this.curRoom.electionId)
@@ -191,37 +195,23 @@ export default {
       }
       else{ return false}
     },
-    getVoters(){
-      // get registered voters
-      this.moreUserInfoRef = db.collection('moreUserInfo')
-      .where('enrolled','array-contains', this.curRoom.electionId)
-      .onSnapshot(async querySnapshot=>{
-        this.regVoters = []
-        querySnapshot.forEach(doc=>{
-          //console.log(doc.id, " => ", doc.data());
-          this.regVoters.push(doc.data())
-        })
-        await this.allContestants()
-        
-      }, function(err){
-       
-        console.log(err)
-      })
-    },
     async allContestants(){
       // get contestants
       return new Promise((resolve, reject)=>{
-        let contestants = []
+        
         db.collection('moreUserInfo')
           .where('contests', 'array-contains', this.curRoom.electionId)
           .get().then(docs =>{
-
+            let contestants = []
             docs.forEach(doc =>{
-              contestants.push(doc.data())
+              doc.data().uid != this.getUser.uid ? 
+              contestants.push(doc.data()) : ''
             })
 
+            contestants.push(this.getUserInfo)
+
             this.contestants = contestants
-            console.log(this.contestants)
+            // console.log(this.contestants)
             resolve(contestants)
           }).catch(err => console.log(err))
       })
@@ -230,59 +220,6 @@ export default {
       // show only contestants that are not suspended. therefore they can't be voted for
       //contestants = contestants.data.filter(item => item.suspended == false)
       
-    },
-    async getAllPosts(){
-
-      this.meAndMyOpponents.forEach(person =>{
-        // get each person's posts
-        
-        db.collection('posts').where('createdBy','==',person.uid)
-        .where('group', '==', this.curRoom.electionId)
-        .get().then(docs =>{
-          let personPosts = []
-          docs.forEach(doc => personPosts.push(doc.data()))
-          this.postsByPersons[person.uid] = personPosts.length
-        })
-      })
-    },
-    async getAllFollowers(){
-
-      this.meAndMyOpponents.forEach(person =>{
-        // get each person's posts
-        
-        db.collection('followers').where('following', '==', person.uid)
-        .get().then(docs =>{
-          let personFollowers = []
-          docs.forEach(doc => personPosts.push(doc.data()))
-          this.followersByPersons[person.uid] = personFollowers.length
-        })
-      })
-    },
-    async getAllProfileViews(){
-
-      this.meAndMyOpponents.forEach(person =>{
-        // get each person's posts
-        
-        db.collection('profileViews').where('viewee','==',person.uid)
-        .get().then(docs =>{
-          let views = []
-          docs.forEach(doc => views.push(doc.data()))
-          this.profileViewsByPersons[person.uid] = views.length
-        })
-      })
-    },
-    async getAllPostViews(){
-
-      this.meAndMyOpponents.forEach(person =>{
-        // get each person's posts
-        
-        db.collection('postViews').where('viewee', '==', person.uid)
-        .get().then(docs =>{
-          let views = []
-          docs.forEach(doc => views.push(doc.data()))
-          this.postViewsByPersons[person.uid] = views.length
-        })
-      })
     },
     async setContestantMonitor(){
       try{
@@ -297,13 +234,13 @@ export default {
           })
 
           .forEach(person =>{
-            console.log(person)
+            // console.log(person)
             let random1 = Math.floor(Math.random() * Math.floor(255))
             let random2 = Math.floor(Math.random() * Math.floor(255))
             let random3 = Math.floor(Math.random() * Math.floor(255))
 
             this.chartdata.datasets.push({
-              label: person.uid == this.getUser.uid ? 'You' : person.name,
+              label: person.uid == this.getUser.uid ? 'You' : this.$helpers.truncateText(person.name,15),
               backgroundColor: `rgba(${random1}, ${random2},  ${random3}, 0.6)`,
               data: [
                 person.posts ? person.posts : 0,
@@ -314,7 +251,7 @@ export default {
             
             })
 
-            console.log(this.chartdata)
+            // console.log(this.chartdata)
           })
           this.spyReady = true
         })

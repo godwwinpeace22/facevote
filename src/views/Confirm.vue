@@ -93,7 +93,7 @@ export default {
     requestMode(){
       let auth = app.auth()
       let query = this.$route.query
-      console.log(query)
+      // console.log(query)
       this.mode = query.mode
       this.actionCode = query.oobCode
 
@@ -154,7 +154,7 @@ export default {
       }).catch(error=>{
         // Invalid or expired action code. Ask user to try to reset the password
         // again.
-        console.log(error)
+        // console.log(error)
         this.resend_password_verification = true
         this.snackbar = {show:true,message:'Invalid or expired token', color:'error'}
       });

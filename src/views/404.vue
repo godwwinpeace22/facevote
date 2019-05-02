@@ -8,7 +8,7 @@
         <v-flex xs12 sm8 md4>
           <h1 class="text-xs-center mb-3" style="color:#333;" >Page Not Found</h1>
           <v-btn color="success" class="d-block" style="line-height:2.5" depressed
-            to="/">
+            to="/home">
             Take me out of here
           </v-btn>
         </v-flex>

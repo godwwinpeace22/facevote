@@ -2,28 +2,26 @@
   <v-toolbar color="teal" dark flat app clipped-right style='background-color:#29648a;'>
     <v-toolbar-side-icon @click.stop="$eventBus.$emit('Toggle_Left_Drawer')"></v-toolbar-side-icon>
     <v-toolbar-title v-show="$vuetify.breakpoint.width > 344">
-      <slot name='title'></slot>
+      <slot name='title' >{{$vuetify.breakpoint.smAndDown ? "Facevote" : "Feed"}}</slot>
     </v-toolbar-title>
     <v-spacer></v-spacer>
     
     <slot name="nav_item"></slot>
 
     <v-btn outline icon :to="curRoom ? `/elections/vote` : ''" 
-      dark class="hidden-xs-only" exact>
-      <v-icon>how_to_vote</v-icon>
+      dark exact>
+      <v-icon color="">how_to_vote</v-icon>
     </v-btn>
 
     <v-divider inset vertical class="mr-2"></v-divider>
 
-    <v-menu transition="slide-y-transition" offset-y v-if="isAuthenticated">
+    <v-menu transition="slide-y-transition" offset-y v-if="getUser">
       <v-toolbar-title slot="activator">
         <template v-if="$vuetify.breakpoint.smAndUp">
-          <v-avatar size="36" color="grey lighten-4">
+          <v-avatar size="36" :color="$helpers.colorMinder(getUserInfo.name.charAt(0))">
             <img v-if="getUserInfo && getUserInfo.photoURL" :src="getUserInfo.photoURL" alt="avatar">
             <img v-else-if="getUser.photoURL"  :src="getUser.photoURL" alt="avatar">
-            <v-avatar v-else color="success" size="38">
-              <span class="white--text headline">{{getUser.displayName.charAt(0)}}</span>
-            </v-avatar>
+            <span v-else class="white--text headline">{{getUser.displayName.charAt(0)}}</span>
           </v-avatar>
           <v-icon dark>arrow_drop_down</v-icon>
         </template>
@@ -37,7 +35,7 @@
         </v-list-tile>
         <v-list-tile @click="settings_dialog = !settings_dialog" >
           <v-icon color="success">settings</v-icon>
-          <v-list-tile-title style="margin-left:5px;">'Settings</v-list-tile-title>
+          <v-list-tile-title style="margin-left:5px;">Settings</v-list-tile-title>
         </v-list-tile>
 
         <v-divider></v-divider>
@@ -75,8 +73,6 @@ export default {
   },
   computed: {
     ...mapGetters([
-      'isAuthenticated',
-      'getToken',
       'getUser',
       'getUserInfo',
       'getMyEnrolled'

@@ -145,8 +145,11 @@ export default {
 			let docRef = db.collection('campaign_posts').doc()
 			let doc = document.getElementById('campaign_text')
 			let campaign_text = doc ? doc.innerText : false
-			console.log(campaign_text)
-			docRef.set({
+			let twenty4hrs = 24 * 60 * 60 * 1000
+			// console.log(campaign_text)
+
+			let {name, photoURL = false, email, sch=false, fac=false, dept=false, uid, is_student} = this.getUserInfo
+			let data = {
 				docId: docRef.id,
 				imgSrc: image ? image : false,
 				img_caption: this.img_caption,
@@ -154,13 +157,24 @@ export default {
 				type: this.campaign_type,
 				color: this.color,
 				elecRef: this.curRoom.electionId,
-				onr: ['name', 'photoURL','email','sch','fac','dept','uid']
-          .reduce((a, e) => (a[e] = this.getUserInfo[e], a), {}),
-				tstamp: Date.now()
-			}).then(done=>{
+				onr: {
+            name,
+            photoURL,
+            email,
+            sch,
+            fac,
+            dept,
+						uid,
+						is_student
+          },
+				tstamp: firebase.firestore.FieldValue.serverTimestamp(),
+				expires_in: Date.now() + twenty4hrs
+			}
+			docRef.set(data).then(done=>{
 				this.loading = false
 				this.$eventBus.$emit('HideNewCampaignDialog')
 
+				this.$eventBus.$emit('PushNewCampaign', data)
 				this.$eventBus.$emit('Snackbar', {
 					show: true, color:'dark',
 					message: 'Campaign added'
