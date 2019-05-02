@@ -817,6 +817,12 @@ export default {
         this.$store.dispatch('setUser', user)
         this.showUi = true
         this.getUser ? this.presenceWatcher() : ''
+
+        $LogRocket.identify(user.uid, {
+          name: user.displayName,
+          email: user.email,
+          isSuperUser: state
+        })
       }
     })
     
@@ -834,12 +840,6 @@ export default {
       if(now - tstamp <= one_month){
         this.$store.dispatch('subscriberState', state)
       }
-
-      // $LogRocket.identify(user.uid, {
-      //   name: user.displayName,
-      //   email: user.email,
-      //   isSuperUser: state
-      // })
 
     })
     .catch((error) => {
