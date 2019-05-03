@@ -159,7 +159,7 @@
     <v-dialog v-model="file_dialog" style="background:#fff;" 
       max-width="600" hide-overlay :fullscreen="breakpoint.xsOnly">
       <v-toolbar dense flat>
-        <v-toolbar-title>Upload a file</v-toolbar-title>
+        <v-toolbar-title>Upload images</v-toolbar-title>
         <v-spacer></v-spacer>
         <v-btn flat icon @click="file_dialog = false">
           <v-icon>close</v-icon>

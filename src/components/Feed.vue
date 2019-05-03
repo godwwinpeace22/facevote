@@ -32,10 +32,6 @@
       </v-container>
     </v-navigation-drawer>
 
-    <!--loading-bar spinnerType='circle' v-if="!ready">
-      <div slot="loading_info">Loading posts...</div>
-    </loading-bar-->
-
     <v-snackbar v-model="snackbar.show" :timeout="5000" :color="snackbar.color" top>
       {{snackbar.message}} 
       <v-btn dark flat @click="snackbar.show = false"> Close</v-btn>
@@ -116,18 +112,6 @@
             <v-tabs-items v-model="feed_model" class="">
               <v-tab-item value="Feed" :style="styleForTabs">
 
-                <!-- ADS ON SMALL SCREENS-->
-                <!-- <v-container grid-list-xs pa-0 v-if="breakpoint.smAndDown">
-                  <span class="pl-3 grey--text lighten-3">Sponsored</span>
-                  <v-layout row wrap>
-                    <v-flex xs12 sm3>
-                      <v-card dark height="150">
-                        
-                      </v-card>
-                    </v-flex>
-                  </v-layout>
-                </v-container> -->
-
                 <!-- POSTS AND POSTS ACTIONS -->
                 <v-container pa-0 >
                   <v-layout row wrap>
@@ -147,35 +131,6 @@
                           </v-btn>
                           <span>This feature requires a premium account</span>
                         </v-tooltip>
-
-                        <!-- <v-chip color="teal" text-color="white" class="linkify" @click="$store.dispatch('switchTheme','true')">
-                          <v-avatar>
-                            <v-btn icon dark><v-icon>brightness_5</v-icon></v-btn>
-                          </v-avatar>
-                          <span class="pr-1 text-capitalize">{{$store.state.theme }} </span> theme
-                        </v-chip> -->
-
-                        <!-- <v-menu offset-y content-class="round">
-                          <v-chip color="secondary" slot="activator" class="linkify" text-color="white">
-                            <v-avatar>
-                              <v-icon>filter_list</v-icon>
-                            </v-avatar>
-                            Filter Posts
-                          </v-chip>
-                          <v-list dense dark class="">
-                            <v-list-tile class="orange--text">
-                              <v-list-tile-title>Show posts from:</v-list-tile-title>
-                            </v-list-tile>
-                            <v-divider></v-divider>
-                            <v-list-tile v-for="item in filter_items"
-                              :key="item.key" @click="filterPostsBy(item.val)">
-                              <v-list-tile-title>{{ item.text }}
-                                <v-icon v-if="getFeedFilter && item.val == getFeedFilter.key" small color="success">check</v-icon>
-                              </v-list-tile-title>
-                            </v-list-tile>
-                          </v-list>
-                        </v-menu> -->
-                        
                       </v-card>
                     </v-flex>
 
@@ -385,7 +340,7 @@
                         </v-list>
 
                         <v-list two-line dense  v-if="getCampaigns.length > 0">
-                          <v-list-tile avatar v-for="(campaign,i) in sorted" :key="i" @click="selectCampaign(i)">
+                          <v-list-tile avatar v-for="(campaign,i) in sorted" :key="i" @click="selectCampaign(campaign)">
                             <v-list-tile-avatar :color="$helpers.colorMinder(campaign.onr.name.charAt(0))">
                               <v-avatar size="45" :color="$helpers.colorMinder(campaign.onr.name.charAt(0))">
                                 <img :src="campaign.onr.photoURL" v-if="campaign.onr.photoURL" alt="alt">
@@ -396,14 +351,11 @@
                               <v-list-tile-title class="secondary--text text-capitalize">
                                 {{campaign.onr.name}}</v-list-tile-title>
                               <v-list-tile-sub-title>
-                                {{$helpers.parseDate(campaign.tstamp)}}
+                                {{$helpers.parseDate(campaign.latest)}}
                                 <v-icon small color="primary" class="pr-1">data_usage</v-icon>{{campaign.count}}
                               </v-list-tile-sub-title>
                             </v-list-tile-content>
                           </v-list-tile>
-                          <v-subheader v-if="campaignsLimit && getCampaigns.length > campaignsLimit">
-                            <v-btn small flat @click="campaignsLimit = null" class="text-capitalize" color="secondary">see more</v-btn>
-                          </v-subheader>
                         </v-list>
                       </v-card>
                     </v-flex>
@@ -420,7 +372,7 @@
             <v-container grid-list-xs pa-0>
               <v-layout column>
                 <v-flex xs12>
-                  <v-card flat class="elevation-0 round_top" elevation-0 :dark="$store.state.theme == 'dark'">
+                  <v-card flat class="elevation-0 round_top" elevation-0>
                     <div style="overflow-y:auto;">
                       <v-subheader class="font-weight-bold">Campaigns</v-subheader>
                       
@@ -655,24 +607,6 @@ export default {
     appendEmoji(emoji,post){
       this.body[post.docId] += emoji
     },
-    async filterPostsBy(filter){
-      
-      // let args = {
-      //   key: filter,
-      //   value: filter == 'dept' ? this.getUserInfo.department : 
-      //   filter == 'fac' ? this.getUserInfo.faculty : 
-      //   filter == 'sch' ? this.getUserInfo.school : this.curRoom.electionId,
-      //   u:this.getUser.uid
-      // }
-      // // save the filter chosen in local storage
-      // this.$store.dispatch('saveFeedFilter', args)
-      
-      // // filter the posts from the feed
-      
-      // this.ready = false
-      // await this.latestPosts(args.key, args.value)
-      // await this.latestCampaigns(args.key, args.value)
-    },
     sortByUid(){
 			return this.campaigns.sort((a,b) => b.onr.uid - a.onr.uid)
 		},
@@ -862,12 +796,6 @@ export default {
                   // console.log("New", change.doc.data());
                   myArr.push(change.doc.data())
               }
-              if (change.type === "modified") {
-                  // console.log("Modified ", change.doc.data());
-              }
-              if (change.type === "removed") {
-                  // console.log("Removed", change.doc.data());
-              }
             })
             
             // console.log(myArr)
@@ -913,8 +841,11 @@ export default {
     this.$eventBus.$on('ShowSnackbar', data=>{
       this.snackbar = data
     })
-    this.$eventBus.$on('PushNewPost',data=>{
+    this.$eventBus.$on('PushNewCampaign',data=>{
       // this.posts.unshift(data)
+      this.latestCampaigns().then(()=> {
+        this.sortCampaigns()
+      })
     })
     this.$eventBus.$on('HideCampaign',data=>{
       this.view_campaign = false

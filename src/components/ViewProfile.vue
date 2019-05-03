@@ -5,13 +5,21 @@
         <v-sheet :class="{'round_top': $vuetify.breakpoint.smAndUp}" width="100%" height="120" :color="$helpers.colorMinder(user.name.charAt(0)) + ' lighten-3'">
 
         </v-sheet>
-        <v-sheet width="61%" height="120" style="position: absolute;top: 50px;left: 20%;" color="transparent">
-          <v-avatar class="d-block mx-auto"
-            size="120"
-            :color="$helpers.colorMinder(user.name.charAt(0))"
+        <v-sheet width="61%" height="124" style="position: absolute;top: 50px;left: 20%;" color="transparent">
+          <v-avatar
+            size="124"
+            color="white"
+            class="elevation-1 d-block mx-auto"
+            style="padding-top: 2px;"
           >
-            <img :src="user.photoURL" :alt="user.name" v-if="user.photoURL">
-            <span v-else style="padding-top: 36px;" class="d-block white--text display-2">{{user.name.charAt(0)}}</span>
+            
+            <v-avatar class="d-block mx-auto"
+              size="120"
+              :color="$helpers.colorMinder(user.name.charAt(0))"
+            >
+              <img :src="user.photoURL" :alt="user.name" v-if="user.photoURL">
+              <span v-else style="padding-top: 36px;" class="d-block white--text display-2">{{user.name.charAt(0)}}</span>
+            </v-avatar>
           </v-avatar>
         </v-sheet>
       

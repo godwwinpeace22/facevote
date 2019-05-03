@@ -246,33 +246,41 @@
           
           <!-- Broadcast Dialog -->
           <v-dialog v-model="broadcast_dialog" max-width="1000"
-            :fullscreen="$vuetify.breakpoint.smAndDown" hide-overlay lazy>
+            :fullscreen="$vuetify.breakpoint.smAndDown" hide-overlay lazy scrollable>
+            <v-card flat class="pa-0">
+              <v-card-text class="pa-0">
+                <private-msg-list v-if="broadcast_dialog" style="min-height:300px;background:#fff;"></private-msg-list>
+              </v-card-text>
+            </v-card>
             
-            <private-msg-list v-if="broadcast_dialog" style="min-height:300px;background:#fff;"></private-msg-list>
           </v-dialog>
 
           <!-- NEW MANIFESTO DIALOG -->
           <v-dialog v-model="new_manifesto_dialog" lazy :fullscreen="$vuetify.breakpoint.xsOnly"
-            max-width="800px" :transition="switchTransition" v-if="new_manifesto_dialog">
-            <v-toolbar dense flat>
-              <v-btn flat icon v-if="$vuetify.breakpoint.xsOnly"
-                @click="new_manifesto_dialog = false">
-                <v-icon>chevron_left</v-icon> 
-              </v-btn>
-              <span>Create a Manifesto</span>
-              <v-spacer></v-spacer>
-              <v-btn flat icon @click="new_manifesto_dialog = false" class="hidden-xs-only">
-                <v-icon>close</v-icon>
-              </v-btn>
-            </v-toolbar>
-            <new-manifesto />
+            max-width="800px" :transition="switchTransition" v-if="new_manifesto_dialog" scrollable>
+            <v-card flat>
+              <v-toolbar card dense flat>
+                <v-btn flat icon v-if="$vuetify.breakpoint.xsOnly"
+                  @click="new_manifesto_dialog = false">
+                  <v-icon>chevron_left</v-icon> 
+                </v-btn>
+                <span>Create a Manifesto</span>
+                <v-spacer></v-spacer>
+                <v-btn flat icon @click="new_manifesto_dialog = false" class="hidden-xs-only">
+                  <v-icon>close</v-icon>
+                </v-btn>
+              </v-toolbar>
+              <v-card-text>
+                <new-manifesto />
+              </v-card-text>
+            </v-card>
           </v-dialog>
           
           <!-- NEW BROADCASTs -->
           <new-broadcast v-if="new_broadcast" ></new-broadcast>
 
           <!-- VIEW BROADCAST -->
-          <v-dialog v-model="show_private_chat_window" scrollable v-if="show_private_chat_window" max-width="500px" 
+          <!-- <v-dialog v-model="show_private_chat_window" scrollable v-if="show_private_chat_window" max-width="500px" 
             lazy :transition="switchTransition">
             <v-card class="grey lighten-3">
               <v-toolbar card dense flat dark class="teal">
@@ -292,7 +300,7 @@
                 <view-broadcasts :broadcasts="broadcasts"></view-broadcasts>
               </v-card-text>
             </v-card>
-          </v-dialog>
+          </v-dialog> -->
 
           <!-- VIEW PROFILE -->
           <v-dialog v-model="viewprofile" v-if="viewprofile" lazy :style="styleObj"

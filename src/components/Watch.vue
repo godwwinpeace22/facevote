@@ -34,8 +34,8 @@
                   </v-list-tile>
                 </v-list>
                 <!-- <v-card-title class="headline">{{currElection.title}}</v-card-title>
-                <small class="pl-3 d-block" style="color:#eee;">Election Id: {{currElection.electionId}}</small> -->
-                
+                <small class="pl-3 d-block" style="color:#eee;">Electi Id: {{currElection.electionId}}</small> -->
+              
                 <loading-bar spinnerType='circle' height="40vh" v-if="!timer_ready"></loading-bar>
                 
                   <transition name="fade">
@@ -168,7 +168,7 @@
                   <v-tooltip right v-if="isAdmin" class="hidden-sm-and-up">
 
                     <v-btn slot="activator" 
-                      dark 
+                       flat outline
                       class="dark white--text text-capitalize"
                       @click="show_manager = !show_manager" v-if="isAdmin"
                     >

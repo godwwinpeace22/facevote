@@ -65,7 +65,7 @@
                   
                   <router-link event="" @click.native.prevent="goto(item,msg.elecRef)" 
                     v-if="item.charAt(0) == '@'" 
-                    :to="'/forum/profile/' + item.slice(1)" :key="item">
+                    :to="'/forum/profile/' + item.slice(1)" :key="item" class="primary--text">
                     @{{findAMember(item.slice(1))}}
                   </router-link>
 
@@ -115,55 +115,6 @@
                 </v-container>
               </div>
               
-              <!-- <div class="show_reactions">
-                <div class="reactions">
-                  <v-btn icon small @click="add_reaction(msg,'like')">
-                    <img alt="Thumbs Up" width=30 height=30 src="@/assets/thumbs-up.gif">
-                  </v-btn>
-                  <v-btn icon small @click="add_reaction(msg,'love')">
-                    <v-icon color="red">favorite</v-icon>
-                  </v-btn>
-                  <v-btn icon small @click="add_reaction(msg,'haha')">
-                    <span class="emojis">😃</span>
-                  </v-btn>
-                  <v-btn icon small @click="add_reaction(msg,'wow')">
-                    <span class="emojis">😲</span>
-                  </v-btn>
-                  <v-btn icon small @click="add_reaction(msg,'angry')">
-                    <span class="emojis">😣</span>
-                  </v-btn>
-                  <v-btn icon small @click="add_reaction(msg,'excited')">
-                    <img alt="Big Dancing Banana" width=20 height=20 src="@/assets/dancing-banana.gif">
-                  </v-btn>
-                </div>
-                <v-tooltip bottom>
-                  <v-btn icon small slot="activator">
-                    <v-icon color="success">mood</v-icon>
-                  </v-btn>
-                  <span>Add reactions</span>
-                  
-                </v-tooltip>
-              </div>
-              <div style="display:inline-block;">
-                <v-btn icon small @click="add_reaction(msg,'like')" v-show="msg.reactions.like > 0">
-                  {{msg.reactions.like}}<img alt="Thumbs Up Hand Gesture" width=30 height=30 src="@/assets/thumbs-up.gif">
-                </v-btn>
-                <v-btn icon small @click="add_reaction(msg,'love')" v-show="msg.reactions.love > 0">
-                  {{msg.reactions.love}}<v-icon color="red">favorite</v-icon>
-                </v-btn>
-                <v-btn icon small @click="add_reaction(msg,'haha')" v-show="msg.reactions.haha > 0">
-                  {{msg.reactions.haha}}<span class="emojis">😃</span>
-                </v-btn>
-                <v-btn icon small @click="add_reaction(msg,'wow')" v-show="msg.reactions.wow > 0">
-                  {{msg.reactions.wow}}<span class="emojis">😲</span>
-                </v-btn>
-                <v-btn icon small @click="add_reaction(msg,'angry')" v-show="msg.reactions.angry > 0">
-                  {{msg.reactions.angry}}<span class="emojis">😣</span>
-                </v-btn>
-                <v-btn icon small @click="add_reaction(msg,'excited')" v-show="msg.reactions.excited > 0">
-                  {{msg.reactions.excited}}<img alt="Big Dancing Banana" width=20 height=20 src="@/assets/dancing-banana.gif">
-                </v-btn>
-              </div> -->
             </div>
           </div>
 
@@ -188,7 +139,20 @@
           <div class="me" v-if="msg.onr.uid == getUser.uid" :key="i + 'me'">
             <div class="me_inner elevation-1" :class="[msg.imgs ? 'msg_inner_imgs': 'msg_inner']">
               <div class="body">
-                {{msg.body}}
+                <!-- the spice of life -->
+                <template v-for="item in msg.body.split(' ')">
+                  
+                  <router-link event="" @click.native.prevent="goto(item,msg.elecRef)" 
+                    v-if="item.charAt(0) == '@'" 
+                    :to="'/forum/profile/' + item.slice(1)" :key="item">
+                    @{{findAMember(item.slice(1))}}
+                  </router-link>
+
+                  <router-link v-else-if="item.charAt(0) == '#'" :to="item" append :key="item">{{item}} </router-link>
+
+                  <template v-else>{{item}} </template>
+
+                </template>
 
                 <!-- UPLOADED IMAGES -->
                 <v-container grid-list-xs v-if="msg.imgs">
@@ -222,11 +186,26 @@
 
           <div class="thm" v-else :key="i + 'thm'">
             <div class="thm_inner elevation-1" :class="[msg.imgs ? 'msg_inner_imgs': 'msg_inner']">
-              <div class="meta1" :class="[$helpers.colorMinder(msg.onr.name.charAt(0)) + '--text']">
+              <div class="meta1 text-capitalize" :class="[$helpers.colorMinder(msg.onr.name.charAt(0)) + '--text']"
+              @click.prevent="$router.push(`/forum/profile/${msg.onr.email}`); 
+                $eventBus.$emit('Toggle_drawerRight', true)">
                 {{msg.onr.name}}
               </div>
               <div class="body">
-                {{msg.body}}
+                <!-- the spice of life -->
+                <template v-for="item in msg.body.split(' ')">
+                  
+                  <router-link @click.native.prevent="goto(item,msg.elecRef)" 
+                    v-if="item.charAt(0) == '@'" 
+                    :to="'/forum/profile/' + item.slice(1)" :key="item" class="primary--text">
+                    @{{findAMember(item.slice(1))}}
+                  </router-link>
+
+                  <router-link v-else-if="item.charAt(0) == '#'" :to="item" append :key="item">{{item}} </router-link>
+
+                  <template v-else>{{item}} </template>
+
+                </template>
 
                 <!-- UPLOADED IMAGES -->
                 <v-container grid-list-xs v-if="msg.imgs">
@@ -663,6 +642,7 @@ a{
   text-align: left;
   margin-left: 15px;
   float: left;
+  margin-bottom: 2px;
 }
 
 .thm_inner:before {

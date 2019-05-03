@@ -7,52 +7,10 @@
     </navigation>
 
     <!-- LOADING WIREFRAME -->
-    <v-container grid-list-md fluid v-if="!ready">
-      <v-layout row wrap justify-space-between>
-        <v-flex xs12 sm3 v-for="i in 4" :key="i">
-          <v-card class="round" flat height="100">
-            
-          </v-card>
-        </v-flex>
-        <v-flex xs12 sm12 md4>
-          <v-card flat class="elevation-0" elevation-0 d-flex height="380">
-            <v-card-text>
-              <v-avatar size="100" class="mb-5 mx-auto d-block"
-                color="grey lighten-3">
-              </v-avatar>
 
-              <div class="grey lighten-3 wireframe mx-auto mb-2" style="width:70%;height:12px;"></div>
-              <div class="grey lighten-3 wireframe mx-auto mb-2" style="width:90%;height:12px;"></div>
-              <div class="grey lighten-3 wireframe mx-auto mb-2" style="width:90%;height:12px;"></div>
-            </v-card-text>
-            
-          </v-card>
-        </v-flex>
-        <v-flex xs12 sm12 md8 d-flex>
-          <v-card flat class="mb-3 pb-2">
-            
-            <v-list two-line dense>
-              <v-list-tile avatar>
-                <v-list-tile-content class="">
-                  <div class="grey lighten-3 wireframe mb-2 ml-2" style="width:40%;height:12px;"></div>
-                </v-list-tile-content>
-              </v-list-tile>
-            </v-list>
-
-            <v-container grid-list-md>
-              <v-layout row wrap>
-                <v-flex xs3 v-for="i in 6" :key="'a' + i">
-                  <v-card flat class="grey lighten-3 wireframe" height="100">
-                  </v-card>
-                </v-flex>
-              </v-layout>
-            </v-container>
-           
-          </v-card>
-        </v-flex>
-        
-      </v-layout>
-    </v-container>
+    <loading-bar v-if="!ready">
+      <div class='mx-auto' style="display: table" slot="loading_info">Loading...</div>
+    </loading-bar>
 
     <template v-else>
 
@@ -65,13 +23,21 @@
               <v-sheet flat width="100%" height="120" :color="$helpers.colorMinder(user.name.charAt(0)) + ' lighten-3'">
 
               </v-sheet>
-              <v-sheet flat width="61%" height="120" style="position: absolute;top: 55px;left: 20%;" color="transparent">
-                <v-avatar class="d-block mx-auto"
-                  size="120"
-                  :color="$helpers.colorMinder(user.name.charAt(0))"
+              <v-sheet flat width="61%" height="124" style="position: absolute;top: 55px;left: 20%;" color="transparent">
+                <v-avatar
+                  size="124"
+                  color="white"
+                  class="elevation-1 d-block mx-auto"
+                  style="padding-top: 2px;"
                 >
-                  <img :src="user.photoURL" :alt="user.name" v-if="user.photoURL">
-                  <span v-else class="d-block white--text display-2" style="padding-top: 30px;">{{user.name.charAt(0)}}</span>
+                  
+                  <v-avatar class="d-block mx-auto"
+                    size="120"
+                    :color="$helpers.colorMinder(user.name.charAt(0))"
+                  >
+                    <img :src="user.photoURL" :alt="user.name" v-if="user.photoURL">
+                    <span v-else class="d-block white--text display-2" style="padding-top: 30px;">{{user.name.charAt(0)}}</span>
+                  </v-avatar>
                 </v-avatar>
               </v-sheet>
 
@@ -428,7 +394,7 @@
                 </v-btn>
               </v-list-tile-action>
 
-              <v-list-tile-avatar color="grey">
+              <v-list-tile-avatar :color="$helpers.colorMinder(user.name.charAt(0))">
                 <img :src="user.photoURL" v-if="user.photoURL"/>
                 <span v-else>{{user.name.charAt(0)}}</span>
               </v-list-tile-avatar>
@@ -611,7 +577,8 @@ export default {
     ElectionManager,
     NewPost,
     ContestantsInsight,
-    ProfileViewers
+    ProfileViewers,
+    LoadingBar
     // NewManifesto
   },
   filters: {
@@ -828,11 +795,7 @@ export default {
       // console.log(manifesto.docId)
       this.viewing = manifesto
       this.view_manifesto = true
-      // let docRef = db.collection('manifestos').doc(manifesto.docId)
-      // // COUNT MANIFESTO VIEWS
-      // docRef.update({
-      //   seenBy: firebase.firestore.FieldValue.arrayUnion(this.getUser.uid)
-      // })
+      
     },
     async seeMorePosts(){
       this.loading = true
@@ -933,7 +896,7 @@ export default {
           this.getCreated();
           this.getContested()
           this.getEnrolled()
-          this.getManifestos(4)
+          this.getManifestos()
         }
         
         else{
@@ -1009,6 +972,7 @@ import {mapGetters, mapState} from 'vuex'
   import NewPost from '@/components/profile/NewPost'
   import ContestantsInsight from '@/components/ContestantsInsight'
   import ProfileViewers from '@/components/ProfileViewers'
+  import LoadingBar from '@/spinners/LoadingBar'
   //import NewManifesto from '@/components/profile/NewManifesto'
 
 </script>

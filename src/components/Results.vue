@@ -261,10 +261,11 @@
     </v-container>
 
     <!-- More Charts -->
-    <v-container grid-list-sm pt-0>
+    <v-container grid-list-sm pt-0 :pa-0="$vuetify.breakpoint.xsOnly">
        <v-layout row wrap>
          <v-flex xs12>
-           <v-card class="round_top grey lighten-4" style="border-top: 4px solid gold !important">
+           <v-card :class="[{round_top: $vuetify.breakpoint.smAndUp, 'grey lighten-4': $vuetify.breakpoint.mdAndUp}]" 
+            style="border-top: 4px solid gold !important" :flat="$vuetify.breakpoint.xsOnly">
              
             <v-toolbar class="white" flat card dense>
               <v-subheader>More Charts</v-subheader>
@@ -272,7 +273,7 @@
               <v-icon color="#FFC107">bookmark</v-icon>
               <span>Premium</span>
             </v-toolbar>
-            <v-container grid-list-xl>
+            <v-container grid-list-xl :pa-1="$vuetify.breakpoint.xsOnly">
               <v-layout row wrap justify-space-around>
                 <!-- Your Share of All Votes -->
 

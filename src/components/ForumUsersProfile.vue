@@ -7,7 +7,7 @@
       <v-btn dark flat @click.native="snackbar = {}">Close</v-btn>
     </v-snackbar>
 
-    <v-toolbar dense flat class="hidden-sm-and-down">
+    <v-toolbar dense flat>
       <v-btn icon to="/forum">
         <v-icon>chevron_left</v-icon>
       </v-btn>
@@ -57,49 +57,10 @@
             <v-subheader class="ma-0 pa-0" style="height:30px;" v-if="getRole()"><i class="mr-1">for </i><strong class="secondary--text"> {{getRole().role}}</strong></v-subheader>
             
           </v-container>
-          <!-- <v-card-actions v-if="isModerator(getUser.uid) && !isModerator(user.uid)">
-            <v-btn v-if="!banned(user.uid)" color="orange" outline small @click="suspend_member_dialog = {show:true,user:user}">
-              <v-icon small class="mr-2">block</v-icon>
-              Suspend
-            </v-btn>
-            <v-btn v-if="banned(user.uid)" color="orange" outline small @click="suspend_member_dialog = {show:true,user:user,banned:true}">
-              <v-icon small class="mr-2">block</v-icon>
-              Restore
-            </v-btn>
-            <v-btn color="success" small outline @click="makeModerator(user)" :loading="making_moderator">Make admin</v-btn>
-          </v-card-actions> -->
-          <!-- <v-dialog v-model="dialog" v-if="dialog" fullscreen hide-overlay transition="dialog-bottom-transition" scrollable>
-            <profile-settings :dialog='dialog'></profile-settings>
-          </v-dialog> -->
           <v-divider></v-divider>
         </v-card>
       </v-flex>
     </v-layout>
-
-    <!-- BAN USER FROM CURRENT ROOM DIALOG-->
-    <!-- <v-dialog v-model="suspend_member_dialog.show"
-      :fullscreen="$vuetify.breakpoint.xsOnly"
-      max-width="500px" persistent
-      transition="dialog-transition" >
-      <v-card dark>
-        <div style="position:absolute;top:10px;right:10px;">
-          <v-icon @click="suspend_member_dialog = {}">close</v-icon>
-        </div>
-        <v-card-title primary-title>
-          <span v-if="suspend_member_dialog.banned == true">Restore Member</span>
-          <span v-else>Suspend Member</span>
-        </v-card-title>
-        <v-card-text>
-          <span v-if="suspend_member_dialog.banned == true">Restore this voter to allow them send messages in this chat room</span>
-          <span v-else>Ban this voter to prevent them from making sending messages in this chat room</span>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn v-if="suspend_member_dialog.banned" color="success" small @click="unsuspend" :loading="loading">Restore</v-btn>
-          <v-btn v-else color="orange" small @click="suspend" :loading="loading">suspend</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog> -->
   </div>
 </template>
 <script>
