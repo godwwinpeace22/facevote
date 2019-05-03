@@ -129,7 +129,7 @@
                   <v-card-actions>
 
                     <v-btn color="secondary" @click="$store.dispatch('curRoom', election)"
-                      v-if="election.electionId && curRoom && curRoom.electionId != selectedElection.electionId">
+                      v-if="getMyEnrolled.find(elec => elec.electionId == selectedElection.electionId)">
                       Switch current election
                     </v-btn>
                     <template v-if="curRoom && curRoom.electionId == selectedElection.electionId">

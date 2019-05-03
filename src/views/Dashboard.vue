@@ -843,6 +843,7 @@ export default {
         this.$store.dispatch('subscriberState', state)
       }
 
+      let user = idTokenResult.claims
       $LogRocket.identify(user.uid, {
         name: user.displayName,
         email: user.email,

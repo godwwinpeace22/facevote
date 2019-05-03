@@ -1435,8 +1435,8 @@ export default {
   },
   destroyed(){
     this.elecRef ? this.elecRef() : ''
-    this.moreUserInfoRef();
-    this.votesRef();
+    this.moreUserInfoRef ? this.moreUserInfoRef() : ''
+    this.votesRef ? this.votesRef() : ''
   },
   components:{
     //ViewProfile,

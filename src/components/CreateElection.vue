@@ -313,8 +313,8 @@
                 </v-card-text>
                 <v-card-actions v-if="form.auto_enroll_admin">
                   <v-btn color="success" flat @click="setCurrentRoom"
-                    v-if="curRoom.electionId != newElec.electionId">Set as current Election</v-btn>
-                  <template v-if="getMyEnrolled.find(elec => elec.electionId == newElec.electionId)
+                    v-if="getMyEnrolled.find(elec => elec.electionId == newElec.electionId)">Set as current Election</v-btn>
+                  <template v-if="curRoom && getMyEnrolled.length > 0 && getMyEnrolled.find(elec => elec.electionId == newElec.electionId)
                     && newElec.electionId == curRoom.electionId">
                     <v-btn color="success" to="/forum">Join the conversation</v-btn>
                     <v-btn color="success" to="/contest">Contest</v-btn>
@@ -444,8 +444,8 @@ export default {
     },
     electionTypes: [
       {text:'School',disabled:false},
-      {text:'Organizations',disabled:false},
-      {text:'Others',disabled:false},
+      {text:'Organizations',disabled:true},
+      {text:'Others',disabled:true},
       {text:'Governement - comming soon',disabled:true},
     ],
     levels: [
