@@ -36,7 +36,7 @@
                     :color="$helpers.colorMinder(user.name.charAt(0))"
                   >
                     <img :src="user.photoURL" :alt="user.name" v-if="user.photoURL">
-                    <span v-else class="d-block white--text display-2" style="padding-top: 30px;">{{user.name.charAt(0)}}</span>
+                    <span v-else class="d-block white--text display-2 text-capitalize" style="padding-top: 30px;">{{user.name.charAt(0)}}</span>
                   </v-avatar>
                 </v-avatar>
               </v-sheet>

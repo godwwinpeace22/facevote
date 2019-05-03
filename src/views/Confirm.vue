@@ -15,7 +15,7 @@
       <v-container fluid fill-height class="cc login" >
         <v-layout align-center justify-center>
           <v-flex xs12 sm8 md4>
-            <h1 class="text-xs-center white--text mb-3" ><a href="/" style="text-decoration:none;color:#fff"> Contestr</a></h1>
+            <h1 class="text-xs-center white--text mb-3" ><a href="/" style="text-decoration:none;color:#fff"> Facevote</a></h1>
             <v-subheader class="white--text text-xs-center d-block">Recover your account</v-subheader>
 
             <v-btn color="success" class="d-block" style="line-height:2.5" depressed v-if="resend_password_verification"
@@ -188,11 +188,12 @@ export default {
       // Try to apply the email verification code.
       auth.applyActionCode(actionCode).then(resp=>{
         // Email address has been verified.
-        this.snackbar = {show:true,message:'Your email address has been verified successfully', color:'purple'}
+        this.snackbar = {show:true,message:'Your email address has been verified successfully. You can now login', color:'purple'}
         
         setTimeout(() => {
-          this.$router.push('/home')
-        }, 2000);
+          // this.$router.push('/home')
+          firebase.auth().signOut()
+        }, 1000);
         
       }).catch(error=>{
         // Code is invalid or expired. Ask the user to verify their email address

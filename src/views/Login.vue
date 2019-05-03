@@ -32,13 +32,13 @@
 
                 <v-form v-model="valid" ref="form">
                   <v-text-field label="Email" color="teal" outline class="mb-2" 
-                    v-model="form.email" :rules="nameRules" browser-autocomplete="email"
+                    v-model="form.email" :rules="nameRules"
                     required>
                      <v-icon slot="prepend-inner" color="teal">mail</v-icon>
                   </v-text-field>
                   <v-text-field id="text-field" color="teal" 
                     outline  v-model="form.password" type="password" :rules="passwordRules"
-                    browser-autocomplete="password" label="Password" 
+                    label="Password" 
                     required>
                      <v-icon slot="prepend-inner" color="teal">lock</v-icon>
                   </v-text-field>
@@ -104,18 +104,24 @@ export default {
     sendVerificationLInk(){
       this.sending = true
       return new Promise((resolve, reject)=>{
-        firebase.auth().currentUser.sendEmailVerification().then(done=>{
-          resolve(done)
-          
-          this.disabled = true;
-          this.sending = false
+        if(firebase.auth().currentUser){
 
-          this.snackbar = {
-            show: true,
-            message: 'Email verification link resent',
-            color: 'purple'
-          }
-        }).catch(err => reject(err))
+          firebase.auth().currentUser.sendEmailVerification().then(done=>{
+            resolve(done)
+            
+            this.disabled = true;
+            this.sending = false
+  
+            this.snackbar = {
+              show: true,
+              message: 'Email verification link resent',
+              color: 'purple'
+            }
+          }).catch(err => reject(err))
+        }
+        else{
+          // console.log('else')
+        }
       })
     },
     async submit(){
@@ -134,6 +140,7 @@ export default {
                   this.$router.push('/home')
                 }
                 else{
+                  this.sendVerificationLInk()
                   this.can_resend_verification = true
                   this.loading = false
                 }

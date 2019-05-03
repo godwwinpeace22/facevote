@@ -91,12 +91,12 @@
       <!-- NO DATA -->
       <v-container grid-list-xl v-if="ready && nodata" mt-5>
         <v-layout row wrap>
-          <v-flex xs6>
+          <v-flex xs12 sm6>
             <v-card class="round secondary lighten-3" height="400">
               
             </v-card> 
           </v-flex>
-          <v-flex xs6>
+          <v-flex xs12 sm6>
             <v-card class="round purple lighten-2" height="400">
               
             </v-card> 

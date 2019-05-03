@@ -17,7 +17,7 @@ const requireAuth = async (to, from, next) => {
       // next()
     }
     else{
-      firebase.auth().signOut()
+      // firebase.auth().signOut()
       next('/login')
     }
   });

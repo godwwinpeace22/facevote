@@ -21,7 +21,7 @@
           <v-avatar size="36" :color="$helpers.colorMinder(getUserInfo.name.charAt(0))">
             <img v-if="getUserInfo && getUserInfo.photoURL" :src="getUserInfo.photoURL" alt="avatar">
             <img v-else-if="getUser.photoURL"  :src="getUser.photoURL" alt="avatar">
-            <span v-else class="white--text headline">{{getUser.displayName.charAt(0)}}</span>
+            <span v-else class="white--text headline text-capitalize">{{getUser.displayName.charAt(0)}}</span>
           </v-avatar>
           <v-icon dark>arrow_drop_down</v-icon>
         </template>

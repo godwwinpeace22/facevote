@@ -8,7 +8,7 @@
       <v-layout align-center justify-center>
         <v-flex xs12 sm8 md5>
 
-          <v-snackbar v-model="snackbar.show" dark :color="snackbar.color" :timeout="30000" top>
+          <v-snackbar v-model="snackbar.show" dark :color="snackbar.color" :timeout="5000" top>
              <span v-html='snackbar.message'></span>
             <v-btn dark flat color="white" @click="snackbar.show = false"> Close</v-btn>
           </v-snackbar>
@@ -251,19 +251,22 @@ export default {
     sendVerificationLInk(alert){
       this.loading = true
       return new Promise((resolve, reject)=>{
-        firebase.auth().currentUser.sendEmailVerification().then(done=>{
-          resolve(done)
-          if(alert){
-            this.disabled = true;
-            this.loading = false
+        if(firebase.auth().currentUser){
 
-            this.snackbar = {
-              show: true,
-              message: 'Email verification link resent',
-              color: 'purple'
+          firebase.auth().currentUser.sendEmailVerification().then(done=>{
+            resolve(done)
+            if(alert){
+              this.disabled = true;
+              this.loading = false
+  
+              this.snackbar = {
+                show: true,
+                message: 'Email verification link resent',
+                color: 'purple'
+              }
             }
-          }
-        }).catch(err => reject(err))
+          }).catch(err => reject(err))
+        }
       })
     },
     async send(){
@@ -279,7 +282,7 @@ export default {
         let user = this.form
         firebase.auth().createUserWithEmailAndPassword(user.email, user.password)
           .then(userRecord=>{
-            //console.log(userRecord)
+            // console.log(userRecord)
             // update users profile info
             firebase.auth().currentUser.updateProfile({
               displayName: user.name,
@@ -306,12 +309,13 @@ export default {
               
               // send email verification message
               this.sendVerificationLInk().then((sent)=>{
+                // console.log({sent})
                 this.verification_sent = true
                 // Email sent. Sign out user
                 this.loading = false
-                firebase.auth().signOut().then(()=>{
-                  // console.log('logged out')
-                })
+                // firebase.auth().signOut().then(()=>{
+                //   // console.log('logged out')
+                // })
 
               }).catch(function(error) {
                 // An error happened.
