@@ -701,7 +701,7 @@ export default {
 
       let no_that_voted = voted_members.length
       let no_that_not_voted = members.length - no_that_voted
-      console.log(no_that_voted, no_that_not_voted, voted_members, members)
+      // console.log(no_that_voted, no_that_not_voted, voted_members, members)
 
         this.chartData4 = {
           datasets: [{
@@ -721,7 +721,7 @@ export default {
     },
     async findASchool(school){
       let found = await api().post('dashboard/getASchool/'+school)
-      console.log('findASchool: ', found)
+      // console.log('findASchool: ', found)
       return found.data
     },
     async turnoutByDepartment(){

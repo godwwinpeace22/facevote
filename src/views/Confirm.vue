@@ -145,7 +145,7 @@ export default {
     },
     handleResetPassword(auth, actionCode) {
       // Verify the password reset code is valid.
-      console.log(actionCode)
+      // console.log(actionCode)
       auth.verifyPasswordResetCode(actionCode).then(email=> {
         let accountEmail = email;
         this.form.email = accountEmail

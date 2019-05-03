@@ -98,7 +98,7 @@ export default {
             this.members.push(doc.data())
           })
         }).catch(err=>{
-          console.log(err)
+          // console.log(err)
         })
     },
     checkProfile(){

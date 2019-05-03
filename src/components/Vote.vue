@@ -171,13 +171,13 @@ export default {
         // vote
         firebase.auth().currentUser.getIdToken().then((token)=>{
           let myVote = btoa(JSON.stringify(this.myVote))
-          console.log(myVote)
+          // console.log(myVote)
           api().post('dashboard/vote', {
             electionId:this.currElection.electionId,
             idToken:token,
             myVote:myVote
           }).then(result=>{
-            console.log(result)
+            // console.log(result)
             
             this.snackbar = {
               show:true,
@@ -192,7 +192,7 @@ export default {
             }).catch(err=>{
             this.loading = false
             if(err.response){
-              console.log(err.response)
+              // console.log(err.response)
               
               this.snackbar = {
                 show:true,
@@ -206,7 +206,7 @@ export default {
             }
             else{
               $NProgress.done()
-              console.log(err)
+              // console.log(err)
               
               this.snackbar = {
                 show:true,
@@ -219,7 +219,7 @@ export default {
 
           
         }).catch(err=>{
-          console.log(err)
+          // console.log(err)
           //console.log(err.response)
           this.snackbar = {
             show:true,
@@ -235,8 +235,8 @@ export default {
   mounted(){
     this.roles = this.currElection.roles
     this.steps = this.currElection.roles.length
-    console.log(this.roles)
-    console.log(this.contestants)
+    // console.log(this.roles)
+    // console.log(this.contestants)
     if(this.contestants.length > 0){
 
       this.contestants.forEach(contestant=>{
@@ -247,7 +247,7 @@ export default {
         this.contestantsByRoles[thisContest.role].push(contestant)
         this.showUi = true
       })
-      console.log(this.contestantsByRoles)
+      // console.log(this.contestantsByRoles)
     }
     else{
       this.no_contestants = true

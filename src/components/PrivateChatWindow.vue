@@ -158,7 +158,7 @@ export default {
       
     },
     sendMessage(){
-      console.log(this.$store.state.chat)
+      // console.log(this.$store.state.chat)
       let msgId = btoa(Math.random()).substring(0,12) + Date.now()
       let data = {
         message:this.message.trim(),
@@ -173,8 +173,8 @@ export default {
         status:'unread'
       }
 
-      console.log(data)
-      console.log(this.user)
+      // console.log(data)
+      // console.log(this.user)
       db.collection('private_conversations').doc(data.msgId).set(data)
       this.clearMessage()
   
@@ -188,7 +188,7 @@ export default {
     //LoadingBar,
   },
   mounted(){
-    console.log(this.user)
+    // console.log(this.user)
     db.collection('private_conversations')
       .where('parties','==',[this.getUser.uid,this.user.uid].sort().join('-'))
       .onSnapshot(async snapshot=>{

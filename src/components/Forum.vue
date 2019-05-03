@@ -436,7 +436,9 @@ export default {
         this.clearMessage()
         // this.$eventBus.$emit('Scroll_Chat', 'data')
       }
-      catch(err){console.log(err)}
+      catch(err){
+        // console.log(err)
+      }
     },
     appendUser(member){
       this.message += ' @' + member.email + ' '

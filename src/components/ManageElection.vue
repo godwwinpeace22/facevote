@@ -707,12 +707,12 @@ export default {
 						this.setChart()
 						this.ready = true
 					}).catch(err=>{
-						console.log(err)
+						// console.log(err)
 					})
 				}
 
       } catch (error) {
-        console.log(error)
+        // console.log(error)
       }
     },
     setTableData(contestants){
@@ -766,7 +766,7 @@ export default {
             acts.push(doc.data())
           })
           this.activities = acts
-          console.log('activities: ', acts)
+          // console.log('activities: ', acts)
         })
       }
 		},
@@ -905,7 +905,7 @@ export default {
         
       } catch (error) {
         alert(error)
-        console.log(error)
+        // console.log(error)
       }
       
     },
@@ -975,7 +975,7 @@ export default {
 			this.getAdmins()
       
     } catch (error) {
-      console.log(error)
+      // console.log(error)
     }
     
   }

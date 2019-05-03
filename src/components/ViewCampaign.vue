@@ -249,7 +249,7 @@ export default {
 						viewers.push(doc.data())
 					})
 					this.viewers[this.active.docId] = viewers
-					console.log(this.viewers)
+					// console.log(this.viewers)
 	
 					this.offset = querySnapshot.docs[querySnapshot.docs.length - 1]
 					this.loading_viewers = false
@@ -284,7 +284,9 @@ export default {
 					tstamp: firebase.firestore.FieldValue.serverTimestamp()
 				})
 
-				batch.commit().then(()=> console.log('campaign viewed'))
+				batch.commit().then(()=> {
+					// console.log('campaign viewed')
+				})
 			}
 		}
 	},

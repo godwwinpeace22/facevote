@@ -125,7 +125,7 @@ export default {
 
           firebase.auth().signInWithEmailAndPassword(this.form.email, this.form.password)
           .then((result)=>{
-            console.log(result.user)
+            // console.log(result.user)
             
             firebase.auth().onAuthStateChanged((user)=>{
               if (user) {
@@ -144,7 +144,7 @@ export default {
             });
             
           }).catch(error=> {
-            console.log(error)
+            // console.log(error)
             this.loading = false
             function errorMsg(code){
               switch(code){
@@ -176,7 +176,7 @@ export default {
         }
       }
       catch(err){
-        console.log(err)
+        // console.log(err)
         this.loading = false
         $NProgress.done()
         if(err.errorCode){

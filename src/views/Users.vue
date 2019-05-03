@@ -743,7 +743,9 @@ export default {
         }
         this.deleteDialog = false
         this.deleting = false
-      }).catch(err => console.log(err))
+      }).catch(err => {
+        // console.log(err)
+      })
     },
     async getCreated(){
       // election user created or is managing (is admin)
@@ -785,16 +787,16 @@ export default {
       this.myEnrolled = arr.sort((a,b) => b.dateCreated.toMillis() - a.dateCreated.toMillis())
     },
     likeManifesto(manifesto){
-      console.log(manifesto, this.getUser.uid)
+      // console.log(manifesto, this.getUser.uid)
       if(manifesto.likes && manifesto.likes.find(id => id == this.getUser.uid)){
-        console.log('liked')
+        // console.log('liked')
         db.collection('manifestos').doc(manifesto.docId)
         .update({
           likes:firebase.firestore.FieldValue.arrayRemove(this.getUser.uid)
         })
       }
       else{
-        console.log('not liked')
+        // console.log('not liked')
         db.collection('manifestos').doc(manifesto.docId)
         .update({
           likes:firebase.firestore.FieldValue.arrayUnion(this.getUser.uid)
@@ -847,7 +849,9 @@ export default {
         this.posts = this.posts.sort((a,b)=> b.tstamp - a.tstamp)
         this.limit_posts = false
         this.loading = false
-      }).catch(err => console.log(err))
+      }).catch(err => {
+        // console.log(err)
+      })
       
     },
     carouselDialog(images,index){
@@ -865,7 +869,7 @@ export default {
         this.manifestos = manifestos
         //console.log(this.manifestos)
       }, err=>{
-        console.log(err)
+        // console.log(err)
       })
     },
     async getUserPosts(){
@@ -880,7 +884,7 @@ export default {
         this.posts = posts.sort((a,b)=> b.tstamp - a.tstamp)
         //console.log(this.posts)
       }, err=>{
-        console.log(err)
+        // console.log(err)
       })
     },
     moreFollowers(){
@@ -895,7 +899,9 @@ export default {
         this.followers_offset = querySnapshot.docs[querySnapshot.docs.length-1];
 
         this.loading_more_followers = false
-      }).catch(err => console.log(err))
+      }).catch(err => {
+        // console.log(err)
+      })
     },
     async getFollowers(){
       return db.collection('ufollowers')
@@ -908,7 +914,7 @@ export default {
         })
         this.followers_offset = querySnapshot.docs[querySnapshot.docs.length-1];
         this.followers = arr
-        console.log(arr)
+        // console.log(arr)
         return arr
       })
     },
@@ -965,7 +971,7 @@ export default {
         
 
       } catch (error) {
-        console.log(error)
+        // console.log(error)
         if(error){}
       }
     }
@@ -986,7 +992,7 @@ export default {
       })
 
     } catch (error) {
-      console.log(error)
+      // console.log(error)
     }
     
   },

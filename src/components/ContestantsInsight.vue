@@ -213,7 +213,9 @@ export default {
             this.contestants = contestants
             // console.log(this.contestants)
             resolve(contestants)
-          }).catch(err => console.log(err))
+          }).catch(err => {
+            // console.log(err)
+          })
       })
       
 
@@ -255,10 +257,12 @@ export default {
           })
           this.spyReady = true
         })
-        .catch(err => console.log(err))
+        .catch(err => {
+          // console.log(err)
+        })
       }
       catch(err){
-        console.log(err)
+        // console.log(err)
       }
       
 

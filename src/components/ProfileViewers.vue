@@ -176,7 +176,7 @@ export default {
         
       }, function(err){
        
-        console.log(err)
+        // console.log(err)
       })
     },
     async allContestants(voters){

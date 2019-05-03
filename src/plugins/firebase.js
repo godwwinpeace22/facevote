@@ -22,11 +22,13 @@ firebase.firestore().enablePersistence({experimentalTabSynchronization:true})
     // Multiple tabs open, persistence can only be enabled
     // in one tab at a a time.
     // ...
+    /* eslint-disable-next-line */
       console.log(err)
   } else if (err.code == 'unimplemented') {
     // The current browser does not support all of the
     // features required to enable persistence
     // ...
+    /* eslint-disable-next-line */
     console.log(err)
   }
 });

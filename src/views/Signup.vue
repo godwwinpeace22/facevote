@@ -224,10 +224,10 @@ export default {
     async getSchools(){
       try {
         let schls = await api().post('dashboard/getSchools')
-        console.log(schls)
+        // console.log(schls)
         this.schools = schls.data
       } catch (error) {
-        console.log(error)
+        // console.log(error)
       }
     },
     submit(){
@@ -245,7 +245,7 @@ export default {
         }
       }
       catch(err){
-        console.log(err)
+        // console.log(err)
       }
     },
     sendVerificationLInk(alert){
@@ -310,19 +310,19 @@ export default {
                 // Email sent. Sign out user
                 this.loading = false
                 firebase.auth().signOut().then(()=>{
-                  console.log('logged out')
+                  // console.log('logged out')
                 })
 
               }).catch(function(error) {
                 // An error happened.
                 this.loading = false
-                console.log(error)
+                // console.log(error)
               })
               
             })
           })
           .catch((error) =>{
-            console.log(error)
+            // console.log(error)
             this.loading = false
             $NProgress.done()
             var errorCode = error.code;

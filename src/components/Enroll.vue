@@ -232,7 +232,7 @@ export default {
               }
             }
             else if(this.election.type == 'School' && user.sch != this.election.sch){
-              console.log(user, this.election)
+              // console.log(user, this.election)
               this.error_msg = 'Sorry, you can only vote in your school'
               this.hide = true
             }
@@ -243,8 +243,8 @@ export default {
         }
         
       } catch (error) {
-        console.log(error)
-        console.log(error.response)
+        // console.log(error)
+        // console.log(error.response)
         error.response ? error.response.status == 404 ? this.snackbar = {
           show:true,message:error.response.data.message, color:'error'
         } : '' : ''
@@ -271,8 +271,8 @@ export default {
         }).catch(error=>{
           $NProgress.done()
           this.loading = false
-          console.log(error)
-          console.log(error.response)
+          // console.log(error)
+          // console.log(error.response)
 
           if(error.response){
             this.snackbar = {
@@ -299,7 +299,7 @@ export default {
               vid.srcObject = localMediaStream
             },
             function(err) {
-              console.log('The following error occurred when trying to use getUserMedia: ' + err);
+              // console.log('The following error occurred when trying to use getUserMedia: ' + err);
             }
           );
 
@@ -313,7 +313,7 @@ export default {
 			const contentType = parts[0].split(':')[1];
 			const raw = window.atob(parts[1]);
       const rawLength = raw.length;
-      console.log(rawLength);
+      // console.log(rawLength);
 			const uInt8Array = new Uint8Array(rawLength);
 
 			for (let i = 0; i < rawLength; ++i) {
@@ -342,11 +342,11 @@ export default {
         formData.append('user',this.$store.getters.getUser._id)
         let payload = {image:this.makeblob(base64Img),user:this.$store.getters.getUser._id}
         let res = await api().post(`dashboard/recognize/${this.electionId}/${this.$store.getters.getToken}`, formData, {headers: {'Content-Type': 'multipart/form-data'}})
-        console.log(res.data)
+        // console.log(res.data)
         
         
       } catch (err) {
-        console.log(err)
+        // console.log(err)
         console.log(err.response)
         
 

@@ -810,7 +810,7 @@ export default {
           .get().then(doc=>{
             
             if(doc.exists){
-              console.log(this.$store.getters.getUser.uid)
+              // console.log(this.$store.getters.getUser.uid)
               if(doc.data().admin != this.$store.getters.getUser.uid){
                 this.$router.push('/notFound')
               }
@@ -821,9 +821,9 @@ export default {
             else{
               this.$router.push('/notFound')
             }
-            console.log('currElection: ', this.currElection)
+            // console.log('currElection: ', this.currElection)
           }).catch(err=>{
-            console.log(err)
+            // console.log(err)
           })
 
           db.collection('moreUserInfo')
@@ -834,7 +834,7 @@ export default {
               myArr.push(doc.data())
             })
             this.regVoters = myArr
-            console.log('regVoters: ', this.regVoters)
+            // console.log('regVoters: ', this.regVoters)
             return myArr
           }).then(result=>{
             // get contestants
@@ -844,14 +844,14 @@ export default {
                 contestants.push(voter)
               }
             })
-            console.log('contestants: ', contestants)
+            // console.log('contestants: ', contestants)
             this.contestants = contestants
             return contestants
           }).then(conts=>{
             this.setTableData(conts)
             this.ready = true
           }).catch(err=>{
-            console.log(err)
+            // console.log(err)
           })
         }
 
@@ -859,14 +859,14 @@ export default {
         // Get regvoters
         
       } catch (error) {
-        console.log(error)
+        // console.log(error)
         if(error){}
       }
     },
     setTableData(contestants){
       this.tabledata = [] // to prevent multiple pushings
       contestants.forEach(cont=>{
-        console.log(this.getRole(cont))
+        // console.log(this.getRole(cont))
         let myObj = {
           value:false,
           name:cont.name,
@@ -879,7 +879,7 @@ export default {
         }
         this.tabledata.push(myObj)
       })
-      console.log('tabledata: ', this.tabledata)
+      // console.log('tabledata: ', this.tabledata)
     },
     getActivities(){
       // Get activities
@@ -897,7 +897,7 @@ export default {
             acts.push(doc.data())
           })
           this.activities = acts
-          console.log('activities: ', acts)
+          // console.log('activities: ', acts)
         })
       }
     },
@@ -962,7 +962,7 @@ export default {
         }
       })
 
-      console.log(this.culprit)
+      // console.log(this.culprit)
       let userRef = db.collection('moreUserInfo').doc(this.culprit.contId)
       await userRef.update({
         contestsRef:filterdContests
@@ -1004,7 +1004,7 @@ export default {
         
       } catch (error) {
         alert(error)
-        console.log(error)
+        // console.log(error)
       }
       
     },
@@ -1038,7 +1038,7 @@ export default {
       await this.getActivities()
       
     } catch (error) {
-      console.log(error)
+      // console.log(error)
     }
     
   }

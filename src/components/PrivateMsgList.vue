@@ -221,7 +221,7 @@ export default {
   methods:{
     selectItem(item){
       this.selected = item
-      console.log(this.selected)
+      // console.log(this.selected)
       this.read = true
       this.$store.dispatch('setLastReadTime', item.onr.uid)
     },
@@ -279,7 +279,7 @@ export default {
     //PrivateChatWindow,
   },
   mounted(){
-    console.log(this.getRecentBroadcasts, 1 > undefined)
+    // console.log(this.getRecentBroadcasts, 1 > undefined)
     //this.items = this.sortMsg()
     // console.log(this.items)
   }

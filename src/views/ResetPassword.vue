@@ -107,7 +107,7 @@ export default {
         return res
       }catch(err){
         //this.snackbar = {show:true, message:err.message}
-        console.log(err)
+        // console.log(err)
         throw new Error('Something went wrong')
       }
     }

@@ -363,7 +363,7 @@ export default {
           this.getChatMessages.splice(msgIndex, 1)
           this.snackbar = {show:true,message:'Message deleted',color:'dark'}
         }).catch(err=>{
-          console.log(err)
+          // console.log(err)
           this.snackbar = {show:true,message:'Something went wrong',color:'error'}
         })
       }
@@ -407,8 +407,8 @@ export default {
     async add_reaction(msg,reaction){
       try {
         let msg_rxns_clone = Object.assign({}, msg.reactions) // bcs of Javascript's Object reassignment issues
-        console.log(msg_rxns_clone)
-        console.log(msg,reaction)
+        // console.log(msg_rxns_clone)
+        // console.log(msg,reaction)
         let docId = `${this.getUser.uid}-${msg.docId}-crxn`
         let reactionsRef = db.collection('chat_reactions').doc(docId)
         let chatRef = db.collection('chat_messages').doc(msg.docId)
@@ -431,7 +431,7 @@ export default {
         }
         
         reactionsRef.get().then(doc => {
-          console.log(msg.reactions)
+          // console.log(msg.reactions)
           if(doc.exists){
             if(doc.data().reaction == reaction){
               // user already reacted same way before, e.g liked already
@@ -474,7 +474,7 @@ export default {
         })
   
       } catch(err) {
-        console.log(err)
+        // console.log(err)
       }
     },
     scrollChat(){

@@ -109,11 +109,11 @@ export default {
         uploaded.push(response.data.secure_url)
       }
       // eslint-disable-next-line
-      console.log(uploaded)
+      // console.log(uploaded)
       return uploaded
     } catch (error) {
       // eslint-disable-next-line
-      console.log(error)
+      // console.log(error)
       alert('Image upload failed')
       throw new Error(error || error.response)
       
@@ -180,7 +180,7 @@ export default {
           
         }).catch(err => {
           /* eslint-disable-next-line */
-          console.log(err); 
+          // console.log(err); 
           reject(err)
         })
       }
@@ -214,7 +214,7 @@ export default {
           
         }).catch(err => {
           /* eslint-disable-next-line */
-          console.log(err); 
+          // console.log(err); 
           reject(err)
         })
       }
@@ -334,7 +334,7 @@ export default {
 
   profileViewsCounter(viewer, viewee){
     /* eslint-disable-next-line */
-    console.log({viewee,viewer})
+    // console.log({viewee,viewer})
     // update profile views count
     return new Promise(async (resolve, reject)=>{
       let docId = `${viewer.uid}-${viewee.uid}-pviews`
