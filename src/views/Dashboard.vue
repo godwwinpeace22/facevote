@@ -874,6 +874,8 @@ import { mapGetters, mapState } from 'vuex'
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style lang='scss' >
 @import url('https://unpkg.com/nprogress@0.2.0/nprogress.css');
+@import url('https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons');
+
 @mixin borderRadius($radius) {
   border-radius: $radius;
   -webkit-border-radius:$radius;
