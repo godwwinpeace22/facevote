@@ -229,11 +229,11 @@ export default {
     this.requestMode()
   },
   components:{
-    'toolbar':Nav,
+    // 'toolbar':Nav,
     footr:Footer
   },
 }
-import Nav from '@/components/Nav'
+// import Nav from '@/components/Nav'
   import Footer from '@/components/Footer'
 </script>
 

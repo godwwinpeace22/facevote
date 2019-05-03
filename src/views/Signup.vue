@@ -205,7 +205,7 @@ export default {
     checkbox: false
   }),
   components:{
-    'toolbar':Nav,
+    // 'toolbar':Nav,
     footr:Footer
   },
   computed: {
@@ -344,7 +344,7 @@ export default {
   }
 }
 
-import Nav from '@/components/Nav'
+// import Nav from '@/components/Nav'
   import api from '@/services/api'
   import Footer from '@/components/Footer'
 </script>

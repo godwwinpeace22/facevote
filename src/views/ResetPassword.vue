@@ -72,7 +72,7 @@ export default {
     ],
   }),
   components:{
-    'toolbar':Nav,
+    // 'toolbar':Nav,
     footr:Footer
   },
   computed: {
@@ -114,7 +114,7 @@ export default {
   }
 }
 
-import Nav from '@/components/Nav'
+// import Nav from '@/components/Nav'
   import Footer from '@/components/Footer'
   import api from '@/services/api'
 </script>

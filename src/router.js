@@ -65,13 +65,13 @@ const router = new Router({
           component: () => import('@/components/Feed'),
           beforeEnter: requireAuth,
         },
-        {
-          path:'/feed/:postId',
-          name:'readfeed',
-          props:true,
-          component: () => import('@/components/ReadPost'),
-          beforeEnter:requireAuth,
-        },
+        // {
+        //   path:'/feed/:postId',
+        //   name:'readfeed',
+        //   props:true,
+        //   component: () => import('@/components/ReadPost'),
+        //   beforeEnter:requireAuth,
+        // },
         {
           path:'/enroll',
           name:'enroll',
@@ -96,13 +96,13 @@ const router = new Router({
           component: () => import('@/views/Users'),
           props:true,
           beforeEnter: requireAuth,
-          children:[
-            {
-              path:'',
-              component: () => import('@/components/User__overview'),
-              // beforeEnter: requiresPremiumAccess
-            }
-          ]
+          // children:[
+          //   {
+          //     path:'',
+          //     component: () => import('@/components/User__overview'),
+          //     // beforeEnter: requiresPremiumAccess
+          //   }
+          // ]
         },
         
         {
