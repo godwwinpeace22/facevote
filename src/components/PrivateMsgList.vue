@@ -68,7 +68,7 @@
           <v-card flat tile :height="$vuetify.breakpoint.smAndUp ? '400' : ''">
             
             <v-list two-line dense >
-              <v-subheader v-if="getRecentBroadcasts[mode].length == 0">
+              <v-subheader v-if="getRecentBroadcasts[mode] && getRecentBroadcasts[mode].length == 0">
                 {{mode == 'inbox' ? 'No recent messages' : 'No Messages'}}
               </v-subheader>
               
