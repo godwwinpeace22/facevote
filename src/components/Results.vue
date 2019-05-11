@@ -71,25 +71,25 @@
                 <v-layout row wrap class="text-xs-center">
                   <v-flex xs4 justify-center>
                     <v-progress-circular style="display:block;margin:auto;"
-                      :value="100" :size="$vuetify.breakpoint.sm ? 55 : 95"
+                      :value="100" :size="$vuetify.breakpoint.sm ? 55 : 75"
                       color="teal"
                     >{{no_of_voters}}</v-progress-circular>
                     <div style="margin:auto;display:table;">Voters</div>
                   </v-flex>
                   <v-flex xs4 justify-center>
                     <v-progress-circular style="display:block;margin:auto;"
-                      :value="100" :size="$vuetify.breakpoint.sm ? 55 : 95"
+                      :value="100" :size="$vuetify.breakpoint.sm ? 55 : 75"
                       color="success"
                     >{{no_of_contestant}}</v-progress-circular>
                     <div style="margin:auto;display:table;">Contestants</div>
                   </v-flex>
                   <v-flex xs4 justify-center>
                     <v-progress-circular style="display:block;margin:auto;"
-                      :value="allVotes || regVotes ? allVotes.length/regVoters.length * 100 : ''"
-                      color="purple" :size="$vuetify.breakpoint.sm ? 55 : 95">
+                      :value="allVotes || regVotes ? rawVotes.length/regVoters.length * 100 : ''"
+                      color="purple" :size="$vuetify.breakpoint.sm ? 55 : 75">
                       {{no_of_votes}}
                       </v-progress-circular>
-                    <div style="margin:auto;display:table;">Votes</div>
+                    <div style="margin:auto;display:table;">Voted</div>
                     
                   </v-flex>
                 </v-layout>
@@ -113,9 +113,9 @@
                   <v-list-tile avatar v-for="winner in winnersInEachRole" :key="winner.id">
                     <v-list-tile-avatar :color="$helpers.colorMinder(getName(winner.id).charAt(0))">
                       <img :src="getDetail(winner.id).photoURL" v-if="getDetail(winner.id).photoURL">
-                      <span class="white--text" v-else>{{getName(winner.id).charAt(0)}}</span>
+                      <span class="white--text text-capitalize" v-else>{{getName(winner.id).charAt(0)}}</span>
                     </v-list-tile-avatar>
-                    <v-list-tile-content class='font-weight-bold'>
+                    <v-list-tile-content class='font-weight-bold text-capitalize'>
                       {{getName(winner.id)}}
                       <v-list-tile-sub-title>{{winner.score}} votes</v-list-tile-sub-title>
                     </v-list-tile-content>
@@ -202,9 +202,10 @@
                   </v-list-tile-avatar>
                   <v-list-tile-avatar :color="contestant.photoURL ? '' : $helpers.colorMinder(contestant.name.charAt(0))">
                     <img :src="contestant.photoURL" v-if="contestant.photoURL">
-                    <span v-else class="white--text">{{contestant.name.charAt(0)}}</span>
+                    <span v-else class="white--text text-capitalize">{{contestant.name.charAt(0)}}</span>
                   </v-list-tile-avatar>
-                  <v-list-tile-content>{{$helpers.truncateText(contestant.name, 20)}}
+                  <v-list-tile-content>
+                    <span class="text-capitalize">{{$helpers.truncateText(contestant.name, 20)}}</span>
                     <v-progress-linear color="secondary" :value="percentage_score(contestant,result.role)"></v-progress-linear>
                   </v-list-tile-content>
                   <span class="align-end mr-3" style="font-size:15px;"> {{contestant.position  }}  </span>
@@ -261,7 +262,7 @@
     </v-container>
 
     <!-- More Charts -->
-    <v-container grid-list-sm pt-0 :pa-0="$vuetify.breakpoint.xsOnly">
+    <v-container grid-list-sm pt-0 :pa-0="$vuetify.breakpoint.xsOnly" v-if="isSuperUser">
        <v-layout row wrap>
          <v-flex xs12>
            <v-card :class="[{round_top: $vuetify.breakpoint.smAndUp, 'grey lighten-4': $vuetify.breakpoint.mdAndUp}]" 
@@ -425,7 +426,7 @@ export default {
     },
     no_of_votes(){
       if(this.allVotes){
-        let len = this.totalVotes
+        let len = this.rawVotes.length
         
         switch (true){
           case len > 1000000:
@@ -520,17 +521,17 @@ export default {
         let total_score = 0
         for(let result of this.results){
           role.title == result.role ? cont.push({
-            name:this.getName(result.id),
-            score:result.score,
-            photoURL:this.getImgSrc(result.id),
-            position:this.getPosition(role.title,result.score)
+            name: this.getName(result.id),
+            score: result.score,
+            photoURL: this.getImgSrc(result.id),
+            position: this.getPosition(role.title,result.score)
           }) : ''
           role.title == result.role ? total_score = total_score + result.score : ''
         }
         this.sortedResults.push({
-          role:role.title,
-          total_score:total_score,
-          contestants:cont
+          role: role.title,
+          total_score: total_score,
+          contestants: cont
         })
       })
     },
@@ -549,7 +550,7 @@ export default {
           
           if(d.contestsRef.find(elec => elec.electionRef == this.currElection.electionId)
             .role == role.value){
-            mylabels.push(d.name)
+            mylabels.push(this.capitalizeText(d.name))
           }
           bar[0] ? mydata.push(bar[0].score) : ''
           let random1 = Math.floor(Math.random() * Math.floor(255))
@@ -677,7 +678,7 @@ export default {
       
       this.chartData6 = {
         datasets: [{
-          label:"Votes",
+          label: "Votes",
           data: Object.values(votesByFac),
           backgroundColor: Object.keys(votesByFac).map(item =>{
             return this.get_random_color()
@@ -691,17 +692,12 @@ export default {
       // comparing number of those that voted and those that registed but didn't vote
 
       // reg voters in the same dept
-      let members = this.regVoters.filter(
-        voter => voter.dept == this.currElection.dept
-      )
+      let members = this.currElection.voters
 
-      let voted_members = this.rawVotes.filter(
-        vote => vote.dept == this.currElection.dept
-      )
-      
+      let voted_members = this.rawVotes.length
 
-      let no_that_voted = voted_members.length
-      let no_that_not_voted = members.length - no_that_voted
+      let no_that_voted = voted_members
+      let no_that_not_voted = members - no_that_voted
       // console.log(no_that_voted, no_that_not_voted, voted_members, members)
 
         this.chartData4 = {
@@ -724,6 +720,12 @@ export default {
       let found = await api().post('dashboard/getASchool/'+school)
       // console.log('findASchool: ', found)
       return found.data
+    },
+    capitalizeText(text){
+      return text.toLowerCase()
+        .split(' ')
+        .map((s) => s.charAt(0).toUpperCase() + s.substring(1))
+        .join(' ');
     },
     async turnoutByDepartment(){
       // comparing voted voters in each dept.
@@ -796,8 +798,8 @@ export default {
     this.getLabels()
     this.allWinners()
     this.percentageShareOfAllVotes()
-    this.currElection.type == 'School' ? this.votesInEachFaculty() : ''
-    this.currElection.type == 'School' ? this.votesInEachDepartment() : ''
+    this.currElection.type == 'School' && this.isSuperUser ? this.votesInEachFaculty() : ''
+    this.currElection.type == 'School' && this.isSuperUser ? this.votesInEachDepartment() : ''
     //console.log(this.contestants)
   },
   destroyed(){

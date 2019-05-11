@@ -30,19 +30,29 @@
                         <small class="grey--text darken-1">Switch election</small>
                       </div>
                     </template>
-                    <v-card >
+                    <v-card class="main lighten-1">
+                      <v-progress-linear :indeterminate="true" height="4" v-if="loading_rooms" color="primary"></v-progress-linear>
                       <v-list class="main lighten-1" dense>
-                        <v-subheader v-if="getMyEnrolled && getMyEnrolled.length == 0">No Election</v-subheader>
+                        <v-subheader v-if="!loading_rooms && getMyEnrolled && getMyEnrolled.length == 0">No Election</v-subheader>
+                        
                         <v-list-tile v-for="election in getMyEnrolled" :key="election.electionId"
                           @click="$store.dispatch('curRoom', election)">
-                          <v-list-tile-title class="text-truncate grey--text darken-1">
-                            {{election.title}}
-                          </v-list-tile-title>
+                          <v-list-tile-content>
+                            <v-list-tile-title class="grey--text darken-1">
+                              {{election.title}}
+                            </v-list-tile-title>
+                          </v-list-tile-content>
                           <v-list-tile-action v-if="curRoom && curRoom.electionId == election.electionId">
                             <v-icon color="success">check</v-icon>
                           </v-list-tile-action>
                         </v-list-tile>
                       </v-list>
+                      <v-btn color="info" 
+                        ripple flat :loading="getting_enrolled"
+                        class="ml-0 text-capitalize" 
+                        small @click="setup">
+                        Refresh
+                      </v-btn>
                     </v-card>
                   </v-expansion-panel-content>
                 </v-expansion-panel>
@@ -83,8 +93,8 @@
                       </v-list-tile-action>
                     </v-list-tile>
 
-                    <template v-if="isSuperUser">
-                      <v-list-tile @click="new_broadcast = true" :disabled="!isSuperUser">
+                    <template v-if="isSuperUser || isAdmin">
+                      <v-list-tile @click="new_broadcast = true" :disabled="!curRoom">
                         <v-list-tile-action>
                           <v-icon color="">record_voice_over</v-icon>
                         </v-list-tile-action>
@@ -130,7 +140,7 @@
                       <v-list-tile-title>Contest</v-list-tile-title>
                     </v-list-tile>
 
-                    <v-list-tile @click="new_manifesto_dialog = true" v-if="isSuperUser">
+                    <v-list-tile @click="new_manifesto_dialog = true" v-if="isSuperUser && curRoom">
                         <v-list-tile-action>
                           <v-icon color="success">add_box</v-icon>
                         </v-list-tile-action>
@@ -279,29 +289,6 @@
           <!-- NEW BROADCASTs -->
           <new-broadcast v-if="new_broadcast" ></new-broadcast>
 
-          <!-- VIEW BROADCAST -->
-          <!-- <v-dialog v-model="show_private_chat_window" scrollable v-if="show_private_chat_window" max-width="500px" 
-            lazy :transition="switchTransition">
-            <v-card class="grey lighten-3">
-              <v-toolbar card dense flat dark class="teal">
-                <v-avatar size="36" :color="$helpers.colorMinder(broadcasts.user.name.charAt(0))">
-                  <img v-if="broadcasts.user.photoURL" :src="broadcasts.user.photoURL" :alt="broadcasts.user.name">
-                  <span v-else>{{broadcasts.user.name.charAt(0)}}</span>
-                </v-avatar>
-
-                <v-toolbar-title>{{broadcasts.user.name}}</v-toolbar-title>
-                <v-spacer></v-spacer>
-
-                <v-btn flat icon @click="$eventBus.$emit('Close_Private_Chat_Window', '')">
-                  <v-icon>close</v-icon>
-                </v-btn>
-              </v-toolbar>
-              <v-card-text style="min-height: 300px;">
-                <view-broadcasts :broadcasts="broadcasts"></view-broadcasts>
-              </v-card-text>
-            </v-card>
-          </v-dialog> -->
-
           <!-- VIEW PROFILE -->
           <v-dialog v-model="viewprofile" v-if="viewprofile" lazy :style="styleObj"
             width="300" hide-overlay scrollable
@@ -333,15 +320,15 @@
           </v-dialog>
 
           <!-- PAYMENTS -->
-          <v-dialog v-model="upgrade" lazy persistent
+          <v-dialog v-model="upgrade" lazy :persistent="procesing_payment"
             max-width="500px" :transition="switchTransition" content-class="round_top" >
-            <v-card class="round_top" flat>
-              <v-toolbar color="teal" dark card>
+            <v-card class="round_top" flat id="pay_card">
+              <!-- <v-toolbar color="teal" dark card>
                 <div class="title">Upgrade Account</div>
-              </v-toolbar>
+              </v-toolbar> -->
+              <v-subheader class="title">Get Premium</v-subheader>
 
-              <v-divider></v-divider>
-              <v-card-text class="grey lighten-3">
+              <v-card-text class="lighten-3">
                 <div>Upgrade your account and have the ability to create posts, campaigns, election manifestos, and much more. Get SuperPowers!</div>
                 <div class="mt-2"><strong>SuperUser</strong>: ₦ 5,000 per month</div>
                 <v-btn color="secondary" 
@@ -366,8 +353,15 @@
                   </v-card>
                 </v-dialog>
 
+                <v-btn color="info" 
+                  flat small class="text-capitalize" 
+                  v-if="getUserInfo && getUserInfo.tried_premium"
+                  @click="tryPremium" :loading="procesing_payment">
+                  Try free for 14 days
+                </v-btn>
+
               </v-card-text>
-              <v-card-actions>
+              <v-card-actions v-if="getUserInfo && !getUserInfo.tried_premium">
                 <v-spacer></v-spacer>
                 <v-btn color="" class="mr-2" depressed :disabled="procesing_payment" @click="upgrade = false">
                   Cancel
@@ -405,11 +399,13 @@ export default {
     fab: false,
     index: null, // for image gallery viewer
     images: [], // for image gallery viewer
-    menu:true,
+    menu: true,
+    getting_enrolled: false,
     show_loading_bar: true,
     show_manager: false, // election manager dialog
     new_broadcast: false,
     broadcasts: '',
+    broadcastsRef: '', // for clearing watcher
     timestamp: Date.now(),
     upgrade: false,
     procesing_payment: false,
@@ -429,7 +425,7 @@ export default {
     navmenus: [
       //{title:'Notifications', icon:'notifications', link:"#"},
       //{title:'Forum', icon:'forum', link:'/forum'},
-      {title:'Enroll', icon:'fingerprint', link:'/enroll'},
+      // {title:'Enroll', icon:'fingerprint', link:'/enroll'},
       {title:'Verify Account', icon:'verified_user', link:'/verify',icon_color:'success'},
     ],
     reference: Date.now() + btoa(Math.random()).substring(0,12),
@@ -450,8 +446,12 @@ export default {
   },
 
   watch: {
-    'curRoom': function(to,from){
-      this.getBroadcasts()
+    'curRoom': function(to, from) {
+      this.curRoom ? this.getBroadcasts() : ''
+    },
+    'getUserInfo': function() {
+      this.getUserInfo ? 
+      this.setup() : ''
     }
   },
   computed: {
@@ -466,6 +466,7 @@ export default {
       'isSuperUser',
       'curRoom',
       'curRoomId',
+      'loading_rooms'
       
     ]),
     isAdmin(){
@@ -474,7 +475,7 @@ export default {
     switchTransition(){
       return this.$vuetify.breakpoint.smAndDown ? 
       'slide-x-reverse-transition' : 
-      'dialog-bottom-transition'
+      'dialog-transition'
     },
     metadata: function(){
       return {
@@ -515,31 +516,98 @@ export default {
   },
   
   methods:{
-    onScroll (e) {
-      // console.log(e.target.scrollTop)
+    async setup () {
+      //get dept elections in user dept
+      // get fac elections in user fac
+      // get sch elections in user school
+      // populate myEnrolled with the retrieved elections
+
+      let elections = []
+      this.getting_enrolled = true
+      // get user's General elections
+      await db.collection('elections')
+      .where('sch', '==', this.getUserInfo.sch)
+      .where('level', '==', 'General')
+      .get().then(docs => {
+        docs.forEach(doc => {
+          elections.push(doc.data())
+        })
+      })
+
+      // get user's fac elections
+      await db.collection('elections')
+      .where('sch', '==', this.getUserInfo.sch)
+      .where('fac', '==', this.getUserInfo.fac)
+      .where('level', '==', 'Faculty')
+      .get().then(docs => {
+        docs.forEach(doc => {
+          elections.push(doc.data())
+        })
+      })
+
+      // get user's dept elections
+      await db.collection('elections')
+      .where('sch', '==', this.getUserInfo.sch)
+      .where('dept', '==', this.getUserInfo.dept)
+      .where('level', '==', 'Department')
+      .get().then(docs => {
+        docs.forEach(doc => {
+          elections.push(doc.data())
+        })
+      })
+      // sort elections by creation date and dispatch to store
+      let sorted = elections.sort((a,b) => b.dateCreated.toMillis() - a.dateCreated.toMillis())
+      this.$store.dispatch('setMyEnrolled', sorted)
+      this.getting_enrolled = false
+
+      // set current room if there is none
+
+      this.curRoom ? '' : sorted.length > 0 ? this.$store.dispatch('curRoom', sorted[0]) : ''
+    },
+    tryPremium(){
+      this.procesing_payment = true
+
+      return firebase.auth().currentUser.getIdToken()
+      .then(async (token)=>{
+        return api().post('dashboard/trypremium', {
+          idToken: token
+        }).then(res=>{
+          // transaction is ok
+          firebase.auth().currentUser.getIdToken(true).then(idToken=>{
+            
+          })
+
+          // TODO: SEND EMAIL TO USER ON SUBSCRIPTION
+
+          this.snackbar = {
+            show: true,
+            message: 'Account upgraded successfully',
+            color: 'success'
+          }
+          this.procesing_payment = false
+          this.upgrade = false
+          setTimeout(() => {
+            window.location.reload()
+          }, 2000);
+          
+        }).catch(error=>{
+          this.procesing_payment = false
+          $NProgress.done()
+
+          this.snackbar = {
+            show: true,
+            message: error.response ? error.response.data.message : 'Transaction failed',
+            color: 'error'
+          }
+        })
+        
+      })
     },
     openBroadcastDialog(){
       this.$vuetify.breakpoint.smAndDown ? 
       this.dialog = false : ''
 
       this.broadcast_dialog = true
-    },
-    setCurRoom(rooms){
-      // SETS THE DEFAULT OR CURRENT ROOM/ELECTION
-      // let dirty = this.curRoom ? this.curRoom.electionId != room.electionId : true
-
-      let found = rooms.find(room => room.electionId == this.curRoomId)
-      if(found){
-        // why? bcs malicious user can change room from localstorage (bcs its persisted).
-        // So we need to check if that room is actually valid (if it exists or user has access to it)
-        this.$store.dispatch('curRoom', found)
-      }else{
-        // either room not set or modified and not matching any valid room
-        this.$store.dispatch('curRoom', rooms[0])
-      }
-      
-      
-      // dirty ? window.location.reload() : ''
     },
     verifyTxn(data){
       // verfy on the server that the transaction is ok
@@ -554,18 +622,7 @@ export default {
         }).then(res=>{
           // transaction is ok
           firebase.auth().currentUser.getIdToken(true).then(idToken=>{
-            // console.log(idToken)
-            function b64DecodeUnicode(str) {
-              return decodeURIComponent(atob(str).replace(/(.)/g, function (m, p) {
-                  var code = p.charCodeAt(0).toString(16).toUpperCase();
-                  if (code.length < 2) {
-                      code = '0' + code;
-                  }
-                  return '%' + code;
-              }));
-            }
-            const payload = JSON.parse(b64DecodeUnicode(idToken.split('.')[1]));
-            // console.log(payload)
+            
           })
 
           this.timestamp = Date.now()
@@ -642,8 +699,10 @@ export default {
             imgSrc: blob_urls,
             selected_files: e.target.files
           })
+          
 				}
 				else{
+          e.target.value = ''
           this.snackbar = {
             show: true,
             message: 'Please select an image that is less than 1mb',
@@ -687,46 +746,27 @@ export default {
         
       });
     },
-    pUnreadMsgs(){
-      db.collection('private_conversations')
-      .where('reciever','==',this.getUser.uid).where('status','==','unread')
-      .onSnapshot(snapshot=>{
-        let msgs = []
-        snapshot.forEach(doc=>{
-          msgs.push(doc.data())
-        })
-      
-        this.$store.dispatch('pUnreadMsgs', msgs)
-        //console.log(msgs)
-      })
-    },
     getBroadcasts(){
-      return new Promise((resolve, reject)=>{
-        if(this.curRoom){
+      if(this.curRoom){
 
-          return db.collection('broadcasts')
-          .where('elecRef', '==', this.curRoom.electionId)
-          .orderBy('tstamp', 'desc')
-          .limit(100)
-          .onSnapshot(docs =>{
-            let d = []
-            docs.forEach(doc =>{
-              d.push(doc.data())
-            })
-            this.$store.dispatch('setBroadcasts', d)
-            // console.log('broadcasts: ', d)
-          }, error => {
-            // console.log(error)
+        this.broadcastsRef = db.collection('broadcasts')
+        .where('elecRef', '==', this.curRoom.electionId)
+        .orderBy('tstamp', 'desc')
+        .limit(100)
+        .onSnapshot(docs =>{
+          let d = []
+          docs.forEach(doc =>{
+            d.push(doc.data())
           })
-        }
-        else{
-          
-        }
-      })
+          this.$store.dispatch('setBroadcasts', d)
+          // console.log('broadcasts: ', d)
+        }, error => {
+          // console.log(error)
+        })
+      }
     }
   },
   async mounted(){
-    //console.log(firebase.firestore.FieldValue.serverTimestamp().seconds)
     document.getElementById('welcome_logo').style.display = 'none'
 
     this.$eventBus.$on('Toggle_Left_Drawer', data=>{
@@ -782,78 +822,77 @@ export default {
       this.upgrade = true
     })
 
+    this.$eventBus.$on('ShowManager', data => {
+      this.show_manager = true
+    })
+
     this.$eventBus.$on('bdialog', ()=> this.new_broadcast = false)
     // show loading animation for some seconds
     setTimeout(() => {
       this.show_loading_bar = false
-    }, 2500);
+    }, 1000);
     
     this.$eventBus.$on('Snackbar', data =>{
       this.snackbar = data
     })
-   
-  //  firebase.auth().currentUser.getIdToken()
-  //   .then(async (token)=>{
-  //     api().post('dashboard/downgradeUser', {token: token}).then(data =>{
-    
-  //       firebase.auth().currentUser.getIdToken(true).then(idToken=>{
-  //         console.log(idToken)
-  //         function b64DecodeUnicode(str) {
-  //           return decodeURIComponent(atob(str).replace(/(.)/g, function (m, p) {
-  //               var code = p.charCodeAt(0).toString(16).toUpperCase();
-  //               if (code.length < 2) {
-  //                   code = '0' + code;
-  //               }
-  //               return '%' + code;
-  //           }));
-  //         }
-  //         const payload = JSON.parse(b64DecodeUnicode(idToken.split('.')[1]));
-  //         console.log(payload)
-  //       })
-  //       console.log(data)
-  //     }).catch(err => console.log(err))
-  //   })
 
-  // api().post('dashboard/listAllUsers').then(data=>{
-  //   console.log(data)
-  // }).catch(err => console.log(err))
+  
    
-  },
-  async created(){
     firebase.auth().onAuthStateChanged(user => {
       if(user){
         this.$store.dispatch('setUser', user)
         this.showUi = true
         this.getUser ? this.presenceWatcher() : ''
+        this.getUserInfo ? this.setup() : ''
+        
+        firebase.auth().currentUser.getIdTokenResult()
+        .then((idTokenResult) => {
+          
+          // console.log(idTokenResult.claims)
+          let state = idTokenResult.claims.superuser
+          let on_trial = idTokenResult.claims.trial
+          let tstamp = idTokenResult.claims.timestamp
+          let one_month = 30 * 24 * 60 * 60 * 1000
+          let two_weeks = 14 * 60 * 60 * 1000
+          let now = new Date().getTime()
+          let time_spent = now - tstamp
+
+          if(on_trial && time_spent <= two_weeks){
+            // user is on premium trial
+            this.$store.dispatch('subscriberState', state)
+          }
+          else if(!on_trial && time_spent <= one_month){
+            // user is on premium subscription
+            this.$store.dispatch('subscriberState', state)
+          }
+
+          this.$store.dispatch('verifiedState', idTokenResult.claims.is_verified)
+
+          let usr = idTokenResult.claims
+          // console.log({usr})
+          // $LogRocket.identify(usr.user_id, {
+          //   name: usr.name,
+          //   email: usr.email,
+          //   isSuperUser: usr.superuser
+          // })
+
+          // console.log(user)
+          window.fcWidget.setExternalId(usr.uid);
+          window.fcWidget.user.setFirstName(usr.name);
+          window.fcWidget.user.setEmail(usr.email);
+          window.fcWidget.user.setProperties({
+            name: usr.name,
+            is_superuser: usr.superuser,
+            is_verified: usr.is_verified
+          });
+
+        })
+        .catch((error) => {
+          // console.log(error);
+        });
       }
     })
-    
-    // this.getBroadcasts()
-
-    firebase.auth().currentUser.getIdTokenResult()
-    .then((idTokenResult) => {
-      
-      // console.log(idTokenResult.claims)
-      let state = idTokenResult.claims.superuser
-      let tstamp = idTokenResult.claims.timestamp
-      let one_month = 30 * 24 * 60 * 60 * 1000
-      let now = new Date().getTime()
   
-      if(now - tstamp <= one_month){
-        this.$store.dispatch('subscriberState', state)
-      }
-
-      let user = idTokenResult.claims
-      $LogRocket.identify(user.uid, {
-        name: user.displayName,
-        email: user.email,
-        isSuperUser: state
-      })
-
-    })
-    .catch((error) => {
-      // console.log(error);
-    });
 
     this.$vuetify.breakpoint.smAndDown ? this.drawer = false : this.drawer = true
     
@@ -861,7 +900,12 @@ export default {
       //console.log('changing the title')
       this.title = data
     })
+  },
+  async created(){
 
+  },
+  beforeDestroy(){
+    this.broadcastsRef ? this.broadcastsRef() : ''
   }
 }
 
@@ -953,6 +997,13 @@ li {
 }
 a {
   color: #42b983;
+}
+
+#pay_card {
+  background: url('../assets/girl.png');
+  background-size: 100%;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 .menu_tabs{
   .v-tabs__div{

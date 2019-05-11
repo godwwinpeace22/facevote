@@ -12,7 +12,7 @@
     </v-snackbar>
 
     <!-- NO DATA -->
-    <v-subheader class="text-xs-center" v-if="!getChatMessages || getChatMessages.length == 0">No recent messages</v-subheader>
+    <v-subheader class="text-xs-center" v-if="!getChatMessages || getChatMessages.length == 0">No recent messages yet. Be the first to write a message</v-subheader>
     
     <div flat pa-0 id="chat_space" v-on:scroll="scroll">
       
@@ -21,7 +21,7 @@
         style="background: white;" :style="styleForChatSpaceContent">
 
         <v-btn flat small @click="moreMessages()"
-          color="secondary" v-if="offset != null"
+          color="secondary" v-if="offset != null && getChatMessages.length <! 25"
           class="d-block mx-auto text-capitalize" 
           :loading="loading_more_msgs">
           See older messages
@@ -65,7 +65,7 @@
                   
                   <router-link event="" @click.native.prevent="goto(item,msg.elecRef)" 
                     v-if="item.charAt(0) == '@'" 
-                    :to="'/forum/profile/' + item.slice(1)" :key="item" class="primary--text">
+                    :to="'/forum/profile/' + item.slice(1)" :key="item" class="primary--text text-capitalize">
                     @{{findAMember(item.slice(1))}}
                   </router-link>
 
@@ -76,7 +76,7 @@
                 </template>
                 
                 <!-- ACTIONS FOR ADMINS OR MODERATORS -->
-                <div id="moderator_actions" v-if="isAdmin">
+                <!-- <div id="moderator_actions" v-if="isAdmin">
                   <v-menu offset-y>
                     <v-btn flat icon slot="activator">
                       <v-icon>more_vert</v-icon>
@@ -88,7 +88,7 @@
                     </v-list>
                   </v-menu>
                   
-                </div>
+                </div> -->
 
                 <!-- UPLOADED IMAGES -->
                 <v-container grid-list-md v-if="msg.imgs">
@@ -249,7 +249,7 @@
 
 export default {
   data:()=>({
-    show_reactions:false,
+    show_reactions: false,
     reactions: {}, // temp holds reactions for quick feedback
     snackbar: {},
     carousel_images: [],
@@ -259,14 +259,14 @@ export default {
     chat_messages: [],
     offset: '',
     loading_more_msgs: false,
-    loading_messages:true,
+    // loading_messages: true,
   }),
-  props:['members','room','thisGroup'],
+  props:['members','room','thisGroup', 'loading_messages'],
   watch:{
     room: function(e){
       //console.log(e)
-      this.loading_messages = true // it will set if off when its done
-      this.chatUpdate()
+      // this.loading_messages = true // it will set if off when its done
+      // this.chatUpdate()
     }
   },
   computed: {
@@ -483,55 +483,21 @@ export default {
           })
       }
     },
-    chatUpdate(){
-      
-      //console.log(this.$route.params.electionId)
-      if(this.curRoom.electionId){
-        this.updateRef = db.collection('chat_messages')
-        .where('elecRef','==',this.curRoom.electionId)
-        .orderBy('tstamp', 'desc')
-        .limit(25)
-        .onSnapshot(snapshot=>{
-          let msgs = []
-          // snapshot.forEach(doc=>{
-          //   msgs.push(doc.data())
-            
-          // })
-          snapshot.docChanges().forEach(function(change) {
-            if (change.type === "added") {
-                // console.log("New", change.doc.data());
-                msgs.push(change.doc.data())
-            }
-            // if (change.type === "modified") {
-            //     console.log("Modified ", change.doc.data());
-            // }
-            // if (change.type === "removed") {
-            //     console.log("Removed", change.doc.data());
-            // }
-        })
-
-          this.offset = snapshot.docs[snapshot.docs.length - 1]
-
-          this.$store.dispatch('updateFromDb', msgs)
-          this.loading_messages = false
-        })
-      }
-    }
   },
   created() {
     setTimeout(() => {
       this.scrollChat()
     }, 4000);
     
-    firebase.auth().onAuthStateChanged((user)=>{
-      if (user) {
-        // User is signed in.
-        this.chatUpdate()
+    // firebase.auth().onAuthStateChanged((user)=>{
+    //   if (user) {
+    //     // User is signed in.
+    //     this.chatUpdate()
         
-      } else {
-        // console.log('No user is signed in.')
-      }
-    });
+    //   } else {
+    //     // console.log('No user is signed in.')
+    //   }
+    // });
     
 
     this.$eventBus.$on('Scroll_Chat', data=>{
@@ -541,7 +507,7 @@ export default {
     
   },
   destroyed(){
-    this.chatUpdate()
+    // this.chatUpdate()
   },
   components:{
     LoadingBar,

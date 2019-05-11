@@ -42,7 +42,11 @@
               </v-sheet>
 
               <v-card-text class="text-xs-center " style="margin-top: 65px;">
-                <span class="title text-capitalize">{{user.name}}</span>
+                <v-tooltip right>
+                  <v-icon color="success" slot="activator" v-if="is_verified">verified_user</v-icon>
+                  <span>User is verified</span>
+                </v-tooltip> 
+                <span class="title text-capitalize">{{user.name | capitalize}}</span>
                 <span class="online_badge" :class="user.online ? 'success' : 'orange'"></span>
                 <div class="" v-if="user.is_student">Student at <strong>{{user.sch}}</strong>,</div>
                 <div class="" v-if="user.is_student">Department of <strong>{{user.dept}}</strong></div>
@@ -643,6 +647,7 @@ export default {
     ]),
     ...mapState([
       'isSuperUser',
+      'is_verified',
       'curRoom'
     ]),
     isFollowing(){

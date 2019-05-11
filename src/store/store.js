@@ -40,10 +40,12 @@ export default new Vuex.Store({
     userInfo: null, // additional info for logged in user
     isAuthenticated: false,
     isSuperUser: false,
+    is_verified: false,
     theme: 'light',
     timestamp: null,
     curRoom: null,
     curRoomId: null, // current room id
+    loading_rooms: true, // tells other components that rooms are still being loaded
     myEnrolled: [],
     broadcasts: [],
     last_read_time: {}, // record of last msg read time, for each user in broadcasts
@@ -55,7 +57,7 @@ export default new Vuex.Store({
     no_of_unread_msgs: '',
     show_right_nav: true,
     show_right_nav_btn: false,
-    feedFilter:null,
+    feedFilter: null,
   },
   mutations: {
     setUserInfo(state,data){
@@ -69,9 +71,16 @@ export default new Vuex.Store({
       // eslint-disable-next-line
       firebase.auth().signOut().then(function() {
         // Sign-out successful.
-        state.isAuthenticated = false
         state.userInfo = null
+        state.isAuthenticated = false
+        state.isSuperUser = false
+        state.is_verified = false
+        state.curRoom = null
         state.myEnrolled = []
+        state.broadcasts = []
+        state.chat_messages = []
+        state.pUnreadMsgs = []
+        
         // router.push('/login')
         window.location.reload()
       }).catch(function(error) {
@@ -88,6 +97,7 @@ export default new Vuex.Store({
     curRoom(state,data){
       state.curRoom = data
       state.curRoomId = data.electionId
+      state.loading_rooms = false
     },
     setBroadcasts(state,data){
       state.broadcasts = data
@@ -111,9 +121,6 @@ export default new Vuex.Store({
     setCurrRightSidebar(state, data){
       state.curr_right_sidebar = data
     },
-    // private_conversations(state,data){
-    //   state.private_conversations = data
-    // },
     setSchools(state,data){
       state.schools = data
     },
@@ -126,8 +133,6 @@ export default new Vuex.Store({
       }else{
         state.myEnrolled = data
       }
-      // eslint-disable-next-line
-      // console.log('firing setMyEnrolled')
       
     },
     setVotes(state,data){
@@ -135,6 +140,9 @@ export default new Vuex.Store({
     },
     subscriberState(state, data){
       state.isSuperUser = data
+    },
+    verifiedState(state, data){
+      state.is_verified = data
     },
     setLastReadTime(state, data){
       // console.log(data,state.last_read_time)
@@ -193,6 +201,9 @@ export default new Vuex.Store({
     },
     subscriberState({commit}, data){
       commit('subscriberState', data)
+    },
+    verifiedState({commit}, data){
+      commit('verifiedState', data)
     },
     setLastReadTime({commit}, data){
       commit('setLastReadTime', data)
@@ -260,6 +271,7 @@ export default new Vuex.Store({
     getUserInfo: state => state.userInfo, // additional info for user
     getChatMessages: (state)=>{
      let sorted = state.chat_messages.sort((a,b) => a.tstamp - b.tstamp)
+     .filter(msg => msg.elecRef == state.curRoom.electionId)
 
      // remove duplicates caused by push
      return sorted.reduce((acc, cur) => [
@@ -284,7 +296,7 @@ export default new Vuex.Store({
       })
       return arr
     },
-    getFeedFilter: state => state.feedFilter
+    getFeedFilter: state => state.feedFilter,
   }
 })
 

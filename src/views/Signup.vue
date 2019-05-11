@@ -15,55 +15,48 @@
 
           <h1 class="text-xs-center white--text mb-4" ><a href="/" style="text-decoration:none;color:#fff">{{app_title}}</a></h1>
           
-          <v-card class="" max-width="800" v-if="!verification_sent">
+          <v-card class="" max-width="800" >
             <v-card-title class="title font-weight-bold justify-space-around">
               <span>{{ currentTitle }}</span>
               
             </v-card-title>
 
             <v-window v-model="step">
+
               <v-window-item :value="1">
                 <v-card-text :class="{'px-0':$vuetify.breakpoint.xsOnly}">
                   <v-form ref="form" v-model="valid" class="text-xs-center pa-3">
-                    <p class="text-xs-center">Lorem ipsum dolor, sit amet consectetur </p>
+                    <!-- <p class="text-xs-center"></p> -->
                     <v-text-field
                       label="Full Name" class="mb-0" browser-autocomplete="name"
                       v-model="form.name" outline
-                      :rules="nameRules" color="secondary" required>
-                      <v-icon slot="prepend" color="teal">person</v-icon>
+                      :rules="nameRules" color="secondary" validate-on-blur required>
+                      <v-icon slot="prepend-inner" color="teal">person</v-icon>
                     </v-text-field>
 
                     <v-text-field 
                       label="Email" class="mb-0" browser-autocomplete="email"
                       v-model="form.email" outline
-                      :rules="emailRules" color="secondary"
+                      :rules="emailRules" color="secondary" validate-on-blur
                       required type="email">
-                      <v-icon slot="prepend" color="teal">mail</v-icon>
-                    </v-text-field>
-
-                    <v-text-field
-                      label="Phone Number" class="mb-0"
-                      v-model="form.phone" type="tel" outline browser-autocomplete="tel"
-                      :rules="phoneRules" color="secondary"
-                      required >
-                      <v-icon slot="prepend" color="teal">phone</v-icon>
+                      <v-icon slot="prepend-inner" color="teal">mail</v-icon>
                     </v-text-field>
 
                     <v-text-field class="mb-0"
                       v-model="form.password" outline
-                      :rules="passwordRules" color="secondary"
+                      :rules="passwordRules" color="secondary" validate-on-blur
                       type="password" label="Password" 
                       required>
-                      <v-icon slot="prepend" color="teal">lock</v-icon>
+                      <v-icon slot="prepend-inner" color="teal">lock</v-icon>
                     </v-text-field>
 
                     <v-text-field required
                       v-model="form.password2" outline
-                      type="password" color="secondary"
+                      type="password" color="secondary" validate-on-blur
                       :rules="passwordRules"
                       name="password2"
                       label="Confirm Password">
-                      <v-icon slot="prepend" color="teal">lock</v-icon>
+                      <v-icon slot="prepend-inner" color="teal">lock</v-icon>
                     </v-text-field>
                   </v-form>
                 </v-card-text>
@@ -80,20 +73,20 @@
                     <v-autocomplete
                       v-model="mySchool" hint="Select your school"
                       :items="schools" return-object item-text="text" hide-no-data outline class="mb-0"
-                      label="School" persistent-hint color="secondary">
-                      <v-icon slot="prepend" color="teal">school</v-icon>
+                      label="School" persistent-hint color="secondary" validate-on-blur>
+                      <v-icon slot="prepend-inner" color="teal">school</v-icon>
                     </v-autocomplete>
 
-                    <v-autocomplete color="secondary"
+                    <v-autocomplete color="secondary" validate-on-blur
                       label="Faculty"  v-model="myFaculty" :items="mySchool.faculties"
                       return-object item-text="text" outline class="mb-0" hide-no-data
                       :rules="nameRules" required >
-                      <v-icon slot="prepend" color="teal">domain</v-icon>
+                      <v-icon slot="prepend-inner" color="teal">domain</v-icon>
                     </v-autocomplete>
                     <v-autocomplete label="Department" outline class="mb-0" hide-no-data
                       v-model="myDepartment" :items="myFaculty.departments" required
-                      return-object item-text="text" :rules="nameRules" color="secondary">
-                      <v-icon slot="prepend" color="teal">place</v-icon>
+                      return-object item-text="text" :rules="nameRules" color="secondary" validate-on-blur>
+                      <v-icon slot="prepend-inner" color="teal">place</v-icon>
                     </v-autocomplete>
                   </v-form>
                   <div class="text-xs-center">
@@ -107,13 +100,6 @@
                 </v-card-text>
               </v-window-item>
 
-              <v-window-item :value="3">
-                <div class="pa-3 text-xs-center">
-                  <!--v-img class="mb-3" contain height="128"
-                    src="https://cdn.vuetifyjs.com/images/logos/v.svg"></v-img-->
-                  <h3>Please check your email to confirm your registration</h3>
-                </div>
-              </v-window-item>
             </v-window>
 
             <v-divider></v-divider>
@@ -124,24 +110,23 @@
               </v-btn>
               <v-spacer></v-spacer>
               <v-btn v-if="step !== 3"
-                :disabled="step === 3 || !valid || (step === 2 && !valid2 && form.is_student == true)"
+                :disabled="!valid || (step === 2 && !valid2 && form.is_student == true)"
                 color="success" :loading="loading" 
                 depressed @click="next"
               >
                 {{step == 2 ? 'Finish' : 'Continue'}}
-                <!--v-icon v-if="step == 1">arrow_forward</v-icon-->
               </v-btn>
             </v-card-actions>
           </v-card>
 
-          <v-card v-else>
+          <!-- <v-card v-else>
             <v-card-text>
               Check your email to confirm your registration
               <p>Didn't get the verification link ? <br>
                 <v-btn color="info" flat @click="sendVerificationLInk(true)" :disabled="disabled" :loading="loading">Resend verification link</v-btn>
               </p>
             </v-card-text>
-          </v-card>
+          </v-card> -->
 
           <v-subheader class="ml-5 white--text">Already have an account? 
             <router-link to="/login" class="pl-2 font-weight-bold success--text" style="text-decoration:none;"> Sign in</router-link>
@@ -158,36 +143,31 @@
 export default {
   data:()=>({
     title:'Sign Up | Facevote',
-    app_title:'Facevote',
-    step:1,
-    message:'Login',
-    snackbar:{},
-    loading:false,
+    app_title: 'Facevote',
+    step: 1,
+    message: 'Login',
+    snackbar: {},
+    loading: false,
     disabled: false,
     verification_sent: false,
-    form:{
+    form: {
       name: '',
-      phone:'',
       email: '',
-      is_student:true, // whether is student or not
-      password:'',
-      password2:'',
+      is_student: true, // whether is student or not
+      password: '',
+      password2: '',
     },
-    mySchool:'',
-    myFaculty:'',
-    myDepartment:'',
-    schools:[],
+    mySchool: '',
+    myFaculty: '',
+    myDepartment: '',
+    schools: [],
     select: null,
     show3: false,
     show4: false,
-    valid:true,
-    valid2:true,
+    valid: true,
+    valid2: true,
     nameRules: [
-      v => !!v || 'Please enter your username',
-    ],
-    phoneRules: [
-      v => !!v || 'Please enter a valid phone number',
-      v => (v&& v.length >= 11) || 'Please enter a valid phone number'
+      v => !!v || 'This field is required',
     ],
     passwordRules: [
       v => !!v || 'Please enter your password',
@@ -234,14 +214,18 @@ export default {
       try{
         // check if forms are valid before submit
         if(this.form.is_student){
-          if((this.$refs.form && this.$refs.form2.validate()) && (this.$refs.form2 && this.$refs.form.validate())){
+          if((this.$refs.form && this.$refs.form.validate()) && (this.$refs.form2 && this.$refs.form2.validate())){
             this.send()
           }else{
             this.snackbar = {status:true,color:'error', message:'Please provide all required fields'}
           }
         }
         else{
-          this.send()
+          if(this.$refs.form && this.$refs.form.validate()){
+            this.send()
+          }else{
+            this.snackbar = {status: true, color: 'error', message: 'Please provide all required fields'}
+          }
         }
       }
       catch(err){
@@ -292,10 +276,9 @@ export default {
 
             // store additional user info
             db.collection('moreUserInfo').doc(userRecord.user.uid).set({
-              uid:userRecord.user.uid,
-              name:user.name,
-              email:user.email,
-              phone:user.phone,
+              uid: userRecord.user.uid,
+              name: user.name,
+              email: user.email,
               followers: 0,
               is_verified: false,
               is_student: user.is_student,
@@ -306,39 +289,48 @@ export default {
             }).then(done=>{
               this.snackbar = {show:true,color:'purple', message:'Account created successfully'}
               
+              this.$router.push('/home')
               
               // send email verification message
-              this.sendVerificationLInk().then((sent)=>{
-                // console.log({sent})
-                this.verification_sent = true
-                // Email sent. Sign out user
-                this.loading = false
-                // firebase.auth().signOut().then(()=>{
-                //   // console.log('logged out')
-                // })
+                // this.sendVerificationLInk().then((sent)=>{
+                //   // console.log({sent})
+                //   this.verification_sent = true
+                //   // Email sent. Sign out user
+                //   this.loading = false
+                //   // firebase.auth().signOut().then(()=>{
+                //   //   // console.log('logged out')
+                //   // })
 
-              }).catch(function(error) {
-                // An error happened.
-                this.loading = false
-                // console.log(error)
-              })
+                // }).catch(function(error) {
+                //   // An error happened.
+                //   this.loading = false
+                //   // console.log(error)
+                // })
               
             })
           })
           .catch((error) =>{
-            // console.log(error)
+            
             this.loading = false
             $NProgress.done()
             var errorCode = error.code;
+
             if(errorCode == 'auth/weak-password' || errorCode == 'auth/invalid-email' 
               || errorCode == 'auth/email-already-in-use' || errorCode == "auth/network-request-failed"){
 
-              this.snackbar = {show:true,color:'error', message:error.message}
+              this.snackbar = {
+                show: true,
+                color: 'error',
+                message: error.message}
             }else{
-              this.snackbar = {show:true,color:'error', message:'Something went wrong, please try again'}
+              this.snackbar = {
+                show: true,
+                color: 'error',
+                message: 'Something went wrong, please try again'
+              }
             }
           });
-        //this.step = 3
+        
       }
     }
   },

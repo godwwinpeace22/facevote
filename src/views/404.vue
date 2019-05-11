@@ -1,7 +1,7 @@
 <template>
   <div>
     <vue-headful title="Not Found"/>
-    <navigation/>
+    <navigation></navigation>
     <v-container fluid fill-height id="notfound" style="min-height:84.6vh;">
 
       <v-layout align-center justify-center>
@@ -36,7 +36,7 @@ import Footer from '@/components/Footer'
   #notfound{
     /*background:#042943;*/
     min-height:84vh;
-    background:url('../assets/fogg-no-comments.png');
+    background:url('../assets/404.png');
     background-size: cover;
     background-position: center;
     background-repeat:no-repeat;

@@ -91,14 +91,14 @@
               <v-flex xs12 sm10 offset-sm-3>
                 <v-card tile :flat="$vuetify.breakpoint.xsOnly">
                   <v-card-title>School</v-card-title>
-                  <v-card-text>
+                  <!-- <v-card-text>
                     
                     <v-checkbox
                       :label="form.is_student ? 'I am a student' : 'I am not a student'"
                       v-model="form.is_student"
                     ></v-checkbox>
-                  </v-card-text>
-                  <v-container v-if="form.is_student">
+                  </v-card-text> -->
+                  <v-container v-if="getUserInfo.is_student">
                     <v-layout column>
                       <template v-if="getUserInfo && getUserInfo.was_once_a_student">
                         <v-flex xs8 d-flex>
@@ -161,14 +161,14 @@ export default {
   data:()=>({
     upload_text:'Update photo',
     snackbar:{},
-    loading:false, // to show the loading state on the save btn
-    uploading:false, // when image is being uploaded
-    disabled_fields:false,
+    loading: false, // to show the loading state on the save btn
+    uploading: false, // when image is being uploaded
+    disabled_fields: false,
     form: {
       name:'',
       email:'',
       phone:'',
-      is_student:true,
+      is_student: '',
       school:'',
       faculty:'',
       department:'',
@@ -194,7 +194,7 @@ export default {
       'isSuperUser',
     ]),
     title(){
-      return this.isSuperUser ? 'Settings' : 'My Profile'
+      return 'My Profile Settings | Facevote'
     }
   },
   methods:{
@@ -255,7 +255,7 @@ export default {
           this.selected_file = null
           this.upload_text = 'Update photo'
           this.uploading = false
-          this.snackbar = {show:true,message:'Photo updated successfully',color:'black'}
+          this.snackbar = {show:true,message:'Photo updated successfully',color:'purple'}
 
           let docRef = db.collection('moreUserInfo').doc(this.getUser.uid)
           let doc = await docRef.get()
@@ -284,7 +284,7 @@ export default {
             let data = {
               name: this.form.name || this.getUser.displayName,
               phone: this.form.phone || this.getUserInfo.phone,
-              is_student: this.form.is_student
+              is_student: true
             }
             userRef.update({
               ...data
@@ -303,7 +303,7 @@ export default {
                   this.$store.dispatch('setUser', user)
                   this.$store.dispatch('setUserInfo',doc.data())
 
-                  this.snackbar = {show:true,message:'Profile updated successfully', color:'black'}
+                  this.snackbar = {show:true,message:'Profile updated successfully', color:'purple'}
                   this.loading = false
                 }
       
@@ -337,7 +337,7 @@ export default {
                   this.$store.dispatch('setUser', user)
                   this.$store.dispatch('setUserInfo',doc.data())
                   
-                  this.snackbar = {show:true,message:'Profile updated successfully', color:'black'}
+                  this.snackbar = {show:true,message:'Profile updated successfully', color:'purple'}
                   this.loading = false
                 }
 
@@ -421,13 +421,6 @@ export default {
     },
     async setUp(data){
       try {
-        if(!this.getUserInfo){
-          let userDetails = db.collection('moreUserInfo').doc(this.getUser.uid);
-          let getDoc = await userDetails.get()
-          
-          this.$store.dispatch('setUserInfo',getDoc.data())
-        }
-        
         
         if(this.getUserInfo && !this.getUserInfo.was_once_a_student){
           this.form.is_student = this.getUserInfo.is_student

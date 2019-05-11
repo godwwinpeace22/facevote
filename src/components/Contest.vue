@@ -5,8 +5,7 @@
     />
 
     <navigation>
-      <span slot="title">{{$vuetify.breakpoint.smAndUp ? 'Dashboard' : 'Contest'}}</span>
-      <h1 slot="extended_nav" v-if="$vuetify.breakpoint.smAndUp">Contest</h1>
+      <span slot="title">Contest</span>
     </navigation>
 
     <v-snackbar v-model="snackbar.show" :timeout="10000" :color="snackbar.color" top right>
@@ -22,9 +21,9 @@
 
     <transition name="fade">
 
-      <intro v-if="ready && elections.length == 0" :text='no_elections_text'></intro>
+      <!-- <intro v-if="ready && elections.length == 0" :text='no_elections_text'></intro> -->
 
-      <v-container v-if="ready && elections.length > 0"
+      <v-container v-if="ready"
         grid-list-sm :pa-0="$vuetify.breakpoint.xsOnly">
         
         <v-card class="contest_main_card" :class="{round:$vuetify.breakpoint.smAndUp}">
@@ -47,7 +46,8 @@
                       <v-flex xs12 sm6>
                         <v-select required small v-model="selectedElection"
                           :items="elections" color="secondary" outline
-                          item-text="title"
+                          item-text="title" :loading="loading_elections"
+                          no-data-text="No elections"
                           return-object hint='you can contest in only elections you have enrolled in'
                           persistent-hint
                           label="select election"
@@ -78,7 +78,7 @@
                         <v-select :items="selectedElection.roles" outline label="Select role" color="secondary" 
                           v-model="selectedRole" item-text="title" return-object>
                         </v-select>
-                        <span class="d-block my-4">If you are authorized to contest, you will be given a token, provide the token below</span>
+                        <span class="d-block my-4">If you are authorized to contest, you will be given a token by the election admin. Provide the token below</span>
                         <v-text-field label="token" v-model="contestant.acstoken" outline color="secondary"></v-text-field>
                       </v-flex>
                     </v-layout>
@@ -126,15 +126,16 @@
                   <v-card-text>
                     <p>What next?</p>
                   </v-card-text>
-                  <v-card-actions>
+                  <v-card-actions :class="{'d-block': $vuetify.breakpoint.xsOnly}">
 
-                    <v-btn color="secondary" @click="$store.dispatch('curRoom', election)"
-                      v-if="getMyEnrolled.find(elec => elec.electionId == selectedElection.electionId)">
+                    <!-- <v-btn color="secondary" @click="$store.dispatch('curRoom', election)"
+                      v-if="getMyEnrolled.find(elec => elec.electionId == selectedElection.electionId)"
+                      :block="$vuetify.breakpoint.xsOnly" :class="[{'mb-2': $vuetify.breakpoint.xsOnly}]">
                       Switch current election
-                    </v-btn>
-                    <template v-if="curRoom && curRoom.electionId == selectedElection.electionId">
-                      <v-btn color="success" to="/forum">Join the conversation</v-btn>
-                      <v-btn color="success" to="/elections/vote">Vote</v-btn>
+                    </v-btn> -->
+                    <template>
+                      <v-btn color="success" to="/forum" :block="$vuetify.breakpoint.xsOnly" :class="[{'mb-2 ml-0': $vuetify.breakpoint.xsOnly}]">Join the conversation</v-btn>
+                      <v-btn color="success" to="/elections/vote" :block="$vuetify.breakpoint.xsOnly" :class="[{'mb-2 ml-0': $vuetify.breakpoint.xsOnly}]">Vote</v-btn>
                     </template>
 
                   </v-card-actions>
@@ -178,13 +179,19 @@ export default {
     selectedElection: {},
     selectedRole: {},
     elections: [],
-    no_elections_text: {data:'Enrolled,Perferendis cumq corp quos aliquid, praes inventore assumenda kkd opre perkj sf jkdd mond',action:{text:'Enroll',action_link:'/enroll'}},
+    loading_elections: true,
+    no_elections_text: {data:'You have not enrolled in any election yet. You need to enroll in an election before you can contest',action:{text:'Enroll',action_link:'/enroll'}},
     election: {},
     contestant: {
       acstoken: '',
       role: ''
     }
   }),
+  watch: {
+    'getUserInfo': function(){
+      this.getEnrolled()
+    },
+  },
   computed:{
     ...mapGetters([
       'getUser',
@@ -213,24 +220,6 @@ export default {
     }
   },
   methods:{
-    getEnrolled(user){
-      
-      db.collection("elections").where('regVoters', 'array-contains',user.uid)
-      .get()
-      .then(querySnapshot=>{
-        let myArr = []
-          querySnapshot.forEach((doc)=>{
-              // doc.data() is never undefined for query doc snapshots
-              // console.log(doc.id, " => ", doc.data());
-              myArr.push(doc.data())
-          });
-          this.elections = myArr
-          this.ready = true
-      })
-      .catch(function(error) {
-          // console.log("Error getting documents: ", error);
-      });
-    },
     async contest(){
       let has_contested = this.getUserInfo.contests && 
         !!this.getUserInfo.contests.find(eId => eId == this.selectedElection.electionId)
@@ -260,6 +249,8 @@ export default {
               message: resp.data.message,
               color: 'success'
             }
+
+            this.$store.dispatch('curRoom', this.selectedElection)
             this.loading = false
             this.e5 = 4
           }).catch(error=>{
@@ -288,6 +279,21 @@ export default {
 
       }
     },
+    async getEnrolled() {
+      let arr = []
+      if(this.getUserInfo.enrolled) {
+
+        this.getUserInfo.enrolled.forEach(async electionId => {
+          let doc = await db.collection('elections').doc(electionId).get()
+          doc.exists ? arr.push(doc.data()) : ''
+          this.elections = arr
+          this.loading_elections = false
+        })
+      }
+      else {
+        this.loading_elections = false
+      }
+    },
     truncateText(text){
       // console.log(text)
       return text ? text.replace(/(.{50})..+/, "$1...") : ''
@@ -296,13 +302,11 @@ export default {
   created(){
     firebase.auth().onAuthStateChanged((user)=>{
       if (user) {
-        // User is signed in.
-        // console.log(this.$store.getters.getMyEnrolled)
-        this.elections = this.getMyEnrolled
+        this.getUserInfo ? this.getEnrolled() : ''
         this.ready = true
         
       } else {
-        // console.log('No user is signed in.')
+        
       }
     })
   },

@@ -23,22 +23,15 @@
               </v-toolbar-->
               <v-card-text>
 
-                <template v-if="can_resend_verification">
-                  <p class="error--text text-xs-center">A link has been sent to your email. Click on that link to verify your email</p>
-                  <p class="error--text text-xs-center">Didn't get the link ? 
-                    <v-btn color="info" @click="sendVerificationLInk" :disabled="sending" flat>Resend link</v-btn>
-                  </p>
-                </template>
-
                 <v-form v-model="valid" ref="form">
                   <v-text-field label="Email" color="teal" outline class="mb-2" 
-                    v-model="form.email" :rules="nameRules"
+                    v-model="form.email" :rules="nameRules" validate-on-blur
                     required>
                      <v-icon slot="prepend-inner" color="teal">mail</v-icon>
                   </v-text-field>
                   <v-text-field id="text-field" color="teal" 
                     outline  v-model="form.password" type="password" :rules="passwordRules"
-                    label="Password" 
+                    label="Password" validate-on-blur
                     required>
                      <v-icon slot="prepend-inner" color="teal">lock</v-icon>
                   </v-text-field>
@@ -135,15 +128,10 @@ export default {
             
             firebase.auth().onAuthStateChanged((user)=>{
               if (user) {
-                if(user.emailVerified){
-                  this.$store.dispatch('setUser', result.user)
-                  this.$router.push('/home')
-                }
-                else{
-                  this.sendVerificationLInk()
-                  this.can_resend_verification = true
-                  this.loading = false
-                }
+                
+                this.$store.dispatch('setUser', result.user)
+                this.$router.push('/home')
+                
                 
               } else {
                 // No user is signed in.
@@ -166,18 +154,18 @@ export default {
               }
             }
             this.snackbar = {
-              show:true,
-              message:errorMsg(error.code),
-              color:'error'
+              show: true,
+              message: errorMsg(error.code),
+              color: 'error'
             }
           });
           
         }
         else{
           this.snackbar = {
-            show:true, 
-            message:'Please provide username and password',
-            color:'error'
+            show: true, 
+            message: 'Please provide email and password',
+            color: 'error'
           }
           
         }
@@ -189,16 +177,16 @@ export default {
         if(err.errorCode){
           
           this.snackbar = {
-            show:true,
-            message:err.message,
-            color:'error'
+            show: true,
+            message: err.message,
+            color: 'error'
           }
         }else{
           
           this.snackbar = {
-            show:true,
-            message:'Sorry, something went wrong. Try again',
-            color:'error'
+            show: true,
+            message: 'Sorry, something went wrong. Try again',
+            color: 'error'
           }
           
         }
@@ -207,6 +195,7 @@ export default {
   },
   mounted(){
     document.getElementById('welcome_logo').style.display = 'none'
+    // console.log(this.$store.state)
   }
 }
 

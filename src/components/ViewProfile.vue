@@ -24,7 +24,11 @@
         </v-sheet>
       
         <v-card-text class="text-xs-center mt-5">
-          <span class="title text-capitalize">{{user.name}}</span>
+          <v-tooltip right>
+            <v-icon color="success" slot="activator" v-if="is_verified">verified_user</v-icon>
+            <span>User is verified</span>
+          </v-tooltip>
+          <span class="title text-capitalize">{{user.name | capitalize}}</span>
           <span class="online_badge" :class="user.online ? 'success' : 'orange'"></span>
           <div class="" v-if="user.is_student">Student at <strong>{{user.sch}}</strong>,</div>
           <div class="" v-if="user.is_student">Department of <strong>{{user.dept}}</strong></div>
@@ -73,13 +77,25 @@ export default {
     disabled: false,
   }),
   props:['user'],
+  filters: {
+    capitalize: function (value) {
+      if (!value) return ''
+      value = value.toString()
+      let arr = []
+      value.split(' ').map((item,index)=>
+        arr.push(item.charAt(0).toUpperCase() + item.slice(1))
+      )
+      return arr.toString().split(',').join(' ')
+    },
+  },
   computed:{
     ...mapGetters([
       'getUser',
       'getUserInfo'
     ]),
     ...mapState([
-      'isSuperUser'
+      'isSuperUser',
+      'is_verified'
     ]),
   },
   methods:{

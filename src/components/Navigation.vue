@@ -1,8 +1,8 @@
 <template>
-  <v-toolbar color="teal" dark flat app clipped-right style='background-color:#29648a;'>
+  <v-toolbar color="success" dense dark flat app clipped-right style='background-color:#29648a;'>
     <v-toolbar-side-icon @click.stop="$eventBus.$emit('Toggle_Left_Drawer')"></v-toolbar-side-icon>
     <v-toolbar-title v-show="$vuetify.breakpoint.width > 344">
-      <slot name='title' >{{$vuetify.breakpoint.smAndDown ? "Facevote" : "Feed"}}</slot>
+      <slot name='title'>Facevote</slot>
     </v-toolbar-title>
     <v-spacer></v-spacer>
     
@@ -18,7 +18,7 @@
     <v-menu transition="slide-y-transition" offset-y v-if="getUser">
       <v-toolbar-title slot="activator">
         <template v-if="$vuetify.breakpoint.smAndUp">
-          <v-avatar size="36" :color="$helpers.colorMinder(getUserInfo.name.charAt(0))">
+          <v-avatar size="36" :color="$helpers.colorMinder(getUser.displayName.charAt(0))">
             <img v-if="getUserInfo && getUserInfo.photoURL" :src="getUserInfo.photoURL" alt="avatar">
             <img v-else-if="getUser.photoURL"  :src="getUser.photoURL" alt="avatar">
             <span v-else class="white--text headline text-capitalize">{{getUser.displayName.charAt(0)}}</span>

@@ -114,7 +114,6 @@ export default {
         
         for(var i= 0; i<elems.length;i++){
           elems[i].style.backgroundColor = ''
-          // elems[i].style.paddingBottom = ''
         }
 
         // disable vote submissin if voter has not voted for all roles
@@ -125,57 +124,34 @@ export default {
         
 
         this.$refs[contestant.uid][0].style.backgroundColor = ''
-        // this.$refs[contestant.uid][0].style.paddingBottom = '23px'
       }
       else{
         for(var i= 0; i<elems.length;i++){
           elems[i].style.backgroundColor = ''
-          // elems[i].style.paddingBottom = ''
         }
         this.$refs[contestant.uid][0].style.backgroundColor = 'yellow'
-        // this.$refs[contestant.uid][0].style.paddingBottom = '23px'
 
         this.myVote[role] = contestant.uid
-        //this.$eventBus.$emit('Someone_Is_Voting', {user:this.$store.getters.getUser, room:this.currElection.electionId})
 
-        // disable vote submissin if voter has not voted for all roles
+        // disable vote submision if voter has not voted for all roles
         // but first, filter the roles that have contestants
         let arr = Object.keys(this.contestantsByRoles) // contains all the roles that have contestants
         
         this.disabled = Object.keys(this.myVote).length < arr.length ? true : false
 
       }
-      //console.log(this.myVote);
-      //console.log(Object.keys(this.myVote).length);
     },
     async submit(){
       this.loading = true
-
-      // Prevent multiple voting
-     /* if(this.currElection.votes.find(voterId => voterId == this.$store.getters.getUser.uid)){
-        
-        this.snackbar = {
-          show:true,
-          message:'Sorry, you have already voted for this election',
-          color:'error'
-        }
-
-        setTimeout(() => {
-          // close the voting dialog after voting and prevent more voting attempts
-          this.$eventBus.$emit('Close_Voting_Dialog', true)
-        }, 3000);
-
-      }
-      else{*/
 
         // vote
         firebase.auth().currentUser.getIdToken().then((token)=>{
           let myVote = btoa(JSON.stringify(this.myVote))
           // console.log(myVote)
           api().post('dashboard/vote', {
-            electionId:this.currElection.electionId,
-            idToken:token,
-            myVote:myVote
+            electionId: this.currElection.electionId,
+            idToken: token,
+            myVote: myVote
           }).then(result=>{
             // console.log(result)
             
@@ -190,30 +166,31 @@ export default {
             }, 3000);
             
             }).catch(err=>{
-            this.loading = false
-            if(err.response){
-              // console.log(err.response)
-              
-              this.snackbar = {
-                show:true,
-                message:err.response.data.message,
-                color:'error'
+              this.loading = false
+              if(err.response){
+                // console.log(err.response)
+                
+                this.snackbar = {
+                  show:true,
+                  message:err.response.data.message,
+                  color:'error'
+                }
+                setTimeout(() => {
+                  // close the voting dialog and prevent more voting attempts
+                  this.$eventBus.$emit('Close_Voting_Dialog', true)
+                }, 3000);
+                $NProgress.done()
               }
-              setTimeout(() => {
-                // close the voting dialog and prevent more voting attempts
-                this.$eventBus.$emit('Close_Voting_Dialog', true)
-              }, 3000);
-            }
-            else{
-              $NProgress.done()
-              // console.log(err)
-              
-              this.snackbar = {
-                show:true,
-                message:'Voting failed, check your internet connection and try again',
-                color:'error'
+              else{
+                $NProgress.done()
+                // console.log(err)
+                
+                this.snackbar = {
+                  show: true,
+                  message: 'Voting failed, check your internet connection and try again',
+                  color: 'error'
+                }
               }
-            }
             
           })
 
@@ -221,10 +198,11 @@ export default {
         }).catch(err=>{
           // console.log(err)
           //console.log(err.response)
+          $$NProgress.done()
           this.snackbar = {
-            show:true,
-            message:'Something went wrong, try again',
-            color:'err'
+            show: true,
+            message: 'Something went wrong, try again',
+            color: 'err'
           }
           this.loading = false
         })
@@ -235,9 +213,9 @@ export default {
   mounted(){
     this.roles = this.currElection.roles
     this.steps = this.currElection.roles.length
-    // console.log(this.roles)
-    // console.log(this.contestants)
+
     if(this.contestants.length > 0){
+      // sort contestants by their roles
 
       this.contestants.forEach(contestant=>{
       

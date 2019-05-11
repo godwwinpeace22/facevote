@@ -2,16 +2,16 @@
 
 import Vue from 'vue'
   import Router from 'vue-router'
+  import Watch from '@/components/Watch'
   // import Dashboard from '@/views/Dashboard'
-  // import NProgress from 'nprogress'
   import './plugins/firebase';
   import $helpers from '@/helpers/helpers'
 Vue.use(Router)
 
 const requireAuth = async (to, from, next) => {
   firebase.auth().onAuthStateChanged((user)=>{
-    if(user && user.emailVerified){
-      $helpers.myEnrolled(user, false).then(() =>{
+    if(user){
+      $helpers.userDetails(user).then(() =>{
         next() 
       }).catch(() => {})
       // next()
@@ -24,19 +24,6 @@ const requireAuth = async (to, from, next) => {
   
 }
 
-
-// const requiresPremiumAccess = async (to, from, next) =>{ // if ther user is not logged in
-//   //console.log('islgdin: ', await isLoggedIn)
-//   firebase.auth().currentUser.getIdTokenResult()
-//     .then((idTokenResult) => {
-      
-//       // console.log(idTokenResult.claims)
-//       idTokenResult.claims.superuser ? next() :
-//       next('/notFound')
-      
-      
-//     })
-// }
 // const requireLogout = async (to, from, next) =>{ // if ther user is not logged in
 
 //   firebase.auth().onAuthStateChanged((user)=>{
@@ -49,66 +36,44 @@ const requireAuth = async (to, from, next) => {
 //   });
 // }
 
-// The route guard is intentionally put in each component instead of the root to allow non-loggedin users
-// to be able to see others profile
 const router = new Router({
   //mode:'history',
   routes: [
     {
       path:'/home',
       component: () => import('@/views/Dashboard'),
+      beforeEnter: requireAuth,
       children:[
         
         {
           path:'',
           name:'feed',
           component: () => import('@/components/Feed'),
-          beforeEnter: requireAuth,
+          // beforeEnter: requireAuth,
         },
         // {
-        //   path:'/feed/:postId',
-        //   name:'readfeed',
-        //   props:true,
-        //   component: () => import('@/components/ReadPost'),
+        //   path:'/enroll',
+        //   name:'enroll',
+        //   component: () => import('@/components/Enroll'),
         //   beforeEnter:requireAuth,
         // },
-        {
-          path:'/enroll',
-          name:'enroll',
-          component: () => import('@/components/Enroll'),
-          beforeEnter:requireAuth,
-        },
         {
           path:'/verify',
           name:'verify_acc',
           component: () => import('@/views/Verify'),
-          beforeEnter:requireAuth,
+          // beforeEnter:requireAuth,
         },
-        
-        /*{
-          path:'forum',
-          name:'select_forum',
-          component:SelectForum,
-          beforeEnter:requireAuth,
-        },*/
         {
           path:'/users/:email',
           component: () => import('@/views/Users'),
           props:true,
-          beforeEnter: requireAuth,
-          // children:[
-          //   {
-          //     path:'',
-          //     component: () => import('@/components/User__overview'),
-          //     // beforeEnter: requiresPremiumAccess
-          //   }
-          // ]
+          // beforeEnter: requireAuth,
         },
         
         {
           path:'/forum',
           component: () => import('@/components/Forum'),
-          beforeEnter: requireAuth,
+          // beforeEnter: requireAuth,
           children:[
             {
               path:'',
@@ -133,7 +98,7 @@ const router = new Router({
           path: '/contest',
           name: 'contest',
           component: () => import('@/components/Contest'),
-          beforeEnter: requireAuth,
+          // beforeEnter: requireAuth,
         },
         // {
         //   path:'/elections/manage',
@@ -145,19 +110,20 @@ const router = new Router({
           path: '/elections/create',
           name: 'create_election',
           component: () => import('@/components/CreateElection'),
-          beforeEnter: requireAuth,
+          // beforeEnter: requireAuth,
         },
 
         {
           path: '/elections/vote',
-          component: () => import('@/components/Watch'),
-          beforeEnter: requireAuth,
+          component: Watch,
+          // beforeEnter: requireAuth,
           props: true,
         },
         {
           path:'/notFound',
           name:'notfound',
-          component: () => import('@/views/404')
+          component: () => import('@/views/404'),
+          // beforeEnter: requireAuth,
         }
       ]
     },
@@ -185,6 +151,11 @@ const router = new Router({
       component: () => import('@/views/ResetPassword'),
       //beforeEnter:requireLogout
     },
+    {
+      path:'/notFound',
+      name:'notfound2',
+      component: () => import('@/views/404')
+    }
   ]
 })
 

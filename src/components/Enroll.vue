@@ -79,14 +79,15 @@
                     <p>Whats next?</p>
                     
                   </v-card-text>
-                  <v-card-actions>
+                  <v-card-actions >
                     <v-btn color="secondary" @click="$store.dispatch('curRoom', election)"
-                      v-if="getMyEnrolled.find(elec => elec.electionId == election.electionId)">
+                      v-if="getMyEnrolled.find(elec => elec.electionId == election.electionId)"
+                      :block="$vuetify.breakpoint.xsOnly" :class="[{'mb-2': $vuetify.breakpoint.xsOnly}]">
                       Switch current election
                     </v-btn>
                     <template v-if="curRoom && curRoom.electionId == election.electionId">
-                      <v-btn color="success" to="/forum">Join the conversation</v-btn>
-                      <v-btn color="success" to="/contest">Contest</v-btn>
+                      <v-btn color="success" :block="$vuetify.breakpoint.xsOnly" :class="[{'mb-2 ml-0': $vuetify.breakpoint.xsOnly}]" to="/forum">Join the conversation</v-btn>
+                      <v-btn color="success" :block="$vuetify.breakpoint.xsOnly" :class="[{'mb-2 ml-0': $vuetify.breakpoint.xsOnly}]" to="/contest">Contest</v-btn>
                     </template>
                   </v-card-actions>
                 </v-card>
@@ -286,91 +287,7 @@ export default {
           
         })
       })
-    },
-    startCamera(){
-      if (navigator.getUserMedia) {
-          // Request the camera.
-          let $self = this
-          navigator.getUserMedia({	video: true}, function(localMediaStream) {
-              // Get a reference to the video element on the page.
-              var vid = document.getElementById('camera-stream');
-              $self.vid = vid
-              // Create an object URL for the video stream and use this to set the video source.
-              vid.srcObject = localMediaStream
-            },
-            function(err) {
-              // console.log('The following error occurred when trying to use getUserMedia: ' + err);
-            }
-          );
-
-        } else {
-          alert('Sorry, your browser does not support getUserMedia');
-        }
-    },
-    makeblob(dataURL) {
-			const BASE64_MARKER = ';base64,';
-			const parts = dataURL.split(BASE64_MARKER);
-			const contentType = parts[0].split(':')[1];
-			const raw = window.atob(parts[1]);
-      const rawLength = raw.length;
-      // console.log(rawLength);
-			const uInt8Array = new Uint8Array(rawLength);
-
-			for (let i = 0; i < rawLength; ++i) {
-					uInt8Array[i] = raw.charCodeAt(i);
-			}
-      
-			return new Blob([uInt8Array], { type: contentType });
-		},
-    
-    async verify(){
-      try {
-        
-        const canvas = document.createElement('canvas'); // create a canvas
-        const ctx = canvas.getContext('2d'); // get its context
-        canvas.width = 500; // set its size to the one of the video
-        canvas.height = 500;
-        ctx.drawImage(this.vid, 0,0); // the video
-        let base64Img = canvas.toDataURL('image/png')
-        document.getElementById('canvasImg').src = base64Img
-        //console.log(base64Img)
-        
-      
-        //document.getElementById('canvasImg').src = URL.createObjectURL(blob)
-        let formData = new FormData();
-        formData.append('image',this.makeblob(base64Img));
-        formData.append('user',this.$store.getters.getUser._id)
-        let payload = {image:this.makeblob(base64Img),user:this.$store.getters.getUser._id}
-        let res = await api().post(`dashboard/recognize/${this.electionId}/${this.$store.getters.getToken}`, formData, {headers: {'Content-Type': 'multipart/form-data'}})
-        // console.log(res.data)
-        
-        
-      } catch (err) {
-        // console.log(err)
-        console.log(err.response)
-        
-
-      }
-    },
-
-    takeASnap(){
-        const canvas = document.createElement('canvas'); // create a canvas
-        const ctx = canvas.getContext('2d'); // get its context
-        canvas.width = this.vid.videoWidth; // set its size to the one of the video
-        canvas.height = this.vid.videoHeight;
-        ctx.drawImage(this.vid, 0,0); // the video
-        return new Promise((res, rej)=>{
-          canvas.toBlob(res, 'image/jpeg'); // request a Blob from the canvas
-        });
-      },
-    download(blob){
-        // uses the <a download> to download a Blob
-        let a = document.createElement('a'); 
-        a.href = URL.createObjectURL(blob);
-        a.download = 'screenshot.jpg';
-        document.body.appendChild(a);
-        a.click();
-      },
+    }
   },
   created(){
     

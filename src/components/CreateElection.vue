@@ -2,9 +2,9 @@
   <div>
     <vue-headful :title="title" :description="description"/>
     <navigation>
-      <span slot="title">{{$vuetify.breakpoint.smAndUp ? 'Dashboard' : 'Create Election'}}</span>
-      <h1 slot="extended_nav" v-if="$vuetify.breakpoint.smAndUp">Create Election</h1>
+      <span slot="title">Create Election</span>
     </navigation>
+
     <v-snackbar v-model="snackbar.show" dark :timeout="5000" :color="snackbar.color" top right>
       {{snackbar.message}}
       <v-btn dark color="white" flat @click="snackbar.show = false"> Close</v-btn>
@@ -90,7 +90,7 @@
                     </v-layout>
                     <v-layout row wrap v-if="form.type == 'School' && (form.level == 'Faculty' || form.level == 'Department')" class="mb-3">
                       <v-flex xs12 sm4>
-                        <v-subheader class="pl-0 font-weight-bold">Your Faculty</v-subheader>
+                        <v-subheader class="pl-0 font-weight-bold">Election Faculty</v-subheader>
                       </v-flex>
                       <v-flex xs12 sm6>
                         <v-text-field required small v-model="form.faculty" disabled
@@ -100,7 +100,7 @@
                     </v-layout>
                     <v-layout row wrap v-if="form.type == 'School' && form.level == 'Department'" class="mb-3">
                       <v-flex xs12 sm4>
-                        <v-subheader class="pl-0 font-weight-bold">Your Department</v-subheader>
+                        <v-subheader class="pl-0 font-weight-bold">Election Department</v-subheader>
                       </v-flex>
                       <v-flex xs12 sm6>
                         <v-text-field required small outline disabled
@@ -113,6 +113,16 @@
                   </v-card>
                 </v-flex>
               </v-layout>
+              <div>
+                
+              </div>
+              <template v-if="!is_verified">
+                <v-btn color="error" to="/verify">
+                  Verify your Account <v-icon>chevron_right</v-icon>
+                </v-btn>
+                <small class="d-block ml-2">Verify your account before you can create elections</small>
+              </template>
+
               <v-btn color="success" @click="e6 = 2" v-if="!disabled_step_one">
                 Next step <v-icon>chevron_right</v-icon>
               </v-btn>
@@ -124,7 +134,7 @@
                   <v-card class="mb-5 mr-1 ml-1 mt-3 pa-3 grey lighten-3 round" light>
                     <!--schedule elections --> 
                     <v-layout row >
-                      <v-flex sm10 ><v-subheader class="title secondary--text">Create Timed Election</v-subheader></v-flex>
+                      <v-flex sm10 ><v-subheader class="title secondary--text">Schedule Election</v-subheader></v-flex>
                       <v-flex sm2 style="padding-bottom:0px;">
                         <v-switch value v-model="form.timed" readonly color="success"></v-switch>
                       </v-flex>
@@ -132,7 +142,13 @@
                     <v-divider v-show="form.timed"></v-divider>
                     <v-layout row wrap v-show="form.timed">
                       <v-flex xs12 sm4>
-                        <v-subheader class="font-weight-bold">Start time</v-subheader>
+                        <div>
+                          <v-tooltip right max-width="300" dark class="d-inline-block mt-3">
+                            <v-icon slot="activator" small>help</v-icon>
+                            <span>When the election should start</span>
+                          </v-tooltip>
+                          <v-subheader class="font-weight-bold d-inline-block">Start time</v-subheader>
+                        </div>
                       </v-flex>
                       <v-flex xs6 sm4 :class="$vuetify.breakpoint.xsOnly ? ['px-2'] : ''">
                         <v-dialog ref="dialog" v-model="modal" :return-value.sync="form.date"
@@ -170,7 +186,11 @@
                     <!-- duration -->
                     <v-layout row v-show="form.timed">
                       <v-flex sm4>
-                        <v-subheader class='font-weight-bold'>Duration</v-subheader>
+                        <v-tooltip right max-width="300" dark class="d-inline-block mt-3">
+                          <v-icon slot="activator" small>help</v-icon>
+                          <span>How long the election should run</span>
+                        </v-tooltip>
+                        <v-subheader class='font-weight-bold d-inline-block'>Duration</v-subheader>
                       </v-flex>
                       <v-flex sm8 mr-4>
                         <v-slider v-model="form.electionDuration" thumb-color="secondary"
@@ -204,17 +224,17 @@
 
                   <v-dialog v-model="dialog" max-width="500px">
                     <v-card>
-                      <v-card-title primary-title class="mb-0 pb-0">Create A New Role</v-card-title>
+                      <v-card-title primary-title class="title mb-0 pb-0">Create A New Role</v-card-title>
                       <v-card-text>
                         <v-text-field label="Role title" v-model="role_input" color="secondary" 
-                          hint="e.g president, secretary,vice-chancellor"></v-text-field>
+                          hint="e.g president, secretary, vice-chancellor"></v-text-field>
                         <small class="grey--text"></small>
                         <p>
                           <small class="grey--text">* try not to use abbreviations</small>
                         </p>
                         <v-divider></v-divider>
                         <v-textarea v-model="role_input_desc"
-                          label="Role description" outline
+                          label="Role description (optional)" outline
                           name="name" color="secondary" hint="e.g what this role can do"
                         ></v-textarea>
                       </v-card-text>
@@ -235,11 +255,11 @@
                     multiple outline
                   ></v-select>
                   <v-checkbox light label="Automatically enroll me into this election" v-model="form.auto_enroll_admin" value></v-checkbox>
-                  <v-checkbox light label="Make this election public" class="d-inline-block" v-model="form.public" value></v-checkbox>
+                  <!-- <v-checkbox light label="Make this election public" class="d-inline-block" v-model="form.public" value></v-checkbox>
                   <v-tooltip right max-width="300" dark class="d-inline-block" style="margin-top:-5px;">
                     <v-icon slot="activator" small>help</v-icon>
                     <span>This means that everyone can see the election activites but only registerd voters can vote or contest</span>
-                  </v-tooltip>
+                  </v-tooltip> -->
                 </v-container>
                 
               </v-card>
@@ -265,7 +285,7 @@
                   <!-- ==SMALL CARDS== -->
                   <v-container grid-list-md :class="$vuetify.breakpoint.xsOnly ? ['px-0'] : ''">
                     <v-layout row wrap>
-                      <v-flex xs12 sm4 md3 d-flex v-for="(plan,i) in Plans" :key="i">
+                      <v-flex xs12 sm4 md3 d-flex v-for="(plan,i) in plans" :key="i">
                         <v-card class="mt-3 mx-auto round" hover @click="selectPlan(plan)">
                           <v-sheet
                             class="v-sheet--offset ml-3"
@@ -278,7 +298,7 @@
                           </v-sheet>
 
                           <v-card-text class="pt-0">
-                            <div class="subheading font-weight-light grey--text mb-2">{{plan.range}} max voters</div>
+                            <div class="subheading font-weight-light grey--text mb-2">{{plan.range}} voters</div>
                             <div class="subheading font-weight-light text-xs-right">₦ {{plan.amount.toLocaleString()}}</div>
                             <v-divider class="my-2"></v-divider>
                             <span class="caption grey--text font-weight-light">
@@ -311,14 +331,11 @@
                   <p>Election Created successfully!</p>
                   
                 </v-card-text>
-                <v-card-actions v-if="form.auto_enroll_admin">
-                  <v-btn color="success" flat @click="setCurrentRoom"
-                    v-if="getMyEnrolled.find(elec => elec.electionId == newElec.electionId)">Set as current Election</v-btn>
-                  <template v-if="curRoom && getMyEnrolled.length > 0 && getMyEnrolled.find(elec => elec.electionId == newElec.electionId)
-                    && newElec.electionId == curRoom.electionId">
-                    <v-btn color="success" to="/forum">Join the conversation</v-btn>
-                    <v-btn color="success" to="/contest">Contest</v-btn>
-                  </template>
+                <v-card-actions :class="[{'d-block': $vuetify.breakpoint.xsOnly}]">
+                  
+                  <v-btn color="success" @click="$eventBus.$emit('ShowManager')" :block="$vuetify.breakpoint.xsOnly" :class="[{'mb-2 ml-0': $vuetify.breakpoint.xsOnly}]">Election Manager</v-btn>
+                  <v-btn color="success" to="/elections/vote" :block="$vuetify.breakpoint.xsOnly" :class="[{'mb-2 ml-0': $vuetify.breakpoint.xsOnly}]">Election page</v-btn>
+                  
                 </v-card-actions>
               </v-card>
             </v-stepper-content>
@@ -340,8 +357,8 @@
         </v-toolbar>
         <v-card-text v-if="selected_plan.title">
           <div class="title mb-3">Your selection</div>
-          <p><strong>Maximum voters</strong>: {{selected_plan.range}}</p>
-          <p><strong>Amount</strong>: ₦ {{selected_plan.amount.toLocaleString()}}</p>
+          <p><strong>Voters</strong>: {{selected_plan.range}}</p>
+          <p><strong>Price</strong>: ₦ {{selected_plan.amount.toLocaleString()}}</p>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -399,8 +416,8 @@ import api from '@/services/api'
 
 export default {
   data: ()=>({
-    title:'Create new election - Facevote',
-    description:'',
+    title: 'Create new election - Facevote',
+    description: '',
     snackbar: {},
     plan_dialog: false,
     newElec: {}, // the newly created election
@@ -416,7 +433,6 @@ export default {
     modal2: false,
     today: new Date().getTime(),
     e6: 1,
-    text: 'Lo consequatur nostrum blanditiis expedita omnis accusantium vitae veritatis aut?',
     electionId: null,
     form: {
       title: '',
@@ -449,7 +465,11 @@ export default {
       {text:'Governement - comming soon',disabled:true},
     ],
     levels: [
-      ['General', 'Faculty','Department'],
+      [
+        {text: 'General (School-wide)', value: 'General'},
+        {text: 'Faculty Election', value: 'Faculty'},
+        {text: 'Departmental Election', value: 'Department'}
+      ],
       ['Federal', 'State','Local governement']
     ],
     rules: {
@@ -466,18 +486,12 @@ export default {
         }
       }
     },
-    currDate(){
-      let d = new Date()
-      let date = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-      // console.log(date)
-      return date.toString()   
-    },
-    Plans(){
+    plans(){
       return [
-        {range:'0 - 400',max_voters:500, amount:'0 (Free)',title:'Basic', color: 'orange'},
-        {range:'400 - 1000', max_voters:1500, amount: 9999,title:'Spark', color: 'primary'},
-        {range:'1001 - 10,000', max_voters:5000, amount: 39999,title:'Chubby', color: 'success'},
-        {range:'10,000 - 50,000', max_voters:10000, amount: 249999,title:'Robbust', color: 'cyan'},
+        {range:'up to 400',max_voters: 500, amount:'0 (Free)', title: 'Basic', color: 'orange'},
+        {range:'up to 1000', max_voters: 1500, amount: 9999, title: 'Spark', color: 'primary'},
+        {range:'up to 10,000', max_voters: 5000, amount: 39999, title: 'Chubby', color: 'success'},
+        {range:'up to 50,000', max_voters: 10000, amount: 249999, title: 'Robbust', color: 'cyan'},
       ]
     },
     metadata(){
@@ -513,11 +527,15 @@ export default {
       (this.form.type == 'School' && !this.form.level) || (this.form.type == 'Governement' && !this.form.level) || 
       (this.form.type == 'School' && !this.form.school) ||
       (this.form.level == 'Faculty' && !this.form.faculty) ||
-      (this.form.level == 'Department' && !this.form.department)
+      (this.form.level == 'Department' && !this.form.department) || 
+      !this.is_verified
     },
 
     disabled_step_two(){
-      return this.form.timed && (!this.form.date || !this.form.time || this.form.electionDuration == 0)
+      return this.form.timed && 
+      (!this.form.date || 
+      !this.form.time || 
+      this.form.electionDuration == 0)
       
     },
     disabled_step_three(){
@@ -534,7 +552,8 @@ export default {
     ]),
     ...mapState([
       'curRoom',
-      'isSuperUser'
+      'isSuperUser',
+      'is_verified'
     ])
   },
   methods:{
@@ -672,15 +691,17 @@ export default {
       }
 
       batch.commit().then(async () => {
-        if(this.form.auto_enroll_admin){
+        
 
-          let newElec = await electionRef.get()
-          this.newElec = newElec.data()
-          this.$store.dispatch('setMyEnrolled', {
-            election: this.newElec,
-            merge: true
-          })
-        }
+        let newElec = await electionRef.get()
+        this.newElec = newElec.data()
+        this.$store.dispatch('setMyEnrolled', {
+          election: this.newElec,
+          merge: true
+        })
+
+        this.$store.dispatch('curRoom', this.newElec)
+        
 
         this.creating_election_dialog = false;
         this.plan_dialog = false;

@@ -16,7 +16,7 @@
         <v-layout align-center justify-center>
           <v-flex xs12 sm8 md4>
             <h1 class="text-xs-center white--text mb-3" ><a href="/" style="text-decoration:none;color:#fff"> Facevote</a></h1>
-            <v-subheader class="white--text text-xs-center d-block">Recover your account</v-subheader>
+            <v-subheader class="white--text text-xs-center d-block">{{text}}</v-subheader>
 
             <v-btn color="success" class="d-block" style="line-height:2.5" depressed v-if="resend_password_verification"
               to="/reset-password">
@@ -66,20 +66,21 @@
 <script>
 export default {
   data:()=>({
-    title:'Reset Password',
-    snackbar:{},
-    disabled:true,
-    show:false,
-    mode:'',
-    actionCode:'',
-    resend_email_verification:false,
-    resend_password_verification:false,
-    form:{
+    title:'Account Recovery | Facevote',
+    snackbar: {},
+    disabled: true,
+    show: false,
+    mode: '',
+    actionCode: '',
+    text: 'Account Recovery',
+    resend_email_verification: false,
+    resend_password_verification: false,
+    form: {
       email: '',
-      password:'',
-      password2:'',
+      password: '',
+      password2: '',
     },
-    valid:true,
+    valid: true,
     emailRules: [
       v => !!v || 'E-mail is required',
       v => /.+@.+/.test(v) || 'E-mail is not valid'
@@ -105,16 +106,21 @@ export default {
           }
           else{
             // Display reset password handler and UI.
+            this.title = 'Reset Your Password | Facevote'
             this.handleResetPassword(auth, this.actionCode);
           }
           
           break;
         case 'recoverEmail':
           // Display email recovery handler and UI.
+          this.title = 'Recover Email | Facevote'
+          this.text = 'Recover Your Email'
           this.handleRecoverEmail(auth, this.actionCode);
           break;
         case 'verifyEmail':
           // Display email verification handler and UI.
+          this.title = 'Verify Email | Facevote'
+          this.text = 'Verify Your Email'
           this.handleVerifyEmail(auth, this.actionCode);
           break;
         default:
@@ -188,7 +194,7 @@ export default {
       // Try to apply the email verification code.
       auth.applyActionCode(actionCode).then(resp=>{
         // Email address has been verified.
-        this.snackbar = {show:true,message:'Your email address has been verified successfully. You can now login', color:'purple'}
+        this.snackbar = {show:true,message:'Email verified successfully. You can now login', color: 'purple'}
         
         setTimeout(() => {
           // this.$router.push('/home')
@@ -198,7 +204,7 @@ export default {
       }).catch(error=>{
         // Code is invalid or expired. Ask the user to verify their email address
         // again.
-        this.snackbar = {show:true,message:error.message, color:'error'}
+        this.snackbar = {show: true, message: error.message, color:'error'}
         
       });
     },

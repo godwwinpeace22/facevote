@@ -12,9 +12,9 @@ import Vuex from 'vuex'
 import helpers from './helpers/helpers'
 import VueQuill from 'vue-quill'
 import vueAwesomeCountdown from 'vue-awesome-countdown'
-import LogRocket from 'logrocket';
+// import LogRocket from 'logrocket';
 
-LogRocket.init('8zkged/facevote-dev');
+// LogRocket.init('8zkged/facevote-dev');
 const plugin = {
   install () {
       Vue.helpers = helpers
@@ -31,7 +31,7 @@ Vue.mixin({
 */
 
 global.$NProgress = Nprogress
-global.$LogRocket = LogRocket
+// global.$LogRocket = LogRocket
 
 Vue.prototype.$eventBus = new Vue();
 Vue.use(Vuex)

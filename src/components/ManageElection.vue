@@ -15,18 +15,26 @@
     </v-container>
 
 			<!-- ==DETAILS AND CHARTS== -->
-			<v-container grid-list-xl fluid class="pb-0">
+			<v-container grid-list-xl fluid class="pb-0" :px-1="$vuetify.breakpoint.xsOnly">
 				<v-layout row wrap>
 					<v-flex sm12 md8 d-flex>
-						<v-card dark color="cyan" class="round_top v-card--offset" height="500" elevation="3">
+						<v-card dark color="cyan" class="round_top v-card--offset pb-2" :height="$vuetify.breakpoint.smAndUp ? 500 : ''" elevation="3">
 							
-							<v-card-title primary-title>
-								<span class="title">{{currElection.title}}</span> <small class="ml-2">( {{currElection.electionId}} )</small>
-								<v-spacer></v-spacer>
-								<v-subheader>Voter Registrations</v-subheader>
-							</v-card-title>
+							<v-toolbar card color="cyan">
+								<v-list dense class="round_top cyan" dark>
+									<v-list-tile>
+										<v-list-tile-content>
+											
+											<v-list-tile-title class="title">{{currElection.title}}</v-list-tile-title>
+											<v-list-tile-sub-title class="hidden-sm-and-up">Voter Registrations</v-list-tile-sub-title>
+										</v-list-tile-content>
+									</v-list-tile>
+								</v-list>
+								<v-spacer v-if="$vuetify.breakpoint.smAndUp"></v-spacer>
+								<v-subheader v-if="$vuetify.breakpoint.smAndUp">Voter Registrations</v-subheader>
+							</v-toolbar>
 							<v-sheet
-									height="400"
+									:height="$vuetify.breakpoint.smAndUp ? 400 : 400"
 									class="mx-auto"
 									style="" flat
 									color="white"
@@ -289,15 +297,17 @@
 											</v-list-tile-avatar>
 
 											<v-list-tile-content>
-												<v-list-tile-title  class="text-capitalize secondary--text">{{admin.name}}</v-list-tile-title>
-												<v-list-tile-sub-title>
+												<v-list-tile-title  class="text-capitalize secondary--text">
+													{{admin.name}}
+												</v-list-tile-title>
+												<v-list-tile-sub-title v-if="admin.uid == currElection.admin">
+													Creator
+												</v-list-tile-sub-title>
+												<v-list-tile-sub-title v-else>
 													<span class="online_badge" :class="[admin.online ? 'success' : 'orange']"></span>
 													{{admin.online ? 'online' : 'offline'}}
 												</v-list-tile-sub-title>
 											</v-list-tile-content>
-											<v-list-tile-action v-if="admin.uid == currElection.admin">
-												<v-list-tile-action-text class="secondary--text">Creator</v-list-tile-action-text>
-											</v-list-tile-action>
 										</v-list-tile>
 										<v-divider  :inset="true" :key="index"></v-divider>
 									</div>
@@ -494,7 +504,7 @@ export default {
           xAxes: [{
             ticks: {
                 beginAtZero: true,
-                autoSkip:false,
+                autoSkip: false,
             }
           }]
       }

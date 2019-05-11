@@ -42,7 +42,7 @@
 
     <v-tabs-items v-model="model" class="" style="background:#fff;" v-if="ready">
       <v-tab-item value="Chat" :style="styleForTabs">
-        <chatwindow :members='members' :room='this_group.electionId' :thisGroup='this_group'></chatwindow>
+        <chatwindow :members='members' :room='this_group.electionId' :thisGroup='this_group' :loading_messages="loading_messages"></chatwindow>
         <!-- Textarea -->
         <div v-show="model == 'Chat'" v-if="ready" :style="styleInput" style="display:;">
           <div class="chat_input white--text" id="chat_input" style='width:100%;background:#fff;z-index:0;'>
@@ -51,7 +51,7 @@
               <v-textarea v-model="message" v-on:keyup.enter="sendMessage" color="deep-purple" 
                 @keyup.shift.50="mention_dialog = true" 
                  id="form" :disabled="!canSendMessages"
-                :label="canSendMessages ? 'Type a message' : 'You cannot send messages in this group'" outline 
+                :label="canSendMessages ? 'Type a message' : text_label" outline 
                 rows="1" auto-grow hide-details
               >
               <v-tooltip top slot="append" v-show="!message.trim()">
@@ -220,6 +220,7 @@ export default {
     password: 'Password',
     drawerRight: true,
     model: 'Chat',
+    text_label: 'You cannot send messages in this forum',
     left: null,
     ready: false,
     emojis: [
@@ -227,6 +228,7 @@ export default {
       '😶','😏','😣','😯','😪','😛','😜','😒','😲','😟','💋','👽','👌','👍','✌️','👋','❤️','💘','💕',
       '✔️','☑️','🔥','🎯','🎤'
     ],
+    loading_messages: true,
     message: "",
     file_message: '',
     files: [],
@@ -247,22 +249,17 @@ export default {
     timeDistance: 0,
     show_imojis: false,
     members_dialog: false,
+    updateRef: '', // stop listening for updates
+    membersRef: '', // stop listening for updates
     cloudinary: {
       cloud_name: 'unplugged',
       upload_preset: 'pe4iolek'
     },
   }),
   watch: {
-    // '$route' (to, from) {
-    //   // react to route changes...
-    //   this.drawerRight = true
-    //   //console.log(to,from)
-    //   if(to.name =='members' && from.name == 'members'){
-    //     this.ready = false
-    //     this.setCurrRoom()
-    //   }
-    // },
+    
     curRoom: function(){
+      this.loading_messages = true
       this.setCurrRoom()
     }
   },
@@ -273,6 +270,7 @@ export default {
     ]),
     ...mapState([
       'curRoom',
+      'curRoomId',
       'isSuperUser'
     ]),
     breakpoint(){
@@ -280,9 +278,11 @@ export default {
     },
     canSendMessages(){
       // check if current user can send messages to current group
-      let enrolled = this.getUserInfo.enrolled.find(electionId => electionId == this.this_group.electionId)
+      let enrolled = this.getUserInfo.enrolled ? 
+        this.getUserInfo.enrolled.find(electionId => electionId == this.this_group.electionId) : false
       let banned = this.this_group.bif ?
       this.this_group.bif.find(memberId => memberId == this.getUser.uid) : false
+      !enrolled ? this.text_label = 'Enroll to join the conversation' : ''
       return enrolled && !banned ? true : false
        
     },
@@ -327,41 +327,43 @@ export default {
     
     retrieveMembers(){
       return new Promise((resolve,reject)=>{
-        db.collection('moreUserInfo')
+        this.membersRef = db.collection('moreUserInfo')
         .where('enrolled','array-contains', this.this_group.electionId)
         .limit(25)
         .onSnapshot(querySnapshot=>{
           this.members = []
           querySnapshot.forEach(doc=>{
-            //console.log(doc.id, " => ", doc.data());
             this.members.push(doc.data())
           })
-          // console.log(this.members)
           resolve(this.members)
-          //this.ready = true
         },err=>{
           reject(err)
         })
       })
     },
-    // opens the chat window on select
-    setCurrRoom(){
+    async getCurRoom(){
+      return db.collection('elections').doc(this.curRoomId)
+      .get().then(doc => {
+        this.this_group = doc.data()
+      })
+    },
+    async setCurrRoom(){
       
       if(this.curRoom){
-        this.this_group = this.curRoom
+        this.this_group = this.curRoom 
+        this.chatUpdate()
 
         this.retrieveMembers().then(members=>{
-          //console.log('members: ', members)
           this.ready = true;
-        }).catch(error=>this.$router.push('/notFound'))
+        }).catch(error=> console.log(error))
+
+      }
+      else if(this.$store.state.loading_rooms) {
 
       }
       else{
-        // this.$router.push('/notFound')
+        this.$router.push('/home')
       }
-      
-      
-      
     },
     async uploadImages(){
       try {
@@ -386,7 +388,7 @@ export default {
       
     },
     sendMessage () {
-      if(this.message.trim()){
+      if(this.message.trim() && this.canSendMessages){
         this.submit(this.message, null)
       }
     },
@@ -444,14 +446,36 @@ export default {
       this.message += ' @' + member.email + ' '
     },
     appendEmoji(emoji){
-      // console.log(emoji)
       this.message += emoji
     },
     scrollChat(){
        let doc = document.getElementById('chat_space')
       doc ? doc.scrollTop = doc.scrollHeight - doc.clientHeight : ''
-      // console.log(doc, doc.scrollTop)
     },
+    chatUpdate(){
+      
+      if(this.curRoom){
+        this.updateRef = db.collection('chat_messages')
+        .where('elecRef','==',this.curRoom.electionId)
+        .orderBy('tstamp', 'desc')
+        .limit(25)
+        .onSnapshot(snapshot=>{
+          let msgs = []
+          
+          snapshot.docChanges().forEach(function(change) {
+            if (change.type === "added") {
+                // console.log("New", change.doc.data());
+                msgs.push(change.doc.data())
+            }
+        })
+
+          this.offset = snapshot.docs[snapshot.docs.length - 1]
+
+          this.$store.dispatch('updateFromDb', msgs)
+          this.loading_messages = false
+        })
+      }
+    }
     
   },
   mounted(){
@@ -464,6 +488,7 @@ export default {
   created() {
     
     this.setCurrRoom()
+    // this.chatUpdate()
 
     this.$eventBus.$on('Toggle_drawerRight', data=>{
       this.drawerRight = data
@@ -475,19 +500,16 @@ export default {
     // console.log('before destroy')
   },
   destroyed(){
-    // console.log('destroyed')
-    //this.$eventBus.$emit('show_right_sidebar',null);
-    // hide the nav, hide the btn trigger [nav,btn]
-    // this.$store.dispatch('showRightNav', [false,false])
-    // this.$eventBus.$emit('change_title','FaceVote');
+    this.updateRef ? this.updateRef() : ''
+    this.membersRef ? this.membersRef() : ''
   },
   components:{
-    'chatwindow':Chatwindow,
-    'users':ForumUsers,
+    'chatwindow': Chatwindow,
+    'users': ForumUsers,
     Navigation,
     ChatMedia,
     LoadingBar,
-    Picker,
+    // Picker,
   }
 }
 //import io from 'socket.io-client';
@@ -500,7 +522,7 @@ export default {
   import Navigation from '@/components/Navigation'
   import ChatMedia from '@/components/ChatMedia'
   import LoadingBar from '@/spinners/LoadingBar'
-  import { Picker } from 'emoji-mart-vue'
+  // import { Picker } from 'emoji-mart-vue'
 </script>
 <style lang="scss" scoped>
 .v-content{

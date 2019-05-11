@@ -1,32 +1,99 @@
 <template>
   <div>
     <navigation>
-      <span>Dashboard</span>
+      <span slot="title">Verify Account</span>
     </navigation>
     
-    <v-container grid-list-xs>
+    <v-container grid-list-xs pa-0 >
       <v-layout row wrap>
         <v-flex>
-          <v-card class="text-xs-center pt-5" flat height="400">
-            Verify your account to allow you to enroll in elections
-            <h3>...COMING SOON...</h3>
+          <v-card class="text-xs-center pt-5 grey lighten-3" flat height="">
+            <v-container grid-list-xs >
+              <v-layout row wrap justify-center>
+                <v-flex sm5>
+                  <v-card height="" class="round" color="">
+                    <v-sheet flat width="61%" height="100" dark style="position: absolute;top: -40px;left: 20%;" color="transparent">
+                      <v-avatar
+                        size="100"
+                        color="success"
+                        class="elevation-1 d-block mx-auto"
+                        style="padding-top: 2px;"
+                      >
+                        
+                        <v-avatar class="d-block mx-auto"
+                          size="100"
+                        >
+                        <!-- <div v-if="verifying || verified" class="circle-loader" :class="[verified ? 'load-complete' : '']">
+                          <div class="checkmark draw" :style="{'display': verified ? 'block' : 'none'}"></div>
+                        </div> -->
+                        <v-progress-circular :value="100" :indeterminate="verifying" size="98" width="2" style="margin-top: -1.5px">
+                          <!-- <div class="checkmark draw" :style="{'display': verified ? 'block' : 'none'}"></div> -->
+                          <v-icon v-if="!verified" large>verified_user</v-icon>
+                          <v-icon v-if="verified" large>check</v-icon>
+                        </v-progress-circular>
+                        </v-avatar>
+                      </v-avatar>
+                    </v-sheet>
+
+                    <v-card-text class="pt-5 text-xs-center">
+                      <div class="mt-4">
+                        <span>Verify your account so that you can enroll in elections and participate in chat forums. It takes less than a minute. </span><br>
+                        <span>You will only need to do this <strong>once</strong>.</span><br>
+                        <router-link to="/faq">Find out more <v-icon small>open_in_new</v-icon></router-link>
+                      </div>
+                      <v-text-field
+                        v-model="bvn"
+                        label="Enter BVN"
+                        hint="Please provide your valid bvn"
+                        :type="show ? 'text' : 'password'"
+                        :append-icon="show ? 'visibility' : 'visibility_off'"
+                        @click:append="show = !show"
+                        counter="11"
+                        browser-autocomplete="vote"
+                        class="px-4" color="secondary"
+                      ></v-text-field>
+
+                      <v-text-field
+                        v-model="phone"
+                        label="Enter Phone number"
+                        hint="* This number should match the phone number associated with your BVN."
+                        type="number" counter="11"
+                        browser-autocomplete="phone" min="0"
+                        class="px-4" color="secondary"
+                      ></v-text-field>
+                    </v-card-text>
+                    
+                    <v-card-actions>
+                      <v-btn color="success" block flat v-if="is_verified">Your account is verified</v-btn>
+                      <v-btn
+                        v-else
+                        color="success" 
+                        ripple class="mx-auto" 
+                        :loading="verifying"
+                        @click="verify"
+                        :disabled="disabled_verify">Verify</v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-flex>
+              </v-layout>
+            </v-container>
           </v-card>
         </v-flex>
       </v-layout>
     </v-container>
 
-
   </div>
 </template>
 <script>
 export default {
-  data:()=>({
-    e5:1,
-    verify_dialog:false,
-    loading:false,
-    vid:'',
-    ctrack:'',
-    trackingStarted:false,
+  data: ()=>({
+    dialog: false,
+    show: false,
+    bvn: '',
+    phone: '',
+    verifying: false,
+    verified: false,
+    verify_dialog: false,
     cloudinary: {
        uploadPreset: 'izcl0gzg',
        cloudName: 'unplugged',
@@ -36,276 +103,60 @@ export default {
         ],
      }, 
   }),
+  watch: {
+    
+  },
+  computed: {
+    ...mapGetters([
+      'getUser',
+      'getUserInfo'
+    ]),
+    ...mapState([
+      'isSuperUser',
+      'is_verified'
+    ]),
+    disabled_verify(){
+      return !this.bvn.trim() || 
+      !this.phone.trim() || 
+      this.bvn.length != 11 ||
+      this.phone.length != 11
+    }
+  },
   methods:{
-    startCamera(){
-      /*if (navigator.getUserMedia) {
-        // Request the camera.
-        let $self = this
-        navigator.getUserMedia({	video: true}, function(localMediaStream) {
-            // Get a reference to the video element on the page.
-            var vid = document.getElementById('camera-stream');
-            $self.vid = vid
-            // Create an object URL for the video stream and use this to set the video source.
-            vid.srcObject = localMediaStream
-          },
-          function(err) {
-            console.log('The following error occurred when trying to use getUserMedia: ' + err);
-          }
-        );
-
-      }
-      else {
-        alert('Sorry, your browser does not support getUserMedia');
-      }*/
-
-
-      navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
-      window.URL = window.URL || window.webkitURL || window.msURL || window.mozURL;
-      // set up video
-      if (navigator.mediaDevices) {
-        navigator.mediaDevices.getUserMedia({video : true}).then(this.gumSuccess).catch(this.gumFail);
-      } else if (navigator.getUserMedia) {
-        navigator.getUserMedia({video : true}, gumSuccess, gumFail);
-      } else {
-        alert("Your browser does not seem to support getUserMedia, using a fallback video instead.");
-      }
-
+    verify(){
+      this.verifying = true
       
-      this.ctrack = new clm.tracker();
-      this.ctrack.init();
-      this.trackingStarted = false;
-      console.log(this.ctrack)
-    },
-    makeblob(dataURL) {
-			const BASE64_MARKER = ';base64,';
-			const parts = dataURL.split(BASE64_MARKER);
-			const contentType = parts[0].split(':')[1];
-			const raw = window.atob(parts[1]);
-      const rawLength = raw.length;
-      console.log(rawLength);
-			const uInt8Array = new Uint8Array(rawLength);
+      firebase.auth().currentUser.getIdToken().then((token)=>{
+        api().post('dashboard/verify', {
+          idToken: token,
+          bvn: this.bvn,
+          phone: this.phone
+        }).then(async result =>{
 
-			for (let i = 0; i < rawLength; ++i) {
-					uInt8Array[i] = raw.charCodeAt(i);
-			}
-      
-			return new Blob([uInt8Array], { type: contentType });
-		},
-    startVideo() {
-      // start video
-      var vid = document.getElementById('videoel');
-      var vid_width = vid.width;
-      var vid_height = vid.height;
-      var overlay = document.getElementById('overlay');
-      var overlayCC = overlay.getContext('2d');
-      
-      vid.play();
-      // start tracking
-      this.ctrack.start(vid);
-      this.trackingStarted = true;
-      console.log('trackingStarted: ', this.trackingStarted)
-      // start loop to draw face
-      this.drawLoop();
-    },
-    async verify(){
-      try {
-        this.loading = true
-        const canvas = document.createElement('canvas'); // create a canvas
-        const ctx = canvas.getContext('2d'); // get its context
-        canvas.width = 200; // set its size to the one of the video
-        canvas.height = 200;
-        ctx.drawImage(this.vid, 0,0); // the video
-        let base64Img = canvas.toDataURL('image/png')
-        document.getElementById('canvasImg').src = base64Img
-        //console.log(base64Img)
-        
-        
-        this.processImage(base64Img)
+          console.log(result)
+          this.verified = true
 
-        //let result = await api().post(`dashboard/verify/${this.$store.getters.getUser.uid}`)
-        //console.log(result)
-        //this.loading = false
-        //document.getElementById('canvasImg').src = URL.createObjectURL(blob)
-        /*let formData = new FormData();
-        formData.append('image',this.makeblob(base64Img));
-        formData.append('user',this.$store.getters.getUser._id)
-        let payload = {image:this.makeblob(base64Img),user:this.$store.getters.getUser._id}
-        let res = await api().post(`dashboard/recognize/${this.electionId}/${this.$store.getters.getToken}`, formData, {headers: {'Content-Type': 'multipart/form-data'}})
-        console.log(res.data)
-        
-        
+          this.$store.dispatch('verifiedState', true)
 
-       */
-       /*let requestUrl = 'http://api.kairos.com/detect'
-       var payload  = { "image" : "https://media.kairos.com/liz.jpg" };
-
-        let res = await api().post(requestUrl, 
-          JSON.stringify(payload),
-          {
-            headers: {
-              "Content-Type": "application/json",
-              "app_id":"",
-              "api_key":"",
-            }
-        })
-          
-       console.log(res)*/
-      } catch (err) {
-        console.log(err)
-        console.log(err.response)
-        this.loading = false
-
-      }
-    },
-    adjustVideoProportions() {
-      // resize overlay and video if proportions of video are not 4:3
-      // keep same height, just change width
-      console.log('adjust proportions')
-      var vid = document.getElementById('videoel');
-      var vid_width = vid.width;
-      var vid_height = vid.height;
-      var overlay = document.getElementById('overlay');
-      var overlayCC = overlay.getContext('2d');
-
-      var proportion = vid.videoWidth/vid.videoHeight;
-      vid_width = Math.round(vid_height * proportion);
-      vid.width = vid_width;
-      overlay.width = vid_width;
-    },
-    gumSuccess( stream ) {
-      // add camera stream if getUserMedia succeeded
-      var vid = document.getElementById('videoel');
-      if ("srcObject" in vid) {
-        vid.srcObject = stream;
-      } else {
-        vid.src = (window.URL && window.URL.createObjectURL(stream));
-      }
-      console.log('gumSuccess')
-      vid.onloadedmetadata = ()=>{
-        this.adjustVideoProportions();
-        vid.play();
-      }
-      vid.onresize = ()=>{
-        this.adjustVideoProportions();
-        if (this.trackingStarted) {
-          this.ctrack.stop();
-          this.ctrack.reset();
-          this.ctrack.start(vid);
-        }
-      }
-    },
-    gumFail() {
-      // fall back to video if getUserMedia failed
-      alert("There was some problem trying to fetch video from your webcam, using a fallback video instead.");
-    },
-    drawLoop(){
-      var vid = document.getElementById('videoel');
-      var vid_width = vid.width;
-      var vid_height = vid.height;
-      var overlay = document.getElementById('overlay');
-      var overlayCC = overlay.getContext('2d');
-
-      requestAnimationFrame(this.drawLoop)
-      overlayCC.clearRect(0, 0, vid_width, vid_height);
-      if (this.ctrack.getCurrentPosition()) {
-        //console.log(this.ctrack.getCurrentPosition())
-        this.ctrack.draw(overlay);
-      }
-      //console.log('drawLoop')
-    },
-    processImage(sourceImageUrl) {
-        
-        var subscriptionKey = "";
-
-        var uriBase =
-            "https://westcentralus.api.cognitive.microsoft.com/face/v1.0/detect";
-
-        // Request parameters.
-        var params = {
-            "returnFaceId": "true",
-            "returnFaceLandmarks": "false",
-            "returnFaceAttributes":
-                "age,gender,headPose,smile,facialHair,glasses,emotion," +
-                "hair,makeup,occlusion,accessories,blur,exposure,noise"
-        };
-
-        fetch(sourceImageUrl)
-          .then(res => res.blob())
-          .then(blobData => {
-            // attach blobData as the data for the post request
-            api().post(uriBase + "?" + $.param(params),
-            '{"url": ' + '"' + blobData + '"}', {
-                headers: {
-                  "Content-Type":"application/octet-stream",
-                  "Ocp-Apim-Subscription-Key":subscriptionKey
-                }
-            }).then(rf=>{
-              console.log(rf)
-              this.loading = false
-            }).catch(err=>{
-              console.log(err)
-              console.log(err.response)
-              this.loading = false
-            })
+          this.$eventBus.$emit('Snackbar', {
+            show: true,
+            message: 'Account verified successfully',
+            color: 'success'
           })
-        // Display the image.
-        //var sourceImageUrl = document.getElementById("inputImage").value;
-        //document.querySelector("#sourceImage").src = sourceImageUrl;
-        //var sourceImageUrl = 'https://www.eurekalert.org/multimedia/pub/web/169764_web.jpg'
 
-        
-        // Perform the REST API call.
-        
-        /*
-        $.ajax({
-            url: uriBase + "?" + $.param(params),
-
-            // Request headers.
-            beforeSend: function(xhrObj){
-                xhrObj.setRequestHeader("Content-Type","application/octet-stream");
-                xhrObj.setRequestHeader("Ocp-Apim-Subscription-Key", subscriptionKey);
-            },
-
-            type: "POST",
-
-            // Request body.
-            data: '{"url": ' + '"' + sourceImageUrl + '"}',
+          // this.$router.push('/home')
+        }).catch(err => {
+          this.verifying = false
+          $NProgress.done()
+          console.log(err.response)
+          this.$eventBus.$emit('Snackbar', {
+            show: true,
+            message: err.response ? err.response.data.message : 'Verification failed',
+            color: 'error'
+          })
         })
-
-        .done(function(data) {
-            // Show formatted JSON on webpage.
-            console.log(JSON.stringify(data, null, 2));
-        })
-
-        .fail(function(jqXHR, textStatus, errorThrown) {
-            // Display error message.
-            var errorString = (errorThrown === "") ?
-                "Error. " : errorThrown + " (" + jqXHR.status + "): ";
-            errorString += (jqXHR.responseText === "") ?
-                "" : (jQuery.parseJSON(jqXHR.responseText).message) ?
-                    jQuery.parseJSON(jqXHR.responseText).message :
-                        jQuery.parseJSON(jqXHR.responseText).error.message;
-            alert(errorString);
-        });*/
-    },
-    takeASnap(){
-        const canvas = document.createElement('canvas'); // create a canvas
-        const ctx = canvas.getContext('2d'); // get its context
-        canvas.width = this.vid.videoWidth; // set its size to the one of the video
-        canvas.height = this.vid.videoHeight;
-        ctx.drawImage(this.vid, 0,0); // the video
-        return new Promise((res, rej)=>{
-          canvas.toBlob(res, 'image/jpeg'); // request a Blob from the canvas
-        });
-      },
-    download(blob){
-        // uses the <a download> to download a Blob
-        let a = document.createElement('a'); 
-        a.href = URL.createObjectURL(blob);
-        a.download = 'screenshot.jpg';
-        document.body.appendChild(a);
-        a.click();
-      },
+      })
+    }
   },
   mounted(){
     
@@ -314,18 +165,12 @@ export default {
     Navigation
   }
 }
-// import api from '@/services/api'
-// import axios from 'axios'
+import api from '@/services/api'
 import Navigation from '@/components/Navigation'
-// import unirest from 'unirest'
-// import clm from 'clmtrackr'
-//const Kairos =  require('@/assets/kairos.js')
-//import { promisfy } from "@/helpers/promisify";
+import { mapGetters, mapState } from 'vuex';
 </script>
 
 
 <style lang="scss" scoped>
-  #videoel, #overlay{
-    position: absolute;
-  }
+  
 </style>

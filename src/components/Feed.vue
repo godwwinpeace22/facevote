@@ -3,9 +3,10 @@
     <vue-headful :title="title"/>
 
     <navigation>
-      <v-toolbar slot="extended_nav" color="teal" dark flat
+      <span slot="title">Feed</span>
+      <v-toolbar slot="extended_nav" color="success" dark flat
         style='background-color:#29648a;' dense v-if="breakpoint.smAndDown">
-        <v-tabs v-model="feed_model" color="teal" 
+        <v-tabs v-model="feed_model" color="success" 
           v-if="breakpoint.smAndDown" slider-color="yellow">
           <v-tab
             v-for="item in ['Feed','Campaigns']"
@@ -87,26 +88,10 @@
           
         </v-layout>
       </v-container>
-    
-      <!-- NO DATA -->
-      <v-container grid-list-xl v-if="ready && nodata" mt-5>
-        <v-layout row wrap>
-          <v-flex xs12 sm6>
-            <v-card class="round secondary lighten-3" height="400">
-              
-            </v-card> 
-          </v-flex>
-          <v-flex xs12 sm6>
-            <v-card class="round purple lighten-2" height="400">
-              
-            </v-card> 
-          </v-flex>
-        </v-layout>
-      </v-container>
 
       <!-- MAIN CONTENT -->
       <v-container grid-list-sm  :class="{'px-1':breakpoint.smAndDown, 'white': feed_model == 'Campaigns'}" 
-        v-if="ready && !nodata">
+        v-if="ready">
         <v-layout row wrap justify-space-between>
           <v-flex xs12 md8 >
             <v-tabs-items v-model="feed_model" class="">
@@ -118,25 +103,78 @@
                     
                     <!-- POST ACTIONS -->
                     <v-flex sm12 md12 pb-1>
-                      <v-card class="round_top pt-1" height="50" color="" flat :dark="$store.state.theme == 'dark'">
-                        <v-btn color="secondary lighten-2" dark depressed v-if="isSuperUser" text-color="white" class="linkify" 
-                          @click="new_post_dialog = true">      
-                          <v-icon class="pr-2">add_circle</v-icon>
-                          New Post
-                        </v-btn>
-                        <v-tooltip right v-else>
-                          <v-btn color="teal" slot="activator" disabled text-color="white" class="linkify">
+                      <v-card class="round_top pt-1" height="" color="" flat :dark="$store.state.theme == 'dark'">
+                        <v-card-actions>
+                          
+                          <v-btn color="secondary lighten-2" dark depressed v-if="isSuperUser" text-color="white" class="linkify" 
+                            @click="new_post_dialog = true">      
                             <v-icon class="pr-2">add_circle</v-icon>
                             New Post
                           </v-btn>
-                          <span>This feature requires a premium account</span>
-                        </v-tooltip>
+                          <v-tooltip right v-else>
+                            <v-btn color="teal" slot="activator" disabled text-color="white" class="linkify">
+                              <v-icon class="pr-2">add_circle</v-icon>
+                              New Post
+                            </v-btn>
+                            <span>This feature requires a premium account</span>
+                          </v-tooltip>
+                        </v-card-actions>
                       </v-card>
                     </v-flex>
 
                     <!-- POSTS -->
                     <v-flex xs12 sm12 md12 pt-0>
-                      <v-subheader v-if="posts.length == 0">No posts for the current election or applied filter</v-subheader>
+                      <template v-if="posts.length == 0">
+                        <v-card flat v-for="(post,i) in welcome_posts" :key="i + 'w_posts'"
+                          height="" class="mb-3 pb-2 ">
+                          
+                          <v-list two-line dense>
+                            <v-list-tile avatar>
+                              <v-list-tile-avatar :color="$helpers.colorMinder(post.onr.name.charAt(0))">
+                                <img :src="post.onr.photoURL" v-if="post.onr.photoURL">
+                                <span class="white--text headline" v-else>{{post.onr.name.charAt(0)}}</span>
+                              </v-list-tile-avatar>
+                              <v-list-tile-content>
+                                <v-list-tile-title class="secondary--text text-capitalize font-weight-bold linkify" style="width:fit-content" 
+                                  @click="$eventBus.$emit('ViewProfile', post.onr)">
+                                  {{post.onr.name}}
+                                </v-list-tile-title>
+                                <v-list-tile-sub-title>founder of Facevote</v-list-tile-sub-title>
+                              </v-list-tile-content>
+                            </v-list-tile>
+                          </v-list>
+
+                          <v-card-text>
+                            <span style="white-space: pre-wrap;" v-if="readmore.find(id=>id == post.docId)">{{post.body}}</span>
+                            <span v-else style="white-space: pre-wrap;">{{$helpers.truncateText(post.body, 350)}}</span>
+                            <span @click="readmore.push(post.docId)" class="secondary--text linkify" 
+                              style="text-decoration:none;" v-show="post.body.length > 350 && !readmore.find(id=>id == post.docId)">
+                              Read more
+                            </span>
+
+                            
+                          </v-card-text>
+
+                          <v-divider class="mx-3"></v-divider>
+                          <v-card-actions>
+                            <div style="width:fit-content;" class="text-xs-center">
+                              
+                              <v-btn depressed icon class="ml-1" small>
+                                <v-icon color="secondary" small>thumb_up</v-icon>
+                              </v-btn>
+                              <span class="">0 Likes</span>
+
+                              <v-btn icon dark class="ml-3" depressed small>
+                                <v-icon color="secondary" small>insert_comment</v-icon>
+                              </v-btn>
+                              <span class="linkify">0 Comments</span>
+
+                            </div>
+                          </v-card-actions>
+                        </v-card>
+                      </template>
+
+
                       <v-card flat v-for="(post,i) in posts" :key="i + '_posts'" :dark="$store.state.theme == 'dark'"
                         height="" class="mb-3 pb-2 ">
                         
@@ -153,13 +191,6 @@
                               </v-list-tile-title>
                               <v-list-tile-sub-title>{{$helpers.parseDate(post.tstamp.toMillis(), true)}}</v-list-tile-sub-title>
                             </v-list-tile-content>
-                            <!-- <v-list-tile-action>
-                              <v-progress-circular v-if="waiting" :value="10"  class="d-inline-block" color="grey" indeterminate></v-progress-circular>
-                              <v-menu offset-y top left>
-                              <v-icon color="grey" slot="activator">more_horiz</v-icon>
-                                
-                              </v-menu>
-                            </v-list-tile-action> -->
                           </v-list-tile>
                         </v-list>
 
@@ -505,7 +536,25 @@ export default {
     body: [],
     campaignsLimit: 5,
     ready: false,
-    nodata: false
+    nodata: false,
+    welcome_posts: [
+      {
+        onr: {
+          name: 'Godwin Gabriel',
+          is_student: false,
+          photoURL: 'https://res.cloudinary.com/unplugged/image/upload/v1556894107/contestr/profile_avatars/imgSrcsmhPFNdktRNXLSe858h2YrW5Mqt2.jpg',
+        },
+        body: 'Welcome to Facevote'
+      },
+      {
+        onr: {
+          name: 'Godwin Gabriel',
+          is_student: false,
+          photoURL: 'https://res.cloudinary.com/unplugged/image/upload/v1556894107/contestr/profile_avatars/imgSrcsmhPFNdktRNXLSe858h2YrW5Mqt2.jpg',
+        },
+        body: "To be able to create posts like this, you need superuser access. Just go the menu and upgrade your account. Don't be scared, you won't be charged as its only a test transaction. Just click on 'use test card' during payment to upgrade for free"
+      }
+    ]
   }),
   watch: {
     'curRoom': function(){
@@ -513,7 +562,7 @@ export default {
       this.latestCampaigns()
     }
   },
-  components:{
+  components: {
     Navigation,
     ViewProfile,
     NewPost,
@@ -521,11 +570,10 @@ export default {
     ViewCampaign,
     // Picker
   },
-  computed:{
+  computed: {
     ...mapGetters([
       'getUser',
       'getUserInfo',
-      'getFeedFilter',
       'getMyEnrolled'
     ]),
     ...mapState([
@@ -539,7 +587,7 @@ export default {
     switchTransition(){
       return this.breakpoint.smAndDown ? 
       'slide-x-reverse-transition' : 
-      'dialog-bottom-transition'
+      'dialog-transition'
     },
     styleForTabs(){
       if(this.breakpoint.xsOnly){
@@ -743,10 +791,10 @@ export default {
     },
     latestPosts(){
       return new Promise((resolve,reject)=>{
-        if(this.curRoom){
+        if(this.curRoomId){
 
           let docRef = db.collection('posts')
-          .where('elecRef','==',this.curRoom.electionId)
+          .where('elecRef','==',this.curRoomId)
           .orderBy('tstamp','desc').limit(25)
           docRef.onSnapshot(querySnapshot=>{
             let posts = []
@@ -766,7 +814,7 @@ export default {
             // console.log(err)
           })
         }
-        else{
+        else {
           this.ready = true;
           this.nodata = true
         }
@@ -775,12 +823,12 @@ export default {
     },
     latestCampaigns(){
       return new Promise((resolve,reject)=>{
-        if(this.curRoom){
+        if(this.curRoomId){
 
           let now = Date.now()
           let twenty4hrs = 24 * 60 * 60 * 1000
           this.campRef = db.collection('campaign_posts')
-          .where('elecRef','==', this.curRoom.electionId)
+          .where('elecRef','==', this.curRoomId)
           .where('expires_in', '>', now)
           .orderBy("expires_in")
           // .limit(100)
@@ -812,6 +860,28 @@ export default {
        
           resolve(this.campaigns)
         }
+      })
+    },
+    getPostsInUserDept(){
+      db.collection('posts')
+      .where('sch', '==', this.getUserInfo.sch)
+      .where('dept', '==', this.getUserInfo.dept)
+      .orderBy('tstamp','desc').limit(25)
+      .get().then(querySnapshot=>{
+        let posts = []
+        querySnapshot.forEach(doc => {
+          //console.log(doc.data().id)
+          posts.push(doc.data())
+        });
+
+        this.posts_offset = querySnapshot.docs[querySnapshot.docs.length-1]
+        // this.posts = posts.sort((a,b)=> b.tstamp - a.tstamp)
+        this.posts = posts
+
+        this.ready = true;
+        this.nodata = false
+      }, err=> {
+        // console.log(err)
       })
     },
     async add_reaction(post){
@@ -876,7 +946,6 @@ import NewPost from '@/components/profile/NewPost'
 import NewCampaign from '@/components/profile/NewCampaign'
 import ViewCampaign from '@/components/ViewCampaign'
 import {mapGetters, mapState} from 'vuex'
-import { Picker } from 'emoji-mart-vue'
 </script>
 <style lang="scss" scoped>
   @mixin borderTopRadius($radius) {

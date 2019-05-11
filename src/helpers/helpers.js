@@ -21,21 +21,15 @@ export default {
     charIndex <= 24 ? 'orange' : 
     'primary'
   },
-  // eslint-disable-next-line
-  // truncateText(text,length=18){
-  //   return text.replace(/(.{length})..+/, "$1...");
-  // },
   capitalize(text){
     return text ? text.toLowerCase().split(' ')
-      .map( w =>  w.substring(0,1).toUpperCase()+ w.substring(1)).join(' ') : 
-      text
+      .map( w =>  w.substring(0,1).toUpperCase()+ w.substring(1)).join(' ') : text
   },
   truncateText(text, length=18){
     return typeof text === 'string' ?
       text.length > length ?
       text.substr(0, length) + '...' :
-      text :
-      text
+      text : text
   },
   trigFileSelector(){
     document.getElementById('file_img').click()
@@ -143,14 +137,20 @@ export default {
   },
 
   userDetails(user){
-    // console.log(user)
+    
     return new Promise((resolve,reject)=>{
-      // eslint-disable-next-line
-      db.collection('moreUserInfo').doc(user.uid).onSnapshot(doc =>{
-        // console.log(doc.data())
-        $store.dispatch('setUserInfo',doc.data())
-        resolve(doc.data())
-      }, err => reject(err))
+      if($store.state.userInfo){
+        // eslint-disable-next-line
+        resolve($store.state.userInfo)
+      }
+      else {
+        
+        db.collection('moreUserInfo').doc(user.uid).onSnapshot(doc =>{
+          // console.log(doc.data())
+          $store.dispatch('setUserInfo',doc.data())
+          resolve(doc.data())
+        }, err => reject(err))
+      }
     })
     
   },
