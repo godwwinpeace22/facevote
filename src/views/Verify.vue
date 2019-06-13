@@ -23,11 +23,7 @@
                         <v-avatar class="d-block mx-auto"
                           size="100"
                         >
-                        <!-- <div v-if="verifying || verified" class="circle-loader" :class="[verified ? 'load-complete' : '']">
-                          <div class="checkmark draw" :style="{'display': verified ? 'block' : 'none'}"></div>
-                        </div> -->
                         <v-progress-circular :value="100" :indeterminate="verifying" size="98" width="2" style="margin-top: -1.5px">
-                          <!-- <div class="checkmark draw" :style="{'display': verified ? 'block' : 'none'}"></div> -->
                           <v-icon v-if="!verified" large>verified_user</v-icon>
                           <v-icon v-if="verified" large>check</v-icon>
                         </v-progress-circular>
@@ -39,17 +35,15 @@
                       <div class="mt-4">
                         <span>Verify your account so that you can enroll in elections and participate in chat forums. It takes less than a minute. </span><br>
                         <span>You will only need to do this <strong>once</strong>.</span><br>
-                        <router-link to="/faq">Find out more <v-icon small>open_in_new</v-icon></router-link>
+                        <a href="https://voteryte.com/faq" target="blank">Find out more <v-icon small>open_in_new</v-icon></a>
                       </div>
                       <v-text-field
                         v-model="bvn"
                         label="Enter BVN"
                         hint="Please provide your valid bvn"
-                        :type="show ? 'text' : 'password'"
-                        :append-icon="show ? 'visibility' : 'visibility_off'"
                         @click:append="show = !show"
                         counter="11"
-                        browser-autocomplete="vote"
+                        :browser-autocomplete="(new Date()).toISOString()"
                         class="px-4" color="secondary"
                       ></v-text-field>
 
@@ -127,13 +121,13 @@ export default {
       this.verifying = true
       
       firebase.auth().currentUser.getIdToken().then((token)=>{
-        api().post('dashboard/verify', {
+        api2().post('dashboard/verify', {
           idToken: token,
           bvn: this.bvn,
           phone: this.phone
         }).then(async result =>{
 
-          console.log(result)
+          // console.log(result)
           this.verified = true
 
           this.$store.dispatch('verifiedState', true)
@@ -143,12 +137,13 @@ export default {
             message: 'Account verified successfully',
             color: 'success'
           })
+          location.reload()
 
           // this.$router.push('/home')
         }).catch(err => {
           this.verifying = false
-          $NProgress.done()
-          console.log(err.response)
+          this.$Nprogress.done()
+          // console.log(err.response)
           this.$eventBus.$emit('Snackbar', {
             show: true,
             message: err.response ? err.response.data.message : 'Verification failed',
@@ -165,9 +160,10 @@ export default {
     Navigation
   }
 }
-import api from '@/services/api'
+import api2 from '@/services/api2'
 import Navigation from '@/components/Navigation'
 import { mapGetters, mapState } from 'vuex';
+import {firebase, db, database} from '@/plugins/firebase'
 </script>
 
 

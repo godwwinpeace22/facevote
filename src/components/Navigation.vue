@@ -1,8 +1,8 @@
 <template>
-  <v-toolbar color="success" dense dark flat app clipped-right style='background-color:#29648a;'>
+  <v-toolbar color="teal" dark flat app clipped-right style='background-color:#29648a;'>
     <v-toolbar-side-icon @click.stop="$eventBus.$emit('Toggle_Left_Drawer')"></v-toolbar-side-icon>
     <v-toolbar-title v-show="$vuetify.breakpoint.width > 344">
-      <slot name='title'>Facevote</slot>
+      <slot name='title'>{{$appName}}</slot>
     </v-toolbar-title>
     <v-spacer></v-spacer>
     
@@ -40,12 +40,6 @@
 
         <v-divider></v-divider>
 
-        <v-list-tile to="#">
-          <v-icon color="primary">help</v-icon>
-          <v-list-tile-title style="margin-left:5px;">Help</v-list-tile-title>
-        </v-list-tile>
-        <v-divider></v-divider>
-
         <v-list-tile @click="logout">
             <v-icon color="error">exit_to_app</v-icon>
           <v-list-tile-title style="margin-left:5px;">Logout</v-list-tile-title>
@@ -64,7 +58,7 @@
 <script>
 export default {
   data:()=>({
-    settings_dialog:false
+    settings_dialog: false
   }),
   methods:{
     logout(){
@@ -87,6 +81,7 @@ export default {
     ProfileSettings,
   },
    mounted(){
+    //  console.log(this.getUser)
      this.$eventBus.$on('hide_profile_settings', ()=>{
       this.settings_dialog = false
     })
@@ -97,6 +92,7 @@ export default {
 }
 import { mapGetters, mapState } from 'vuex'
 import ProfileSettings from '@/components/ProfileSettings'
+import {firebase, db, database} from '@/plugins/firebase'
 </script>
 <style lang="sass" scoped>
   

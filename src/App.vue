@@ -9,7 +9,7 @@
 export default {
   name: 'App',
   data: ()=> ({
-    message:'FACEVOTE'
+    
   }),
   mounted(){
     // document.getElementById('welcome_logo').style.display = 'none'

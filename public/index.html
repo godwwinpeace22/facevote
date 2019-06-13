@@ -20,17 +20,25 @@
         max-width: 50%;
       }
     </style>
+    <script>
+      if(self == top) {
+          document.documentElement.style.display = 'block'; 
+      } else {
+          top.location = self.location; 
+      }
+   </script>
     
-    <title>Facevote</title>
+    <title>Voteryte</title>
+    <script src="https://wchat.freshchat.com/js/widget.js"></script>
   </head>
   <body>
     <noscript>
-      <strong>We're sorry but facevote doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+      <strong>We're sorry but Voteryte doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
     </noscript>
     <div id="app"></div>
     
     <div class="Aligner" id="welcome_logo">
-      <img  class="Aligner-item" src="<%= BASE_URL %>img/icons/msapplication-icon-144x144.png" alt="logo" srcset="">
+      <img  class="Aligner-item" src="<%= BASE_URL %>img/icons/logo-50x50-w.png" alt="logo" srcset="">
     </div>
     
   </body>

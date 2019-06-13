@@ -61,7 +61,6 @@
 <script>
 export default {
   data:()=>({
-    title:'Recover Account | Facevote',
     description:'',
     message:'',
     loading:false,
@@ -82,8 +81,10 @@ export default {
     footr:Footer
   },
   computed: {
-      
+    title(){
+      return `Recover Account | ${this.$appName}`
     },
+  },
   methods:{
     async reset(){
       try{
@@ -101,13 +102,13 @@ export default {
         else{
           this.snackbar = true
           this.message = 'Please provide email'
-          $NProgress.done()
+          $Nprogress.done()
         }
       }
       catch(err){
         this.snackbar = true
         this.message = err.response.data.message
-        $NProgress.done()
+        $Nprogress.done()
       }
     }
   },
@@ -118,7 +119,7 @@ export default {
 
 import Nav from '@/components/Nav'
   import Footer from '@/components/Footer'
-  import api from '@/services/api'
+  import api from '@/services/api2'
 </script>
 <style lang="scss">
   @mixin MainColor(){

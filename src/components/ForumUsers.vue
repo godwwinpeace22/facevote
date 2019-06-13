@@ -136,6 +136,7 @@ export default {
 }
 //import api from '@/services/api'
 import {mapGetters} from 'vuex'
+import {firebase, db, database} from '@/plugins/firebase'
 </script>
 
 <style lang="scss" scoped>

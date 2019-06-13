@@ -138,6 +138,7 @@ export default {
 
 import {mapGetters, mapState} from 'vuex'
 import ProfileSettings from '@/components/ProfileSettings'
+import {firebase, db, database} from '@/plugins/firebase'
 </script>
 
 <style lang="scss" scoped>

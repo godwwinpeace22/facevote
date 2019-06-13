@@ -4,9 +4,9 @@
 
     <navigation>
       <span slot="title">Feed</span>
-      <v-toolbar slot="extended_nav" color="success" dark flat
+      <v-toolbar slot="extended_nav" color="teal" dark flat
         style='background-color:#29648a;' dense v-if="breakpoint.smAndDown">
-        <v-tabs v-model="feed_model" color="success" 
+        <v-tabs v-model="feed_model" color="teal" 
           v-if="breakpoint.smAndDown" slider-color="yellow">
           <v-tab
             v-for="item in ['Feed','Campaigns']"
@@ -111,20 +111,19 @@
                             <v-icon class="pr-2">add_circle</v-icon>
                             New Post
                           </v-btn>
-                          <v-tooltip right v-else>
-                            <v-btn color="teal" slot="activator" disabled text-color="white" class="linkify">
-                              <v-icon class="pr-2">add_circle</v-icon>
-                              New Post
-                            </v-btn>
-                            <span>This feature requires a premium account</span>
-                          </v-tooltip>
+
+                          <v-btn color="secondary lighten-2" dark depressed v-if="!isSuperUser" text-color="white" class="linkify" 
+                            @click="$eventBus.$emit('Show_Upgrade_Dialog')">      
+                            <v-icon class="pr-2">add_circle</v-icon>
+                            New Post
+                          </v-btn>
                         </v-card-actions>
                       </v-card>
                     </v-flex>
 
                     <!-- POSTS -->
                     <v-flex xs12 sm12 md12 pt-0>
-                      <template v-if="posts.length == 0">
+                      <template v-if="posts.length == 0 || $route.query.welcome">
                         <v-card flat v-for="(post,i) in welcome_posts" :key="i + 'w_posts'"
                           height="" class="mb-3 pb-2 ">
                           
@@ -136,23 +135,16 @@
                               </v-list-tile-avatar>
                               <v-list-tile-content>
                                 <v-list-tile-title class="secondary--text text-capitalize font-weight-bold linkify" style="width:fit-content" 
-                                  @click="$eventBus.$emit('ViewProfile', post.onr)">
+                                  @click="''">
                                   {{post.onr.name}}
                                 </v-list-tile-title>
-                                <v-list-tile-sub-title>founder of Facevote</v-list-tile-sub-title>
+                                <v-list-tile-sub-title>Founder of Voteryte</v-list-tile-sub-title>
                               </v-list-tile-content>
                             </v-list-tile>
                           </v-list>
 
                           <v-card-text>
-                            <span style="white-space: pre-wrap;" v-if="readmore.find(id=>id == post.docId)">{{post.body}}</span>
-                            <span v-else style="white-space: pre-wrap;">{{$helpers.truncateText(post.body, 350)}}</span>
-                            <span @click="readmore.push(post.docId)" class="secondary--text linkify" 
-                              style="text-decoration:none;" v-show="post.body.length > 350 && !readmore.find(id=>id == post.docId)">
-                              Read more
-                            </span>
-
-                            
+                            <span style="white-space: pre-wrap;">{{post.body}}</span>
                           </v-card-text>
 
                           <v-divider class="mx-3"></v-divider>
@@ -189,7 +181,7 @@
                                 @click="$eventBus.$emit('ViewProfile', post.onr)">
                                 {{post.onr.name}}
                               </v-list-tile-title>
-                              <v-list-tile-sub-title>{{$helpers.parseDate(post.tstamp.toMillis(), true)}}</v-list-tile-sub-title>
+                              <v-list-tile-sub-title>{{$helpers.parseDate(post.tstamp ? post.tstamp.toMillis() : Date.now(), true)}}</v-list-tile-sub-title>
                             </v-list-tile-content>
                           </v-list-tile>
                         </v-list>
@@ -308,7 +300,7 @@
                                                 <v-list-tile-title style="" class="secondary--text">
                                                   {{comment.onr.name}}
                                                 </v-list-tile-title>
-                                                <v-list-tile-sub-title>{{$helpers.parseDate(comment.tstamp.toMillis(),true)}}</v-list-tile-sub-title>
+                                                <v-list-tile-sub-title>{{$helpers.parseDate(comment.tstamp ? comment.tstamp.toMillis() : Date.now(),true)}}</v-list-tile-sub-title>
                                               </v-list-tile-content>
                                             </v-list-tile>
                                           </v-list>
@@ -339,6 +331,7 @@
                           </div>
                         </v-expand-transition>
                       </v-card>
+
                       <v-btn v-if="posts.length >= 25" color="secondary" style="text-transform: initial;" :loading="loading_more_posts"
                         @click="morePosts" class="d-block mx-auto" flat small >
                         See More
@@ -365,7 +358,7 @@
                             <v-list-tile-content>
                               <v-list-tile-title class="secondary--text">
                                 Add Your Campaign</v-list-tile-title>
-                              <v-list-tile-sub-title>Add a campaign that disappears in 24 hours</v-list-tile-sub-title>
+                              <v-list-tile-sub-title>Campaigns disappears after 24 hours</v-list-tile-sub-title>
                             </v-list-tile-content>
                           </v-list-tile>
                         </v-list>
@@ -456,7 +449,7 @@
     </transition>
     
     <!-- NEW CAMPAIGN DIALOG -->
-    <v-dialog v-model="new_campaign" lazy scrollable
+    <v-dialog v-model="new_campaign" lazy scrollable persistent
       max-width="500px" :transition="switchTransition" :fullscreen="breakpoint.smAndDown">
       <v-card flat>
         <v-toolbar card dense flat>
@@ -481,7 +474,7 @@
     <!-- VIEW CAMPAIGN -->
     <v-dialog v-model="view_campaign" content-class="white view_dialog" 
       v-if="view_campaign" max-width="500" lazy :transition="switchTransition"
-      :fullscreen="breakpoint.smAndDown" scrollable>
+      :fullscreen="breakpoint.smAndDown" scrollable hide-overlay>
 
       <view-campaign :selectedcampaign="selected_campaign" :campaigns='getCampaigns'/>
         
@@ -504,7 +497,7 @@
 <script>
 export default {
   data:()=>({
-    title:'Home | Facevote',
+    title:'Home | Votertye',
     posts: [],
     snackbar: false,
     feed_model: 'Feed',
@@ -537,24 +530,7 @@ export default {
     campaignsLimit: 5,
     ready: false,
     nodata: false,
-    welcome_posts: [
-      {
-        onr: {
-          name: 'Godwin Gabriel',
-          is_student: false,
-          photoURL: 'https://res.cloudinary.com/unplugged/image/upload/v1556894107/contestr/profile_avatars/imgSrcsmhPFNdktRNXLSe858h2YrW5Mqt2.jpg',
-        },
-        body: 'Welcome to Facevote'
-      },
-      {
-        onr: {
-          name: 'Godwin Gabriel',
-          is_student: false,
-          photoURL: 'https://res.cloudinary.com/unplugged/image/upload/v1556894107/contestr/profile_avatars/imgSrcsmhPFNdktRNXLSe858h2YrW5Mqt2.jpg',
-        },
-        body: "To be able to create posts like this, you need superuser access. Just go the menu and upgrade your account. Don't be scared, you won't be charged as its only a test transaction. Just click on 'use test card' during payment to upgrade for free"
-      }
-    ]
+    
   }),
   watch: {
     'curRoom': function(){
@@ -568,7 +544,6 @@ export default {
     NewPost,
     NewCampaign,
     ViewCampaign,
-    // Picker
   },
   computed: {
     ...mapGetters([
@@ -632,6 +607,21 @@ export default {
         }
       })
       return enrolled
+    },
+    welcome_posts(){
+      return [
+        {
+          onr: {
+            name: 'Godwin Gabriel',
+            is_student: false,
+            photoURL: 'https://res.cloudinary.com/unplugged/image/upload/v1556894107/contestr/profile_avatars/imgSrcsmhPFNdktRNXLSe858h2YrW5Mqt2.jpg',
+          },
+          body: `Hi ${this.getUser.displayName}. I want to personally welcome you onboard. You’re joining thousands of users who use Voteryte to select their next set of leaders. Thank you for chosing us.
+
+You can create posts, campaigns, manifestos, or interact with other voters in the forum. 
+We are here to help if you need any help. Feel free to chat with us.`
+        }
+      ]
     }
   },
   methods:{
@@ -946,6 +936,8 @@ import NewPost from '@/components/profile/NewPost'
 import NewCampaign from '@/components/profile/NewCampaign'
 import ViewCampaign from '@/components/ViewCampaign'
 import {mapGetters, mapState} from 'vuex'
+import {firebase, db, database} from '@/plugins/firebase'
+
 </script>
 <style lang="scss" scoped>
   @mixin borderTopRadius($radius) {

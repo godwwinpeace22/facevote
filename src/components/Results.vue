@@ -244,12 +244,12 @@
                   
                   <v-tab-item value="tab-1">
                     <v-card flat>
-                      <bar-chart :chart-data="chartData[role.title]" :options="chartOptions"></bar-chart>
+                      <bar-chart :chart-data="chartData[role.title] ? chartData[role.title] : {}" :options="chartOptions"></bar-chart>
                     </v-card>
                   </v-tab-item>
                   <v-tab-item value="tab-2" >
                     <v-card flat>
-                      <pie-chart :chart-data="chartData[role.title]" :options="chartOptions2"></pie-chart>
+                      <pie-chart :chart-data="chartData[role.title] ? chartData[role.title] : {}" :options="chartOptions2"></pie-chart>
                     </v-card>
                   </v-tab-item>
                 </v-tabs-items>
@@ -316,7 +316,6 @@
 <script>
 export default {
   data:()=>({
-    title:'Results | Facevote',
     results:[],
     model:[],
     show: false,
@@ -380,7 +379,16 @@ export default {
   props:['id','roles','currElection','allVotes', 'rawVotes',
     'regVoters','contestants', 'charDate3', 'status'
   ],
+  watch: {
+    'curRoom': function(){
+      console.log({regvoters: this.regVoters, contestants: this.contestants, chardate: this.charDate3, status: this.status, roles: this.roles})
+      this.curRoom ? this.setUp() : ''
+    },
+  },
   computed:{
+    title(){
+      return `Results | ${this.$appName}`
+    },
     endTime(){
       let a = this.currElection
       let enddate = new Date(a.startDate + ' ' + a.startTime)
@@ -396,13 +404,13 @@ export default {
     },
     no_of_voters(){
       if(this.regVoters){
-        let len = this.currElection.voters
+        let len = this.currElection.voters || 0
         
         switch (true){
           case len > 1000000:
-            return len / 1000000 + 'M +'
+            return Math.round(len / 1000000) + 'M +'
           case len > 1000:
-            return len / 1000 + 'K + '
+            return Math.round(len / 1000) + 'K + '
           default:
             return len
         }
@@ -416,9 +424,9 @@ export default {
         
         switch (true){
           case len > 1000000:
-            return len / 1000000 + 'M +'
+            return Math.round(len / 1000000) + 'M +'
           case len > 1000:
-            return len / 1000 + 'K + '
+            return Math.round(len / 1000) + 'K + '
           default:
             return len
         }
@@ -462,11 +470,28 @@ export default {
     
   },
   methods:{
+    setUp(){
+      this.results = (this.allVotes).sort(
+        (a,b) => b.score - a.score
+      )
+
+      // console.log('setup running: ', this.results)
+      this.currElection.level == 'Department' ? this.deptTurnout() : ''
+      this.currElection.level == 'Faculty' ? this.turnoutByDepartment() : ''
+      this.currElection.level == 'General' ? this.turnoutByFaculty() : ''
+      this.sortResults()
+      this.getLabels()
+      this.allWinners()
+      this.percentageShareOfAllVotes()
+      this.currElection.type == 'School' && this.isSuperUser ? this.votesInEachFaculty() : ''
+      this.currElection.type == 'School' && this.isSuperUser ? this.votesInEachDepartment() : ''
+    },
     getName(id){ // return the name of each contestant
       let user = this.contestants.filter(
         item => item.uid == id
       )
-      return user[0].name
+      // console.log(this.contestants, user[0] , id)
+      return user[0] ? user[0].name : ' '
     },
     getDetail(id){ // return the name of each contestant
       let user = this.contestants.filter(
@@ -487,7 +512,7 @@ export default {
       return scoreArr.sort((a,b)=>b - a).indexOf(score) == 0 ? '🏆'   :
         scoreArr.sort((a,b)=>b - a).indexOf(score) == 1 ? '2nd' :
         scoreArr.sort((a,b)=>b - a).indexOf(score) == 2 ? '3rd' : 
-        score + 'th'
+        scoreArr.sort((a,b)=>b - a).indexOf(score) + 1 + 'th'
     },
     getWinner(role){
       let rl = this.results.filter(
@@ -512,7 +537,7 @@ export default {
       return total_score_for_role ?  contestant.score/total_score_for_role * 100 : ''
     },
     getImgSrc(id){
-      // console.log(this.contestants)
+      // console.log({contestants: this.contestants})
       return this.contestants.filter(item=> item.uid == id)[0].photoURL
     },
     sortResults(){
@@ -784,26 +809,13 @@ export default {
   },
   mounted(){
     // console.log(this.$parent)
+    this.setUp()
   },
   async created(){
     
-    this.results = (this.allVotes).sort(
-      (a,b) => b.score - a.score
-    )
-    //console.log(this.results)
-    this.currElection.level == 'Department' ? this.deptTurnout() : ''
-    this.currElection.level == 'Faculty' ? this.turnoutByDepartment() : ''
-    this.currElection.level == 'General' ? this.turnoutByFaculty() : ''
-    this.sortResults()
-    this.getLabels()
-    this.allWinners()
-    this.percentageShareOfAllVotes()
-    this.currElection.type == 'School' && this.isSuperUser ? this.votesInEachFaculty() : ''
-    this.currElection.type == 'School' && this.isSuperUser ? this.votesInEachDepartment() : ''
-    //console.log(this.contestants)
   },
   destroyed(){
-    document.title = 'Vote | Facevote'
+    document.title = `Vote | ${this.$appName}`
   }
 }
 
@@ -811,6 +823,7 @@ import api from '@/services/api'
 import {mapGetters, mapState} from 'vuex'
 import piechart from '@/charts/piechart'
 import barchart from '@/charts/barchart'
+import {firebase, db, database} from '@/plugins/firebase'
 //import polararea from '@/charts/polararea'
 </script>
 

@@ -10,11 +10,11 @@ let config = {
   projectId: "facevote-eb748",
 };
 
-global.firebase = firebase
-global.app = firebase.initializeApp(config);
 
-global.db = firebase.firestore();
-global.database = firebase.database();
+firebase.initializeApp(config);
+
+const db = firebase.firestore()
+const database = firebase.database();
 
 firebase.firestore().enablePersistence({experimentalTabSynchronization:true})
 .catch(function(err) {
@@ -31,4 +31,6 @@ firebase.firestore().enablePersistence({experimentalTabSynchronization:true})
     /* eslint-disable-next-line */
     console.log(err)
   }
-});
+})
+
+export { firebase, db, database }

@@ -1045,6 +1045,7 @@ export default {
 }
 import api from '@/services/api'
 import {mapGetters, mapState} from 'vuex'
+import {firebase, db, database} from '@/plugins/firebase'
   //import EditElection from '@/components/EditElection'
 </script>
 <style scopped>

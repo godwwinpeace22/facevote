@@ -254,6 +254,7 @@ export default {
 //import api from "@/services/api";
 import ProfileSettings from '@/components/ProfileSettings'
 import {mapGetters, mapState} from 'vuex'
+import {firebase, db, database} from '@/plugins/firebase'
 </script>
 <style lang="scss" scoped>
   #online_badge{

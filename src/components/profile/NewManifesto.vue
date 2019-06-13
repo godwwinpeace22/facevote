@@ -174,6 +174,7 @@ export default {
 }
 import api from '@/services/api'
 import {mapGetters, mapState} from 'vuex'
+import {firebase, db, database} from '@/plugins/firebase'
 </script>
 <style lang="scss">
 	@import url(https://cdn.quilljs.com/1.2.6/quill.snow.css);

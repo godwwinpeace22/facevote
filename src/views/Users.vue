@@ -36,7 +36,7 @@
                     :color="$helpers.colorMinder(user.name.charAt(0))"
                   >
                     <img :src="user.photoURL" :alt="user.name" v-if="user.photoURL">
-                    <span v-else class="d-block white--text display-2 text-capitalize" style="padding-top: 30px;">{{user.name.charAt(0)}}</span>
+                    <span v-else class="d-block white--text display-2 text-capitalize" style="padding-top: 35px;">{{user.name.charAt(0)}}</span>
                   </v-avatar>
                 </v-avatar>
               </v-sheet>
@@ -53,12 +53,9 @@
               </v-card-text>
               <v-card-actions class="justify-center" >
                 <template v-if="user.uid != getUser.uid">
-                  <!-- <v-btn color="purple" class="round" v-if="isSuperUser"
-                    @click="$eventBus.$emit('Open_Private_Chat_Window',user)">
-                    Message
-                  </v-btn> -->
+                  
                   <v-btn color="secondary" class="round" @click="''">
-                    {{user.followers}} Followers
+                    {{user.followers || 0}} Followers
                   </v-btn>
                 </template>
                 <v-btn v-else class="round" color="success"
@@ -85,14 +82,7 @@
                     {{ item }}
                   </v-tab>
                 </v-tabs>
-                <!-- <v-subheader class="pl-0 mt-0 font-weight-bold">Recent Posts</v-subheader>
-                <v-spacer></v-spacer>
-                <v-btn color="success" icon small v-if="getUser.email == $route.params.email && isSuperUser" depressed @click="new_post_dialog = true">
-                  <v-icon>add</v-icon>
-                </v-btn>
-                <v-btn color="success" icon small v-if="getUser.email == $route.params.email && !isSuperUser" depressed @click="$eventBus.$emit('Show_Upgrade_Dialog', {from:'new_post'})">
-                  <v-icon>add</v-icon>
-                </v-btn> -->
+                
               </v-toolbar>
 
               <v-container grid-list-md>
@@ -128,7 +118,7 @@
                                     <v-icon large :color="stat.iconColor">{{stat.icon}}</v-icon>
                                   </v-list-tile-avatar>
                                 </v-list-tile>
-                                <!-- <v-subheader class="font-weight-light hidden-xs-only">{{stat.text}}</v-subheader> -->
+                                
                               </v-list>
                             </v-card>
                             
@@ -220,21 +210,6 @@
                             {{electionStatus(election)[0]}}
                           </v-list-tile-sub-title>
                         </v-list-tile-content>
-                        <!-- <v-list-tile-action>
-                          <v-menu offset-y>
-                            <v-btn small icon depressed class="text-capitalize" dark slot="activator">
-                              <v-icon color="grey">more_vert</v-icon>
-                            </v-btn>
-                            <v-list dense>
-                              <v-list-tile @click="''">
-                                <v-list-tile-title>Switch Election</v-list-tile-title>
-                              </v-list-tile>
-                              <v-list-tile @click="''">
-                                <v-list-tile-title>Manage</v-list-tile-title>
-                              </v-list-tile>
-                            </v-list>
-                          </v-menu>
-                        </v-list-tile-action> -->
                       </v-list-tile>
                       <v-divider :key="election.electionId  + i + myContests.length"></v-divider>
                     </template>
@@ -323,10 +298,6 @@
                     <v-list-tile :key="i" @click="view_manifesto = true; viewManifesto(manifesto)">
                       <v-list-tile-content>
                         <v-list-tile-title v-html="manifesto.title"></v-list-tile-title>
-                        <!-- <v-list-tile-sub-title v-text="manifesto.manifesto_text"></v-list-tile-sub-title> -->
-                        <!-- <v-list-tile-sub-title>
-                          <v-icon small color="red">favorite</v-icon> 56k
-                        </v-list-tile-sub-title> -->
                         
                       </v-list-tile-content>
                       <v-list-tile-action>
@@ -350,10 +321,6 @@
                 </v-list>
               </v-card-text>
               <v-card-actions>
-                <!-- <v-btn color="success" flat v-if="manifestos.length > 4 " small class="text-capitalize" 
-                  @click="getManifestos(5999); limit_manifestos = false;">
-                  See More
-                </v-btn> -->
               </v-card-actions>
             </v-card>
           </v-flex>
@@ -504,9 +471,9 @@
 </template>
 <script>
 export default {
-  data:()=>({
+  data: ()=>({
     model:'overview',
-    ready:false,
+    ready: false,
     snackbar: {},
     follower_tab:1,
     user:'', // users profile
@@ -604,8 +571,8 @@ export default {
   computed:{
     
     title(){
-      return this.user.name + ' | Facevote' || 
-      'Users | Facevote'
+      return `${this.user.name} | ${this.$appName}` || 
+      `Users | ${this.$appName}`
     },
     menuItems(){
       return [
@@ -618,7 +585,7 @@ export default {
     },
     stats(){
       return [
-        {title:'Followers', value: this.user.followers.toLocaleString(), icon: 'lens',iconColor:'secondary'},
+        {title:'Followers', value: this.user.followers ? this.user.followers.toLocaleString() : 0, icon: 'lens',iconColor:'secondary'},
         {title:'Contests', value: this.myContests.length.toLocaleString(), icon:'group', iconColor:'purple'},
         {title:'Elections', value: this.myCreated.length.toLocaleString(), icon: 'hdr_strong', iconColor:'success'},
         {title:'Posts', value: this.posts.length.toLocaleString(), icon: 'equalizer', iconColor: 'cyan'}
@@ -641,9 +608,7 @@ export default {
     },
     ...mapGetters([
       'getUser',
-      'getUserInfo',
-      'getToken',
-      'isAuthenticated'
+      'getUserInfo'
     ]),
     ...mapState([
       'isSuperUser',
@@ -658,33 +623,25 @@ export default {
   },
   methods:{
     async follow(){
-      if(this.user.followers.indexOf(this.getUser.uid) == -1){
-        // not following user, follow this user
-        this.disabled = true
-        this.user.followers.push(this.getUser.uid)
+      this.disabled = true
 
-        db.collection('moreUserInfo').doc(this.user.uid).update({
-          followers:firebase.firestore.FieldValue.arrayUnion(this.getUser.uid)
-        }).then(async res=>{
-          await db.collection('moreUserInfo').doc(this.getUser.uid).update({
-            following:firebase.firestore.FieldValue.arrayUnion(this.user.uid)
-          })
-          this.disabled = false
-        })
-      }
-      else{
-        // is following the user, unfollow
-        this.disabled = true
-        this.user.followers.splice(this.user.followers.indexOf(this.getUser.uid),1)
-        db.collection('moreUserInfo').doc(this.user.uid).update({
-          followers:firebase.firestore.FieldValue.arrayRemove(this.getUser.uid)
-        }).then(async res=>{
-          await db.collection('moreUserInfo').doc(this.getUser.uid).update({
-            following:firebase.firestore.FieldValue.arrayRemove(this.user.uid)
-          })
-          this.disabled = false
-        })
-      }
+      this.$helpers.followUser(this.getUserInfo, this.user)
+      .then(data =>{
+        this.disabled = false
+        // console.log(this.$refs)
+        if(data.following){
+          this.user.followers += 1
+
+          // this.$refs[contestant.uid][0].innerText = `You are following ${contestant.name}`
+        }
+        else{
+          this.user.followers -= 1
+          // this.$refs[contestant.uid][0].innerText = `Follow ${contestant.name}`
+        }
+      })
+      .catch(err => {
+        // console.log(err)
+      })
     },
     electionStatus(election){
       // BEWARE THIS FUNCTION USES LOCAL TIME, WHICH MIGHT BE INACCURATE
@@ -735,6 +692,7 @@ export default {
     },
     async getContested(){
       let elecs = []
+      // console.log(this.user)
       if(this.user.contests){
 
         this.user.contests.forEach(async contest =>{
@@ -828,7 +786,8 @@ export default {
       })
     },
     async getManifestos(){
-      this.manifestoRef = db.collection('manifestos').where('onr.uid','==',this.user.uid)
+      this.manifestoRef = db.collection('manifestos')
+      .where('onr.uid','==',this.user.uid)
       .onSnapshot(querySnapshot=>{
         let manifestos = []
         querySnapshot.forEach(doc => {
@@ -885,56 +844,40 @@ export default {
         // console.log(arr)
         return arr
       })
+      // .catch(err => console.log)
     },
     async setUp(){
       try {
         this.ready = false
         this.limit = 25
 
-        if(this.$route.params.email == this.getUser.email && this.getUserInfo){
-          this.user = this.getUserInfo
-          
-          await this.getUserPosts(this.offset)
-          await this.getFollowers()
-          this.ready = true
+        db.collection('moreUserInfo')
+        .where('email', '==', this.$route.params.email)
+        .get().then(async querySnapshot =>{
+          if(querySnapshot.docs.length > 0){
+            let res = []
+            querySnapshot.forEach(doc =>{
+              res.push(doc.data())
+            })
+            this.user = res[0]
 
-          this.getCreated();
-          this.getContested()
-          this.getEnrolled()
-          this.getManifestos()
-        }
-        
-        else{
-          db.collection('moreUserInfo')
-          .where('email', '==', this.$route.params.email)
-          .get().then(async querySnapshot =>{
-            if(querySnapshot.docs.length > 0){
-              let res = []
-              querySnapshot.forEach(doc =>{
-                res.push(doc.data())
-              })
-              this.user = res[0]
+            await this.getUserPosts(this.offset)
+            await this.getFollowers()
+            this.ready = true
 
-              await this.getUserPosts(this.offset)
-              await this.getFollowers()
-              this.ready = true
+            this.getCreated();
+            this.getContested()
+            this.getEnrolled()
+            this.getManifestos(4)
+            if(this.$route.params.email != this.getUser.email){
 
-              this.getCreated();
-              this.getContested()
-              this.getEnrolled()
-              this.getManifestos(4)
-              if(this.$route.params.email != this.getUser.email){
-
-                await this.$helpers.profileViewsCounter(this.getUserInfo, this.user)
-              }
+              await this.$helpers.profileViewsCounter(this.getUserInfo, this.user)
             }
-            else{
-              this.$router.push('/notFound')
-            }
-          })
-          
-         
-        }
+          }
+          else{
+            this.$router.push('/notFound')
+          }
+        })
 
         
 
@@ -966,8 +909,8 @@ export default {
   },
   beforeDestroy(){
     // remove firebase query listeners
-    this.postsRef()
-    this.manifestoRef()
+    this.postsRef ? this.postsRef() : ''
+    // this.manifestoRef ? this.manifestoRef() : ''
   }
 }
   //import api from '@/services/api'
@@ -978,7 +921,7 @@ import {mapGetters, mapState} from 'vuex'
   import ContestantsInsight from '@/components/ContestantsInsight'
   import ProfileViewers from '@/components/ProfileViewers'
   import LoadingBar from '@/spinners/LoadingBar'
-  //import NewManifesto from '@/components/profile/NewManifesto'
+  import {firebase, db, database} from '@/plugins/firebase'
 
 </script>
 

@@ -1,6 +1,6 @@
 <template>
 	<v-card :color="active.color" v-if="active.onr" flat
-		style="height:400px;position:relative; overflow-x: hidden;" 
+		style="position:relative; overflow-x: hidden;" 
 		class="white--text title text-xs-center">
 
 		<v-toolbar card flat color="grey lighten-3">
@@ -47,17 +47,24 @@
 			</v-list>
 		</v-toolbar>
 
+
+		<v-card-text v-if="active.type == 'text'" class="title pa-5" style="overflow: auto; min-height: 480px; margin: auto;">
+			<div style="width: 80%; margin: auto; line-height: 2em;">
+				{{active.body}}
+			</div>
+		</v-card-text>
+
 		<!-- viewers list -->
 		<v-navigation-drawer v-if="active.onr.uid == getUser.uid"
 			temporary absolute clipped-right
 			v-model="drawer"
-			right width="200" hide-overlay
-		>
-		<v-toolbar dense color="">
-			<v-toolbar-title class="subheading">Viewers</v-toolbar-title>
-			<v-spacer></v-spacer>
-			<span class="subheading">{{viewers[active.docId] ? viewers[active.docId].length.toLocaleString() : ''}}</span>
-		</v-toolbar>
+			right width="200" hide-overlay>
+
+			<v-toolbar dense color="">
+				<v-toolbar-title class="subheading">Viewers</v-toolbar-title>
+				<v-spacer></v-spacer>
+				<span class="subheading">{{viewers[active.docId] ? viewers[active.docId].length.toLocaleString() : ''}}</span>
+			</v-toolbar>
 
 			<v-progress-circular 
 				v-if="loading_viewers" color="grey"
@@ -94,12 +101,23 @@
 			</v-subheader>
 		</v-navigation-drawer>
 
-		<v-card-text v-if="active.type == 'text'" class="title pa-2" style="display: table; margin: auto;">
-			{{active.body}}
-		</v-card-text>
-
-		<v-card-text v-if="active.type == 'photo'" class="pa-0">
-			<v-img :src="active.imgSrc" width="100%" height="100%"/>
+		<v-card-text v-if="active.type == 'photo'" class="pa-0" style="overflow: auto; min-height: 480px; margin: auto;">
+			<v-hover>
+				<v-container grid-list-xs slot-scope="{ hover }" class="pa-0">
+					
+					<v-img :src="active.imgSrc" contain height="100%" max-height="480" :lazy-src="activeThumbnail">
+						<v-layout slot="placeholder" fill-height align-center justify-center ma-0>
+							<v-progress-circular indeterminate color="grey lighten-5"></v-progress-circular>
+						</v-layout>
+						<v-expand-transition v-if="active.img_caption">
+							<div v-if="hover" class="d-flex transition-fast-in-fast-out v-card--reveal display-5 white--text"
+								style="height: 100%;">
+								{{active.img_caption}}
+							</div>
+						</v-expand-transition>
+					</v-img>
+				</v-container>
+			</v-hover>
 		</v-card-text>
 
 		<div class="next_left" style="width:50px;position:absolute;top:50%;left: 0" v-if="index > 0">
@@ -114,6 +132,7 @@
 </template>
 <script>
 import { mapGetters, mapState } from 'vuex';
+import {firebase, db, database} from '@/plugins/firebase'
 export default {
 	data(){
 		return {
@@ -150,7 +169,12 @@ export default {
 			'curRoom',
 			'isSuperUser'
 		]),
-		
+		activeThumbnail(){
+			if(this.active.type == 'photo'){
+				let parts = this.active.imgSrc.split('upload/')
+				return `${parts[0]}upload/c_thumb,g_face:center,w_200,h_200,q_10/${parts[1]}`
+			}
+		},
 		sortByUid(){
 			
 			let f = this.campaigns.map(camp => {
@@ -308,5 +332,22 @@ export default {
 <style>
 	.v-overlay--active:before {
 		opacity: 0.86;
+	}
+
+	.v-card--reveal {
+    align-items: center;
+		padding: 15px;
+		line-height: 2rem;
+    bottom: 0;
+    justify-content: center;
+    opacity: .9;
+    position: absolute;
+    width: 100%;
+    cursor:pointer;
+		background: rgba(0,0,0,.5)
+  }
+
+	.img_caption::-webkit-scrollbar {
+		width: 0 !important;
 	}
 </style>

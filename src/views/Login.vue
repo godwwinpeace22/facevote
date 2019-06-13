@@ -15,7 +15,7 @@
               <v-btn dark flat @click="snackbar.show = false"> Close</v-btn>
             </v-snackbar>
 
-            <h1 class="text-xs-center white--text mb-3" ><a href="/" style="text-decoration:none;color:#fff"> {{app_title}}</a></h1>
+            <h1 class="text-xs-center white--text mb-3" ><a href="/" style="text-decoration:none;color:#fff"> {{$appName}}</a></h1>
             <v-subheader class="white--text text-xs-center d-block">Log in to your account</v-subheader>
             <v-card dark flat tile style="background:inherit">
               <!--v-toolbar dark dense flat style="background:inherit;text-align:center;">
@@ -62,8 +62,6 @@
 <script>
 export default {
   data:()=>({
-    title:'Login | Facevote',
-    app_title:'Facevote',
     loading:false,
     sending:false,
     can_resend_verification: false,
@@ -91,8 +89,10 @@ export default {
     footr:Footer
   },
   computed: {
-      
+    title(){
+      return `Login | ${this.$appName}`
     },
+  },
   methods:{
     sendVerificationLInk(){
       this.sending = true
@@ -128,9 +128,14 @@ export default {
             
             firebase.auth().onAuthStateChanged((user)=>{
               if (user) {
-                
-                this.$store.dispatch('setUser', result.user)
-                this.$router.push('/home')
+
+                firebase.auth().currentUser.getIdTokenResult()
+                .then((idTokenResult) => {
+                  
+                  this.$store.dispatch('setUser', user)
+                  // this.$store.dispatch('setUserInfo', idTokenResult.claims)
+                  this.$router.push('/home')
+                })
                 
                 
               } else {
@@ -173,7 +178,7 @@ export default {
       catch(err){
         // console.log(err)
         this.loading = false
-        $NProgress.done()
+        $Nprogress.done()
         if(err.errorCode){
           
           this.snackbar = {
@@ -199,8 +204,8 @@ export default {
   }
 }
 
-// import Nav from '@/components/Nav'
   import Footer from '@/components/Footer'
+  import {firebase, db, database} from '@/plugins/firebase'
 </script>
 <style lang="scss">
   @mixin MainColor(){

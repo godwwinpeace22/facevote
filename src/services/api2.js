@@ -2,7 +2,8 @@ import axios from 'axios'
 import $Nprogress from 'nprogress'
 
 const instance = axios.create({
-    baseURL: "https://us-central1-facevote-eb748.cloudfunctions.net"
+    // baseURL: 'http://localhost:5080',
+    baseURL: "https://securepoll.herokuapp.com"
 })
 
 // Start nprogress before request is made

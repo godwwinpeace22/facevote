@@ -516,6 +516,7 @@ export default {
 }
 import {mapGetters, mapState} from 'vuex'
   import LoadingBar from '@/spinners/LoadingBar'
+  import {firebase, db, database} from '@/plugins/firebase'
   
 </script>
 <style lang="scss" scoped>

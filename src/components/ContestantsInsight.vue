@@ -78,26 +78,6 @@
                     </v-card-text>
                   </v-card>
                 </v-flex>
-
-                <!-- <v-flex sm12 d-flex>
-                  <div class="mt-3 text-xs-center text-sm-left">
-                    <v-progress-circular
-                      :value="100" class="mr-3"
-                      size="60"
-                      color="success"
-                    ></v-progress-circular>
-
-                    <v-progress-circular
-                      :value="80" size="60" class="mr-3"
-                      color="purple lighten-2"
-                    ></v-progress-circular>
-
-                    <v-progress-circular
-                      :value="60" size="60"
-                      color="teal" class="mr-3"
-                    ></v-progress-circular>
-                  </div>
-                </v-flex> -->
               </v-layout>
 
               <v-layout row wrap>
@@ -146,7 +126,12 @@ export default {
   }),
   watch: {
     'curRoom': function(from,to){
-      this.setContestantMonitor()
+      // console.log(to,from)
+      if(this.curRoom && this.getUserInfo && this.getUserInfo.contests){
+        let isContestant = !!this.getUserInfo.contests.find(contest => contest == this.curRoom.electionId)
+        console.log(isContestant, this.getUserInfo)
+        isContestant ? this.setContestantMonitor() : ''
+      }
     }
   },
   computed: {
@@ -164,6 +149,7 @@ export default {
       let opponents = this.contestantsByRoles.filter(cont =>{
         return cont.role == myRole && cont.uid != this.getUser.uid
       })
+      console.log(myRole,this.contestantsByRoles)
       return opponents
     },
     otherContestants(){
@@ -185,12 +171,12 @@ export default {
   },
   methods: {
     getRole(contestant){
-      // console.log(contestant)
+      
       if(contestant.contestsRef){
 
         let ref = contestant.contestsRef
         .find(item=>item.electionRef == this.curRoom.electionId)
-        let found = this.curRoom.roles.find(role=>role.value == ref.role)
+        let found = ref ? this.curRoom.roles.find(role=>role.value == ref.role) : false
         return found ? found.title : false
       }
       else{ return false}
@@ -218,17 +204,13 @@ export default {
           })
       })
       
-
-      // show only contestants that are not suspended. therefore they can't be voted for
-      //contestants = contestants.data.filter(item => item.suspended == false)
-      
     },
     async setContestantMonitor(){
       try{
         // console.log(this.meAndMyOpponents)
 
         this.allContestants().then(contestants =>{
-
+          // console.log(contestants)
           let myRole = this.getRole(this.getUserInfo)
 
           this.contestantsByRoles.filter(cont =>{
@@ -270,7 +252,13 @@ export default {
     }
   },
   mounted(){
-    this.curRoom ? this.setContestantMonitor() : ''
+    // this.curRoom ? this.setContestantMonitor() : ''
+    // first check if user is contestant in curRoom
+    if(this.curRoom && this.getUserInfo && this.getUserInfo.contests){
+      let isContestant = !!this.getUserInfo.contests.find(contest => contest == this.curRoom.electionId)
+      // console.log(isContestant, this.getUserInfo)
+      isContestant ? this.setContestantMonitor() : ''
+    }
   },
   created(){
     
@@ -284,4 +272,5 @@ import RadarChart from '@/charts/radar'
 import BarChart from '@/charts/barchart'
 import { mapState, mapGetters } from 'vuex';
 import { constants } from 'fs';
+import {firebase, db, database} from '@/plugins/firebase'
 </script>

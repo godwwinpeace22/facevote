@@ -51,48 +51,11 @@
                         </template>
                       </v-list>
                     </v-card-text>
-                    <!-- <v-card-actions>
-
-                      <v-btn color="secondary" flat small @click="more_profile_views" v-if="profileViews.length > 25 && user.profile_views > profileViews.length"
-                        :loading="loading_more_viewers" style="text-transform: initial">
-                        See more
-                      </v-btn>
-                    </v-card-actions> -->
                   </v-card>
                 </v-flex>
               </v-layout>
               <v-divider></v-divider>
-
-              <!-- <v-layout row wrap>
-                <v-flex sm12>
-                  <v-card
-                    flat
-                    color="grey lighten-4"
-                    max-width="600"
-                  >
-                    <v-card-title>
-                      <div class="caption grey--text text-uppercase">
-                        Heart rate
-                      </div>
-                    </v-card-title>
-
-                    <v-sheet
-                      class="v-sheet--offset"
-                      color="cyan lighten-3"
-                      elevation="0" tile
-                      max-width="calc(100%)"
-                    >
-                      <v-sparkline
-                        :labels="labels"
-                        :value="value"
-                        color="white"
-                        line-width="2"
-                        padding="16"
-                      ></v-sparkline>
-                    </v-sheet>
-                  </v-card>
-                </v-flex>
-              </v-layout> -->
+              
             </v-container>
           </v-card>
         </v-flex>
@@ -103,8 +66,6 @@
 <script>
 export default {
   data: ()=>({
-    regVoters: [],
-    contestants: [],
     profileViews: [],
     chartdata: {},
     offset: '',
@@ -162,40 +123,6 @@ export default {
     ])
   },
   methods: {
-    getVoters(){
-      // get registered voters
-      this.moreUserInfoRef = db.collection('moreUserInfo')
-      .where('enrolled','array-contains', this.curRoom.electionId)
-      .onSnapshot(async querySnapshot=>{
-        this.regVoters = []
-        querySnapshot.forEach(doc=>{
-          //console.log(doc.id, " => ", doc.data());
-          this.regVoters.push(doc.data())
-        })
-        await this.allContestants()
-        
-      }, function(err){
-       
-        // console.log(err)
-      })
-    },
-    async allContestants(voters){
-      // get contestants
-      let contestants = []
-      this.regVoters.forEach(voter=>{
-        if(voter.contests && voter.contests.find(id => id == this.curRoom.electionId)){
-          contestants.push(voter)
-        }
-      })
-      //console.log(contestants)
-      // show only contestants that are not suspended. therefore they can't be voted for
-      //contestants = contestants.data.filter(item => item.suspended == false)
-      this.contestants = contestants
-      //this.$store.dispatch('setCurElectionContestants', contestants)
-    },
-    extractVoter(uid){
-      return this.regVoters.find(voter=> voter.uid == uid)
-    },
     moreProfileViews(){
 
     },
@@ -283,4 +210,5 @@ export default {
 import PieChart from '@/charts/piechart'
 import BarChart from '@/charts/barchart'
 import { mapGetters, mapState } from 'vuex';
+import {firebase, db, database} from '@/plugins/firebase'
 </script>

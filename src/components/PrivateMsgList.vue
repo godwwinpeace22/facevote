@@ -286,6 +286,7 @@ export default {
 }
 //import LoadingBar from '@/spinners/LoadingBar'
 import {mapState, mapGetters} from 'vuex'
+import {firebase, db, database} from '@/plugins/firebase'
 </script>
 <style>
   .selected {

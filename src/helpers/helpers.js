@@ -1,7 +1,5 @@
-/* global db: false */ // tells eslint to treat 'db' as a globally defined variable, and that it should not be written to
-/* global firebase: false */
-
 import $store from '../store/store'
+import {firebase, db} from '../plugins/firebase'
 export default {
 
   /**
@@ -231,7 +229,7 @@ export default {
 
       let docId = `${follower.uid}-${followee.uid}-fol`
       let followerRef = db.collection('ufollowers').doc(docId)
-      let userRef = db.collection('moreUserInfo').doc(followee.uid)
+      // let userRef = db.collection('moreUserInfo').doc(followee.uid)
       let {name, photoURL = false, email, sch=false, fac=false, dept=false, uid, is_student} = follower
       let onr = {
         name,
@@ -255,9 +253,9 @@ export default {
         let batch = db.batch();
         batch.delete(followerRef)
         
-        batch.update(userRef, {
-          followers: firebase.firestore.FieldValue.increment(-1)
-        })
+        // batch.update(userRef, {
+        //   followers: firebase.firestore.FieldValue.increment(-1)
+        // })
 
         batch.commit().then(()=> resolve({following: false}))
         .catch(err => reject(err))
@@ -274,9 +272,9 @@ export default {
           tstamp: firebase.firestore.FieldValue.serverTimestamp()
         })
 
-        batch.update(userRef, {
-          followers: firebase.firestore.FieldValue.increment(1)
-        })
+        // batch.update(userRef, {
+        //   followers: firebase.firestore.FieldValue.increment(1)
+        // })
 
         batch.commit().then(()=> resolve({following: true}))
         .catch(err => reject(err))
@@ -340,7 +338,7 @@ export default {
       let docId = `${viewer.uid}-${viewee.uid}-pviews`
       /* eslint-disable-next-line */
       // console.log(docId)
-      let vieweeRef = db.collection('moreUserInfo').doc(viewee.uid)
+      // let vieweeRef = db.collection('moreUserInfo').doc(viewee.uid)
       let profileViewsRef = db.collection('profile_views').doc(docId)
 
       let has_viewed = profileViewsRef.get().then(doc=>{
@@ -371,9 +369,9 @@ export default {
           viewee: viewee.uid,
           tstamp: firebase.firestore.FieldValue.serverTimestamp()
         })
-        batch.update(vieweeRef, {
-          profile_views: firebase.firestore.FieldValue.increment(1)
-        })
+        // batch.update(vieweeRef, {
+        //   profile_views: firebase.firestore.FieldValue.increment(1)
+        // })
         batch.commit().then(()=>{
           resolve({success: true})
         })

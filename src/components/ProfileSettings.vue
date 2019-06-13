@@ -5,11 +5,11 @@
         @click.native="$eventBus.$emit('hide_profile_settings', {})">
         <v-icon>chevron_left</v-icon>
       </v-btn>
-      <v-toolbar-title>{{title}}</v-toolbar-title>
+      <v-toolbar-title>Profile Settings</v-toolbar-title>
       <v-spacer></v-spacer>
       
       <v-btn dark :small="$vuetify.breakpoint.xs" class="hidden-sm-and-down" tile color="grey lighten-1" :disabled="loading" outline @click.native="$eventBus.$emit('hide_profile_settings', {})">Cancel</v-btn>
-      <v-btn depressed color="orange" @click.native="updateProfile" :loading="loading">Save</v-btn>
+      <v-btn depressed color="orange" @click.native="updateProfile" :disabled="disabled_save" :loading="loading">Save</v-btn>
     </v-toolbar>
 
     <v-snackbar v-model="snackbar.show" dark :timeout="5000" 
@@ -26,7 +26,7 @@
             <v-layout row justify-center>
               <v-flex xs12>
                 
-                <v-card tile :flat="$vuetify.breakpoint.xsOnly">
+                <v-card tile :flat="$vuetify.breakpoint.xsOnly" style="min-height: 300px;">
                   <v-hover :class="{profile_card: selected_file}">
                     <v-container slot-scope="{ hover }">
                       <v-img :src="blob_url || getUser.photoURL || `https://ui-avatars.com/api/?name=${getUser.displayName}&size=300`" max-height="250" @click="openFileSelect">
@@ -76,8 +76,8 @@
                     </v-text-field>
 
                     <v-text-field required small v-model="form.phone" style="text-transform:capitalize"
-                      color="secondary" browser-autocomplete="tel" :placeholder="getUserInfo ? getUserInfo.phone : ''" 
-                      label="Your Phone number">
+                      color="secondary" browser-autocomplete="tel" :placeholder="getUser.phoneNumber || ''" 
+                      label="Your Phone number" hint="e.g +2347099998888">
                     </v-text-field>
                   </v-card-text>
                   
@@ -91,13 +91,7 @@
               <v-flex xs12 sm10 offset-sm-3>
                 <v-card tile :flat="$vuetify.breakpoint.xsOnly">
                   <v-card-title>School</v-card-title>
-                  <!-- <v-card-text>
-                    
-                    <v-checkbox
-                      :label="form.is_student ? 'I am a student' : 'I am not a student'"
-                      v-model="form.is_student"
-                    ></v-checkbox>
-                  </v-card-text> -->
+                  
                   <v-container v-if="getUserInfo.is_student">
                     <v-layout column>
                       <template v-if="getUserInfo && getUserInfo.was_once_a_student">
@@ -194,7 +188,10 @@ export default {
       'isSuperUser',
     ]),
     title(){
-      return 'My Profile Settings | Facevote'
+      return `Profile Settings | ${this.$appName}`
+    },
+    disabled_save(){
+      return !this.form.name.trim() || !this.form.phone.trim()
     }
   },
   methods:{
@@ -223,13 +220,15 @@ export default {
         alert('Only images are allowed!')
         this.blob_url = null
         this.selected_file = null
+        document.getElementById('file').value = ''
       }
     },
     async updatePhoto(){
       this.upload_text = 'Updating photo...'
       this.uploading = true
 
-      firebase.auth().currentUser.getIdToken(true).then(async idToken=>{
+      firebase.auth().currentUser.getIdToken(true)
+      .then(async idToken=>{
 
         let formData = new FormData()
         formData.append('file', this.selected_file)
@@ -244,117 +243,84 @@ export default {
             }
           )
 
-          // console.log(response)
-
-          // await this.otherUpdates({
-          //   photoURL: response
-          // }).then((done) => console.log(done))
-          // .catch(err => console.log(err))
-
           firebase.auth().currentUser.getIdToken(true);
           this.selected_file = null
+          this.blob_url = null
           this.upload_text = 'Update photo'
           this.uploading = false
-          this.snackbar = {show:true,message:'Photo updated successfully',color:'purple'}
+
+          this.snackbar = {
+            show: true,
+            message: 'Photo updated successfully',
+            color: 'purple'
+          }
 
           let docRef = db.collection('moreUserInfo').doc(this.getUser.uid)
           let doc = await docRef.get()
-          // console.log(doc.data())
-          this.$store.dispatch('setUserInfo',doc.data())
+
+          firebase.auth().onAuthStateChanged((user) => {
+            if(user){
+              user.photoURL = doc.data().photoURL
+              this.$store.dispatch('setUser', user)
+              this.$store.dispatch('setUserInfo', doc.data())
+            }
+
+          })
 
         } catch (error) {
-          // console.log(error)
           
-          this.snackbar = {show:true,message:"Upload failed. Please try again",color:"error"}
+          this.snackbar = {
+            show: true,
+            message: "Upload failed. Please try again",
+            color: "error"
+          }
           this.upload_text = 'Update photo'
           this.uploading = false
-          $NProgress.done()
+          $Nprogress.done()
         }
       })
     },
     async updateProfile(){
-      try {
-        this.loading = true
-        firebase.auth().currentUser.updateProfile({
-          displayName: this.form.name || this.getUser.displayName
-        }).then(() => {
 
-          let userRef = db.collection('moreUserInfo').doc(this.getUser.uid);
-          if(this.getUserInfo.was_once_a_student){
-            let data = {
-              name: this.form.name || this.getUser.displayName,
-              phone: this.form.phone || this.getUserInfo.phone,
-              is_student: true
-            }
-            userRef.update({
-              ...data
-            }).then(async () => {
+      this.loading = true
 
-              // await this.otherUpdates({
-              //   ...data,
-              // }).then((done) => {
-              //   console.log(done)
-              // }).catch(err => console.log(err))
+      firebase.auth().currentUser.getIdToken(true).then(async idToken=>{
+        api().post('dashboard/updateProfile', {
+          name: this.form.name || this.getUser.displayName,
+          phone: this.form.phone || this.getUser.phoneNumber || false,
+          idToken: idToken
+        }).then(async ()=> {
 
-              let doc = await userRef.get()
-          
-              firebase.auth().onAuthStateChanged((user) => {
-                if(user){
-                  this.$store.dispatch('setUser', user)
-                  this.$store.dispatch('setUserInfo',doc.data())
-
-                  this.snackbar = {show:true,message:'Profile updated successfully', color:'purple'}
-                  this.loading = false
-                }
-      
-              })
-            })
-            
-          }
-          else{
-            let data = {
-              name: this.form.name || this.getUser.displayName,
-              //email:this.form.email || this.getUser.email,
-              phone: this.form.phone || this.getUserInfo.phone,
-              is_student: this.form.is_student,
-              was_once_a_student: this.form.is_student,
-              sch: this.form.school.text || this.getUserInfo.sch,
-              fac: this.form.faculty.text || this.getUserInfo.fac,
-              dept: this.form.department.text || this.getUserInfo.dept
-            }
-            userRef.update(data).then( async () => {
-
-              // await this.otherUpdates({
-              //   ...data,
-              // }).then((done) => {
-              //   console.log(done)
-              // }).catch(err => console.log(err))
-
-              let doc = await userRef.get()
-          
-              firebase.auth().onAuthStateChanged((user) => {
-                if(user){
-                  this.$store.dispatch('setUser', user)
-                  this.$store.dispatch('setUserInfo',doc.data())
-                  
-                  this.snackbar = {show:true,message:'Profile updated successfully', color:'purple'}
-                  this.loading = false
-                }
-
-      
-              })
-            })
-            // console.log(update)
-          }
-          
-          
-        })
+          let userRef = db.collection('moreUserInfo').doc(this.getUser.uid)
+          let doc = await userRef.get()
         
-      } catch (error) {
-        // console.log(error)
-        this.snackbar = {show:true,message:'Something went wrong', color:'error'}
-        this.loading = false
-      }
+            firebase.auth().onAuthStateChanged((user) => {
+              if(user){
+                user.phoneNumber = this.form.phone
+                this.$store.dispatch('setUser', user)
+                this.$store.dispatch('setUserInfo', doc.data())
+
+                this.snackbar = {
+                  show: true,
+                  message: 'Profile updated successfully',
+                  color: 'purple'
+                }
+                this.loading = false
+              }
+    
+            })
+        }).catch(err => {
+
+          this.snackbar = {
+            show: true,
+            message: err.response.data.message || 'Profile update failed. Try again',
+            color: 'error'
+          }
+          this.loading = false
+          $Nprogress.done()
+        })
+
+      })
     },
     otherUpdates(onr){
       // get reference to all users posts
@@ -416,12 +382,16 @@ export default {
         this.$store.dispatch('setSchools', schls.data)
       } catch (error) {
         // console.log(error)
-        $NProgress.done()
+        $Nprogress.done()
       }
     },
     async setUp(data){
       try {
         
+        // console.log(this.getUser.photoURL)
+        this.form.name = this.getUser.displayName
+        this.form.phone = this.getUser.phoneNumber || ''
+
         if(this.getUserInfo && !this.getUserInfo.was_once_a_student){
           this.form.is_student = this.getUserInfo.is_student
           await this.allSchools()
@@ -442,8 +412,9 @@ export default {
   }
 }
 
-import api from '@/services/api'
+import api from '@/services/api2'
 import { mapGetters, mapState } from 'vuex'
+import {firebase, db, database} from '@/plugins/firebase'
 </script>
 
 <style scss>

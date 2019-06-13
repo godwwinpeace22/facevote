@@ -1,11 +1,7 @@
 <template>
   <div>
-
-    <navigation>
-      <span slot="title">Vote</span>
-      <!-- <h1 slot="extended_nav" v-if="$vuetify.breakpoint.smAndUp && currElection">{{currElection.title}}</h1> -->
-    </navigation>
-
+    <navigation/>
+    
     <vue-headful
       :title="title"
       :description="description"
@@ -30,12 +26,19 @@
                     </v-list-tile-avatar>
                     <v-list-tile-content>
                       <v-list-tile-title>{{currElection.title}}</v-list-tile-title>
-                      <v-list-tile-sub-title>Election Id: {{currElection.electionId}}</v-list-tile-sub-title>
+                      <v-list-tile-sub-title>{{currElection.official ? 'Official' : 'Unofficial'}}</v-list-tile-sub-title>
                     </v-list-tile-content>
+                    <v-list-tile-action>
+                      
+                      <v-tooltip top class="d-inline">
+                        <small slot="activator">Current Time</small>
+                        <v-icon small color="red"  class="pr-2">info</v-icon>
+                        <span>Check that your time matches with this time</span>
+                      </v-tooltip>
+                      <iframe src="http://free.timeanddate.com/clock/i6svkufx/n1972/fs12/fcddd/tc424242/pc424242/ahr/tt0/tw0/tm1/ts1/ta1/tb1" frameborder="0" width="189" height="16"></iframe>
+                    </v-list-tile-action>
                   </v-list-tile>
                 </v-list>
-                <!-- <v-card-title class="headline">{{currElection.title}}</v-card-title>
-                <small class="pl-3 d-block" style="color:#eee;">Electi Id: {{currElection.electionId}}</small> -->
               
                 <loading-bar spinnerType='circle' height="40vh" v-if="!timer_ready"></loading-bar>
                 
@@ -96,7 +99,7 @@
                                     <div class="text-xs-left py-5" style="display:table;margin:auto;">
                                       <h3 class="display-1">Election Ended</h3>
                                       <small>at 
-                                      {{new Date(endTime).toLocaleString('en-Us',date_options)}}</small>
+                                      {{new Date(endTime).toLocaleString('en-Us',{day: 'numeric', month: 'numeric', year: 'numeric', hour:'numeric',minute:'numeric'})}}</small>
                                     </div>
                                   </span>
                                 </vac>
@@ -125,12 +128,15 @@
                         Vote 
                       </v-btn>
 
-                      <v-btn  color="teal" class="mr-3" dark to="/verify" small
-                        v-if="!is_verified">
-                        Verify account
-                      </v-btn>
+                      <v-tooltip right>
+                        <v-btn  color="red" slot="activator" class="mr-3 text-capitalize" dark to="/verify" small
+                          v-if="!is_verified">
+                          Verify Your account
+                        </v-btn>
+                        <span>You need to verify your account before you can enroll to vote</span>
+                      </v-tooltip>
 
-                      <v-tooltip right v-if="status.not_started" class="mr-3">
+                      <v-tooltip right v-if="status.not_started && is_verified" class="mr-3">
                         <v-btn  color="success" slot="activator" small dark @click="enroll_dialog = true" 
                             v-if="status.not_started && !hasEnrolled && is_verified">
                           Enroll
@@ -155,10 +161,6 @@
                         </v-btn>
                         <span>Election Manager</span>
                       </v-tooltip>
-                      <!--v-btn color="secondary" class="ml-3" small v-if="getUser.uid == currElection.admin"
-                        :to="`/elections/manage/${currElection.electionId}`">
-                        <v-icon>settings</v-icon>
-                        <span class="ml-2">Manager</span></v-btn-->
                     </v-card-actions>
                   </transition>
                 
@@ -193,7 +195,7 @@
                     </v-list-tile-action>
                     <v-list-tile-title>
                       <span class="mr-3">Start Time</span>
-                      <span>{{(new Date(getStartDate)).toLocaleString('en-Us',{hour:'numeric',minute:'numeric'})}}</span>
+                      <span>{{(new Date(getStartDate)).toLocaleString('en-Us',{day: 'numeric', month: 'numeric', year: 'numeric', hour:'numeric',minute:'numeric'})}}</span>
                     </v-list-tile-title>
                   </v-list-tile>
                   
@@ -265,7 +267,7 @@
 										<v-flex shrink class="mr-5 text-xs-center">
 											<v-progress-circular
 												:value="100"
-												size="60"
+												size="80"
 												color="success"
 											>
 											{{no_of_voters}}
@@ -275,7 +277,7 @@
 
 										<v-flex shrink class="text-xs-center">
 											<v-progress-circular
-												:value="80" size="60"
+												:value="80" size="80"
 												color="purple lighten-2"
 											>
 											{{no_of_contestants}}
@@ -459,7 +461,7 @@
                   <v-toolbar-title><h5><v-icon color="orange">equalizer</v-icon> Stats</h5></v-toolbar-title>
                   <v-spacer></v-spacer>
                   <v-btn small flat color="success" 
-                    outline  @click="show_summary_dialog = true; title = 'Election Results | Facevote'" 
+                    outline  @click="show_summary_dialog = true; title = `Election Results | ${$appName}`" 
                     :disabled="!status.election_ended">
                     Results Summary
                   </v-btn>
@@ -491,7 +493,7 @@
                   :color="$helpers.colorMinder(contestant.name.charAt(0))"
                 >
                   <img :src="contestant.photoURL" :alt="contestant.name" v-if="contestant.photoURL">
-                  <span v-else style="padding-top: 34px;" class="d-block white--text display-2 text-capitalize">{{contestant.name.charAt(0)}}</span>
+                  <span v-else style="padding-top: 28px;" class="d-block white--text display-2 text-capitalize">{{contestant.name.charAt(0)}}</span>
                 </v-avatar>
               </v-sheet>
 
@@ -512,7 +514,7 @@
                     class="mx-auto text-capitalize"  
                     :disabled='!!disabled.find(uid => uid == contestant.uid)'
                     @click="follow($event,contestant)" :id="contestant.uid">
-                    {{(contestant.followers).toLocaleString()}} Followers
+                    {{(contestant.followers || 0).toLocaleString()}} Followers
                   </v-btn>
                   <span :ref="contestant.uid">{{contestant.followers}} Followers</span>
                 </v-tooltip>
@@ -520,7 +522,7 @@
                 <v-btn :color="$helpers.colorMinder(contestant.name.charAt(0))" outline dark 
                   class="mx-auto text-capitalize" v-if="contestant.uid == getUser.uid" 
                   @click="''">
-                  {{(contestant.followers).toLocaleString()}} Followers
+                  {{(contestant.followers || 0).toLocaleString()}} Followers
                 </v-btn>
               </v-card-actions>
             </v-card>
@@ -609,7 +611,7 @@
             <v-btn flat icon @click.native="printResult" class="hidden-sm-and-down">
               <v-icon>print</v-icon>
             </v-btn>
-            <v-btn flat icon @click.native="show_summary_dialog = false; title = 'Vote | Facevote'">
+            <v-btn flat icon @click.native="show_summary_dialog = false; title = `Vote | ${$appName}`">
               <v-icon>close</v-icon>
             </v-btn>
           </v-toolbar>
@@ -816,7 +818,6 @@
 <script>
 export default {
   data:()=>({
-    title: 'Vote | Facevote',
     description: '',
     show_when_ready: false,
     timer_ready: false,
@@ -933,96 +934,16 @@ export default {
     }
   },
   computed:{
+    title(){
+      return `Vote | ${this.$appName}`
+    },
     getStartDate(){
       return new Date(this.currElection.startDate + ' ' + this.currElection.startTime).getTime();
-    },
-    flashNumbers(){
-      return [
-        {
-          text:'Registerd voters',
-          number: this.currElection.voters,
-          icon1: 'trending_up',
-          icon2: 'timer',
-          sub: this.lastRegistration,
-          color: 'teal'
-        },
-        {
-          text:'Contestants',
-          number: this.contestants.length,
-          icon1: 'equalizer',
-          icon2: 'block',
-          sub: this.suspendedContestants,
-          color: 'orange'
-        },
-        {
-          text: 'Votes',
-          number: this.totalVotes,
-          icon1: 'how_to_vote',
-          icon2: 'timer',
-          sub: this.lastVotedTime,
-          color: 'primary'
-        },
-        // {text:'Followers',number:this.currElection.followers.length,icon1:'people',icon2:'timer',sub:'opps sub'}
-      ]
-    },
-    lastRegistration(){
-      // TAKE NOTE: ITS POSIBLE THAT THE ACTIVITIES RETRIEVED DOES NOT CONTAIN 
-      // A REGISTRATION ACTIVITY. SO YOU MIGHT WANT TO DO A SEARCH SPECIALLY FOR THAT
-      // KIND OF ACTIVITY
-
-      let regActivities = this.activities.filter(
-        activity => activity.type == 'voter_registered'
-      )
-      ////console.log(regActivities[0])
-
-      if(regActivities && regActivities.length > 0){
-        // console.log(regActivities.length)
-        let the_last_reg_time = regActivities[0].tstamp.toMillis()
-        let now = Date.now()
-        let oneMin = 60 * 1000
-        let oneHour = 60 * oneMin
-        let oneDay = 24 * oneHour
-        let oneWeek = oneDay * 7
-        let time_difference = now - the_last_reg_time
-        //console.log(now,the_last_reg_time,time_difference)
-        return time_difference < oneMin ?
-        'Last registration a few seconds ago' :
-        time_difference < oneHour ? 'Last registration ' + Math.floor(time_difference/oneMin) + ' minutes ago' :
-        time_difference < oneDay ? 'Last registration ' + Math.floor(time_difference/oneHour) + ' hours ago' :
-        time_difference < oneWeek ? 'Last registration ' + Math.floor(time_difference/oneDay) + ' days ago' :
-        'Last registration ' + new Date(the_last_reg_time).toLocaleString('en-Us',{year:'numeric', month: 'short',day: 'numeric'})
-      }
-      else{
-        return 'No registrations yet'
-      }
     },
     suspendedContestants(){
       let suspended = this.currElection.suspended ? this.currElection.suspended.length : 0
 
       return suspended > 0 ? suspended + ' contestants suspended' : 'No contestant suspended'
-    },
-    lastVotedTime(){
-      if(this.rawVotes && this.rawVotes.length > 0){
-        let sortedVotes = this.rawVotes.sort((a,b)=>b.tstamp.toMillis() - a.tstamp.toMillis())
-        let the_last_vote_time = sortedVotes[0].tstamp.toMillis()
-        let now = Date.now()
-        let oneMin = 60*1000
-        let oneHour = 60*oneMin
-        let oneDay = 24*oneHour
-        let oneWeek = oneDay * 7
-        let time_difference = now - the_last_vote_time
-        
-        return time_difference < oneMin ?
-        'Last vote a few seconds ago' :
-        time_difference < oneHour ? 'Last vote ' + Math.floor(time_difference/oneMin) + ' minutes ago' :
-        time_difference < oneDay ? 'Last vote ' + Math.floor(time_difference/oneHour) + ' hours ago' :
-        time_difference < oneWeek ? 'Last vote ' + Math.floor(time_difference/oneDay) + ' days ago' :
-        'Last vote ' + new Date(the_last_vote_time).toLocaleString('en-Us',{year:'numeric', month: 'short', day: 'numeric'})
-      }
-      else{
-        return 'No votes yet'
-      }
-      
     },
     totalVotes(){
       let totalVotes = 0
@@ -1032,13 +953,13 @@ export default {
       return totalVotes
     },
     no_of_voters(){
-      let len = this.currElection.voters
+      let len = this.currElection.voters || 0
         
 			switch (true){
 				case len >= 1000000:
-					return len / 1000000 + 'M +'
+					return Math.round(len / 1000000) + 'M +'
 				case len >= 1000:
-					return len / 1000 + 'K + '
+					return Math.round(len / 1000) + 'K + '
 				default:
 					return len
 			}
@@ -1048,9 +969,9 @@ export default {
 			
 			switch (true){
 				case len >= 1000000:
-					return len / 1000000 + 'M +'
+					return Math.round(len / 1000000) + 'M +'
 				case len >= 1000:
-					return len / 1000 + 'K + '
+					return Math.round(len / 1000) + 'K + '
 				default:
 					return len
 			}
@@ -1103,60 +1024,90 @@ export default {
     async setup(){
       // get election
       // console.log(this.curRoom)
-      this.currElection = this.curRoom
-      this.open()
+      // No, get election afresh, so you can watch the changes
+      this.show_when_ready = false
 
-      // get registered voters
-      this.moreUserInfoRef = db.collection('moreUserInfo')
-      .where('enrolled','array-contains', this.currElection.electionId)
-      .limit(25)
-      .onSnapshot(async querySnapshot=>{
-        this.regVoters = []
-        querySnapshot.forEach(doc=>{
-          //console.log(doc.id, " => ", doc.data());
-          this.regVoters.push(doc.data())
-        })
-        this.voters_offset = querySnapshot.docs[querySnapshot.docs.length -1]
+      this.getCurElection().then(async ()=>{
+
         await this.allContestants()
-        
-      }, function(err){
-        // console.log(err)
-      })
-
-
-      // get raw votes for this election
-      this.votesRef = db.collection('votes')
-      .where('elecRef', '==', this.currElection.electionId)
-      .onSnapshot(async querySnapshot=>{
-        let arr = []
-        querySnapshot.forEach(doc=>{
-          arr.push(doc.data())
-        })
-        this.rawVotes = arr // the raw votes
-        // console.log(this.rawVotes)
-        this.allVotes = await this.getScores(await this.sortByRoles(this.rawVotes))
-        
-      }, error=>{
-        // console.log(error)
+        await this.getVoters()
+        await this.getVotes()
+        this.open()
       })
       
 
-      // Get activities
-      this.activityRef = db.collection('activities')
-      .limit(25)
-      .orderBy('tstamp', 'desc')
-      .where('elecRef','==',this.currElection.electionId).onSnapshot(async querySnapshot=>{
-        let acts = []
-        querySnapshot.forEach(doc=>{
-          acts.push(doc.data())
-        })
-        this.activities_offset = querySnapshot.docs[querySnapshot.docs.length - 1]
-        this.activities = acts
-      })
+      this.getActivities()
       
       this.getManifestos()
       // console.timeEnd('watch')
       
+    },
+    getCurElection(){
+      return new Promise((resolve, reject) => {
+        this.elecRef = db.collection('elections').doc(this.curRoom.electionId)
+        .onSnapshot(doc => {
+          this.currElection = doc.data()
+          // console.log(doc.data())
+          resolve(doc.data())
+        }, err => {})
+      })
+    },
+    getVoters(){
+      return new Promise((resolve, reject)=>{
+        // get registered voters
+        this.moreUserInfoRef = db.collection('moreUserInfo')
+        .where('enrolled','array-contains', this.curRoom.electionId)
+        .limit(25).onSnapshot(async querySnapshot=>{
+          let regVoters = []
+          querySnapshot.forEach(doc=>{
+            //console.log(doc.id, " => ", doc.data());
+            regVoters.push(doc.data())
+          })
+          this.regVoters = regVoters
+          this.voters_offset = querySnapshot.docs[querySnapshot.docs.length -1]
+          resolve(regVoters)
+        }, function(err){
+          // console.log(err)
+          reject(err)
+        })
+      })
+    },
+    getVotes(){
+      return new Promise((resolve, reject)=>{
+        // get raw votes for this election
+        this.votesRef = db.collection('votes')
+        .where('elecRef', '==', this.curRoom.electionId)
+        .onSnapshot(async querySnapshot=>{
+          let arr = []
+          querySnapshot.forEach(doc=>{
+            arr.push(doc.data())
+          })
+          this.rawVotes = arr // the raw votes
+          // console.log(this.rawVotes)
+          this.allVotes = await this.getScores(await this.sortByRoles(this.rawVotes))
+          resolve(arr)
+        }, error=>{
+          // console.log(error)
+          reject(error)
+        })
+      })
+    },
+    getActivities(){
+      return new Promise((resolve, reject)=>{
+
+        this.activityRef = db.collection('activities')
+        .limit(25).orderBy('tstamp', 'desc')
+        .where('elecRef', '==', this.curRoom.electionId)
+        .onSnapshot(async querySnapshot=>{
+          let acts = []
+          querySnapshot.forEach(doc=>{
+            acts.push(doc.data())
+          })
+          this.activities_offset = querySnapshot.docs[querySnapshot.docs.length - 1]
+          this.activities = acts
+          resolve(acts)
+        }, err => reject(err))
+      })
     },
     printResult(){
       window.print()
@@ -1182,16 +1133,18 @@ export default {
           contestants2.push(doc.data())
         })
 
+        // console.log({contestants})
+
         this.contestants = contestants
         this.all_contestants = contestants2
-        this.getLabels()
-        this.setTableData()
+        // this.getLabels()
+        // this.setTableData()
       })
 
     },
     async getManifestos(){
        db.collection('manifestos')
-      .where('elecRef','==',this.currElection.electionId)
+      .where('elecRef','==',this.curRoom.electionId)
       .get().then(querySnapshot=>{
         let manifestos = []
         querySnapshot.forEach(doc => {
@@ -1212,6 +1165,7 @@ export default {
       let resultsByRoles = {};
       if(votes.length > 0){
         for(let item of Object.keys(votes[0].choices)){
+          // console.log({item})
           resultsByRoles[item] = [];
         }
 
@@ -1219,7 +1173,7 @@ export default {
         votes.map((item,index)=>{
           for(let i=0;i<Object.keys(item.choices).length;i++){
             let f = Object.keys(item.choices)[i] // each key
-            ////console.log(f)
+            // console.log(resultsByRoles)
             resultsByRoles[f].push(item.choices[f])
           }
           
@@ -1280,18 +1234,21 @@ export default {
     },
     async open(){
       try{
+
+        this.show_when_ready = false
+
         if(this.currElection.timed){
           this.timer_ready = false;
           // if the election is a timed election
-          this.getServerTime().then(resp=>{
+          // this.getServerTime().then(resp=>{
             //console.log(resp.time - Date.now())
-            let serverTime = resp.time
+            let serverTime = Date.now() // resp.time
             this.time_lag = serverTime - Date.now()
 
             this.countDownTimer()
-          }).catch(err=> {
-            // console.log(err,err.response)
-          })
+          // }).catch(err=> {
+          //   // console.log(err,err.response)
+          // })
         }
         else{
           this.status = {
@@ -1299,6 +1256,8 @@ export default {
             not_started: false
           }
         }
+        this.getLabels()
+        this.setTableData()
         this.show_when_ready = true
       }catch(error){
         // console.log(error)
@@ -1309,7 +1268,7 @@ export default {
       this.enrolling = true
 
       firebase.auth().currentUser.getIdToken().then((token)=>{
-        api().post('dashboard/enroll',{
+        api().post('enroll',{
           electionId: this.currElection.electionId,
           idToken: token
         }).then(result =>{
@@ -1323,7 +1282,7 @@ export default {
           this.enrolling = false
           this.enroll_dialog = false
         }).catch(error=>{
-          $NProgress.done()
+          this.$Nprogress.done()
           this.enrolling = false
           this.enroll_dialog = false
 
@@ -1385,7 +1344,7 @@ export default {
         firebase.auth().currentUser.getIdToken()
         .then(async (token)=>{
           
-          api().post('dashboard/serverTimestamp', { idToken: token }).then(resp=>{
+          api().post('serverTimestamp', { idToken: token }).then(resp=>{
             resolve(resp.data)
           }).catch(err=>reject(err))
         })
@@ -1525,8 +1484,8 @@ export default {
           return 'purple'
         case 'election_created':
           return 'primary'
-        case 'election_edited':
-          return 'success'
+        case 'election_updated':
+          return 'error'
         case 'logo_updated':
           return 'secondary'
         case 'new_contestant':
@@ -1565,7 +1524,9 @@ export default {
         }
       })
       .catch(err => {
-        // console.log(err)
+        console.log(err)
+        // contestant.followers += 1
+        this.disabled.splice(this.disabled.indexOf(contestant.uid),1)
       })
        
     },
@@ -1666,6 +1627,7 @@ import api from '@/services/api'
   // import Manifesto from '@/components/Manifesto'
 import { setTimeout } from 'timers';
 import ManageElection from '@/components/ManageElection'
+import {firebase, db, database} from '@/plugins/firebase'
 </script>
 <style lang="scss" scoped>
   @mixin borderRadius($radius) {

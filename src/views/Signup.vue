@@ -13,7 +13,7 @@
             <v-btn dark flat color="white" @click="snackbar.show = false"> Close</v-btn>
           </v-snackbar>
 
-          <h1 class="text-xs-center white--text mb-4" ><a href="/" style="text-decoration:none;color:#fff">{{app_title}}</a></h1>
+          <h1 class="text-xs-center white--text mb-4" ><a href="/" style="text-decoration:none;color:#fff">{{$appName}}</a></h1>
           
           <v-card class="" max-width="800" >
             <v-card-title class="title font-weight-bold justify-space-around">
@@ -142,8 +142,6 @@
 
 export default {
   data:()=>({
-    title:'Sign Up | Facevote',
-    app_title: 'Facevote',
     step: 1,
     message: 'Login',
     snackbar: {},
@@ -189,6 +187,9 @@ export default {
     footr:Footer
   },
   computed: {
+    title(){
+      return `Sign Up | ${this.$appName}`
+    },
     currentTitle () {
       switch (this.step) {
         case 1: return 'Sign Up For Free'
@@ -203,7 +204,7 @@ export default {
     },
     async getSchools(){
       try {
-        let schls = await api().post('dashboard/getSchools')
+        let schls = await api2().post('dashboard/getSchools')
         // console.log(schls)
         this.schools = schls.data
       } catch (error) {
@@ -258,78 +259,114 @@ export default {
         this.snackbar = {status:true,color:'error', message:'Passwords do not match'}
       }
       else{
-        let user_school = this.mySchool.text
-        let user_faculty = this.myFaculty.text
-        let user_department = this.myDepartment.text
+
+        let user = this.form
+
+        user.school = this.mySchool.text
+        user.faculty = this.myFaculty.text
+        user.department = this.myDepartment.text
         this.loading = true
         
-        let user = this.form
-        firebase.auth().createUserWithEmailAndPassword(user.email, user.password)
-          .then(userRecord=>{
-            // console.log(userRecord)
-            // update users profile info
-            firebase.auth().currentUser.updateProfile({
-              displayName: user.name,
-            }).catch(function(error) {
-                // An error happened.
-            });
 
-            // store additional user info
-            db.collection('moreUserInfo').doc(userRecord.user.uid).set({
-              uid: userRecord.user.uid,
-              name: user.name,
-              email: user.email,
-              followers: 0,
-              is_verified: false,
-              is_student: user.is_student,
-              was_once_a_student: user.is_student,
-              sch: user_school,
-              fac: user_faculty,
-              dept: user_department
-            }).then(done=>{
-              this.snackbar = {show:true,color:'purple', message:'Account created successfully'}
-              
-              this.$router.push('/home')
-              
-              // send email verification message
-                // this.sendVerificationLInk().then((sent)=>{
-                //   // console.log({sent})
-                //   this.verification_sent = true
-                //   // Email sent. Sign out user
-                //   this.loading = false
-                //   // firebase.auth().signOut().then(()=>{
-                //   //   // console.log('logged out')
-                //   // })
-
-                // }).catch(function(error) {
-                //   // An error happened.
-                //   this.loading = false
-                //   // console.log(error)
-                // })
-              
-            })
-          })
-          .catch((error) =>{
-            
-            this.loading = false
-            $NProgress.done()
-            var errorCode = error.code;
-
-            if(errorCode == 'auth/weak-password' || errorCode == 'auth/invalid-email' 
-              || errorCode == 'auth/email-already-in-use' || errorCode == "auth/network-request-failed"){
-
-              this.snackbar = {
-                show: true,
-                color: 'error',
-                message: error.message}
-            }else{
-              this.snackbar = {
-                show: true,
-                color: 'error',
-                message: 'Something went wrong, please try again'
-              }
+        // console.log(user)
+        api().post('createUser', user).then(result => {
+          firebase.auth().signInWithCustomToken(result.data.token).then(() => {
+            // console.log(result.data)
+            this.snackbar = {
+              show: true,
+              color: 'purple',
+              message: `Welcome to ${this.$appName}`
             }
+            this.$router.push('/home/?welcome=true')
+              
+          })
+          .catch(function(error) {
+            // Handle Errors here.
+            var errorCode = error.code;
+            var errorMessage = error.message;
+            // console.log(error.response.data)
+            this.snackbar = {
+              show: true,
+              message: error.response.data.message,
+              color: 'error'
+            }
+            // ...
           });
+        }).catch(err => {
+          // console.log(err.response.data)
+          this.loading = false
+          this.snackbar = {
+            show: true,
+            color: 'error',
+            message: err.response.data.message
+          }
+        })
+        // firebase.auth().createUserWithEmailAndPassword(user.email, user.password)
+          // .then(userRecord=>{
+          //   // console.log(userRecord)
+          //   // update users profile info
+          //   firebase.auth().currentUser.updateProfile({
+          //     displayName: user.name,
+          //   }).catch(function(error) {
+          //       // An error happened.
+          //   });
+
+          //   // store additional user info
+          //   db.collection('moreUserInfo').doc(userRecord.user.uid).set({
+          //     uid: userRecord.user.uid,
+          //     name: user.name,
+          //     email: user.email,
+          //     followers: 0,
+          //     is_verified: false,
+          //     is_student: user.is_student,
+          //     was_once_a_student: user.is_student,
+          //     sch: user_school,
+          //     fac: user_faculty,
+          //     dept: user_department
+          //   }).then(done=>{
+          //     this.snackbar = {show:true,color:'purple', message:'Account created successfully'}
+              
+          //     this.$router.push('/home')
+              
+          //     // send email verification message
+          //       // this.sendVerificationLInk().then((sent)=>{
+          //       //   // console.log({sent})
+          //       //   this.verification_sent = true
+          //       //   // Email sent. Sign out user
+          //       //   this.loading = false
+          //       //   // firebase.auth().signOut().then(()=>{
+          //       //   //   // console.log('logged out')
+          //       //   // })
+
+          //       // }).catch(function(error) {
+          //       //   // An error happened.
+          //       //   this.loading = false
+          //       //   // console.log(error)
+          //       // })
+              
+          //   })
+          // })
+          // .catch((error) =>{
+            
+          //   this.loading = false
+          //   $Nprogress.done()
+          //   var errorCode = error.code;
+
+          //   if(errorCode == 'auth/weak-password' || errorCode == 'auth/invalid-email' 
+          //     || errorCode == 'auth/email-already-in-use' || errorCode == "auth/network-request-failed"){
+
+          //     this.snackbar = {
+          //       show: true,
+          //       color: 'error',
+          //       message: error.message}
+          //   }else{
+          //     this.snackbar = {
+          //       show: true,
+          //       color: 'error',
+          //       message: 'Something went wrong, please try again'
+          //     }
+          //   }
+          // });
         
       }
     }
@@ -342,7 +379,9 @@ export default {
 
 // import Nav from '@/components/Nav'
   import api from '@/services/api'
+  import api2 from '@/services/api2'
   import Footer from '@/components/Footer'
+  import {firebase, db, database} from '@/plugins/firebase'
 </script>
 <style lang="scss" scoped>
   @mixin MainColor(){

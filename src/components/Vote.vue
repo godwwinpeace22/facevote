@@ -148,7 +148,7 @@ export default {
         firebase.auth().currentUser.getIdToken().then((token)=>{
           let myVote = btoa(JSON.stringify(this.myVote))
           // console.log(myVote)
-          api().post('dashboard/vote', {
+          api().post('vote', {
             electionId: this.currElection.electionId,
             idToken: token,
             myVote: myVote
@@ -179,10 +179,10 @@ export default {
                   // close the voting dialog and prevent more voting attempts
                   this.$eventBus.$emit('Close_Voting_Dialog', true)
                 }, 3000);
-                $NProgress.done()
+                this.$Nprogress.done()
               }
               else{
-                $NProgress.done()
+                this.$Nprogress.done()
                 // console.log(err)
                 
                 this.snackbar = {
@@ -198,7 +198,7 @@ export default {
         }).catch(err=>{
           // console.log(err)
           //console.log(err.response)
-          $$NProgress.done()
+          this.$Nprogress.done()
           this.snackbar = {
             show: true,
             message: 'Something went wrong, try again',
@@ -233,7 +233,7 @@ export default {
     
   },
   destroyed(){
-    document.title = 'Vote | Facevote'
+    document.title = `Vote | ${this.$appName}`
   },
   components:{
     LoadingBar
@@ -242,6 +242,7 @@ export default {
 
 import api from '@/services/api'
   import LoadingBar from '@/spinners/LoadingBar'
+  import {firebase, db, database} from '@/plugins/firebase'
 </script>
 <style lang="scss" scoped>
   @mixin borderRadius($radius) {

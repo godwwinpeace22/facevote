@@ -181,7 +181,7 @@ export default {
 				})
 			}).catch(err=>{
 				this.loading = false
-
+				
 				this.$eventBus.$emit('Snackbar', {
 					show: true,color:'error',
 					message: 'Something went wrong, try again'
@@ -199,6 +199,7 @@ export default {
 }
 import api from '@/services/api'
 import {mapGetters, mapState} from 'vuex'
+import {firebase, db, database} from '@/plugins/firebase'
 </script>
 <style>
 	#campaign_text div{

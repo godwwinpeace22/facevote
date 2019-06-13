@@ -102,4 +102,5 @@ export default {
 }
 
 import { mapGetters, mapState } from 'vuex'
+import {firebase, db, database} from '@/plugins/firebase'
 </script>

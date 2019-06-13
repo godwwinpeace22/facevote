@@ -1,4 +1,4 @@
-# facevote
+# Voteryte
 
 ## Project setup
 ```
@@ -19,4 +19,4 @@ npm run build
 ```
 npm run lint
 ```
-# facevote
+# voteryte

@@ -172,9 +172,9 @@ export default {
         let batch = db.batch()
 
         batch.set(postRef, post)
-        batch.update(userRef, {
-          posts: firebase.firestore.FieldValue.increment(1)
-        })
+        // batch.update(userRef, {
+        //   posts: firebase.firestore.FieldValue.increment(1)
+        // })
         
         batch.commit().then(()=>{
           this.loading = false
@@ -190,13 +190,15 @@ export default {
             color:'success',
             message:'Post was created successfully'
           })
+        }).catch(err => {
+          this.loading = false
         })
         
         
       }catch(err){
         console.log(err)
         this.loading = false
-        this.$eventBus.$emit('ShowSnackbar',{
+        this.$eventBus.$emit('Snackbar',{
           show:true,
           color:'error',
           message:'Sorry, something went wrong, try again'
@@ -212,4 +214,5 @@ export default {
   }
 }
 import {mapGetters, mapState} from 'vuex'
+import {firebase, db, database} from '@/plugins/firebase'
 </script>

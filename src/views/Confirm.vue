@@ -15,7 +15,7 @@
       <v-container fluid fill-height class="cc login" >
         <v-layout align-center justify-center>
           <v-flex xs12 sm8 md4>
-            <h1 class="text-xs-center white--text mb-3" ><a href="/" style="text-decoration:none;color:#fff"> Facevote</a></h1>
+            <h1 class="text-xs-center white--text mb-3" ><a href="/" style="text-decoration:none;color:#fff"> {{$appName}}</a></h1>
             <v-subheader class="white--text text-xs-center d-block">{{text}}</v-subheader>
 
             <v-btn color="success" class="d-block" style="line-height:2.5" depressed v-if="resend_password_verification"
@@ -66,7 +66,6 @@
 <script>
 export default {
   data:()=>({
-    title:'Account Recovery | Facevote',
     snackbar: {},
     disabled: true,
     show: false,
@@ -90,6 +89,11 @@ export default {
       v => v.length >= 6 || 'Password should be at least six characters long'
     ]
   }),
+  computed: {
+    title(){
+      return `Account Recovery | ${this.$appName}`
+    },
+  },
   methods:{
     requestMode(){
       let auth = app.auth()
@@ -106,20 +110,20 @@ export default {
           }
           else{
             // Display reset password handler and UI.
-            this.title = 'Reset Your Password | Facevote'
+            this.title = `Reset Your Password | ${this.$appName}`
             this.handleResetPassword(auth, this.actionCode);
           }
           
           break;
         case 'recoverEmail':
           // Display email recovery handler and UI.
-          this.title = 'Recover Email | Facevote'
+          this.title = `Recover Email | ${this.$appName}`
           this.text = 'Recover Your Email'
           this.handleRecoverEmail(auth, this.actionCode);
           break;
         case 'verifyEmail':
           // Display email verification handler and UI.
-          this.title = 'Verify Email | Facevote'
+          this.title = `Verify Email | ${this.$appName}`
           this.text = 'Verify Your Email'
           this.handleVerifyEmail(auth, this.actionCode);
           break;
@@ -218,13 +222,13 @@ export default {
         else{
           this.loading = false
           this.snackbar = {show:true, message:'Please provide email'}
-          //$NProgress.done()
+          //$Nprogress.done()
         }
       }
       catch(err){
         this.loading = false
         this.snackbar = {show:true, message:err.message}
-        $NProgress.done()
+        $Nprogress.done()
       }
     },
     handleError(){
@@ -242,6 +246,7 @@ export default {
 }
 // import Nav from '@/components/Nav'
   import Footer from '@/components/Footer'
+  import {firebase, db, database} from '@/plugins/firebase'
 </script>
 
 <style lang="scss">

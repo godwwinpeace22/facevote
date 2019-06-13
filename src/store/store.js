@@ -1,8 +1,8 @@
-/* global firebase: false */
 import Vue from 'vue'
 import Vuex from 'vuex'
 import VuexPersist from 'vuex-persist';
 import createMutationsSharer from 'vuex-shared-mutations'
+import {firebase} from '@/plugins/firebase'
 // import LogRocket from 'logrocket';
 // import createPlugin from 'logrocket-vuex';
 
@@ -61,10 +61,15 @@ export default new Vuex.Store({
   },
   mutations: {
     setUserInfo(state,data){
+      // data.user_id ? data['uid'] = data.user_id : ''
       state.userInfo = data
     },
     setUser(state,data){
+      // data['displayName'] = data.name
+      // data.user_id ? data['uid'] = data.user_id : ''
+
       state.isAuthenticated = data
+      // state.userInfo = data
       // state.userInfo = null
     },
     logout(state){

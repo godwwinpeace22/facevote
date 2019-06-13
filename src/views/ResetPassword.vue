@@ -57,7 +57,6 @@
 <script>
 export default {
   data:()=>({
-    title:'Recover Account | Facevote',
     description:'',
     loading:false,
     snackbar:{},
@@ -76,8 +75,10 @@ export default {
     footr:Footer
   },
   computed: {
-      
+    title(){
+      return `Recover Account | ${this.$appName}`
     },
+  },
   methods:{
     async submit(){
       try{
@@ -91,13 +92,13 @@ export default {
         else{
           this.loading = false
           this.snackbar = {show:true, message:'Please provide email'}
-          $NProgress.done()
+          $Nprogress.done()
         }
       }
       catch(err){
         this.loading = false
         this.snackbar = {show:true, message:err.message}
-        $NProgress.done()
+        $Nprogress.done()
       }
     },
     async sendPasswordReset(email){
@@ -114,9 +115,9 @@ export default {
   }
 }
 
-// import Nav from '@/components/Nav'
   import Footer from '@/components/Footer'
-  import api from '@/services/api'
+  import api from '@/services/api2'
+  import {firebase, db, database} from '@/plugins/firebase'
 </script>
 <style lang="scss">
   @mixin MainColor(){

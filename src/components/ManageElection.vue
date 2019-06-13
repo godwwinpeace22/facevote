@@ -57,7 +57,12 @@
 								
 
 								<v-card-text class="pt-0">
-									<div class="title font-weight-light mb-2">{{$helpers.truncateText(currElection.title, 35)}} </div>
+									<div class="title font-weight-light mb-2 secondary--text">{{$helpers.truncateText(currElection.title, 35)}} 
+										<v-btn flat icon class="ml-4" @click.native="edit_dialog = !edit_dialog">
+											<v-icon color="orange">settings</v-icon>
+										</v-btn>
+										
+									</div>
 									<small>Created on {{currElection.dateCreated.toDate().toLocaleString()}}</small>
 									<v-divider class="my-2"></v-divider>
 
@@ -254,16 +259,16 @@
 										<v-timeline align-top dense class="" >
 											<v-timeline-item :color="getColor(activity)" small v-for="(activity, i) in activities" :key="i + 'activity'">
 												<v-layout pt-3>
-													<v-flex xs3>
+													<!-- <v-flex xs3>
 														<strong>{{$helpers.parseDate(activity.tstamp)}}</strong>
-													</v-flex>
+													</v-flex> -->
 													<v-flex>
 														<strong>
 															<span class="secondary--text linkify" @click="$eventBus.$emit('ViewProfile', activity.onr)">
 																{{activity.onr.uid == getUser.uid ? 'Admin' : activity.onr.name}}
 															</span> 
 															{{activity.body}}</strong>
-														<div class="caption">Mobile App</div>
+														<div class="caption">{{$helpers.parseDate(activity.tstamp)}}</div>
 													</v-flex>
 												</v-layout>
 											</v-timeline-item>
@@ -423,7 +428,112 @@
 					</v-flex>
 				</v-layout>
 			</v-container>
+			
+			<!-- EDIT DIALOG -->
+			<v-dialog v-model="edit_dialog" :persistent="saving_edit" hide-overlay max-width="500" scrollable>
+				<v-card flat>
+					<v-toolbar>
+						<v-icon class="mr-2" color="primary">settings</v-icon>
+						<span class="font-weight-bold">Edit Election</span>
+					</v-toolbar>
+					<v-card-text class="">
+						<v-text-field
+							name="title" hide-details color="secondary"
+							label="Election Title" outline
+							:value="currElection.title" v-model="form.title"
+						></v-text-field>
 
+						<v-layout column mt-4>
+						
+							<v-flex xs12 sm6 mb-4>
+								<v-dialog ref="dialog" v-model="modal" :return-value.sync="form.date"
+									persistent lazy full-width width="290px" >
+
+									<v-text-field slot="activator" hide-details outline color="secondary" v-model="form.date"
+										label="Start Date" readonly>
+										<v-icon color="secondary" slot="prepend-inner">event</v-icon>
+									</v-text-field>
+									<v-date-picker v-model="form.date" scrollable :allowed-dates="allowedDates" header-color="secondary">
+										<v-spacer></v-spacer>
+										<v-btn flat   @click="modal = false">Cancel</v-btn>
+										<v-btn flat small outline color="success" @click="$refs.dialog.save(form.date)">OK</v-btn>
+									</v-date-picker>
+								</v-dialog>
+							</v-flex>
+
+							<v-flex xs12 sm6>
+								
+								<v-dialog ref="dialog2" v-model="modal2" :return-value.sync="form.time"
+									persistent lazy full-width width="290px" >
+
+									<v-text-field  slot="activator" hide-details outline v-model="form.time"  label="Start Time" color="secondary" readonly >
+										<v-icon color="secondary" slot="prepend-inner">access_time</v-icon>
+									</v-text-field>
+									<v-time-picker v-if="modal2" format="ampm" v-model="form.time" header-color='secondary'>
+										<v-spacer></v-spacer>
+										<v-btn flat  @click="modal2 = false">Cancel</v-btn>
+										<v-btn flat color="success" outline @click="$refs.dialog2.save(form.time)">OK</v-btn>
+									</v-time-picker>
+								</v-dialog>
+							</v-flex>
+						</v-layout>
+
+						<!-- duration -->
+						<v-slider v-model="form.electionDuration" thumb-color="secondary"
+							:thumb-size="24" ticks thumb-label :label="'Duration: ' + form.electionDuration + ' hrs'" :min="1" :max='24'>
+						</v-slider>
+						
+						<v-btn depressed @click="dialog = true" small color="secondary" class="ml-0 text-capitalize">
+							<v-icon>add</v-icon> Add role
+						</v-btn>
+
+						<v-dialog v-model="dialog"  max-width="500px">
+
+							<v-card>
+								<v-card-title primary-title class="title mb-0 pb-0">Add A New Role</v-card-title>
+								<v-card-text>
+									<v-text-field label="Role title" v-model="role_input" color="secondary" 
+										hint="e.g president, secretary, vice-chancellor"></v-text-field>
+									<small class="grey--text"></small>
+									<p>
+										<small class="grey--text">* try not to use abbreviations</small>
+									</p>
+									<v-divider></v-divider>
+									<v-textarea v-model="role_input_desc"
+										label="Role description (optional)" outline
+										name="name" color="secondary" hint="e.g what this role can do"
+									></v-textarea>
+								</v-card-text>
+								<v-card-actions>
+									<v-spacer></v-spacer>
+									<v-btn flat @click.native="dialog = false">Cancel</v-btn>
+									<v-btn flat color="success" @click.native="addrole" :disabled="!role_input.trim()">Add role</v-btn>
+								</v-card-actions>
+							</v-card>
+						</v-dialog>
+
+						<v-select class="mt-2" deletable-chips
+							v-model="form.roles" dense
+							:items="form.roles" return-object
+							item-text="title" cache-items
+							color="secondary"
+							chips label="Roles"
+							multiple outline
+						></v-select>
+
+					</v-card-text>
+					<v-card-actions>
+						<v-spacer></v-spacer>
+						<v-btn color="success" 
+							:loading="saving_edit" 
+							:disabled="!!disabled_save" 
+							depressed
+							@click="saveChanges">
+							Save Changes
+						</v-btn>
+					</v-card-actions>
+				</v-card>
+			</v-dialog>
 		</div>
 		</transition>
     
@@ -484,15 +594,29 @@ export default {
   data:()=>({
     ready: false,
     flagged_user_dialog: false,
-    flagged_user: {},
+		flagged_user: {},
+		e9: 1,
+		edit_dialog: false,
+		role_input: '',
+		role_input_desc: '',
+		dialog: false,
+		form: {
+			title: '',
+			date: '',
+			time: '',
+			electionDuration: 5,
+			roles: []
+		},
+		saving_edit: false,
+		modal: false,
+    modal2: false,
+    today: new Date().getTime(),
     contestants: [],
     currElection: {},
     regVoters: [],
 		activities: [],
 		regActivities: [],
-		chartData: {
-			 
-		},
+		chartData: {},
 		chartOptions:{
       responsive: true, maintainAspectRatio: false,
       scales: {
@@ -545,6 +669,11 @@ export default {
 	watch: {
 		'curRoom': function(){
 			this.setUp()
+			this.prefillForm()
+		},
+		'election': function(){
+			this.setUp()
+			this.prefillForm()
 		}
 	},
   filters: {
@@ -566,23 +695,18 @@ export default {
     ...mapState([
       'isSuperUser',
       'curRoom'
-    ]),
-    stats(){
-      return [
-        // {title:'Followers', value: this.currElection.followers, text: '65 new this week', icon: 'lens',iconColor:'secondary'},
-        {title:'Voters', value: this.regVoters.length, text: 'Since last month', icon:'group', iconColor:'purple'},
-        {title:'Contestants', value: this.contestants.length, text: '5 roles/positions', icon: 'hdr_strong', iconColor:'success'},
-        {title:'Total Votes', value: '103,000', text: 'Since last month', icon: 'how_to_vote', iconColor: 'cyan'}
-      ]
+		]),
+		disabled_save(){
+			return !this.form.title.trim() || !this.form.date.trim() || !this.form.time.trim()
 		},
 		no_of_voters(){
       let len = this.currElection.voters
         
 			switch (true){
 				case len >= 1000000:
-					return len / 1000000 + 'M +'
+					return Math.round(len / 1000000) + 'M +'
 				case len >= 1000:
-					return len / 1000 + 'K + '
+					return Math.round(len / 1000) + 'K + '
 				default:
 					return len
 			}
@@ -594,9 +718,9 @@ export default {
 			
 			switch (true){
 				case len >= 1000000:
-					return len / 1000000 + 'M +'
+					return Math.round(len / 1000000) + 'M +'
 				case len >= 1000:
-					return len / 1000 + 'K + '
+					return Math.round(len / 1000) + 'K + '
 				default:
 					return len
 			}
@@ -659,6 +783,109 @@ export default {
    
   },
   methods:{
+		prefillForm(){
+			this.form = {
+				title: this.currElection.title,
+				date: this.currElection.startDate,
+				time: this.currElection.startTime,
+				electionDuration: this.currElection.duration
+			}
+			this.form.roles = this.currElection.roles.map(role => {
+				return {
+					...role,
+					disabled: true
+				}
+			})
+		},
+		addrole(){
+      if(this.role_input.length == 0){
+        alert("Text should not be empty")
+        return 
+      }else{
+        this.form.roles = [
+					...this.form.roles,
+					{
+						title: this.role_input,
+						value: this.role_input,
+						description: this.role_input_desc,
+						disabled: false,
+					}
+				]
+				this.dialog = false;
+
+        this.role_input = '' //empty it
+        this.role_input_desc = ''
+        }
+      
+		},
+		saveChanges(){
+			let start = new Date(this.currElection.startDate + ' ' + this.currElection.startTime).getTime();
+			// Allow changes only when election has not started
+			if(start > Date.now()){
+
+				firebase.auth().currentUser.getIdToken().then((token)=>{
+					this.saving_edit = true
+	
+					api().post('edit_election',{
+						form: this.form,
+						userInfo: this.getUserInfo,
+						electionId: this.currElection.electionId,
+						idToken: token
+					}).then(res =>{ 
+	
+						this.saving_edit = false
+	
+						this.$eventBus.$emit('Snackbar', {
+							show: true,
+							message: res.data.message,
+							color: 'success'
+						})
+						this.edit_dialog = false
+						this.setUp()
+	
+					}).catch((err) => {
+						this.saving_edit = false;
+						this.$Nprogress.done()
+						
+						this.$eventBus.$emit('Snackbar', {
+							show: true,
+							message: err.response ? err.response.data.message : 'Something went wrong, try again',
+							color: 'error'
+						})
+					})
+	
+				})
+				.catch(err => {
+					this.$eventBus.$emit('Snackbar', {
+						show: true,
+						message: 'Something went wrong, try again',
+						color: 'error'
+					})
+				})
+			}
+			else {
+				// election has started or ended
+				this.$eventBus.$emit('Snackbar', {
+					show: true,
+					message: "You can't update election after it has started",
+					color: 'error'
+				})
+			}
+		},
+		allowedDates(val){
+			// only allow dates greater than or equal to today
+			let today = this.today
+
+			let toAllow = new Date(val).getTime()
+	
+			return today - toAllow - 24 * 60 * 60 * 1000 <= 0
+    },
+    allowedHours(val){
+      // only allow hours that are not yet past
+      let curHour = new Date().getHours()
+      // console.log(curHour, val)
+      return curHour < val
+    },
     voterSuspended(voter){
       let finding = voter.suspended &&
       voter.suspended.find(electionId => electionId == this.currElection.electionId) ?
@@ -677,9 +904,10 @@ export default {
     },
     async setUp(){
       try {
-
+				
         // Set current election
-				this.currElection = this.election ? this.election : this.curRoom
+				this.currElection = this.election ? this.election : this.curRoom 
+
 				// console.log(this.currElection, this.election, this.curRoom)
 				if(this.voters){
 					this.regVoters = this.voters
@@ -751,7 +979,7 @@ export default {
 
 				// console.log(votersObj)
 				this.chartData = {
-					labels: Object.keys(votersObj),
+					labels: Object.keys(votersObj).map(item => this.$helpers.truncateText(item, 10)),
 					datasets: [{
 						label: 'Voter Registrations',
 						backgroundColor: 'orange',
@@ -823,8 +1051,8 @@ export default {
         case 'election_created':
           return 'primary'
           break
-        case 'election_edited':
-          return 'success'
+        case 'election_updated':
+          return 'error'
           break
         case 'logo_updated':
           return 'secondary'
@@ -925,7 +1153,7 @@ export default {
 			
       db.collection('moreUserInfo').doc(voter.uid)
       .update({
-        suspended:firebase.firestore.FieldValue.arrayUnion(this.currElection.electionId)
+        suspended: firebase.firestore.FieldValue.arrayUnion(this.currElection.electionId)
       }).then(()=>{
 				this.loading = false
 				voter.suspended ? 
@@ -983,6 +1211,7 @@ export default {
 			await this.getActivities()
 			await this.recentRegActivities()
 			this.getAdmins()
+			this.prefillForm()
       
     } catch (error) {
       // console.log(error)
@@ -990,10 +1219,11 @@ export default {
     
   }
 }
-// import api from '@/services/api'
+import api from '@/services/api'
 import {mapGetters, mapState} from 'vuex'
 import LoadingBar from '@/spinners/LoadingBar'
 import BarChart from '@/charts/barchart'
+import {firebase, db, database} from '@/plugins/firebase'
 </script>
 <style scopped>
   .linkify{

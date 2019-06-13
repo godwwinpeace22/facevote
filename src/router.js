@@ -1,11 +1,9 @@
-/* global firebase: false, $NProgress: false */ // tells eslint to treat 'db' as a globally defined variable, and that it should not be written to
-
 import Vue from 'vue'
   import Router from 'vue-router'
   import Watch from '@/components/Watch'
-  // import Dashboard from '@/views/Dashboard'
-  import './plugins/firebase';
+  import {firebase} from './plugins/firebase'
   import $helpers from '@/helpers/helpers'
+  import $Nprogress from 'nprogress'
 Vue.use(Router)
 
 const requireAuth = async (to, from, next) => {
@@ -37,7 +35,7 @@ const requireAuth = async (to, from, next) => {
 // }
 
 const router = new Router({
-  //mode:'history',
+  // mode: 'history',
   routes: [
     {
       path:'/home',
@@ -51,12 +49,6 @@ const router = new Router({
           component: () => import('@/components/Feed'),
           // beforeEnter: requireAuth,
         },
-        // {
-        //   path:'/enroll',
-        //   name:'enroll',
-        //   component: () => import('@/components/Enroll'),
-        //   beforeEnter:requireAuth,
-        // },
         {
           path:'/verify',
           name:'verify_acc',
@@ -100,12 +92,6 @@ const router = new Router({
           component: () => import('@/components/Contest'),
           // beforeEnter: requireAuth,
         },
-        // {
-        //   path:'/elections/manage',
-        //   name:'manage',
-        //   component: ManageElection,
-        //   beforeEnter:requireAuth,
-        // },
         {
           path: '/elections/create',
           name: 'create_election',
@@ -163,7 +149,7 @@ router.beforeResolve((to, from, next) => {
   // If this isn't an initial page load.
   if (to.name) {
       // Start the route progress bar.
-      $NProgress.start()
+      $Nprogress.start()
   }
   next()
 })
@@ -181,7 +167,7 @@ router.beforeEach((to, from, next) => {
 
 router.afterEach(() => {
   // Complete the animation of the route progress bar.
-  $NProgress.done()
+  $Nprogress.done()
 })
 
 export default router

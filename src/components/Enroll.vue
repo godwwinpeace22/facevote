@@ -127,7 +127,7 @@
 <script>
 export default {
   data:()=>({
-    title: 'Enroll | Facevote',
+    title: 'Enroll | Voteryte',
     e5: 1,
     snackbar: {},
     dialog: false,
@@ -195,7 +195,7 @@ export default {
           let doc, user
 
           user = this.getUserInfo
-          $NProgress.start()
+          $Nprogress.start()
 
           let electionRef = db.collection('elections').doc(this.electionId)
           
@@ -207,14 +207,14 @@ export default {
               show:true,message:'Sorry, election not found', color:'error'
             }
             this.loading = false
-            $NProgress.done()
+            $Nprogress.done()
           }
           else if(this.getUserInfo && this.getUserInfo.enrolled && !!this.getUserInfo.enrolled.find(id => id == this.electionId)){
             this.error_msg = 'Sorry, you have already enrolled for this election'
             this.hide = true
           }
           else{
-            $NProgress.done()
+            $Nprogress.done()
             this.election = id.data()
             this.loading = false
             this.e5 = 2
@@ -270,7 +270,7 @@ export default {
           this.dialog = false
           this.e5 = 3
         }).catch(error=>{
-          $NProgress.done()
+          $Nprogress.done()
           this.loading = false
           // console.log(error)
           // console.log(error.response)
@@ -303,6 +303,7 @@ import axios from 'axios'
 import Navigation from '@/components/Navigation'
 import { mapGetters, mapState } from 'vuex';
 import LoadingBar from '@/spinners/LoadingBar'
+import {firebase, db, database} from '@/plugins/firebase'
 </script>
 <style lang="scss">
   @mixin borderRadius($radius) {

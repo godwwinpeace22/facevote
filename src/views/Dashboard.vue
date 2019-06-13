@@ -12,7 +12,14 @@
               <v-navigation-drawer fixed v-model="drawer" app dark width="230" 
                 style="background-color:#1c1f35;color:bfbbbb;z-index:20" >
                 <v-toolbar flat tile class="" style="background-color:rgba(51, 54, 78, 0.9);color:#fff;">
-                  <v-toolbar-title>Facevote</v-toolbar-title>
+                  <v-avatar
+                    size="40"
+                    color="transparent"
+                  >
+                    <img src="@/assets/logo-50x50.png" alt="logo">
+                  </v-avatar>
+
+                  <v-toolbar-title>{{$appName}}</v-toolbar-title>
                 </v-toolbar>
                 <v-divider></v-divider>
 
@@ -98,7 +105,9 @@
                         <v-list-tile-action>
                           <v-icon color="">record_voice_over</v-icon>
                         </v-list-tile-action>
-                        <v-list-tile-title>New Broadcast</v-list-tile-title>
+                        <v-list-tile-content>
+                          <v-list-tile-title>New Broadcast </v-list-tile-title>
+                        </v-list-tile-content>
                       </v-list-tile>
                     </template>
 
@@ -140,22 +149,15 @@
                       <v-list-tile-title>Contest</v-list-tile-title>
                     </v-list-tile>
 
-                    <v-list-tile @click="new_manifesto_dialog = true" v-if="isSuperUser && curRoom">
+                    <v-list-tile @click="new_manifesto_dialog = true" 
+                      v-if="isSuperUser && curRoom"
+                      :disabled="!isContestant">
                         <v-list-tile-action>
                           <v-icon color="success">add_box</v-icon>
                         </v-list-tile-action>
-                      <v-list-tile-title>New Manifesto</v-list-tile-title>
+                      <v-list-tile-title>New Manifesto </v-list-tile-title>
                     </v-list-tile>
 
-                    <v-tooltip right v-if="isAdmin">
-                      <v-list-tile @click="show_manager = !show_manager" slot="activator">
-                        <v-list-tile-action>
-                          <v-icon color="success">build</v-icon>
-                        </v-list-tile-action>
-                        <v-list-tile-title>Manage Election</v-list-tile-title>
-                      </v-list-tile>
-                      <span>Manage Election</span>
-                    </v-tooltip>
 
                     <v-tooltip right v-if="!isSuperUser">
                       <v-list-tile disabled slot="activator">
@@ -166,13 +168,23 @@
                       </v-list-tile>
                       <span>This feature requires a premium account</span>
                     </v-tooltip>
+
+                    <v-tooltip right v-if="isAdmin">
+                      <v-list-tile @click="show_manager = !show_manager" slot="activator">
+                        <v-list-tile-action>
+                          <v-icon color="success">build</v-icon>
+                        </v-list-tile-action>
+                        <v-list-tile-title>Manage Election</v-list-tile-title>
+                      </v-list-tile>
+                      <span>Manage Election</span>
+                    </v-tooltip>
                   </v-list-group>
                   
-                  <v-list-tile :to="menu.link" exact v-for="menu in navmenus" :key="menu.icon">
+                  <v-list-tile to="/verify" exact >
                     <v-list-tile-action>
-                      <v-icon :color="menu.icon_color">{{menu.icon}}</v-icon>
+                      <v-icon color="success">verified_user</v-icon>
                     </v-list-tile-action>
-                    <v-list-tile-title>{{menu.title}}</v-list-tile-title>
+                    <v-list-tile-title>Verify Account</v-list-tile-title>
                   </v-list-tile>
 
                   <!-- SETTINGS -->
@@ -184,12 +196,26 @@
                   </v-list-tile>
 
                   <!-- HELP -->
-                  <v-list-tile to='#2'>
-                    <v-list-tile-action>
-                      <v-icon color="success">help</v-icon>
-                    </v-list-tile-action>
-                    <v-list-tile-title>Help</v-list-tile-title>
-                  </v-list-tile>
+                  <v-list-group prepend-icon="help" no-action>
+                    <v-list-tile slot="activator">
+                      <v-list-tile-title>Help</v-list-tile-title>
+                    </v-list-tile>
+                    <v-list-tile href="https://voteryte.com/faq" target="blank">
+                      <v-list-tile-action>
+                        <v-icon color="success">info</v-icon>
+                      </v-list-tile-action>
+                      <v-list-tile-title>FAQ</v-list-tile-title>
+                    </v-list-tile>
+
+                      <v-list-tile href="https://voteryte.freshdesk.com" target="blank">
+                        <v-list-tile-action>
+                          <v-icon color="grey">live_help</v-icon>
+                        </v-list-tile-action>
+                        <v-list-tile-content>
+                          <v-list-tile-title>Helpdesk </v-list-tile-title>
+                        </v-list-tile-content>
+                      </v-list-tile>
+                  </v-list-group>
 
                   <!-- NOT SUPERUSER -->
                   <v-list-tile v-if="!isSuperUser">
@@ -218,34 +244,10 @@
                 {{snackbar.message}}
                 <v-btn dark flat @click="snackbar.show = false"> Close</v-btn>
               </v-snackbar>
-
-              <!-- FAB -->
-              <!-- <v-speed-dial v-model="fab" fixed bottom
-                right direction="top" open-on-hover
-                transition="slide-y-reverse-transition" v-if="$vuetify.breakpoint.xsOnly">
-                
-                <v-btn slot="activator" v-model="fab"
-                  color="orange" dark fab>
-                  <v-icon large>how_to_vote</v-icon>
-                </v-btn>
-
-                <v-btn fab dark small color="green" @click.stop="$router.push(`/elections/vote`)">
-                  <v-icon>how_to_vote</v-icon>
-                </v-btn>
-                <v-btn fab dark small color="indigo" @click.stop="$router.push(`/forum`)">
-                  <v-icon>forum</v-icon>
-                </v-btn>
-                <v-btn fab dark small color="red">
-                  <v-icon>add</v-icon>
-                </v-btn>
-              </v-speed-dial> -->
               
-              <!-- <transition name="fade" mode="out-in"> -->
-                <loading-bar v-if="show_loading_bar" color="grey"></loading-bar>
-                <router-view v-else></router-view>
-              <!-- </transition> -->
-            
-        
+              <loading-bar v-if="show_loading_bar" color="grey"></loading-bar>
+              <router-view v-else></router-view>
+              
             </v-flex>
           </v-layout>
         
@@ -267,7 +269,7 @@
 
           <!-- NEW MANIFESTO DIALOG -->
           <v-dialog v-model="new_manifesto_dialog" lazy :fullscreen="$vuetify.breakpoint.xsOnly"
-            max-width="800px" :transition="switchTransition" v-if="new_manifesto_dialog" scrollable>
+            max-width="800px" :transition="switchTransition" hide-overlay v-if="new_manifesto_dialog" scrollable>
             <v-card flat>
               <v-toolbar card dense flat>
                 <v-btn flat icon v-if="$vuetify.breakpoint.xsOnly"
@@ -322,18 +324,16 @@
           <!-- PAYMENTS -->
           <v-dialog v-model="upgrade" lazy :persistent="procesing_payment"
             max-width="500px" :transition="switchTransition" content-class="round_top" >
-            <v-card class="round_top" flat id="pay_card">
-              <!-- <v-toolbar color="teal" dark card>
-                <div class="title">Upgrade Account</div>
-              </v-toolbar> -->
+            <v-card class="round_top" flat>
+              
               <v-subheader class="title">Get Premium</v-subheader>
 
               <v-card-text class="lighten-3">
                 <div>Upgrade your account and have the ability to create posts, campaigns, election manifestos, and much more. Get SuperPowers!</div>
-                <div class="mt-2"><strong>SuperUser</strong>: ₦ 5,000 per month</div>
+                <div class="mt-2"><strong>Amount</strong>: ₦ 5,000 per month</div>
                 <v-btn color="secondary" 
                   style="text-transform: initial;" 
-                  small class="px-0 ml-0" to="/" 
+                  small class="px-0 ml-0" target="blank" href="https://voteryte.com/pricing.php" 
                   flat>
                   <span style="text-decoration: underline;">See plan details</span>
                   <v-icon small>open_in_new</v-icon>
@@ -353,15 +353,8 @@
                   </v-card>
                 </v-dialog>
 
-                <v-btn color="info" 
-                  flat small class="text-capitalize" 
-                  v-if="getUserInfo && getUserInfo.tried_premium"
-                  @click="tryPremium" :loading="procesing_payment">
-                  Try free for 14 days
-                </v-btn>
-
               </v-card-text>
-              <v-card-actions v-if="getUserInfo && !getUserInfo.tried_premium">
+              <v-card-actions>
                 <v-spacer></v-spacer>
                 <v-btn color="" class="mr-2" depressed :disabled="procesing_payment" @click="upgrade = false">
                   Cancel
@@ -384,8 +377,23 @@
           </v-dialog>
 
           <input type="file" name="file" id="file_img" style="visibility:hidden;position:absolute;" 
-            @change="onFileSelect($event)" accept="image/jpeg,image/png" multiple>
+            @change="onFileSelect($event)" accept="image/jpeg,image/png/gif" multiple>
+
+          <v-layout row justify-center>
+            <v-dialog v-model="switch_room_dialog" persistent max-width="290" content-class="switch_room_dialog">
+              
+              <v-card style="height: 150px;" class="pa-5">
+                <p class="title text-xs-center">Switching Election</p>
+                <v-progress-circular indeterminate 
+                  color="primary lighten-3" class="mx-auto d-block">
+
+                </v-progress-circular>
+              </v-card>
+            </v-dialog>
+          </v-layout>
         </div>
+
+
       </transition>
     </v-content>
   </v-app>
@@ -394,12 +402,10 @@
 <script>
 export default {
   data:()=>({
-    title: 'Dashboard | Facevote',
     showUi: false,
-    fab: false,
+    switch_room_dialog: false,
     index: null, // for image gallery viewer
     images: [], // for image gallery viewer
-    menu: true,
     getting_enrolled: false,
     show_loading_bar: true,
     show_manager: false, // election manager dialog
@@ -419,15 +425,8 @@ export default {
     plan: {
       title: 'SuperUser',
       amount: 5000,
-      // plan_code: 'PLN_o4nm592fy4796k9',
-      paystack_key:'pk_test_fefaa0524871e5ff35d4ec861974c59197cb42e7',
+      paystack_key:'pk_test_cd14c065dfe123cd983362a4ed795fe1128ec4e2',
     },
-    navmenus: [
-      //{title:'Notifications', icon:'notifications', link:"#"},
-      //{title:'Forum', icon:'forum', link:'/forum'},
-      // {title:'Enroll', icon:'fingerprint', link:'/enroll'},
-      {title:'Verify Account', icon:'verified_user', link:'/verify',icon_color:'success'},
-    ],
     reference: Date.now() + btoa(Math.random()).substring(0,12),
     drawer: true,
   }),
@@ -435,19 +434,22 @@ export default {
     ViewProfile,
     LoadingBar,
     PrivateMsgList,
-    // PrivateChatWindow,
     Navigation,
     NewManifesto,
     paystack,
     Gallery,
     NewBroadcast,
     ManageElection
-    // ViewBroadcasts
   },
 
   watch: {
     'curRoom': function(to, from) {
       this.curRoom ? this.getBroadcasts() : ''
+
+      this.switch_room_dialog = true
+      setTimeout(()=>{
+        this.switch_room_dialog = false
+      }, 1000)
     },
     'getUserInfo': function() {
       this.getUserInfo ? 
@@ -469,6 +471,9 @@ export default {
       'loading_rooms'
       
     ]),
+    title(){
+      return `Dashboard | ${this.$appName}`
+    },
     isAdmin(){
       return this.curRoom ? this.curRoom.admins.includes(this.getUser.uid) : false
     },
@@ -513,6 +518,15 @@ export default {
         }
       }
     },
+    isContestant(){ // return the role a user is contesting for
+      if(this.getUserInfo && this.getUserInfo.contestsRef){
+        let found = this.getUserInfo.contestsRef.find(contest=>contest.electionRef == this.curRoom.electionId)
+        //console.log(res)
+        return found ? this.curRoom.roles.find(role => role.value == found.role).title : false
+      }else{
+        return false
+      }
+    },
   },
   
   methods:{
@@ -521,48 +535,55 @@ export default {
       // get fac elections in user fac
       // get sch elections in user school
       // populate myEnrolled with the retrieved elections
+      // console.log(this.getUser)
+      // console.log(this.getUser, this.getUserInfo)
+      if(this.getUserInfo.is_student) {
 
-      let elections = []
-      this.getting_enrolled = true
-      // get user's General elections
-      await db.collection('elections')
-      .where('sch', '==', this.getUserInfo.sch)
-      .where('level', '==', 'General')
-      .get().then(docs => {
-        docs.forEach(doc => {
-          elections.push(doc.data())
+        let elections = []
+        this.getting_enrolled = true
+        // get user's General elections
+        await db.collection('elections')
+        .where('sch', '==', this.getUserInfo.sch)
+        .where('level', '==', 'General')
+        .get().then(docs => {
+          docs.forEach(doc => {
+            elections.push(doc.data())
+          })
         })
-      })
 
-      // get user's fac elections
-      await db.collection('elections')
-      .where('sch', '==', this.getUserInfo.sch)
-      .where('fac', '==', this.getUserInfo.fac)
-      .where('level', '==', 'Faculty')
-      .get().then(docs => {
-        docs.forEach(doc => {
-          elections.push(doc.data())
+        // get user's fac elections
+        await db.collection('elections')
+        .where('sch', '==', this.getUserInfo.sch)
+        .where('fac', '==', this.getUserInfo.fac)
+        .where('level', '==', 'Faculty')
+        .get().then(docs => {
+          docs.forEach(doc => {
+            elections.push(doc.data())
+          })
         })
-      })
 
-      // get user's dept elections
-      await db.collection('elections')
-      .where('sch', '==', this.getUserInfo.sch)
-      .where('dept', '==', this.getUserInfo.dept)
-      .where('level', '==', 'Department')
-      .get().then(docs => {
-        docs.forEach(doc => {
-          elections.push(doc.data())
+        // get user's dept elections
+        await db.collection('elections')
+        .where('sch', '==', this.getUserInfo.sch)
+        .where('dept', '==', this.getUserInfo.dept)
+        .where('level', '==', 'Department')
+        .get().then(docs => {
+          docs.forEach(doc => {
+            elections.push(doc.data())
+          })
         })
-      })
-      // sort elections by creation date and dispatch to store
-      let sorted = elections.sort((a,b) => b.dateCreated.toMillis() - a.dateCreated.toMillis())
-      this.$store.dispatch('setMyEnrolled', sorted)
-      this.getting_enrolled = false
+        // sort elections by creation date and dispatch to store
+        let sorted = elections.sort((a,b) => b.dateCreated.toMillis() - a.dateCreated.toMillis())
+        this.$store.dispatch('setMyEnrolled', sorted)
+        this.getting_enrolled = false
 
-      // set current room if there is none
+        // set current room if there is none
 
-      this.curRoom ? '' : sorted.length > 0 ? this.$store.dispatch('curRoom', sorted[0]) : ''
+        this.curRoom ? '' : sorted.length > 0 ? this.$store.dispatch('curRoom', sorted[0]) : ''
+      }
+      else {
+        this.getting_enrolled = false
+      }
     },
     tryPremium(){
       this.procesing_payment = true
@@ -651,7 +672,6 @@ export default {
           this.timestamp = Date.now()
           this.upgrade = false
           this.procesing_payment = false
-          //this.creating_election_dialog = false;
         })
         
       })
@@ -675,7 +695,7 @@ export default {
       let file_sizes = 0
       for(let file of e.target.files){
         if(file.type == 'image/jpeg' || 
-          file.type == 'image/jpg' || file.type == 'image/png'){
+          file.type == 'image/jpg' || file.type == 'image/png' || file.type == 'image/gif'){
             stop = false
           
         }
@@ -722,7 +742,7 @@ export default {
       // Fetch the current user's ID from Firebase Authentication.
       let userId = this.getUser.uid;
 
-      const usersRef = db.collection('moreUserInfo'); // Get a reference to the Users collection;
+      const usersRef = db.collection('users'); // Get a reference to the Users collection;
       const onlineRef = database.ref('.info/connected'); // Get a reference to the list of connections
 
       onlineRef.on('value', snapshot => {
@@ -748,23 +768,28 @@ export default {
     },
     getBroadcasts(){
       if(this.curRoom){
-
-        this.broadcastsRef = db.collection('broadcasts')
-        .where('elecRef', '==', this.curRoom.electionId)
-        .orderBy('tstamp', 'desc')
-        .limit(100)
-        .onSnapshot(docs =>{
-          let d = []
-          docs.forEach(doc =>{
-            d.push(doc.data())
+        
+        try {
+          this.broadcastsRef = db.collection('broadcasts')
+          .where('elecRef', '==', this.curRoom.electionId)
+          .orderBy('tstamp', 'desc')
+          .limit(100)
+          .onSnapshot(docs =>{
+            let d = []
+            docs.forEach(doc =>{
+              d.push(doc.data())
+            })
+            this.$store.dispatch('setBroadcasts', d)
+            // console.log('broadcasts: ', d)
+          }, error => {
+            // console.log(error)
           })
-          this.$store.dispatch('setBroadcasts', d)
-          // console.log('broadcasts: ', d)
-        }, error => {
-          // console.log(error)
-        })
+        } catch (error) {
+          console.log(error)
+        }
+        
       }
-    }
+    },
   },
   async mounted(){
     document.getElementById('welcome_logo').style.display = 'none'
@@ -838,25 +863,31 @@ export default {
 
   
    
-    firebase.auth().onAuthStateChanged(user => {
-      if(user){
-        this.$store.dispatch('setUser', user)
-        this.showUi = true
-        this.getUser ? this.presenceWatcher() : ''
-        this.getUserInfo ? this.setup() : ''
-        
+    firebase.auth().onAuthStateChanged(u => {
+      if(u){
+        // console.log(u)
         firebase.auth().currentUser.getIdTokenResult()
         .then((idTokenResult) => {
+
+          let user = idTokenResult.claims
+
+          // user.phoneNumber = u.phoneNumber
+          this.$store.dispatch('setUser', u)
+          this.showUi = true
+          this.getUser ? this.presenceWatcher() : ''
+          this.getUserInfo ? this.setup() : ''
           
           // console.log(idTokenResult.claims)
+
           let state = idTokenResult.claims.superuser
-          let on_trial = idTokenResult.claims.trial
-          let tstamp = idTokenResult.claims.timestamp
+          let on_trial = user.trial
+          let tstamp = user.timestamp
           let one_month = 30 * 24 * 60 * 60 * 1000
-          let two_weeks = 14 * 60 * 60 * 1000
+          let two_weeks = 14 * 24* 60 * 60 * 1000
           let now = new Date().getTime()
           let time_spent = now - tstamp
-
+          
+          // console.log(time_spent/(1000*60*60*24*30))
           if(on_trial && time_spent <= two_weeks){
             // user is on premium trial
             this.$store.dispatch('subscriberState', state)
@@ -866,24 +897,30 @@ export default {
             this.$store.dispatch('subscriberState', state)
           }
 
-          this.$store.dispatch('verifiedState', idTokenResult.claims.is_verified)
+          this.$store.dispatch('verifiedState', user.is_verified)
 
-          let usr = idTokenResult.claims
-          // console.log({usr})
-          // $LogRocket.identify(usr.user_id, {
-          //   name: usr.name,
-          //   email: usr.email,
-          //   isSuperUser: usr.superuser
-          // })
+          // let usr = idTokenResult.claims
+          // console.log({user})
+          this.$LogRocket.identify(user.user_id, {
+            name: user.name,
+            email: user.email,
+            isSuperUser: user.superuser,
+            dept: user.dept
+          })
 
           // console.log(user)
-          window.fcWidget.setExternalId(usr.uid);
-          window.fcWidget.user.setFirstName(usr.name);
-          window.fcWidget.user.setEmail(usr.email);
+          
+          window.fcWidget.init({
+            token: "3402f5b8-1e86-4016-bad3-bb1b79d386d3",
+            host: "https://wchat.freshchat.com"
+          });
+          
+          window.fcWidget.setExternalId(u.uid);
+          window.fcWidget.user.setEmail(u.email);
           window.fcWidget.user.setProperties({
-            name: usr.name,
-            is_superuser: usr.superuser,
-            is_verified: usr.is_verified
+            name: u.displayName,
+            is_superuser: user.superuser,
+            is_verified: user.is_verified
           });
 
         })
@@ -910,7 +947,7 @@ export default {
 }
 
 import { mapGetters, mapState } from 'vuex'
-  import api from '@/services/api'
+  import api from '@/services/api2'
   import ViewProfile from '@/components/ViewProfile'
   import LoadingBar from '@/spinners/LoadingBar'
   import PrivateMsgList from '@/components/PrivateMsgList'
@@ -921,6 +958,7 @@ import { mapGetters, mapState } from 'vuex'
   import Gallery from 'vue-gallery';
   import NewBroadcast from '@/components/NewBroadcast'
   import ManageElection from '@/components/ManageElection'
+  import {firebase, db, database} from '@/plugins/firebase'
   // import ViewBroadcasts from '@/components/ViewBroadcasts'
 </script>
 
@@ -978,6 +1016,9 @@ $mainBgColor:#1c1f35;
   @include borderTopRadius(10px)
 }
 
+.switch_room_dialog.v-dialog--active {
+  @include borderTopRadius(0px)
+}
 .v-dialog--fullscreen{
   @include borderTopRadius(0px)
 }

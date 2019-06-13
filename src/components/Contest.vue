@@ -21,8 +21,6 @@
 
     <transition name="fade">
 
-      <!-- <intro v-if="ready && elections.length == 0" :text='no_elections_text'></intro> -->
-
       <v-container v-if="ready"
         grid-list-sm :pa-0="$vuetify.breakpoint.xsOnly">
         
@@ -170,7 +168,7 @@
 <script>
 export default {
   data:()=>({
-    title:'Contest | Facevote',
+    title:'Contest | Voteryte',
     e5: 1,
     snackbar: false,
     loading: false,
@@ -239,7 +237,7 @@ export default {
       else{
         this.loading = true
         firebase.auth().currentUser.getIdToken().then((token)=>{
-          api().post('dashboard/contest', {
+          api().post('contest', {
             idToken: token,
             electionId: this.selectedElection.electionId,
             selectedRole: this.selectedRole.value
@@ -256,7 +254,7 @@ export default {
           }).catch(error=>{
 
             this.loading = false
-            $NProgress.done()
+            $Nprogress.done()
 
             if(error.response){
               // console.log(error.response)
@@ -312,15 +310,14 @@ export default {
   },
   components:{
     Navigation,
-    Intro,
     LoadingBar,
   }
 }
 import api from '@/services/api'
 import Navigation from '@/components/Navigation'
-import Intro from '@/components/Intro'
 import LoadingBar from '@/spinners/LoadingBar'
-import { mapGetters, mapState } from 'vuex';
+import { mapGetters, mapState } from 'vuex'
+import {firebase, db, database} from '@/plugins/firebase'
 </script>
 <style lang="scss" scoped>
   //.v-stepper{

@@ -241,7 +241,7 @@
                       <v-card-actions>
                         <v-spacer></v-spacer>
                         <v-btn flat @click.native="dialog = false">Cancel</v-btn>
-                        <v-btn flat color="success" @click.native="addrole" :disabled="!role_input">Add role</v-btn>
+                        <v-btn flat color="success" @click.native="addrole" :disabled="!role_input.trim()">Add role</v-btn>
                       </v-card-actions>
                     </v-card>
                   </v-dialog>
@@ -279,39 +279,31 @@
               <v-card color="grey lighten-3" flat class="mb-5" light>
                 <v-card-text>
                   <v-card-title>
-                    Click to select a payment plan based on the number of voters you are expecting
+                    Select Voter Size
                   </v-card-title>
-
-                  <!-- ==SMALL CARDS== -->
-                  <v-container grid-list-md :class="$vuetify.breakpoint.xsOnly ? ['px-0'] : ''">
-                    <v-layout row wrap>
-                      <v-flex xs12 sm4 md3 d-flex v-for="(plan,i) in plans" :key="i">
-                        <v-card class="mt-3 mx-auto round" hover @click="selectPlan(plan)">
-                          <v-sheet
-                            class="v-sheet--offset ml-3"
-                            :color="plan.color" elevation="1"
-                            max-width="35%" height="80">
-                            <v-icon class='mx-auto d-block ma-auto' 
-                              style="width:50px;padding-top:15%;" size="50" color="white">
-                              
-                            </v-icon>
-                          </v-sheet>
-
-                          <v-card-text class="pt-0">
-                            <div class="subheading font-weight-light grey--text mb-2">{{plan.range}} voters</div>
-                            <div class="subheading font-weight-light text-xs-right">₦ {{plan.amount.toLocaleString()}}</div>
-                            <v-divider class="my-2"></v-divider>
-                            <span class="caption grey--text font-weight-light">
-                              <v-btn color="secondary" 
-                                style="text-transform: initial;" 
-                                small class="px-0 ml-0" 
-                                flat>
-                                <span style="text-decoration:;">Learn more</span>
-                                <v-icon small>open_in_new</v-icon>
-                              </v-btn>
-                            </span>
-                          </v-card-text>
-                        </v-card>
+                  
+                  <v-container fluid grid-list-md>
+                    <v-layout column wrap>
+                      <v-flex>
+                        <v-text-field color="secondary" outline hide-details label="Enter number of voters" :min="50" :max="30000" v-model="no_of_voters" type="number"></v-text-field>
+                      </v-flex>
+                      <v-flex xs9>
+                        <v-slider label="Estimated number of voters" color="secondary" :min="50" :max="30000" v-model="no_of_voters"></v-slider>
+                      </v-flex>
+                      <v-flex>
+                        <strong>You Pay:  NGN {{(no_of_voters * price_per_voter).toLocaleString()}}</strong><br>
+                        <paystack
+                          :amount="no_of_voters * price_per_voter * 100"
+                          :email="getUser.email"
+                          :metadata="metadata"
+                          :paystackkey="paystack_key"
+                          :reference="reference"
+                          :callback="callback"
+                          :close="close"
+                          :embed="false"
+                      >
+                        <v-btn class="ml-0 mt-3" color="success">Make Payment</v-btn>
+                      </paystack>
                       </v-flex>
                     </v-layout>
                   </v-container>
@@ -344,41 +336,6 @@
       </v-card>
     </v-container>
     <!--stepper -->
-    
-    <v-dialog
-      v-model="plan_dialog"
-      max-width="400px"
-      transition="dialog-transition"
-      lazy
-    >
-      <v-card height="" flat>
-        <v-toolbar color="teal" card dark>
-          <span class="title">Selected Plan</span>
-        </v-toolbar>
-        <v-card-text v-if="selected_plan.title">
-          <div class="title mb-3">Your selection</div>
-          <p><strong>Voters</strong>: {{selected_plan.range}}</p>
-          <p><strong>Price</strong>: ₦ {{selected_plan.amount.toLocaleString()}}</p>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="success" v-if="selected_plan.title == 'Basic'" @click="create">Create Election</v-btn>
-          <paystack v-else
-              :amount="selected_plan.amount * 100"
-              :email="getUser.email"
-              :metadata="metadata"
-              :paystackkey="paystack_key"
-              :reference="reference"
-              :callback="callback"
-              :close="close"
-              :embed="false"
-          >
-            <v-btn color="success">Make Payment</v-btn>
-          </paystack>
-        </v-card-actions>
-        
-      </v-card>
-    </v-dialog>
 
     <!-- < Creating Election Progress Dialog> -->
     <v-dialog v-model="creating_election_dialog"
@@ -408,27 +365,29 @@
 </template>
 <script>
 import api from '@/services/api'
+  import api2 from '@/services/api2'
   import randomWords from 'random-words'
   import { mapGetters, mapState } from 'vuex'
   import Navigation from '@/components/Navigation'
-  import paystack from 'vue-paystack';
-//import { promisfy } from "@/helpers/promisify";
+  import paystack from 'vue-paystack'
+  import {firebase, db, database} from '@/plugins/firebase'
 
 export default {
   data: ()=>({
-    title: 'Create new election - Facevote',
+    title: 'Create new election | Voteryte',
     description: '',
     snackbar: {},
     plan_dialog: false,
+    price_per_voter: 8,
+    no_of_voters: 500,
     newElec: {}, // the newly created election
-    selected_plan: {},
     loading: false,
     dialog: false,
     p_text: 'Verifying...',
     creating_election_dialog: false,
     paystack_key: 'pk_test_fefaa0524871e5ff35d4ec861974c59197cb42e7',
-    role_input: null,
-    role_input_desc: null,
+    role_input: '',
+    role_input_desc: '',
     modal: false,
     modal2: false,
     today: new Date().getTime(),
@@ -466,7 +425,7 @@ export default {
     ],
     levels: [
       [
-        {text: 'General (School-wide)', value: 'General'},
+        {text: 'Students Council Election', value: 'General'},
         {text: 'Faculty Election', value: 'Faculty'},
         {text: 'Departmental Election', value: 'Department'}
       ],
@@ -488,26 +447,25 @@ export default {
     },
     plans(){
       return [
-        {range:'up to 400',max_voters: 500, amount:'0 (Free)', title: 'Basic', color: 'orange'},
-        {range:'up to 1000', max_voters: 1500, amount: 9999, title: 'Spark', color: 'primary'},
-        {range:'up to 10,000', max_voters: 5000, amount: 39999, title: 'Chubby', color: 'success'},
-        {range:'up to 50,000', max_voters: 10000, amount: 249999, title: 'Robbust', color: 'cyan'},
+        {range:'up to 100',max_voters: 100, amount:'0 (Free)', title: 'Lean', color: 'orange'},
+        {range:'up to 1000', max_voters: 1500, amount: 10000, title: 'Jam', color: 'primary'},
+        {range:'up to 10,000', max_voters: 10000, amount: 45000, title: 'Legion', color: 'success'},
+        {range:'up to 50,000', max_voters: 50000, amount: 150000, title: 'Swarm', color: 'cyan'},
       ]
     },
     metadata(){
       return {
-        plan_type: this.selected_plan.title,
         orderid: this.reference,
         custom_fields: [
           {
-            display_name: "Plan_type",
-            variable_name: "plan",
-            value: this.selected_plan.title
+            display_name: "No of voters",
+            variable_name: "no_of_voters",
+            value: this.no_of_voters
           },
           {
             display_name: "Amount Paid",
             variable_name: "amount_paid",
-            value: this.selected_plan.amount
+            value: this.no_of_voters * this.price_per_voter
           },
           {
             display_name: "Customer Name",
@@ -595,135 +553,60 @@ export default {
       this.creating_election_dialog = true
       this.p_text = 'Creating Election...'
 
-      let electionId = randomWords({ exactly: 2, join: '-' })
-      this.electionId = electionId
-      let temp_role = []
-      this.form.roles.forEach(role=>{
-        let new_token = randomWords({exactly:2, join: '-'})
-        temp_role.push({
-          title: role.title,
-          description: role.description,
-          value: new_token,
-          token: new_token
+      firebase.auth().currentUser.getIdToken().then((token)=>{
+        api().post('create_election',{
+          form: this.form,
+          userInfo: this.getUserInfo,
+          selected_plan: {
+            range: `0 to ${this.no_of_voters}`,
+            max_voters: this.no_of_voters,
+            amount: this.no_of_voters * this.price_per_voter,
+            title: 'payment'
+          },
+          idToken: token
+        }).then(async result =>{
+
+          let electionRef = db.collection('elections').doc(result.data.electionId)
+          let newElec = await electionRef.get()
+          this.newElec = newElec.data()
+          this.$store.dispatch('setMyEnrolled', {
+            election: this.newElec,
+            merge: true
+          })
+
+          this.$store.dispatch('curRoom', this.newElec)
+          
+
+          this.creating_election_dialog = false;
+          this.plan_dialog = false;
+
+          //this.loading = !this.loading
+          this.snackbar = {
+            show: true,
+            message: 'Election created successfully',
+            color: 'success'
+          }
+          this.e6 = 5
         })
-      })
+        .catch(err => {
+          console.log(err)
+          this.creating_election_dialog = false
+          this.plan_dialog = false
+          $Nprogress.done()
 
-      let electionRef = db.collection('elections').doc(electionId)
-      let activityRef = db.collection('activities').doc()
-      let userRef = db.collection('moreUserInfo').doc(this.getUser.uid)
-      let {name, photoURL = false, email, sch=false, fac=false, dept=false, uid, is_student} = this.getUserInfo
-      let onr = {
-        name,
-        photoURL,
-        email,
-        sch,
-        fac,
-        dept,
-        uid,
-        is_student
-      }
-
-      // Create a new write batch
-      let batch = db.batch();
-
-      batch.set(electionRef, {
-        title: this.form.title,
-        type: this.form.type,
-        level: this.form.level,
-        timed: this.form.timed,
-        electionId: electionId,
-        admin: this.getUser.uid,
-        admins: [this.getUser.uid],
-        moderators: [this.getUser.uid], // moderators in chat room
-        followers: 1, // the creator is a follower
-        // voters: this.form.auto_enroll_admin ? 1 : 0, // voters count
-        contestants: 0,
-        sch: this.form.school,
-        fac: this.form.faculty,
-        dept: this.form.department,
-        startDate: this.form.date,
-        startTime: this.form.time,
-        duration: this.form.electionDuration,
-        voterSize: this.selected_plan.max_voters,
-        plan: this.selected_plan,
-        roles: temp_role,
-        dateCreated: firebase.firestore.FieldValue.serverTimestamp(),
-        status: 'inRegistration',
-        public: this.form.public,
-      })
-
-      batch.set(activityRef, {
-        type: 'election_created',
-        onr: onr,
-        tstamp: firebase.firestore.FieldValue.serverTimestamp(), // timestamp
-        body: 'created this election',
-        elecRef: electionId
-      })
-
-      if(this.form.auto_enroll_admin){
-        this.p_text = 'Enrolling Admin...'
-
-        batch.update(userRef, {
-          created: firebase.firestore.FieldValue.arrayUnion(electionId),
-          enrolled: firebase.firestore.FieldValue.arrayUnion(electionId)
+          this.snackbar = {
+            show: true,
+            message: 'Something went wrong, try again',
+            color: 'error'
+          }
         })
-
-        let str = `votersByDept.${onr.dept}`
-        batch.update(electionRef, {
-          voters: 1,
-          [str]: 1
-        })
-
-        let activityRef2 = db.collection('activities').doc()
-        batch.set(activityRef2, {
-          type: 'voter_registered',
-          onr: onr,
-          tstamp: firebase.firestore.FieldValue.serverTimestamp(),
-          body: 'enrolled for this election',
-          elecRef: electionId
-        })
-      }
-
-      else{
-        batch.update(userRef, {
-          created: firebase.firestore.FieldValue.arrayUnion(electionId)
-        })
-      }
-
-      batch.commit().then(async () => {
-        
-
-        let newElec = await electionRef.get()
-        this.newElec = newElec.data()
-        this.$store.dispatch('setMyEnrolled', {
-          election: this.newElec,
-          merge: true
-        })
-
-        this.$store.dispatch('curRoom', this.newElec)
-        
-
-        this.creating_election_dialog = false;
-        this.plan_dialog = false;
-
-        //this.loading = !this.loading
+      }).catch(err => {
         this.snackbar = {
-          show:true,
-          message:'Election created successfully',
-          color:'success'
-        }
-        this.e6 = 5
-      })
-      .catch(err => {
-        this.snackbar = {
-          show:true,
-          message:'Something went wrong, try again',
-          color:'error'
+          show: true,
+          message: 'Something went wrong, try again',
+          color: 'error'
         }
       })
-
-        
-      
       
     },
     prefillForm(user){
@@ -760,16 +643,11 @@ export default {
         }
       });   
     },
-    selectPlan(plan){
-      // console.log(plan)
-      this.selected_plan = plan
-      this.plan_dialog = true
-    },
     callback(res){
-      this.verifyTxn(res)
+      // this.verifyTxn(res)
+      this.create(res)
     },
     close(res){
-      // console.log('closed dialog')
       this.reference = Date.now() + btoa(Math.random()).substring(0,12)
     },
     createPaymentRef(data){
@@ -778,8 +656,8 @@ export default {
         db.collection('paymentRefs').add({
           ...data,
           by: this.getUser.uid,
-          plan_type: this.selected_plan.title,
-          plan_amount: this.selected_plan.amount,
+          no_of_voters: this.no_of_voters,
+          price: this.no_of_voters * this.price_per_voter,
           trxn_date: Date.now()
         }).then(doc=>resolve(doc))
         .catch(err=> reject(err))
@@ -790,10 +668,10 @@ export default {
       this.creating_election_dialog = true
       firebase.auth().currentUser.getIdToken()
       .then((token)=>{
-        api().post('dashboard/verifyTxn', {
+        api2().post('dashboard/verifyTxn', {
           token,
-          reference:data.reference,
-          amount:this.selected_plan.amount * 100
+          reference: data.reference,
+          amount: this.no_of_voters * this.price_per_voter * 100
         }).then(res=>{
           // transaction is ok, create election
           this.create(data)
@@ -801,6 +679,7 @@ export default {
         }).catch(error=>{
           // resets the reference to prevent duplicate trxn reference
           this.reference = Date.now() + btoa(Math.random()).substring(0,12)
+          this.$Nprogress.done()
 
           this.snackbar = {
             show:true,
@@ -813,21 +692,15 @@ export default {
       })
     },
     create(data){
-      // console.log(data)
-      if(this.selected_plan.title == 'Basic'){
+      this.creating_election_dialog = true
+
+      this.createPaymentRef(data).then(doc=>{
+        this.reference = Date.now() + btoa(Math.random()).substring(0,12)
         this.createElection()
-      }
-      else{
-        this.createPaymentRef(data).then(doc=>{
-          // console.log(doc);
-          this.reference = Date.now() + btoa(Math.random()).substring(0,12)
-          this.createElection()
-        })
-      }
-    
+      })
     }
   },
-  components:{
+  components: {
     Navigation,
     paystack,
   },

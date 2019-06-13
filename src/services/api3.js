@@ -2,8 +2,9 @@ import axios from 'axios'
 import $Nprogress from 'nprogress'
 
 const instance = axios.create({
-    baseURL: "https://us-central1-facevote-eb748.cloudfunctions.net"
-})
+  baseURL: 'https://api.paystack.co/bank/resolve_bvn/',
+  headers: {'Authorization': 'Bearer ' + process.env.paystack_skrt}
+});
 
 // Start nprogress before request is made
 instance.interceptors.request.use(config => {

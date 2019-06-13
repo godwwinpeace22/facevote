@@ -216,7 +216,6 @@
 <script>
 export default {
   data: ()=>({
-    title:'Forum | Facevote',
     password: 'Password',
     drawerRight: true,
     model: 'Chat',
@@ -273,6 +272,9 @@ export default {
       'curRoomId',
       'isSuperUser'
     ]),
+    title(){
+      return `Forum | ${this.$appName}`
+    },
     breakpoint(){
       return this.$vuetify.breakpoint
     },
@@ -522,6 +524,7 @@ export default {
   import Navigation from '@/components/Navigation'
   import ChatMedia from '@/components/ChatMedia'
   import LoadingBar from '@/spinners/LoadingBar'
+  import {firebase, db, database} from '@/plugins/firebase'
   // import { Picker } from 'emoji-mart-vue'
 </script>
 <style lang="scss" scoped>
