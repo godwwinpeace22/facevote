@@ -67,7 +67,7 @@
                   <!-- <v-subheader class="px-4">Are you a student? </v-subheader> -->
                   <v-radio-group v-model="form.is_student" row class="px-3">
                     <v-radio label="I am a student" :value="true"></v-radio>
-                    <v-radio label="I am not a student" :value="false"></v-radio>
+                    <v-radio label="I am not a student" :value="false" disabled></v-radio>
                   </v-radio-group>
                   <v-form ref="form2" v-if="form.is_student == true" v-model="valid2" class="text-xs-center pa-3">
                     <v-autocomplete
@@ -95,7 +95,8 @@
                   </span><br>
                   <small class="grey--text text--darken-1">By signing up, you agree with our </small><br>
                   <small class="grey--text text--darken-1">
-                    <router-link to="#">Terms of Use</router-link> and <router-link to="#"> Privacy Policy</router-link></small>
+                    <v-btn href="https://voteryte.com/terms" color="primary" style="font-size: 12px" target="blank" class="text-capitalize" flat small>Terms of Use</v-btn> and 
+                    <v-btn href="https://voteryte.com/privacy" color="primary" style="font-size: 12px" target="blank" class="text-capitalize" flat small> Privacy Policy</v-btn></small>
                   </div>
                 </v-card-text>
               </v-window-item>
