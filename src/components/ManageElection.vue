@@ -732,7 +732,7 @@ export default {
         ['School',this.currElection.sch],
         ['Faculty',this.currElection.fac],
         ['Department',this.currElection.dept],
-        ['Start Time',new Date(this.getStartDate).toDateString('en-Us',this.date_options)],
+        ['Start Date',new Date(this.currElection.fullStartDate).toDateString('en-Us',this.date_options)],
       ]
     },
     filteredList() {
@@ -743,7 +743,7 @@ export default {
       }
     },
     electionStartDate(){
-      let d = new Date(this.currElection.startDate + ' ' + this.currElection.startTime);
+      let d = new Date(this.currElection.fullStartDate);
       return d.toLocaleString('en-US',{
         month: 'short',
         day: 'numeric',
@@ -756,12 +756,14 @@ export default {
       // BEWARE THIS FUNCTION USES LOCAL TIME, WHICH MIGHT BE INACCURATE
       // Get the status of the current election
     
-      let start = new Date(this.currElection.startDate + ' ' + this.currElection.startTime).getTime();
-      let one_hour = 1000 * 60 * 60
-      if(start > Date.now()){
+      let start = new Date(this.currElection.fullStartDate).getTime();
+			let one_hour = 1000 * 60 * 60
+			let now = new Date().getTime()
+
+      if(start > now){
         return ['Not Started', 'secondary'] // not started
       }
-      else if(start + this.currElection.duration * one_hour > Date.now()){
+      else if(start + this.currElection.duration * one_hour > now){
         return ['In Progress', 'success'] // in progress
       }
       else{
@@ -777,9 +779,7 @@ export default {
         return []
       }
     },
-    getStartDate(){
-      return new Date(this.currElection.startDate + ' ' + this.currElection.startTime).getTime();
-    }
+    
    
   },
   methods:{
@@ -819,9 +819,10 @@ export default {
       
 		},
 		saveChanges(){
-			let start = new Date(this.currElection.startDate + ' ' + this.currElection.startTime).getTime();
+			let start = new Date(this.currElection.fullStartDate).getTime();
+			let now = new Date().getTime()
 			// Allow changes only when election has not started
-			if(start > Date.now()){
+			if(start > now){
 
 				firebase.auth().currentUser.getIdToken().then((token)=>{
 					this.saving_edit = true

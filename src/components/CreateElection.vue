@@ -554,6 +554,7 @@ export default {
       this.p_text = 'Creating Election...'
 
       firebase.auth().currentUser.getIdToken().then((token)=>{
+        this.form.fullStartDate = new Date(this.form.date + ' ' + this.form.time)
         api().post('create_election',{
           form: this.form,
           userInfo: this.getUserInfo,

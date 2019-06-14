@@ -588,6 +588,7 @@ a{
   background: #e5f9cd;
   text-align: right;
   margin-right: 15px;
+  margin-bottom: 10px;
   float: right;
 }
 

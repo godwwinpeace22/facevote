@@ -207,12 +207,21 @@
                       <v-list-tile-title>FAQ</v-list-tile-title>
                     </v-list-tile>
 
-                      <v-list-tile href="https://voteryte.freshdesk.com" target="blank">
+                      <v-list-tile href="https://support.voteryte.com" target="blank">
                         <v-list-tile-action>
                           <v-icon color="grey">live_help</v-icon>
                         </v-list-tile-action>
                         <v-list-tile-content>
                           <v-list-tile-title>Helpdesk </v-list-tile-title>
+                        </v-list-tile-content>
+                      </v-list-tile>
+
+                      <v-list-tile @click="openChatWidget(); drawer = !drawer">
+                        <v-list-tile-action>
+                          <v-icon color="grey">chat</v-icon>
+                        </v-list-tile-action>
+                        <v-list-tile-content>
+                          <v-list-tile-title>Chat</v-list-tile-title>
                         </v-list-tile-content>
                       </v-list-tile>
                   </v-list-group>
@@ -468,7 +477,8 @@ export default {
       'isSuperUser',
       'curRoom',
       'curRoomId',
-      'loading_rooms'
+      'loading_rooms',
+      'is_verified'
       
     ]),
     title(){
@@ -790,76 +800,109 @@ export default {
         
       }
     },
+    isMobile() {
+      return ( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) );
+    },
+    openChatWidget(){
+      this.initChatWidget()
+      if (window.fcWidget.isInitialized() == true) {
+        console.log('Widget already initialised');
+        // open widget
+        window.fcWidget.open();
+      }
+    },
+    initChatWidget(){
+      try {
+        let user = this.getUserInfo
+
+        window.fcWidget.init({
+          token: "3402f5b8-1e86-4016-bad3-bb1b79d386d3",
+          host: "https://wchat.freshchat.com"
+        });
+
+        window.fcWidget.setExternalId(user.uid);
+        window.fcWidget.user.setEmail(user.email);
+        window.fcWidget.user.setProperties({
+          name: user.name,
+          is_superuser: this.isSuperUser,
+          is_verified: this.is_verified
+        });
+       
+      } catch (error) {
+        console.log(error)
+      }
+    }
   },
   async mounted(){
     document.getElementById('welcome_logo').style.display = 'none'
+      document.querySelector('body').style.backgroundColor = '#fff'
 
-    this.$eventBus.$on('Toggle_Left_Drawer', data=>{
-      this.drawer = !this.drawer
-    })
+      this.$eventBus.$on('Toggle_Left_Drawer', data=>{
+        this.drawer = !this.drawer
+      })
 
-    this.$eventBus.$on('Toggle_New_Broadcast', data=>{
-      this.new_broadcast = data
-    })
-    
-    if(this.curRoom){
-      this.getBroadcasts()
-    }
+      this.$eventBus.$on('Toggle_New_Broadcast', data=>{
+        this.new_broadcast = data
+      })
+      
+      if(this.curRoom){
+        this.getBroadcasts()
+      }
 
-    this.$eventBus.$on('Open_Private_Chat_Window', (data)=>{
-      this.broadcasts = data
-      this.show_private_chat_window = true
-      this.show_private_msg_list = false
-    })
+      this.$eventBus.$on('Open_Private_Chat_Window', (data)=>{
+        this.broadcasts = data
+        this.show_private_chat_window = true
+        this.show_private_msg_list = false
+      })
 
-    this.$eventBus.$on('ToggleInboxDialog', data =>{
-      this.broadcast_dialog = data
-    })
+      this.$eventBus.$on('ToggleInboxDialog', data =>{
+        this.broadcast_dialog = data
+      })
 
-    this.$eventBus.$on('Close_Private_Chat_Window', ()=>{
-      this.show_private_chat_window = false
-    })
-    
-    this.$eventBus.$on('OpenNewManifestoDialog', data=>{
-      this.new_manifesto_dialog = true
-    })
-    this.$eventBus.$on('CloseNewManifestoDialog', data=>{
-      this.new_manifesto_dialog = false
-    })
+      this.$eventBus.$on('Close_Private_Chat_Window', ()=>{
+        this.show_private_chat_window = false
+      })
+      
+      this.$eventBus.$on('OpenNewManifestoDialog', data=>{
+        this.new_manifesto_dialog = true
+      })
+      this.$eventBus.$on('CloseNewManifestoDialog', data=>{
+        this.new_manifesto_dialog = false
+      })
 
-    this.$eventBus.$on('ViewProfile', data=>{
-      this.viewprofile = true
-      this.voterprofile = data
-    })
-    this.$eventBus.$on('CloseProfile', data=>{
-      this.viewprofile = false
-    })
-    
-    this.$eventBus.$on('Show_Upgrade_Dialog', data=>{
-      this.upgrade = true
-    })
+      this.$eventBus.$on('ViewProfile', data=>{
+        this.viewprofile = true
+        this.voterprofile = data
+      })
+      this.$eventBus.$on('CloseProfile', data=>{
+        this.viewprofile = false
+      })
+      
+      this.$eventBus.$on('Show_Upgrade_Dialog', data=>{
+        this.upgrade = true
+      })
 
-    this.$eventBus.$on('Open_Image_Gallery', data=>{
-      this.images = data.images
-      this.index = data.index
-    })
-    this.$eventBus.$on('Open_Upgrade_Dialog', data=>{
-      this.upgrade = true
-    })
+      this.$eventBus.$on('Open_Image_Gallery', data=>{
+        this.images = data.images
+        this.index = data.index
+      })
+      this.$eventBus.$on('Open_Upgrade_Dialog', data=>{
+        this.upgrade = true
+      })
 
-    this.$eventBus.$on('ShowManager', data => {
-      this.show_manager = true
-    })
+      this.$eventBus.$on('ShowManager', data => {
+        this.show_manager = true
+      })
 
-    this.$eventBus.$on('bdialog', ()=> this.new_broadcast = false)
-    // show loading animation for some seconds
-    setTimeout(() => {
-      this.show_loading_bar = false
-    }, 1000);
-    
-    this.$eventBus.$on('Snackbar', data =>{
-      this.snackbar = data
-    })
+      this.$eventBus.$on('bdialog', ()=> this.new_broadcast = false)
+      // show loading animation for some seconds
+      setTimeout(() => {
+        this.show_loading_bar = false
+      }, 1000);
+      
+      this.$eventBus.$on('Snackbar', data =>{
+        this.snackbar = data
+      })
 
   
    
@@ -909,23 +952,24 @@ export default {
           })
 
           // console.log(user)
-          
-          window.fcWidget.init({
-            token: "3402f5b8-1e86-4016-bad3-bb1b79d386d3",
-            host: "https://wchat.freshchat.com"
+          // show chat widget only on large screens
+          if(this.$vuetify.breakpoint.mdAndUp){
+
+            this.initChatWidget(user)
+          }
+
+          window.fcWidget.on("widget:closed", (resp)=>{
+            console.log('Widget Closed');
+            // destroy the widget on close in small screen
+            if(this.$vuetify.breakpoint.smAndDown){
+              window.fcWidget.destroy()
+            }
           });
-          
-          window.fcWidget.setExternalId(u.uid);
-          window.fcWidget.user.setEmail(u.email);
-          window.fcWidget.user.setProperties({
-            name: u.displayName,
-            is_superuser: user.superuser,
-            is_verified: user.is_verified
-          });
+
 
         })
         .catch((error) => {
-          // console.log(error);
+          console.log(error);
         });
       }
     })

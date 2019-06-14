@@ -28,7 +28,7 @@
                       <v-list-tile-title>{{currElection.title}}</v-list-tile-title>
                       <v-list-tile-sub-title>{{currElection.official ? 'Official' : 'Unofficial'}}</v-list-tile-sub-title>
                     </v-list-tile-content>
-                    <v-list-tile-action>
+                    <v-list-tile-action v-show="$vuetify.breakpoint.smAndUp">
                       
                       <v-tooltip top class="d-inline">
                         <small slot="activator">Current Time</small>
@@ -195,7 +195,7 @@
                     </v-list-tile-action>
                     <v-list-tile-title>
                       <span class="mr-3">Start Time</span>
-                      <span>{{(new Date(getStartDate)).toLocaleString('en-Us',{day: 'numeric', month: 'numeric', year: 'numeric', hour:'numeric',minute:'numeric'})}}</span>
+                      <span>{{(new Date(currElection.fullStartDate)).toLocaleString('en-Us',{day: 'numeric', month: 'numeric', year: 'numeric', hour:'numeric',minute:'numeric'})}}</span>
                     </v-list-tile-title>
                   </v-list-tile>
                   
@@ -736,8 +736,8 @@
                               <v-icon color="teal">schedule</v-icon>
                             </v-list-tile-action>
                             <v-list-tile-title>
-                              <span class="mr-3">Start Time:</span>
-                              <span>{{(new Date(getStartDate)).toLocaleString('en-Us',{hour:'numeric',minute:'numeric'})}}</span>
+                              <span class="mr-3">Start Date:</span>
+                              <span>{{(new Date(currElection.fullStartDate))}}</span>
                             </v-list-tile-title>
                           </v-list-tile>
                           
@@ -1242,8 +1242,8 @@ export default {
           // if the election is a timed election
           // this.getServerTime().then(resp=>{
             //console.log(resp.time - Date.now())
-            let serverTime = Date.now() // resp.time
-            this.time_lag = serverTime - Date.now()
+            let serverTime = new Date().getTime() // resp.time
+            this.time_lag = serverTime - new Date().getTime()
 
             this.countDownTimer()
           // }).catch(err=> {
@@ -1377,7 +1377,7 @@ export default {
     countDownTimer(){
       
       this.timer_ready = false
-      this.startDate = new Date(this.currElection.startDate + ' ' + this.currElection.startTime).getTime();
+      this.startDate = new Date(this.currElection.fullstartDate).getTime();
       let now = new Date().getTime() + this.time_lag;
     
       this.start = now + this.time_lag;
