@@ -16,7 +16,7 @@
       <v-list-tile @click.stop="'a'">
         <v-list-tile-content>
           <v-text-field hide-details v-model="search"
-            prepend-icon="search" color="secondary"
+            prepend-icon="mdi-account-search" color="secondary"
             label="Search members..."
           ></v-text-field>
         </v-list-tile-content>
@@ -26,7 +26,7 @@
     <div style="height:calc(100% - 50px);overflow-y:auto;" class="navdrawr" :class="{thin_scrollbar:$vuetify.breakpoint.smAndDown}">
       <v-list subheader dense two-line>
         <v-subheader v-show="filteredList.length == 0">No results found</v-subheader>
-        <v-list-tile v-for="member in filteredList" :key="member.uid" avatar :to="'/forum/profile/' + member.email">
+        <v-list-tile v-for="member in filteredList" :key="member.uid" avatar :to="'/forum/profile/' + member.username">
           
           <v-list-tile-avatar>
             <!-- prefer to user loggedin user's info rather than his info from voters list -->

@@ -90,7 +90,7 @@ export default new Vuex.Store({
         window.location.reload()
       }).catch(function(error) {
         // eslint-disable-next-line
-        console.log(error)
+        // console.log(error)
       });
     },
     switchTheme(state){
@@ -222,10 +222,12 @@ export default new Vuex.Store({
         if(!ids.find(id => msg.onr.uid == id)){
           ids.push(msg.onr.uid)
           unread = unread + state.broadcasts.filter(item => {
-            let foo = state.last_read_time[item.onr.uid] ? 
-            item.tstamp.toMillis() > state.last_read_time[item.onr.uid] : true
+            if(item.tstamp){
+              let foo = state.last_read_time[item.onr.uid] ? 
+              item.tstamp.seconds * 1000 > state.last_read_time[item.onr.uid] : true
+              return foo && item.onr.uid != state.userInfo.uid && item.onr.uid == msg.onr.uid 
+            }
 
-            return foo && item.onr.uid != state.userInfo.uid && item.onr.uid == msg.onr.uid 
           }).length
         }
       })

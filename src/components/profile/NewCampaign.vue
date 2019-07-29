@@ -66,7 +66,7 @@
 					</v-card>
 					<v-btn v-else color="grey" depressed block style="padding:23%;" @click="$helpers.trigFileSelector">
 						<div style="margin-top:-25px;">
-							<v-icon color="white" large>add</v-icon>
+							<v-icon color="white" large>mdi-plus</v-icon>
 							<span class="d-block white--text">Add photo</span>
 						</div>
 					</v-btn>
@@ -148,7 +148,7 @@ export default {
 			let twenty4hrs = 24 * 60 * 60 * 1000
 			// console.log(campaign_text)
 
-			let {name, photoURL = false, email, sch=false, fac=false, dept=false, uid, is_student} = this.getUserInfo
+			let {name, photoURL = false,username, email, sch=false, fac=false, dept=false, uid, is_student} = this.getUserInfo
 			let data = {
 				docId: docRef.id,
 				imgSrc: image ? image : false,
@@ -165,7 +165,8 @@ export default {
             fac,
             dept,
 						uid,
-						is_student
+						is_student,
+						username
           },
 				tstamp: firebase.firestore.FieldValue.serverTimestamp(),
 				expires_in: Date.now() + twenty4hrs

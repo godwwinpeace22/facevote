@@ -1,5 +1,7 @@
 <template>
   <div>
+    <vue-headful :title="title"/>
+    
     <navigation>
       <span slot="title">Verify Account</span>
     </navigation>
@@ -10,7 +12,7 @@
           <v-card class="text-xs-center pt-5 grey lighten-3" flat height="">
             <v-container grid-list-xs >
               <v-layout row wrap justify-center>
-                <v-flex sm5>
+                <v-flex xs12 sm8 md5>
                   <v-card height="" class="round" color="">
                     <v-sheet flat width="61%" height="100" dark style="position: absolute;top: -40px;left: 20%;" color="transparent">
                       <v-avatar
@@ -24,8 +26,8 @@
                           size="100"
                         >
                         <v-progress-circular :value="100" :indeterminate="verifying" size="98" width="2" style="margin-top: -1.5px">
-                          <v-icon v-if="!verified" large>verified_user</v-icon>
-                          <v-icon v-if="verified" large>check</v-icon>
+                          <v-icon v-if="!verified" large>mdi-shield</v-icon>
+                          <v-icon v-if="verified" large>mdi-check</v-icon>
                         </v-progress-circular>
                         </v-avatar>
                       </v-avatar>
@@ -35,7 +37,7 @@
                       <div class="mt-4">
                         <span>Verify your account so that you can enroll in elections and participate in chat forums. It takes less than a minute. </span><br>
                         <span>You will only need to do this <strong>once</strong>.</span><br>
-                        <a href="https://voteryte.com/faq" target="blank">Find out more <v-icon small>open_in_new</v-icon></a>
+                        <a href="https://voteryte.com/faq" target="blank">Find out more <v-icon small>mdi-open-in-new</v-icon></a>
                       </div>
                       <v-text-field
                         v-model="bvn"
@@ -57,6 +59,7 @@
                       ></v-text-field>
                     </v-card-text>
                     
+                      <p v-if="re_login" class="orange--text">You might need to re-login</p>
                     <v-card-actions>
                       <v-btn color="success" block flat v-if="is_verified">Your account is verified</v-btn>
                       <v-btn
@@ -88,6 +91,7 @@ export default {
     verifying: false,
     verified: false,
     verify_dialog: false,
+    re_login: false,
     cloudinary: {
        uploadPreset: 'izcl0gzg',
        cloudName: 'unplugged',
@@ -109,6 +113,9 @@ export default {
       'isSuperUser',
       'is_verified'
     ]),
+    title(){
+      return `Verify account | ${this.$appName}`
+    },
     disabled_verify(){
       return !this.bvn.trim() || 
       !this.phone.trim() || 
@@ -137,7 +144,13 @@ export default {
             message: 'Account verified successfully',
             color: 'success'
           })
-          location.reload()
+
+          this.re_login = true
+          
+          // setTimeout(() => {
+          //   location.reload()
+          // }, 2000);
+          
 
           // this.$router.push('/home')
         }).catch(err => {
@@ -164,6 +177,7 @@ import api2 from '@/services/api2'
 import Navigation from '@/components/Navigation'
 import { mapGetters, mapState } from 'vuex';
 import {firebase, db, database} from '@/plugins/firebase'
+import { setTimeout } from 'timers';
 </script>
 
 

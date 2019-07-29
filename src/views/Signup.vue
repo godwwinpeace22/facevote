@@ -15,7 +15,7 @@
 
           <h1 class="text-xs-center white--text mb-4" ><a href="/" style="text-decoration:none;color:#fff">{{$appName}}</a></h1>
           
-          <v-card class="" max-width="800" >
+          <v-card class="" max-width="800" v-if="!show_confirm_text">
             <v-card-title class="title font-weight-bold justify-space-around">
               <span>{{ currentTitle }}</span>
               
@@ -28,35 +28,35 @@
                   <v-form ref="form" v-model="valid" class="text-xs-center pa-3">
                     <!-- <p class="text-xs-center"></p> -->
                     <v-text-field
-                      label="Full Name" class="mb-0" browser-autocomplete="name"
-                      v-model="form.name" outline
+                      label="Full Name" class="mb-0"
+                      v-model="form.name" 
                       :rules="nameRules" color="secondary" validate-on-blur required>
-                      <v-icon slot="prepend-inner" color="teal">person</v-icon>
+                      <v-icon slot="prepend-inner" color="teal">mdi-account</v-icon>
                     </v-text-field>
 
                     <v-text-field 
-                      label="Email" class="mb-0" browser-autocomplete="email"
-                      v-model="form.email" outline
+                      label="Email" class="mb-0"
+                      v-model="form.email" 
                       :rules="emailRules" color="secondary" validate-on-blur
                       required type="email">
-                      <v-icon slot="prepend-inner" color="teal">mail</v-icon>
+                      <v-icon slot="prepend-inner" color="teal">mdi-email</v-icon>
                     </v-text-field>
 
                     <v-text-field class="mb-0"
-                      v-model="form.password" outline
+                      v-model="form.password"
                       :rules="passwordRules" color="secondary" validate-on-blur
                       type="password" label="Password" 
                       required>
-                      <v-icon slot="prepend-inner" color="teal">lock</v-icon>
+                      <v-icon slot="prepend-inner" color="teal">mdi-lock</v-icon>
                     </v-text-field>
 
                     <v-text-field required
-                      v-model="form.password2" outline
+                      v-model="form.password2"
                       type="password" color="secondary" validate-on-blur
                       :rules="passwordRules"
                       name="password2"
                       label="Confirm Password">
-                      <v-icon slot="prepend-inner" color="teal">lock</v-icon>
+                      <v-icon slot="prepend-inner" color="teal">mdi-lock</v-icon>
                     </v-text-field>
                   </v-form>
                 </v-card-text>
@@ -72,21 +72,21 @@
                   <v-form ref="form2" v-if="form.is_student == true" v-model="valid2" class="text-xs-center pa-3">
                     <v-autocomplete
                       v-model="mySchool" hint="Select your school"
-                      :items="schools" return-object item-text="text" hide-no-data outline class="mb-0"
+                      :items="schools" return-object item-text="text" hide-no-data  class="mb-0"
                       label="School" persistent-hint color="secondary" validate-on-blur>
-                      <v-icon slot="prepend-inner" color="teal">school</v-icon>
+                      <v-icon slot="prepend-inner" color="teal">mdi-school</v-icon>
                     </v-autocomplete>
 
                     <v-autocomplete color="secondary" validate-on-blur
                       label="Faculty"  v-model="myFaculty" :items="mySchool.faculties"
-                      return-object item-text="text" outline class="mb-0" hide-no-data
+                      return-object item-text="text" class="mb-0" hide-no-data
                       :rules="nameRules" required >
-                      <v-icon slot="prepend-inner" color="teal">domain</v-icon>
+                      <v-icon slot="prepend-inner" color="teal">mdi-domain</v-icon>
                     </v-autocomplete>
-                    <v-autocomplete label="Department" outline class="mb-0" hide-no-data
+                    <v-autocomplete label="Department" class="mb-0" hide-no-data
                       v-model="myDepartment" :items="myFaculty.departments" required
                       return-object item-text="text" :rules="nameRules" color="secondary" validate-on-blur>
-                      <v-icon slot="prepend-inner" color="teal">place</v-icon>
+                      <v-icon slot="prepend-inner" color="teal">mdi-map-marker</v-icon>
                     </v-autocomplete>
                   </v-form>
                   <div class="text-xs-center">
@@ -106,7 +106,7 @@
             <v-divider></v-divider>
 
             <v-card-actions>
-              <v-btn :disabled="step === 1" flat @click="step--">
+              <v-btn :disabled="step === 1 || loading" flat @click="step--">
                 Back
               </v-btn>
               <v-spacer></v-spacer>
@@ -120,16 +120,26 @@
             </v-card-actions>
           </v-card>
 
-          <!-- <v-card v-else>
+          <v-card v-else>
+            <v-alert
+              color="success"
+              dismissible
+              transition="fade-transition"
+              type="success"
+              :value="show_confirm_text"
+            >
+              {{confirm_text}}
+            </v-alert>
+
             <v-card-text>
-              Check your email to confirm your registration
+              <p class="subheading">We've sent an email to <b>{{form.email}}</b>. Click the confirmation link in that email to begin using {{$appName}}</p>
               <p>Didn't get the verification link ? <br>
-                <v-btn color="info" flat @click="sendVerificationLInk(true)" :disabled="disabled" :loading="loading">Resend verification link</v-btn>
+                <v-btn color="info" flat @click="sendVerificationLInk(true)" :loading="sending_link">Resend verification link</v-btn>
               </p>
             </v-card-text>
-          </v-card> -->
+          </v-card>
 
-          <v-subheader class="ml-5 white--text">Already have an account? 
+          <v-subheader class="ml-5 white--text text-xs-center">Already have an account? 
             <router-link to="/login" class="pl-2 font-weight-bold success--text" style="text-decoration:none;"> Sign in</router-link>
           </v-subheader>
         </v-flex>
@@ -147,8 +157,10 @@ export default {
     message: 'Login',
     snackbar: {},
     loading: false,
+    sending_link: false,
     disabled: false,
-    verification_sent: false,
+    show_confirm_text: false,
+    confirm_text: 'Email verification link has been sent',
     form: {
       name: '',
       email: '',
@@ -235,23 +247,23 @@ export default {
       }
     },
     sendVerificationLInk(alert){
-      this.loading = true
+      this.sending_link = true
       return new Promise((resolve, reject)=>{
         if(firebase.auth().currentUser){
 
           firebase.auth().currentUser.sendEmailVerification().then(done=>{
-            resolve(done)
+            
+            this.sending_link = false
+
             if(alert){
-              this.disabled = true;
-              this.loading = false
-  
-              this.snackbar = {
-                show: true,
-                message: 'Email verification link resent',
-                color: 'purple'
-              }
+              this.confirm_text = 'Verification link has been resent'
+              
             }
-          }).catch(err => reject(err))
+            resolve(done)
+          }).catch(err => {
+            this.sending_link  = false
+            reject(err)
+          })
         }
       })
     },
@@ -262,10 +274,12 @@ export default {
       else{
 
         let user = this.form
+        let two_weeks = 14 * 24* 60 * 60 * 1000
 
         user.school = this.mySchool.text
         user.faculty = this.myFaculty.text
         user.department = this.myDepartment.text
+        user.trial_expiry_date = (new Date().getTime()) + two_weeks
         this.loading = true
         
 
@@ -273,12 +287,16 @@ export default {
         api().post('createUser', user).then(result => {
           firebase.auth().signInWithCustomToken(result.data.token).then(() => {
             // console.log(result.data)
-            this.snackbar = {
-              show: true,
-              color: 'purple',
-              message: `Welcome to ${this.$appName}`
-            }
-            this.$router.push('/home/?welcome=true')
+            // this.snackbar = {
+            //   show: true,
+            //   color: 'purple',
+            //   message: `Welcome to ${this.$appName}`
+            // }
+            // this.$router.push('/home/?welcome=true')
+
+            this.sendVerificationLInk().then(()=> {
+              this.show_confirm_text = true
+            })
               
           })
           .catch(function(error) {
@@ -302,72 +320,6 @@ export default {
             message: err.response.data.message
           }
         })
-        // firebase.auth().createUserWithEmailAndPassword(user.email, user.password)
-          // .then(userRecord=>{
-          //   // console.log(userRecord)
-          //   // update users profile info
-          //   firebase.auth().currentUser.updateProfile({
-          //     displayName: user.name,
-          //   }).catch(function(error) {
-          //       // An error happened.
-          //   });
-
-          //   // store additional user info
-          //   db.collection('moreUserInfo').doc(userRecord.user.uid).set({
-          //     uid: userRecord.user.uid,
-          //     name: user.name,
-          //     email: user.email,
-          //     followers: 0,
-          //     is_verified: false,
-          //     is_student: user.is_student,
-          //     was_once_a_student: user.is_student,
-          //     sch: user_school,
-          //     fac: user_faculty,
-          //     dept: user_department
-          //   }).then(done=>{
-          //     this.snackbar = {show:true,color:'purple', message:'Account created successfully'}
-              
-          //     this.$router.push('/home')
-              
-          //     // send email verification message
-          //       // this.sendVerificationLInk().then((sent)=>{
-          //       //   // console.log({sent})
-          //       //   this.verification_sent = true
-          //       //   // Email sent. Sign out user
-          //       //   this.loading = false
-          //       //   // firebase.auth().signOut().then(()=>{
-          //       //   //   // console.log('logged out')
-          //       //   // })
-
-          //       // }).catch(function(error) {
-          //       //   // An error happened.
-          //       //   this.loading = false
-          //       //   // console.log(error)
-          //       // })
-              
-          //   })
-          // })
-          // .catch((error) =>{
-            
-          //   this.loading = false
-          //   $Nprogress.done()
-          //   var errorCode = error.code;
-
-          //   if(errorCode == 'auth/weak-password' || errorCode == 'auth/invalid-email' 
-          //     || errorCode == 'auth/email-already-in-use' || errorCode == "auth/network-request-failed"){
-
-          //     this.snackbar = {
-          //       show: true,
-          //       color: 'error',
-          //       message: error.message}
-          //   }else{
-          //     this.snackbar = {
-          //       show: true,
-          //       color: 'error',
-          //       message: 'Something went wrong, please try again'
-          //     }
-          //   }
-          // });
         
       }
     }

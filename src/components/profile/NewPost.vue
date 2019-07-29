@@ -5,14 +5,14 @@
       <v-toolbar dense flat dark color="teal">
         <v-btn flat icon class="hidden-md-and-up" 
           @click="$eventBus.$emit('HideNewPostDialog',true)">
-          <v-icon>chevron_left</v-icon>
+          <v-icon>mdi-chevron-left</v-icon>
         </v-btn>
 
-        <v-subheader class="white--text">Compose</v-subheader>
+        <v-subheader class="white--text">New Post</v-subheader>
         <v-spacer></v-spacer>
         <v-btn depressed small icon class="hidden-sm-and-down"
           @click="$eventBus.$emit('HideNewPostDialog',true)">
-          <v-icon>close</v-icon>
+          <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-toolbar>
 
@@ -35,18 +35,25 @@
             </v-layout>
           </v-container>
           
-          <v-chip color="teal" text-color="white" v-if="type == 'post'" @click="$helpers.trigFileSelector">
-            <v-avatar>
-              <v-icon color="">insert_photo</v-icon>
-            </v-avatar>
+          <v-btn round dark 
+            class="teal text-capitalize" 
+            :disabled="loading" flat
+            v-if="type == 'post'" 
+            @click="$helpers.trigFileSelector">
+            <v-icon class="mr-2">mdi-image</v-icon>
+            
             Add Photos
-          </v-chip>
-          <v-chip color="grey" text-color="white" v-if="type == 'post' && blob_urls.length > 0" @click="blob_urls = [];selected_files = []">
-            <v-avatar>
-              <v-icon color="error">cancel</v-icon>
-            </v-avatar>
+          </v-btn>
+
+          <v-btn round dark 
+            class="grey text-capitalize" 
+            :disabled="loading" 
+            v-if="type == 'post' && blob_urls.length > 0" 
+            @click="blob_urls = [];selected_files = []">
+
+            <v-icon color="error" class="mr-2">mdi-close</v-icon>
             Clear All
-          </v-chip>
+          </v-btn>
         </v-card>
             
       </v-card-text>
@@ -59,28 +66,28 @@
 <script>
 export default {
   data:()=>({
-    snackbar:{},
-    file_modal:false,
-    e14:1,
-    blob_urls:[],
-    selected_files:[],
-    form:{
-      message:''
+    snackbar: {},
+    file_modal: false,
+    e14: 1,
+    blob_urls: [],
+    selected_files: [],
+    form: {
+      message: ''
     },
-    loading:false,
-    cloudinary:{
-      cloud_name:'unplugged',
-      upload_preset:'pe4iolek'
+    loading: false,
+    cloudinary: {
+      cloud_name: 'unplugged',
+      upload_preset: 'pe4iolek'
     },
   }),
-  props:{
-    user:Object,
-    type:{
-      type:String,
-      default:'post'
+  props: {
+    user: Object,
+    type: {
+      type: String,
+      default: 'post'
     }
   },
-  computed:{
+  computed: {
     p_msg_rules(){
       return !this.form.message.trim()
     },
@@ -117,7 +124,7 @@ export default {
         if(file_sizes < one_mb){
           //console.log(e.target.files)
           for(let file of e.target.files){
-            console.log(file)
+            // console.log(file)
             this.blob_urls.push(URL.createObjectURL(file))
           }
           this.selected_files = e.target.files
@@ -155,7 +162,7 @@ export default {
 
         let post = {
           docId: postRef.id,
-          body: this.form.message,
+          body: this.$sanitize(this.form.message),
           imgs: images,
           elecRef: this.curRoom.electionId,
           tstamp: firebase.firestore.FieldValue.serverTimestamp(),
@@ -196,7 +203,7 @@ export default {
         
         
       }catch(err){
-        console.log(err)
+        // console.log(err)
         this.loading = false
         this.$eventBus.$emit('Snackbar',{
           show:true,

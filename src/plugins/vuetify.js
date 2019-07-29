@@ -1,5 +1,5 @@
 import Vue from 'vue'
-// import '@mdi/font/css/materialdesignicons.css'
+import '@mdi/font/css/materialdesignicons.css'
 import directives from 'vuetify/es5/directives';
 import {
   Vuetify,
@@ -55,7 +55,7 @@ import colors from 'vuetify/lib/util/colors';
 
 
 Vue.use(Vuetify, {
-  // iconfont: 'mdi',
+  iconfont: 'mdi',
   components: {
     VApp,
     transitions,

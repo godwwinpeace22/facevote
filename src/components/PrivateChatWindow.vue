@@ -10,7 +10,7 @@
       <v-spacer></v-spacer>
 
       <v-btn flat icon @click="$eventBus.$emit('Close_Private_Chat_Window', '')">
-        <v-icon>close</v-icon>
+        <v-icon>mdi-close</v-icon>
       </v-btn>
     </v-toolbar>
     

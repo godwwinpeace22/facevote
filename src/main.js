@@ -12,9 +12,13 @@ import Vuex from 'vuex'
 import helpers from './helpers/helpers'
 import VueQuill from 'vue-quill'
 import vueAwesomeCountdown from 'vue-awesome-countdown'
-import LogRocket from 'logrocket';
+import VueSanitize from "vue-sanitize"
+import linkify from 'vue-linkify'
+// import VueChatScroll from 'vue-chat-scroll'
 
-LogRocket.init('8zkged/voteryte');
+// import LogRocket from 'logrocket';
+
+// LogRocket.init('8zkged/voteryte');
 
 const plugin = {
   install () {
@@ -22,6 +26,7 @@ const plugin = {
       Vue.prototype.$helpers = helpers
   }
 }
+
 
 /* OR
 Vue.mixin({
@@ -33,7 +38,8 @@ Vue.mixin({
 
 Vue.prototype.$Nprogress = Nprogress
 Vue.prototype.$appName = 'Voteryte'
-Vue.prototype.$LogRocket = LogRocket
+Vue.prototype.$paystackKey = 'pk_test_cd14c065dfe123cd983362a4ed795fe1128ec4e2'
+// Vue.prototype.$LogRocket = LogRocket
 // global.$LogRocket = LogRocket
 
 Vue.prototype.$eventBus = new Vue();
@@ -43,6 +49,10 @@ Vue.use(vueAwesomeCountdown, 'vac')
 Vue.config.productionTip = false
 Vue.use(plugin)
 Vue.use(VueQuill)
+// Vue.use(VueChatScroll)
+Vue.use(VueSanitize);
+
+Vue.directive('linkified', linkify)
 
 new Vue({
   router,

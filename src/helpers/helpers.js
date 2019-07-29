@@ -1,5 +1,6 @@
 import $store from '../store/store'
 import {firebase, db} from '../plugins/firebase'
+import Nprogress from 'nprogress'
 export default {
 
   /**
@@ -105,9 +106,10 @@ export default {
       return uploaded
     } catch (error) {
       // eslint-disable-next-line
-      // console.log(error)
-      alert('Image upload failed')
-      throw new Error(error || error.response)
+      console.log(error.response.data)
+      // alert('Image upload failed')
+      Nprogress.done()
+      throw new Error(error || error.response.data.message)
       
     }
   },

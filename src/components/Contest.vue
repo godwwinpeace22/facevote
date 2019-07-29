@@ -58,7 +58,7 @@
 
                 <v-btn color="secondary" dark depressed @click="e5 = 2" v-if="selectedElection.admin">
                   Next
-                  <v-icon small>chevron_right</v-icon>
+                  <v-icon small>mdi-chevron-right</v-icon>
                 </v-btn>
               </v-stepper-content>
 
@@ -84,12 +84,12 @@
                 </v-card>
 
                 <v-btn flat @click="e5 = 1" dark color="grey">
-                  <v-icon small>chevron_left</v-icon>
+                  <v-icon small>mdi-chevron-left</v-icon>
                   Previous
                 </v-btn>
                 <v-btn color="secondary" dark depressed @click="e5 = 3" v-if="!disabled">
                   Next
-                  <v-icon small>chevron_right</v-icon>
+                  <v-icon small>mdi-chevron-right</v-icon>
                 </v-btn>
               </v-stepper-content>
 
@@ -108,7 +108,7 @@
                 </v-card>
 
                 <v-btn flat @click="e5 = 2" color="grey" :disabled="loading">
-                  <v-icon small>chevron_left</v-icon>
+                  <v-icon small>mdi-chevron-left</v-icon>
                   Previous
                 </v-btn>
                 <v-btn color="secondary" @click="contest" :loading="loading"> Finish</v-btn>

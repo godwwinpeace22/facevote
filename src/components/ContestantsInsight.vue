@@ -7,8 +7,8 @@
             <v-toolbar class="white" flat card dense>
               <v-subheader>Contestants Insight</v-subheader>
               <v-spacer></v-spacer>
-              <v-icon color="#FFC107">bookmark</v-icon>
-              <span>Premium</span>
+              <v-icon color="#FFC107" class="pr-2">mdi-flash-circle</v-icon>
+              <span class="font-weight-bold"> Premium</span>
             </v-toolbar>
             <v-container grid-list-lg pt-3 v-if="curRoom">
               <v-layout row wrap>
@@ -129,7 +129,7 @@ export default {
       // console.log(to,from)
       if(this.curRoom && this.getUserInfo && this.getUserInfo.contests){
         let isContestant = !!this.getUserInfo.contests.find(contest => contest == this.curRoom.electionId)
-        console.log(isContestant, this.getUserInfo)
+        // console.log(isContestant, this.getUserInfo)
         isContestant ? this.setContestantMonitor() : ''
       }
     }
@@ -149,7 +149,7 @@ export default {
       let opponents = this.contestantsByRoles.filter(cont =>{
         return cont.role == myRole && cont.uid != this.getUser.uid
       })
-      console.log(myRole,this.contestantsByRoles)
+      // console.log(myRole,this.contestantsByRoles)
       return opponents
     },
     otherContestants(){

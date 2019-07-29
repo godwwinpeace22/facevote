@@ -10,8 +10,8 @@
               <vue-headful :title="title"/>
 
               <v-navigation-drawer fixed v-model="drawer" app dark width="230" 
-                style="background-color:#1c1f35;color:bfbbbb;z-index:20" >
-                <v-toolbar flat tile class="" style="background-color:rgba(51, 54, 78, 0.9);color:#fff;">
+                style="background-color:#1c1f35;color:bfbbbb;z-index:20" class="navdrawr">
+                <v-toolbar flat tile id="step1" class="" style="background-color:rgba(51, 54, 78, 0.9);color:#fff;">
                   <v-avatar
                     size="40"
                     color="transparent"
@@ -50,7 +50,7 @@
                             </v-list-tile-title>
                           </v-list-tile-content>
                           <v-list-tile-action v-if="curRoom && curRoom.electionId == election.electionId">
-                            <v-icon color="success">check</v-icon>
+                            <v-icon color="success">mdi-check</v-icon>
                           </v-list-tile-action>
                         </v-list-tile>
                       </v-list>
@@ -70,7 +70,7 @@
             
                   <v-list-tile to="/home" exact >
                     <v-list-tile-action>
-                      <v-icon>home</v-icon>
+                      <v-icon>mdi-home</v-icon>
                     </v-list-tile-action>
                     <v-list-tile-title>Home</v-list-tile-title>
                   </v-list-tile>
@@ -78,19 +78,19 @@
                   <!-- FORUM -->
                   <v-list-tile :to="curRoom ? `/forum` : '/#forum'">
                     <v-list-tile-action>
-                      <v-icon color="">forum</v-icon>
+                      <v-icon color="">mdi-forum</v-icon>
                     </v-list-tile-action>
                     <v-list-tile-title>Forum</v-list-tile-title>
                   </v-list-tile>
 
                   <!-- Messages -->
-                  <v-list-group prepend-icon="message" no-action :value="true">
+                  <v-list-group prepend-icon="mdi-message-text" no-action :value="true">
                     <v-list-tile slot="activator">
                       <v-list-tile-title>Messages</v-list-tile-title>
                     </v-list-tile>
                     <v-list-tile @click="openBroadcastDialog">
                       <v-list-tile-action>
-                        <v-icon color="success">mail</v-icon>
+                        <v-icon color="success">mdi-email</v-icon>
                       </v-list-tile-action>
                       <v-list-tile-title>Inbox</v-list-tile-title>
                       <v-list-tile-action v-show="getUnreadLength > 0">
@@ -100,79 +100,54 @@
                       </v-list-tile-action>
                     </v-list-tile>
 
-                    <template v-if="isSuperUser || isAdmin">
-                      <v-list-tile @click="new_broadcast = true" :disabled="!curRoom">
-                        <v-list-tile-action>
-                          <v-icon color="">record_voice_over</v-icon>
-                        </v-list-tile-action>
-                        <v-list-tile-content>
-                          <v-list-tile-title>New Broadcast </v-list-tile-title>
-                        </v-list-tile-content>
-                      </v-list-tile>
-                    </template>
-
-                    <template v-else>
-                      <v-tooltip top>
-                        <v-list-tile slot="activator">
-                          <v-list-tile-action>
-                            <v-icon color="">record_voice_over</v-icon>
-                          </v-list-tile-action>
-                          <v-list-tile-title>New Broadcast</v-list-tile-title>
-                        </v-list-tile>
-                        <span>This feature requires a premium account</span>
-                      </v-tooltip>
-                    </template>
+                    <v-list-tile @click="isSuperUser || isAdmin ? new_broadcast = true : upgrade = true" :disabled="!curRoom">
+                      <v-list-tile-action>
+                        <v-icon color="">mdi-bullhorn</v-icon>
+                      </v-list-tile-action>
+                      <v-list-tile-content>
+                        <v-list-tile-title>New Broadcast </v-list-tile-title>
+                      </v-list-tile-content>
+                    </v-list-tile>
                   </v-list-group>
 
                   <!-- ELECTIONS -->
-                  <v-list-group prepend-icon="poll" no-action :value="false">
+                  <v-list-group prepend-icon="mdi-poll-box" no-action :value="false">
                     <v-list-tile slot="activator">
                       <v-list-tile-title>Elections</v-list-tile-title>
                     </v-list-tile>
                     <v-list-tile  to="/elections/create">
                       <v-list-tile-action>
-                        <v-icon color="success">add_box</v-icon>
+                        <v-icon color="success">mdi-plus-box</v-icon>
                       </v-list-tile-action>
                       <v-list-tile-title>Create Election</v-list-tile-title>
                     </v-list-tile>
 
                     <v-list-tile :to="curRoom ? `/elections/vote` : '/#vote'">
                       <v-list-tile-action>
-                        <v-icon color="success">how_to_vote</v-icon>
+                        <v-icon color="info">mdi-vote-outline</v-icon>
                       </v-list-tile-action>
                       <v-list-tile-title>Vote</v-list-tile-title>
                     </v-list-tile>
                     <v-list-tile  to="/contest">
                       <v-list-tile-action>
-                        <v-icon color="success">hdr_strong</v-icon>
+                        <v-icon color="">mdi-trophy</v-icon>
                       </v-list-tile-action>
                       <v-list-tile-title>Contest</v-list-tile-title>
                     </v-list-tile>
 
-                    <v-list-tile @click="new_manifesto_dialog = true" 
-                      v-if="isSuperUser && curRoom"
+                    <v-list-tile @click="isSuperUser ? new_manifesto_dialog = true : upgrade = true" 
+                      v-if="curRoom"
                       :disabled="!isContestant">
                         <v-list-tile-action>
-                          <v-icon color="success">add_box</v-icon>
+                          <v-icon color="">mdi-plus-circle</v-icon>
                         </v-list-tile-action>
                       <v-list-tile-title>New Manifesto </v-list-tile-title>
                     </v-list-tile>
 
-
-                    <v-tooltip right v-if="!isSuperUser">
-                      <v-list-tile disabled slot="activator">
-                        <v-list-tile-action>
-                          <v-icon color="success">add_box</v-icon>
-                        </v-list-tile-action>
-                        <v-list-tile-title>New Manifesto</v-list-tile-title>
-                      </v-list-tile>
-                      <span>This feature requires a premium account</span>
-                    </v-tooltip>
-
                     <v-tooltip right v-if="isAdmin">
                       <v-list-tile @click="show_manager = !show_manager" slot="activator">
                         <v-list-tile-action>
-                          <v-icon color="success">build</v-icon>
+                          <v-icon color="cyan">mdi-tune</v-icon>
                         </v-list-tile-action>
                         <v-list-tile-title>Manage Election</v-list-tile-title>
                       </v-list-tile>
@@ -182,7 +157,7 @@
                   
                   <v-list-tile to="/verify" exact >
                     <v-list-tile-action>
-                      <v-icon color="success">verified_user</v-icon>
+                      <v-icon color="success">mdi-check-decagram</v-icon>
                     </v-list-tile-action>
                     <v-list-tile-title>Verify Account</v-list-tile-title>
                   </v-list-tile>
@@ -190,38 +165,34 @@
                   <!-- SETTINGS -->
                   <v-list-tile  @click="$eventBus.$emit('show_profile_settings')">
                     <v-list-tile-action>
-                      <v-icon color="success">settings</v-icon>
+                      <v-icon color="success">mdi-settings</v-icon>
                     </v-list-tile-action>
                     <v-list-tile-title>Settings</v-list-tile-title>
                   </v-list-tile>
 
                   <!-- HELP -->
-                  <v-list-group prepend-icon="help" no-action>
+                  <v-list-group prepend-icon="mdi-help-circle" no-action>
                     <v-list-tile slot="activator">
                       <v-list-tile-title>Help</v-list-tile-title>
                     </v-list-tile>
                     <v-list-tile href="https://voteryte.com/faq" target="blank">
                       <v-list-tile-action>
-                        <v-icon color="success">info</v-icon>
+                        <v-icon color="success">mdi-frequently-asked-questions</v-icon>
                       </v-list-tile-action>
-                      <v-list-tile-title>FAQ</v-list-tile-title>
+                      <v-list-tile-content>
+                        <v-list-tile-title>FAQ</v-list-tile-title>
+                      </v-list-tile-content>
+                      <v-list-tile-avatar>
+                        <v-icon small>mdi-open-in-new</v-icon>
+                      </v-list-tile-avatar>
                     </v-list-tile>
 
                       <v-list-tile href="https://support.voteryte.com" target="blank">
                         <v-list-tile-action>
-                          <v-icon color="grey">live_help</v-icon>
+                          <v-icon color="grey">mdi-headset</v-icon>
                         </v-list-tile-action>
                         <v-list-tile-content>
                           <v-list-tile-title>Helpdesk </v-list-tile-title>
-                        </v-list-tile-content>
-                      </v-list-tile>
-
-                      <v-list-tile @click="openChatWidget(); drawer = !drawer">
-                        <v-list-tile-action>
-                          <v-icon color="grey">chat</v-icon>
-                        </v-list-tile-action>
-                        <v-list-tile-content>
-                          <v-list-tile-title>Chat</v-list-tile-title>
                         </v-list-tile-content>
                       </v-list-tile>
                   </v-list-group>
@@ -230,22 +201,34 @@
                   <v-list-tile v-if="!isSuperUser">
                     <v-list-tile-content>
                       <v-btn color="success" block @click="upgrade = true">
-                        <v-icon color="secondary" class="mr-2">star</v-icon>
+                        <v-icon color="secondary" class="mr-2">mdi-star</v-icon>
                         Upgrade</v-btn>
                     </v-list-tile-content>
                   </v-list-tile>
 
                   <v-list-tile avatar v-if="isSuperUser" style="background: #2f324a;">
                     <v-list-tile-action>
-                      <v-icon color="orange">flash_on</v-icon>
+                      <v-icon color="orange">mdi-flash-circle</v-icon>
                     </v-list-tile-action>
                     <v-list-tile-content>
-                      <v-list-tile-title>SuperUser</v-list-tile-title>
+                      <v-list-tile-title>Premium User</v-list-tile-title>
                       <small>You've got super powers!</small>
                     </v-list-tile-content>
                   </v-list-tile>
                 
                 </v-list>
+              </v-navigation-drawer>
+              
+              <!-- New Interactive Session -->
+              <v-navigation-drawer temporary
+                :stateless="drawer_right_persist"
+                v-model="drawer_right" right app width="800">
+
+                <new-event 
+                  @persist-drawer="drawer_right_persist = true" 
+                  @close-event-drawer="drawer_right = false">
+                </new-event>
+
               </v-navigation-drawer>
 
               <!-- SNACKBAR -->
@@ -254,12 +237,33 @@
                 <v-btn dark flat @click="snackbar.show = false"> Close</v-btn>
               </v-snackbar>
               
+              <!-- FAB -->
+              <v-speed-dial v-if="showFab"
+                v-model="fab" fixed
+                bottom right
+                direction="top"
+                transition="slide-y-reverse-transition">
+                <template v-slot:activator>
+                  <v-btn v-model="fab" color="teal" dark fab>
+                    <v-icon v-if="fab">mdi-close</v-icon>
+                    <v-icon v-else>mdi-view-dashboard</v-icon>
+                  </v-btn>
+                </template>
+                <v-btn fab dark small @click="$router.push({path: '/elections/vote'})"
+                   color="green">
+                  <v-icon>mdi-vote-outline</v-icon>
+                </v-btn>
+                <v-btn fab dark small class=""
+                  color="indigo" @click="$router.push({path: '/forum'})">
+                  <v-icon>mdi-forum</v-icon>
+                </v-btn>
+              </v-speed-dial>
+
               <loading-bar v-if="show_loading_bar" color="grey"></loading-bar>
               <router-view v-else></router-view>
               
             </v-flex>
           </v-layout>
-        
         
 
           <!-- GALLERY VIEWER -->
@@ -283,12 +287,12 @@
               <v-toolbar card dense flat>
                 <v-btn flat icon v-if="$vuetify.breakpoint.xsOnly"
                   @click="new_manifesto_dialog = false">
-                  <v-icon>chevron_left</v-icon> 
+                  <v-icon>mdi-chevron-left</v-icon> 
                 </v-btn>
                 <span>Create a Manifesto</span>
                 <v-spacer></v-spacer>
                 <v-btn flat icon @click="new_manifesto_dialog = false" class="hidden-xs-only">
-                  <v-icon>close</v-icon>
+                  <v-icon>mdi-close</v-icon>
                 </v-btn>
               </v-toolbar>
               <v-card-text>
@@ -320,7 +324,7 @@
                 <v-toolbar-title>Election Manager</v-toolbar-title>
                 <v-spacer></v-spacer>
                 <v-btn color="" icon @click="show_manager = false">
-                  <v-icon>close</v-icon>
+                  <v-icon>mdi-close</v-icon>
                 </v-btn>
               </v-toolbar>
 
@@ -330,58 +334,123 @@
             </v-card>
           </v-dialog>
 
-          <!-- PAYMENTS -->
+          <!-- GO PREMIUM -->
           <v-dialog v-model="upgrade" lazy :persistent="procesing_payment"
-            max-width="500px" :transition="switchTransition" content-class="round_top" >
+            max-width="950px" :transition="switchTransition" content-class="round_top" >
             <v-card class="round_top" flat>
-              
-              <v-subheader class="title">Get Premium</v-subheader>
+              <v-toolbar color="white" card>
+                <v-card-title primary-title class="pl-1 font-weight-bold title">
+                  Upgrade To Premium
+                </v-card-title>
 
-              <v-card-text class="lighten-3">
-                <div>Upgrade your account and have the ability to create posts, campaigns, election manifestos, and much more. Get SuperPowers!</div>
-                <div class="mt-2"><strong>Amount</strong>: ₦ 5,000 per month</div>
-                <v-btn color="secondary" 
-                  style="text-transform: initial;" 
-                  small class="px-0 ml-0" target="blank" href="https://voteryte.com/pricing.php" 
-                  flat>
-                  <span style="text-decoration: underline;">See plan details</span>
-                  <v-icon small>open_in_new</v-icon>
-                </v-btn>
-
-                <v-dialog v-model="procesing_payment"
-                  persistent width="300">
-                  <v-card color="secondary" dark >
-                    <v-card-text>
-                      Processing. Please wait...
-                      <v-progress-linear
-                        indeterminate
-                        color="white"
-                        class="mb-0"
-                      ></v-progress-linear>
-                    </v-card-text>
-                  </v-card>
-                </v-dialog>
-
-              </v-card-text>
-              <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn color="" class="mr-2" depressed :disabled="procesing_payment" @click="upgrade = false">
-                  Cancel
+                <v-btn light icon :disabled="procesing_payment" @click="upgrade = false">
+                  <v-icon>mdi-close</v-icon>
                 </v-btn>
-                <paystack
-                  :amount="plan.amount * 100"
-                  :email="getUser.email"
-                  :metadata="metadata"
-                  :paystackkey="plan.paystack_key"
-                  :reference="reference"
-                  :callback="verifyTxn"
-                  :close="onclose"
-                  :embed="false"
-                >
-                  <v-btn color="success" :loading="procesing_payment">Upgrade</v-btn>
-                </paystack>
-                
-              </v-card-actions>
+              </v-toolbar>
+              <v-layout row wrap class="pl-2" justify-space-between>
+                <v-flex xs12 sm4>
+                  <v-subheader class="black--text">Voteryte premium gives you all the tools you need to rise above the competition</v-subheader>
+                  <v-card flat>
+                    
+                    <v-card-text class="px-0">
+                      <div style="overflow: auto" class="mb-2">
+                        <div style="width: 30px; height: 30px;float: left;" class="ml-3 d-inline-block">
+                          <v-icon color="success">mdi-check</v-icon>
+                        </div>
+                        <div class="d-inline-block" style="width: calc(100% - 50px);float: right;">
+                          Ability to create compelling manifestos 
+                        </div>
+                      </div>
+                      <div style="overflow: auto" class="mb-2">
+                        <div style="width: 30px; height: 30px;float: left;" class="ml-3 d-inline-block">
+                          <v-icon color="success">mdi-check</v-icon>
+                        </div>
+                        <div class="d-inline-block" style="width: calc(100% - 50px);float: right;">
+                          Create events such as meetups, webinar, interactive sessions, e.t.c.
+                        </div>
+                      </div>
+                      <div style="overflow: auto" class="mb-2">
+                        <div style="width: 30px; height: 30px;float: left;" class="ml-3 d-inline-block">
+                          <v-icon color="success">mdi-check</v-icon>
+                        </div>
+                        <div class="d-inline-block" style="width: calc(100% - 50px);float: right;">
+                          Engage targeted audience through campaigns and posts
+                        </div>
+                      </div>
+                      <div style="overflow: auto" class="mb-2">
+                        <div style="width: 30px; height: 30px;float: left;" class="ml-3 d-inline-block">
+                          <v-icon color="success">mdi-check</v-icon>
+                        </div>
+                        <div class="d-inline-block" style="width: calc(100% - 50px);float: right;">
+                          Overview of contestant Insights and who's viewed your profile
+                        </div>
+                      </div>
+                      <div style="overflow: auto" class="mb-2">
+                        <div style="width: 30px; height: 30px;float: left;" class="ml-3 d-inline-block">
+                          <v-icon color="success">mdi-check</v-icon>
+                        </div>
+                        <div class="d-inline-block" style="width: calc(100% - 50px);float: right;">
+                          Send unlimited broadcast messages to election participants
+                        </div>
+                      </div>
+                    </v-card-text>
+                      <v-subheader class="teal--text">For only ₦ 5,000 per month</v-subheader>
+                      
+
+                    <v-card-actions>
+                      <paystack
+                        :amount="plan.amount * 100"
+                        :email="getUser.email"
+                        :metadata="metadata"
+                        :paystackkey="$paystackKey"
+                        :reference="reference"
+                        :callback="verifyTxn"
+                        :close="onclose"
+                        :embed="false"
+                      >
+                        <v-btn color="teal" dark block large class="ml-2 text-capitalize" depressed :loading="procesing_payment">Upgrade Now</v-btn>
+                      </paystack>
+                    </v-card-actions>
+                    <small class="ml-3">Cancel at any time</small> <br>
+                    <v-btn color="secondary" 
+                      style="text-transform: initial;margin-bottom: 15px;" 
+                      small class="" target="blank" href="https://voteryte.com/contestants" 
+                      flat>
+                      <span style="text-decoration: underline;">Learn more  </span>
+                      <v-icon small class="pl-1">mdi-open-in-new</v-icon>
+                    </v-btn>
+
+                    
+                    <v-dialog v-model="procesing_payment"
+                      persistent width="300">
+                      <v-card color="secondary" dark >
+                        <v-card-text>
+                          Processing. Please wait...
+                          <v-progress-linear
+                            indeterminate
+                            color="white"
+                            class="mb-0"
+                          ></v-progress-linear>
+                        </v-card-text>
+                      </v-card>
+                    </v-dialog>
+                  </v-card>
+                </v-flex>
+                <v-flex xs0 sm7 class="hidden-xs-only">
+                  <v-card id="pay_card" flat tile>
+                    <div class="slider">
+                      <div class="slide1"></div>
+                      <div class="slide2"></div>
+                      <div class="slide3"></div>
+                      <div class="slide4"></div>
+                      <div class="slide5"></div>
+                      <div class="slide6"></div>
+                      <div class="slide7"></div>
+                    </div>
+                  </v-card>
+                </v-flex>
+              </v-layout>
             </v-card>
           </v-dialog>
 
@@ -412,6 +481,7 @@
 export default {
   data:()=>({
     showUi: false,
+    fab: false,
     switch_room_dialog: false,
     index: null, // for image gallery viewer
     images: [], // for image gallery viewer
@@ -438,6 +508,8 @@ export default {
     },
     reference: Date.now() + btoa(Math.random()).substring(0,12),
     drawer: true,
+    drawer_right: false,
+    drawer_right_persist: false,
   }),
   components:{
     ViewProfile,
@@ -448,17 +520,20 @@ export default {
     paystack,
     Gallery,
     NewBroadcast,
-    ManageElection
+    ManageElection,
+    NewEvent
   },
 
   watch: {
     'curRoom': function(to, from) {
-      this.curRoom ? this.getBroadcasts() : ''
+      if(this.curRoom){
+        this.getBroadcasts()
 
-      this.switch_room_dialog = true
-      setTimeout(()=>{
-        this.switch_room_dialog = false
-      }, 1000)
+        this.switch_room_dialog = true
+        setTimeout(()=>{
+          this.switch_room_dialog = false
+        }, 1000)
+      }
     },
     'getUserInfo': function() {
       this.getUserInfo ? 
@@ -491,6 +566,26 @@ export default {
       return this.$vuetify.breakpoint.smAndDown ? 
       'slide-x-reverse-transition' : 
       'dialog-transition'
+    },
+    showFab(){
+      if(this.$vuetify.breakpoint.smAndDown){
+        
+        let route_name = this.$route.name
+  
+        switch (route_name) {
+          case 'members':
+            return false;
+          case 'profile':
+            return false;
+          case 'profile2':
+            return false;
+          default:
+            return true;
+        }
+      }
+      
+      return false
+      
     },
     metadata: function(){
       return {
@@ -595,45 +690,6 @@ export default {
         this.getting_enrolled = false
       }
     },
-    tryPremium(){
-      this.procesing_payment = true
-
-      return firebase.auth().currentUser.getIdToken()
-      .then(async (token)=>{
-        return api().post('dashboard/trypremium', {
-          idToken: token
-        }).then(res=>{
-          // transaction is ok
-          firebase.auth().currentUser.getIdToken(true).then(idToken=>{
-            
-          })
-
-          // TODO: SEND EMAIL TO USER ON SUBSCRIPTION
-
-          this.snackbar = {
-            show: true,
-            message: 'Account upgraded successfully',
-            color: 'success'
-          }
-          this.procesing_payment = false
-          this.upgrade = false
-          setTimeout(() => {
-            window.location.reload()
-          }, 2000);
-          
-        }).catch(error=>{
-          this.procesing_payment = false
-          $NProgress.done()
-
-          this.snackbar = {
-            show: true,
-            message: error.response ? error.response.data.message : 'Transaction failed',
-            color: 'error'
-          }
-        })
-        
-      })
-    },
     openBroadcastDialog(){
       this.$vuetify.breakpoint.smAndDown ? 
       this.dialog = false : ''
@@ -729,6 +785,12 @@ export default {
             imgSrc: blob_urls,
             selected_files: e.target.files
           })
+
+          setTimeout(() =>{ 
+            // e.target = null
+            // document.getElementById('file_img').value = null
+           
+          }, 2000)
           
 				}
 				else{
@@ -806,7 +868,7 @@ export default {
     openChatWidget(){
       this.initChatWidget()
       if (window.fcWidget.isInitialized() == true) {
-        console.log('Widget already initialised');
+        // console.log('Widget already initialised');
         // open widget
         window.fcWidget.open();
       }
@@ -814,24 +876,26 @@ export default {
     initChatWidget(){
       try {
         let user = this.getUserInfo
+        if(window.fcWidget){
 
-        window.fcWidget.init({
-          token: "3402f5b8-1e86-4016-bad3-bb1b79d386d3",
-          host: "https://wchat.freshchat.com"
-        });
-
-        window.fcWidget.setExternalId(user.uid);
-        window.fcWidget.user.setEmail(user.email);
-        window.fcWidget.user.setProperties({
-          name: user.name,
-          is_superuser: this.isSuperUser,
-          is_verified: this.is_verified
-        });
+          window.fcWidget.init({
+            token: "3402f5b8-1e86-4016-bad3-bb1b79d386d3",
+            host: "https://wchat.freshchat.com"
+          });
+  
+          window.fcWidget.setExternalId(user.uid);
+          window.fcWidget.user.setEmail(user.email);
+          window.fcWidget.user.setProperties({
+            name: user.name,
+            is_superuser: this.isSuperUser,
+            is_verified: this.is_verified
+          });
+        }
        
       } catch (error) {
         console.log(error)
       }
-    }
+    },
   },
   async mounted(){
     document.getElementById('welcome_logo').style.display = 'none'
@@ -895,6 +959,11 @@ export default {
       })
 
       this.$eventBus.$on('bdialog', ()=> this.new_broadcast = false)
+      this.$eventBus.$on('NewInteractive', data => {
+        this.drawer_right = data
+      })
+
+
       // show loading animation for some seconds
       setTimeout(() => {
         this.show_loading_bar = false
@@ -904,8 +973,7 @@ export default {
         this.snackbar = data
       })
 
-  
-   
+    
     firebase.auth().onAuthStateChanged(u => {
       if(u){
         // console.log(u)
@@ -923,49 +991,45 @@ export default {
           // console.log(idTokenResult.claims)
 
           let state = idTokenResult.claims.superuser
-          let on_trial = user.trial
-          let tstamp = user.timestamp
-          let one_month = 30 * 24 * 60 * 60 * 1000
-          let two_weeks = 14 * 24* 60 * 60 * 1000
           let now = new Date().getTime()
-          let time_spent = now - tstamp
+          let premium_expired = now > user.trial_expiry_date
           
-          // console.log(time_spent/(1000*60*60*24*30))
-          if(on_trial && time_spent <= two_weeks){
-            // user is on premium trial
-            this.$store.dispatch('subscriberState', state)
+          // console.log((user.trial_expiry_date - now)/86400000)
+          if(premium_expired){
+            
+            this.$store.dispatch('subscriberState', false)
           }
-          else if(!on_trial && time_spent <= one_month){
-            // user is on premium subscription
+          else{
+            
             this.$store.dispatch('subscriberState', state)
           }
 
           this.$store.dispatch('verifiedState', user.is_verified)
 
+
           // let usr = idTokenResult.claims
           // console.log({user})
-          this.$LogRocket.identify(user.user_id, {
-            name: user.name,
-            email: user.email,
-            isSuperUser: user.superuser,
-            dept: user.dept
-          })
+          // this.$LogRocket.identify(user.user_id, {
+          //   name: user.name,
+          //   email: user.email,
+          //   isSuperUser: user.superuser,
+          //   dept: user.dept
+          // })
 
           // console.log(user)
           // show chat widget only on large screens
           if(this.$vuetify.breakpoint.mdAndUp){
 
-            this.initChatWidget(user)
+            // this.initChatWidget(user)
           }
 
-          window.fcWidget.on("widget:closed", (resp)=>{
-            console.log('Widget Closed');
+          window.fcWidget ? window.fcWidget.on("widget:closed", (resp)=>{
+            // console.log('Widget Closed');
             // destroy the widget on close in small screen
             if(this.$vuetify.breakpoint.smAndDown){
               window.fcWidget.destroy()
             }
-          });
-
+          }) : ''
 
         })
         .catch((error) => {
@@ -995,21 +1059,19 @@ import { mapGetters, mapState } from 'vuex'
   import ViewProfile from '@/components/ViewProfile'
   import LoadingBar from '@/spinners/LoadingBar'
   import PrivateMsgList from '@/components/PrivateMsgList'
-  // import PrivateChatWindow from '@/components/PrivateChatWindow'
   import Navigation from '@/components/Navigation'
   import NewManifesto from '@/components/profile/NewManifesto'
   import paystack from 'vue-paystack'
   import Gallery from 'vue-gallery';
   import NewBroadcast from '@/components/NewBroadcast'
   import ManageElection from '@/components/ManageElection'
+  import NewEvent from '@/components/NewEvent'
   import {firebase, db, database} from '@/plugins/firebase'
-  // import ViewBroadcasts from '@/components/ViewBroadcasts'
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style lang='scss' >
 @import url('https://unpkg.com/nprogress@0.2.0/nprogress.css');
-@import url('https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons');
+// @import url('https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons');
 
 @mixin borderRadius($radius) {
   border-radius: $radius;
@@ -1018,6 +1080,7 @@ import { mapGetters, mapState } from 'vuex'
   -o-border-radius:$radius;
 }
 $mainBgColor:#1c1f35;
+$secondary: #1867c0;
 
 [v-cloak] {
   display: none;
@@ -1040,7 +1103,18 @@ $mainBgColor:#1c1f35;
   @include borderRadius(10px);
 }
 
+.magnify {
+  cursor: zoom-in;
+}
 
+.dragify {
+  cursor: grab;
+}
+
+.linkified{
+  color: $secondary;
+  text-decoration: none;
+}
 .fade-enter-active, .fade-leave-active {
   transition: all .5s cubic-bezier(1.0, 0.5, 0.8, 1.0);
 }
@@ -1085,7 +1159,7 @@ a {
 }
 
 #pay_card {
-  background: url('../assets/girl.png');
+  background: url('../assets/abstract.png');
   background-size: 100%;
   background-position: center;
   background-repeat: no-repeat;
@@ -1102,6 +1176,10 @@ a {
   min-width: 35px;
 }
 .home_list{
+
+  // height: calc(100vh - 40%);
+  // overflow-y: auto;
+
   .v-list__tile__action, .v-list__group__header .v-list__group__header__prepend-icon{
     min-width:35px;
   }
@@ -1126,6 +1204,7 @@ a {
 }
 .v-content{
   background:#eceff1;
+  // background: #fff;
 }
 
 .online_badge{
@@ -1140,14 +1219,90 @@ a {
 .navdrawr::-webkit-scrollbar {
     width: 8px;
     background-color: $mainBgColor;
-    @include borderRadius(10px)
+    @include borderRadius(10px);
   }
-.navdrawr::-webkit-scrollbar-track, .emoji-mart-scroll::-webkit-scrollbar-track {
-  background-color: white;
+.navdrawr::-webkit-scrollbar-track {
+  background-color: $mainBgColor;
   // @include borderRadius(10px)
 }
 .navdrawr::-webkit-scrollbar-thumb {
   background-color:#87899c ;
   @include borderRadius(10px);
 }
+
+.emoji-picker::-webkit-scrollbar-track {
+  background-color: #fff;
+}
+
+
+/* --slider-- */
+
+.slider {
+	max-width: 209px;
+	height: 434px;
+	margin: 20px auto;
+	position: relative;
+	// box-shadow: 2px -1px 5px 1px #a29f9f;
+	// border-radius: 5px;
+  }
+
+  @media (max-width: 400px){
+	  .slider {
+		  height: 160px;
+	  }
+  }
+
+.slide1,.slide2,.slide3,.slide4,.slide5,.slide6,.slide7 {
+	position: absolute;
+	width: 100%;
+  height: 100%;
+  animation-name: fade; 
+  animation-duration: 18s; 
+  animation-iteration-count: infinite;
+	// border-radius: 5px;
+}
+.slide1 {
+	background: url('../assets/insight.png') no-repeat center;
+	background-size: cover;
+  animation-delay: 0s;
+}
+.slide2 {
+	background: url('../assets/insight2.png')no-repeat center;
+	background-size: cover;
+  animation-delay: 3s;
+}
+.slide3 {
+	background: url('../assets/profile-viewers.png')no-repeat center;
+	background-size: cover;
+  animation-delay: 6s;
+}
+.slide4 {
+	background: url('../assets/profile-viewers2.png')no-repeat center;
+	background-size: cover;
+  animation-delay: 9s;
+} 
+.slide5 {
+	background: url('../assets/create-post.png')no-repeat center;
+	background-size: cover;
+  animation-delay: 12s;
+}
+.slide6 {
+	background: url('../assets/create-campaign.png')no-repeat center;
+	background-size: cover;
+  animation-delay: 15s;
+}
+.slide7 {
+	background: url('../assets/create-manifesto.png')no-repeat center;
+	background-size: cover;
+  animation-delay: 18s;
+}
+
+@keyframes fade
+  {
+	0%   {opacity:1}
+	33.333% { opacity: 0}
+	66.666% { opacity: 0}
+	100% { opacity: 1}
+}
+
 </style>

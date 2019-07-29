@@ -17,6 +17,7 @@
           <v-flex xs12 sm8 md4>
             <h1 class="text-xs-center white--text mb-3" ><a href="/" style="text-decoration:none;color:#fff"> {{$appName}}</a></h1>
             <v-subheader class="white--text text-xs-center d-block">{{text}}</v-subheader>
+            <v-btn color="success" v-if="show_login_btn" to="/login?new=true" block class="mx-auto">Login</v-btn>
 
             <v-btn color="success" class="d-block" style="line-height:2.5" depressed v-if="resend_password_verification"
               to="/reset-password">
@@ -67,6 +68,8 @@
 export default {
   data:()=>({
     snackbar: {},
+    title_text: 'Account Recovery',
+    show_login_btn: false,
     disabled: true,
     show: false,
     mode: '',
@@ -91,7 +94,7 @@ export default {
   }),
   computed: {
     title(){
-      return `Account Recovery | ${this.$appName}`
+      return `${this.title_text} | ${this.$appName}`
     },
   },
   methods:{
@@ -110,20 +113,20 @@ export default {
           }
           else{
             // Display reset password handler and UI.
-            this.title = `Reset Your Password | ${this.$appName}`
+            this.title_text = `Reset Your Password`
             this.handleResetPassword(auth, this.actionCode);
           }
           
           break;
         case 'recoverEmail':
           // Display email recovery handler and UI.
-          this.title = `Recover Email | ${this.$appName}`
+          this.title_text = `Recover Email`
           this.text = 'Recover Your Email'
           this.handleRecoverEmail(auth, this.actionCode);
           break;
         case 'verifyEmail':
           // Display email verification handler and UI.
-          this.title = `Verify Email | ${this.$appName}`
+          this.title_text = `Verify Email`
           this.text = 'Verify Your Email'
           this.handleVerifyEmail(auth, this.actionCode);
           break;
@@ -149,7 +152,7 @@ export default {
       }).catch(error=> {
         // Error occurred during confirmation. The code might have expired or the
         // password is too weak.
-        console.log(error)
+        // console.log(error)
         this.snackbar = {show:true,message:error.message, color:'error'}
       });
     },
@@ -199,7 +202,8 @@ export default {
       auth.applyActionCode(actionCode).then(resp=>{
         // Email address has been verified.
         this.snackbar = {show:true,message:'Email verified successfully. You can now login', color: 'purple'}
-        
+        this.show_login_btn = true;
+
         setTimeout(() => {
           // this.$router.push('/home')
           firebase.auth().signOut()
@@ -246,7 +250,7 @@ export default {
 }
 // import Nav from '@/components/Nav'
   import Footer from '@/components/Footer'
-  import {firebase, db, database} from '@/plugins/firebase'
+  import {firebase, db, database, app} from '@/plugins/firebase'
 </script>
 
 <style lang="scss">

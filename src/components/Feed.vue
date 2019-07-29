@@ -9,7 +9,7 @@
         <v-tabs v-model="feed_model" color="teal" 
           v-if="breakpoint.smAndDown" slider-color="yellow">
           <v-tab
-            v-for="item in ['Feed','Campaigns']"
+            v-for="item in ['Feed','Campaigns', 'Events']"
             :key="item"
             :href="`#${item}`"
           >
@@ -19,15 +19,13 @@
       </v-toolbar>
     </navigation>
 
-    <!-- SPONSORED -->
+    <!-- Events -->
     <v-navigation-drawer width='250' right hide-overlay clipped app style="background:#eceff1;">
-      <v-subheader class="font-weight-bold">Sponsored</v-subheader>
+      <v-subheader class="font-weight-bold">Events</v-subheader>
       <v-container grid-list-xs px-2 py-1>
         <v-layout row wrap>
           <v-flex xs12>
-            <v-card height="200" color="grey lighten-2" flat>
-              
-            </v-card>
+            <list-events/>
           </v-flex>
         </v-layout>
       </v-container>
@@ -90,7 +88,7 @@
       </v-container>
 
       <!-- MAIN CONTENT -->
-      <v-container grid-list-sm  :class="{'px-1':breakpoint.smAndDown, 'white': feed_model == 'Campaigns'}" 
+      <v-container grid-list-sm :class="{'px-1':breakpoint.smAndDown, 'white': feed_model == 'Campaigns'}" 
         v-if="ready">
         <v-layout row wrap justify-space-between>
           <v-flex xs12 md8 >
@@ -105,16 +103,10 @@
                     <v-flex sm12 md12 pb-1>
                       <v-card class="round_top pt-1" height="" color="" flat :dark="$store.state.theme == 'dark'">
                         <v-card-actions>
-                          
-                          <v-btn color="secondary lighten-2" dark depressed v-if="isSuperUser" text-color="white" class="linkify" 
-                            @click="new_post_dialog = true">      
-                            <v-icon class="pr-2">add_circle</v-icon>
-                            New Post
-                          </v-btn>
-
-                          <v-btn color="secondary lighten-2" dark depressed v-if="!isSuperUser" text-color="white" class="linkify" 
-                            @click="$eventBus.$emit('Show_Upgrade_Dialog')">      
-                            <v-icon class="pr-2">add_circle</v-icon>
+                       
+                          <v-btn color="secondary lighten-2" dark depressed text-color="white" 
+                            @click="isSuperUser ? new_post_dialog = true : $eventBus.$emit('Show_Upgrade_Dialog')">      
+                            <v-icon class="pr-2">mdi-plus-circle</v-icon>
                             New Post
                           </v-btn>
                         </v-card-actions>
@@ -123,9 +115,9 @@
 
                     <!-- POSTS -->
                     <v-flex xs12 sm12 md12 pt-0>
-                      <template v-if="posts.length == 0 || $route.query.welcome">
-                        <v-card flat v-for="(post,i) in welcome_posts" :key="i + 'w_posts'"
-                          height="" class="mb-3 pb-2 ">
+                      <template v-if="posts.length == 0 || $route.query.new">
+                        <v-card  v-for="(post,i) in welcome_posts" :key="i + 'w_posts'"
+                          class="mb-3 pb-2 elevation-1">
                           
                           <v-list two-line dense>
                             <v-list-tile avatar>
@@ -152,12 +144,12 @@
                             <div style="width:fit-content;" class="text-xs-center">
                               
                               <v-btn depressed icon class="ml-1" small>
-                                <v-icon color="secondary" small>thumb_up</v-icon>
+                                <v-icon color="secondary" small>mdi-thumb-up</v-icon>
                               </v-btn>
                               <span class="">0 Likes</span>
 
                               <v-btn icon dark class="ml-3" depressed small>
-                                <v-icon color="secondary" small>insert_comment</v-icon>
+                                <v-icon color="secondary" small>mdi-comment</v-icon>
                               </v-btn>
                               <span class="linkify">0 Comments</span>
 
@@ -167,8 +159,7 @@
                       </template>
 
 
-                      <v-card flat v-for="(post,i) in posts" :key="i + '_posts'" :dark="$store.state.theme == 'dark'"
-                        height="" class="mb-3 pb-2 ">
+                      <v-card v-for="(post,i) in posts" :key="i + '_posts'" class="mb-3 pb-2 elevation-1">
                         
                         <v-list two-line dense>
                           <v-list-tile avatar>
@@ -226,13 +217,13 @@
                           <div style="width:fit-content;" class="text-xs-center">
                             
                             <v-btn depressed icon class="ml-1" small :disabled="!!disabled_btns.find(id => id == post.docId)" @click.native="add_reaction(post)">
-                              <v-icon color="secondary" small>thumb_up</v-icon>
+                              <v-icon color="secondary" small>mdi-thumb-up</v-icon>
                             </v-btn>
                             <span class="">{{post.reactions}} Likes</span>
 
                             <v-btn icon dark class="ml-3" depressed small
                               @click.native="expand(i)">
-                              <v-icon color="secondary" small>insert_comment</v-icon>
+                              <v-icon color="secondary" small>mdi-comment</v-icon>
                             </v-btn>
                             <span class="linkify" @click="expand(post, i);">{{post.comments}} Comments</span>
 
@@ -254,20 +245,14 @@
                                     <v-icon color="secondary" >send</v-icon>
                                   </v-btn>
                                   <!-- EMOJIS DIALOG-->
-                                  <v-menu max-width="380" :close-on-content-click='false'
+                                  <v-menu max-width="330" :close-on-content-click='false'
                                     slot="prepend-inner" max-height="" top offset-y>
 
                                     <v-btn slot="activator" icon >
-                                      <v-icon color="success">mood</v-icon>
+                                      <v-icon color="success">mdi-emoticon-outline</v-icon>
                                     </v-btn>
                                     <v-card class="">
-                                      <!-- <picker set="google" @select="appendEmoji($event,post)" :native="true" 
-                                        title="Choose Emoji" emoji="grinning"/> -->
-                                        <v-card-text >
-                                          <v-btn small flat color="primary" icon v-for="(emoji,i) in emojis" :key="i" @click="appendEmoji(emoji,post)">
-                                            <span style="font-size:30px;display:block;margin-top:-7px;">{{emoji}}</span>
-                                          </v-btn>
-                                        </v-card-text>
+                                      <emoji-picker @append-emoji="appendEmoji"/>
                                     </v-card>
                                   </v-menu>
                                   </v-textarea>
@@ -348,17 +333,17 @@
                     <v-flex xs12>
                       <v-card flat class="elevation-0" elevation-0 :dark="$store.state.theme == 'dark'">
                         <v-subheader class="font-weight-bold">Featured Campaigns</v-subheader>
-                        <v-list three-line dense >
+                        <v-list dense>
                           <v-list-tile avatar @click="newCampaign" v-if="isSuperUser">
                             <v-list-tile-avatar color="grey">
-                              <v-avatar size="45" color="grey">
-                                <v-icon small color="white">add</v-icon>
+                              <v-avatar size="40" color="grey">
+                                <v-icon small color="white">mdi-plus</v-icon>
                               </v-avatar>
                             </v-list-tile-avatar>
                             <v-list-tile-content>
                               <v-list-tile-title class="secondary--text">
                                 Add Your Campaign</v-list-tile-title>
-                              <v-list-tile-sub-title>Campaigns disappears after 24 hours</v-list-tile-sub-title>
+                              <!-- <v-list-tile-sub-title>Campaigns disappears after 24 hours</v-list-tile-sub-title> -->
                             </v-list-tile-content>
                           </v-list-tile>
                         </v-list>
@@ -376,12 +361,22 @@
                                 {{campaign.onr.name}}</v-list-tile-title>
                               <v-list-tile-sub-title>
                                 {{$helpers.parseDate(campaign.latest)}}
-                                <v-icon small color="primary" class="pr-1">data_usage</v-icon>{{campaign.count}}
+                                <v-icon small color="primary" class="pr-1">mdi-chart-donut</v-icon>{{campaign.count}}
                               </v-list-tile-sub-title>
                             </v-list-tile-content>
                           </v-list-tile>
                         </v-list>
                       </v-card>
+                    </v-flex>
+                  </v-layout>
+                </v-container>
+              </v-tab-item>
+
+              <v-tab-item value="Events" :style="styleForTabs">
+                <v-container grid-list-xs px-2 py-1>
+                  <v-layout row wrap>
+                    <v-flex xs12>
+                      <list-events/>
                     </v-flex>
                   </v-layout>
                 </v-container>
@@ -400,17 +395,17 @@
                     <div style="overflow-y:auto;">
                       <v-subheader class="font-weight-bold">Campaigns</v-subheader>
                       
-                      <v-list three-line dense >
+                      <v-list dense >
                         <v-list-tile avatar @click="newCampaign" v-if="isSuperUser">
                           <v-list-tile-avatar color="grey">
                             <v-avatar size="45" color="grey">
-                              <v-icon small color="white">add</v-icon>
+                              <v-icon small color="white">mdi-plus</v-icon>
                             </v-avatar>
                           </v-list-tile-avatar>
                           <v-list-tile-content>
                             <v-list-tile-title class="secondary--text">
                               Add Your Campaign</v-list-tile-title>
-                            <v-list-tile-sub-title>Add a campaign that disappears in 24 hours</v-list-tile-sub-title>
+                            <!-- <v-list-tile-sub-title>Add a campaign that disappears in 24 hours</v-list-tile-sub-title> -->
                           </v-list-tile-content>
                         </v-list-tile>
                       </v-list>
@@ -428,7 +423,7 @@
                               {{campaign.onr.name}}</v-list-tile-title>
                             <v-list-tile-sub-title>
                               {{$helpers.parseDate(campaign.latest)}}
-                              <v-icon small color="primary" class="pr-1">data_usage</v-icon>{{campaign.count}}
+                              <v-icon small color="primary" class="pr-1">mdi-chart-donut</v-icon>{{campaign.count}}
                             </v-list-tile-sub-title>
                           </v-list-tile-content>
                         </v-list-tile>
@@ -456,7 +451,7 @@
           <span>Create a Campaign</span>
           <v-spacer></v-spacer>
           <v-btn flat icon @click="new_campaign = false">
-            <v-icon>close</v-icon>
+            <v-icon>mdi-close</v-icon>
           </v-btn>
         </v-toolbar>
         <v-card-text class="pa-0">
@@ -544,6 +539,8 @@ export default {
     NewPost,
     NewCampaign,
     ViewCampaign,
+    ListEvents,
+    EmojiPicker
   },
   computed: {
     ...mapGetters([
@@ -935,6 +932,8 @@ import ViewProfile from '@/components/ViewProfile'
 import NewPost from '@/components/profile/NewPost'
 import NewCampaign from '@/components/profile/NewCampaign'
 import ViewCampaign from '@/components/ViewCampaign'
+import ListEvents from '@/components/ListEvents'
+import EmojiPicker from '@/components/EmojiPicker'
 import {mapGetters, mapState} from 'vuex'
 import {firebase, db, database} from '@/plugins/firebase'
 

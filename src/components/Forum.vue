@@ -10,7 +10,7 @@
       <v-spacer></v-spacer>
       <v-btn icon slot="nav_item" @click="media_dialog = true"
         v-if="breakpoint.mdAndUp">
-        <v-icon color="">photo_library</v-icon>
+        <v-icon color="">mdi-image-multiple</v-icon>
       </v-btn>
 
       <v-toolbar slot="extended_nav" color="teal" dark flat
@@ -56,34 +56,28 @@
               >
               <v-tooltip top slot="append" v-show="!message.trim()">
                 <v-btn icon slot="activator" @click='$helpers.trigFileSelector'>
-                  <v-icon color="success">photo_camera</v-icon>
+                  <v-icon color="success">mdi-camera</v-icon>
                 </v-btn>
                 <span>Send a photo</span>
               </v-tooltip>
               
               <v-tooltip top slot="append-outer" v-if="message.trim()">
                 <v-btn icon slot="activator" @click="sendMessage">
-                  <v-icon color="teal">{{message.trim() ? 'send' : '' }}</v-icon>
+                  <v-icon color="teal">{{message.trim() ? 'mdi-send' : '' }}</v-icon>
                 </v-btn>
                 <span>Send message</span>
               </v-tooltip>
 
               <!-- EMOJIS DIALOG-->
-              <v-menu max-width="380" :close-on-content-click='false'
+              <v-menu max-width="350" :close-on-content-click='false'
                 slot="prepend-inner" max-height="" top offset-y>
 
                 <v-btn slot="activator" icon >
-                  <v-icon color="success">mood</v-icon>
+                  <v-icon color="success">mdi-emoticon-outline</v-icon>
                 </v-btn>
-                <v-card class="">
-                  <!-- <picker set="google" @select="appendEmoji" :native="true" 
-                    title="Choose Emoji" emoji="grinning"/> -->
-                  <v-card-text >
-                    <v-btn small flat color="primary" icon v-for="(emoji,i) in emojis" :key="i" @click="appendEmoji(emoji)">
-                      <span style="font-size:30px;display:block;margin-top:-7px;">{{emoji}}</span>
-                    </v-btn>
-                  </v-card-text>
-                </v-card>
+                
+                  <emoji-picker @append-emoji="appendEmoji"/>
+                
               </v-menu>
 
               <!-- MENTION MEMBER -->
@@ -162,7 +156,7 @@
         <v-toolbar-title>Upload images</v-toolbar-title>
         <v-spacer></v-spacer>
         <v-btn flat icon @click="file_dialog = false">
-          <v-icon>close</v-icon>
+          <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-toolbar>
       <v-container class="white">
@@ -200,7 +194,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn flat icon>
-            <v-icon @click="progress_dialog = false">close</v-icon>
+            <v-icon @click="progress_dialog = false">mdi-close</v-icon>
           </v-btn>
         </v-card-actions>
         <v-container class="mt-0">
@@ -222,11 +216,12 @@ export default {
     text_label: 'You cannot send messages in this forum',
     left: null,
     ready: false,
-    emojis: [
-      '😀','😂','😁','😈','😃','😄','😅','😆','😉','😊','😋','😎','😍','😘','😐',
-      '😶','😏','😣','😯','😪','😛','😜','😒','😲','😟','💋','👽','👌','👍','✌️','👋','❤️','💘','💕',
-      '✔️','☑️','🔥','🎯','🎤'
-    ],
+    // emojis: [
+    //   '😀','😂','😁','😈','😃','😄','😅','😆','😉','😊','😋','😎','😍','😘','😐',
+    //   '😶','😏','😣','😯','😪','😛','😜','😒','😲','😟','💋','👽','👌','👍','✌️','👋','❤️','💘','💕',
+    //   '✔️','☑️','🔥','🎯','🎤'
+    // ],
+    // emojis: emojiData,
     loading_messages: true,
     message: "",
     file_message: '',
@@ -357,7 +352,7 @@ export default {
 
         this.retrieveMembers().then(members=>{
           this.ready = true;
-        }).catch(error=> console.log(error))
+        }).catch(error=> {})
 
       }
       else if(this.$store.state.loading_rooms) {
@@ -385,13 +380,13 @@ export default {
           message: 'Sorry, something went wrong, try again.'
         }
         // eslint-disable-next-line
-        console.log(error)
+        // console.log(error)
       }
       
     },
     sendMessage () {
       if(this.message.trim() && this.canSendMessages){
-        this.submit(this.message, null)
+        this.submit(this.$sanitize(this.message), null)
       }
     },
     clearMessage () {
@@ -418,7 +413,7 @@ export default {
         let data = {
           onr: onr,
           tstamp: Date.now(),
-          body: message.trim(),
+          body: this.$sanitize(message.trim()),
           imgs: images, // this is for the uploaded image
           docId: docRef.id,
           elecRef: this.this_group.electionId,
@@ -445,14 +440,17 @@ export default {
       }
     },
     appendUser(member){
-      this.message += ' @' + member.email + ' '
+      this.message += ' @' + member.username + ' '
     },
     appendEmoji(emoji){
       this.message += emoji
     },
     scrollChat(){
-       let doc = document.getElementById('chat_space')
-      doc ? doc.scrollTop = doc.scrollHeight - doc.clientHeight : ''
+       let doc = document.getElementById('chat_space_content')
+      doc ? doc.scroll({
+        top: doc.scrollHeight,
+        behavior: 'smooth'
+      }) : ''
     },
     chatUpdate(){
       
@@ -464,7 +462,7 @@ export default {
         .onSnapshot(snapshot=>{
           let msgs = []
           
-          snapshot.docChanges().forEach(function(change) {
+          snapshot.docChanges().forEach(change =>{
             if (change.type === "added") {
                 // console.log("New", change.doc.data());
                 msgs.push(change.doc.data())
@@ -473,8 +471,14 @@ export default {
 
           this.offset = snapshot.docs[snapshot.docs.length - 1]
 
-          this.$store.dispatch('updateFromDb', msgs)
-          this.loading_messages = false
+          this.$store.dispatch('updateFromDb', msgs).then(()=>{
+            
+            this.loading_messages = false
+
+            setTimeout(() => {
+              this.scrollChat()
+            }, 1000);
+          })
         })
       }
     }
@@ -485,7 +489,8 @@ export default {
       this.file_dialog = true
 			this.files = data.selected_files,
 			this.blob_urls = data.imgSrc
-		})
+    })
+    
   },
   created() {
     
@@ -511,6 +516,7 @@ export default {
     Navigation,
     ChatMedia,
     LoadingBar,
+    EmojiPicker
     // Picker,
   }
 }
@@ -524,6 +530,7 @@ export default {
   import Navigation from '@/components/Navigation'
   import ChatMedia from '@/components/ChatMedia'
   import LoadingBar from '@/spinners/LoadingBar'
+  import EmojiPicker from '@/components/EmojiPicker'
   import {firebase, db, database} from '@/plugins/firebase'
   // import { Picker } from 'emoji-mart-vue'
 </script>

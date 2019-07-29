@@ -7,37 +7,14 @@
 
 		<v-card flat tile>
 			<v-card-text>
-				<!-- <v-radio-group v-model="manifesto_type" row class="mt-0">
-					<v-radio class="mr-2"
-						label="Text"
-						color="teal"
-						value="text"
-					></v-radio>
-					<v-radio class="mr-2"
-						label="Photo"
-						color="secondary"
-						value="photo"
-					></v-radio>
-				</v-radio-group> -->
 				<v-text-field	label="Manifesto title" class="mb-3" v-model="manifesto_title" color="secondary" outline>
 
 				</v-text-field>
 
 				<template v-if="manifesto_type == 'text'">
 					<quill v-model="manifesto_text" :config="config" output="html"></quill>
-					
+					<small>Note: You can create only one manifesto per election</small>
         </template>
-				<!-- <template v-if="manifesto_type == 'photo'">
-					<v-card flat contenteditable="false" v-if="imgSrc" color="" class="mb-2 jusity-center fill-height" height="200">
-						<v-img height="100%" width="80%" style="margin:auto;" :src="imgSrc"/>
-					</v-card>
-					<v-btn v-else color="grey mb-3" depressed block style="padding:10%;" @click="$helpers.trigFileSelector">
-						<div style="margin-top:-25px;">
-							<v-icon color="white" large>add</v-icon>
-							<span class="d-block white--text">Add photo</span>
-						</div>
-					</v-btn>
-				</template> -->
 
 			</v-card-text>
 			<v-card-actions>
@@ -95,12 +72,6 @@ export default {
 			if(this.manifesto_type == 'text'){
 				return !this.manifesto_text.trim() || !this.manifesto_title.trim()
 			}
-			// if(this.manifesto_type == 'photo'){
-			// 	return !this.imgSrc || !this.manifesto_title.trim()
-			// }
-			// if(this.manifesto_type == 'video'){
-			// 	return !this.video_link.trim() || !this.manifesto_title.trim()
-			// }
 		},
 		...mapGetters([
       'isAuthenticated',
@@ -118,7 +89,7 @@ export default {
   
 		async submit(){
 			this.loading = true
-			console.log(this.manifesto_text)
+			// console.log(this.manifesto_text)
 			if(this.manifesto_type == 'photo'){
 				let image = await this.$helpers.uploadImage(this.selected_file, this.cloudinary)
 				this.createManifesto(image[0])
@@ -145,22 +116,23 @@ export default {
 				onr: onr,
 				tstamp: firebase.firestore.FieldValue.serverTimestamp(),
 				elecRef: this.curRoom.electionId,
-				body: this.manifesto_text.trim(),
-				title: this.manifesto_title
+				body: this.$sanitize(this.manifesto_text.trim()),
+				title: this.$sanitize(this.manifesto_title)
 				
 			}).then(done=>{
 				this.loading = false
 				this.$eventBus.$emit('CloseNewManifestoDialog')
-				this.snackbar = {
-					show: true,color:'dark',
-					message: 'Campaign created successfully'
-				}
+				this.$eventBus.$emit('Snackbar', {
+					show: true,color:'success',
+					message: 'Manifesto created successfully'
+				})
 			}).catch(err=>{
 				this.loading = false
-				this.snackbar = {
-					show: true,color:'error',
+				
+				this.$eventBus.$emit('Snackbar',{
+					show: true, color:'error',
 					message: 'Something went wrong, try again'
-				}
+				})
 			})
 		}
 	},
@@ -169,7 +141,7 @@ export default {
 			this.selected_file = data.selected_files
 			this.imgSrc = data.imgSrc[0]
 		})
-		console.log(this.manifesto_text)
+		// console.log(this.manifesto_text)
 	}
 }
 import api from '@/services/api'

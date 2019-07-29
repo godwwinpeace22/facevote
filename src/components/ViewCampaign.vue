@@ -10,7 +10,7 @@
 
 						<v-list-tile-action style="min-width: 20px;">
 							
-							<v-icon @click="$eventBus.$emit('HideCampaign')">chevron_left</v-icon>
+							<v-icon @click="$eventBus.$emit('HideCampaign')">mdi-chevron-left</v-icon>
 						</v-list-tile-action>
 						<v-divider vertical inset class="mr-2"></v-divider>
 					</template>
@@ -31,15 +31,15 @@
 					<v-list-tile-action>
 						<v-progress-circular color="secondary" :value="value">
 							<v-btn icon small @click.native="playSlides">
-								<v-icon v-if="play">pause</v-icon>
-								<v-icon v-else>play_arrow</v-icon>
+								<v-icon v-if="play">mdi-pause</v-icon>
+								<v-icon v-else>mdi-play</v-icon>
 							</v-btn>
 						</v-progress-circular>
 					</v-list-tile-action>
 
 					<v-list-tile-action v-if="active.onr.uid == getUser.uid">
 						<v-btn flat icon @click.native="showViewers">
-							<v-icon>menu</v-icon>
+							<v-icon>mdi-menu</v-icon>
 						</v-btn>
 					</v-list-tile-action>
 				</v-list-tile>
@@ -121,11 +121,11 @@
 		</v-card-text>
 
 		<div class="next_left" style="width:50px;position:absolute;top:50%;left: 0" v-if="index > 0">
-			<v-icon large color="#fff" @click="previous">chevron_left</v-icon>
+			<v-icon large color="#fff" @click="previous">mdi-chevron-left</v-icon>
 		</div>
 
 		<div class="next_right" style="width:50px;position:absolute;top:50%;right:0" v-if="index < campaigns.length -1">
-			<v-icon large color="#fff" @click="next">chevron_right</v-icon>
+			<v-icon large color="#fff" @click="next">mdi-chevron-right</v-icon>
 		</div>
 	</v-card>
 	

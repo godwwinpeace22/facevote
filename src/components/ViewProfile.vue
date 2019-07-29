@@ -25,7 +25,7 @@
       
         <v-card-text class="text-xs-center mt-5">
           <v-tooltip right>
-            <v-icon color="success" slot="activator" v-if="is_verified">verified_user</v-icon>
+            <v-icon color="success" slot="activator" v-if="is_verified">mdi-check-decagram</v-icon>
             <span>User is verified</span>
           </v-tooltip>
           <span class="title text-capitalize">{{user.name | capitalize}}</span>
@@ -35,8 +35,16 @@
           <!-- <div class="mt-3">{{user.email}}</div> -->
           <div class="mt-3">
             <div class="d-inline-block">
-              <v-btn depressed color="info" class="round text-capitalize"
-                :to="`/users/${user.email}`" @click="$eventBus.$emit('CloseProfile')">View Profile</v-btn>
+              <v-btn depressed color="info" 
+                class="round text-capitalize"
+                :loading="loading"
+                @click="getUserProfile"
+              >
+                View Profile
+                <template v-slot:loader>
+                  <span>Loading...</span>
+                </template>
+              </v-btn>
             </div>
 
             <v-btn depressed
@@ -75,6 +83,7 @@ export default {
   data: ()=>({
     dialog: false,
     disabled: false,
+    loading: false,
   }),
   props:['user'],
   filters: {
@@ -99,14 +108,30 @@ export default {
     ]),
   },
   methods:{
-    openPrivateChatWindow(){
-      this.$eventBus.$emit('Open_Private_Chat_Window', {
-        username:this.user,
-        ...this.user,
-        name:this.user.name,
-        imgSrc:this.user.imgSrc,
-        last_msg_status:null
-      })
+    getUserProfile(){
+
+      this.loading = true
+      
+      if(this.user.uid == this.getUser.uid){
+        
+        this.loading = false
+        this.$router.push(`/users/${this.getUserInfo.username}`)
+        this.$eventBus.$emit('CloseProfile')
+      }
+      else {
+        
+        db.collection('moreUserInfo').doc(this.user.uid).get()
+        .then(doc => {
+  
+          this.loading = false
+          if(doc.exists){
+            this.$router.push(`/users/${doc.data().username}`)
+            this.$eventBus.$emit('CloseProfile')
+          }else{
+  
+          }
+        })
+      }
     },
     flagUser(){
       // mark the user as flagged

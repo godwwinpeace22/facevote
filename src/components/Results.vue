@@ -143,7 +143,7 @@
               <v-subheader class='font-weight-bold'>Voter turnout
                 <v-tooltip left max-width="300px">
                   <v-btn icon slot="activator" dark small>
-                    <v-icon color="black" small>help</v-icon>
+                    <v-icon color="black" small>mdi-help-circle-outline</v-icon>
                   </v-btn>
                   <span v-if="currElection.level == 'Faculty'">This chart compares the number of people that voted in each department</span>
                   <span v-if="currElection.level == 'General'">This chart compares the number of people that voted in each faculty</span>
@@ -271,7 +271,7 @@
             <v-toolbar class="white" flat card dense>
               <v-subheader>More Charts</v-subheader>
               <v-spacer></v-spacer>
-              <v-icon color="#FFC107">bookmark</v-icon>
+              <v-icon color="#FFC107" class="mr-1">mdi-flash-circle</v-icon>
               <span>Premium</span>
             </v-toolbar>
             <v-container grid-list-xl :pa-1="$vuetify.breakpoint.xsOnly">
@@ -283,7 +283,7 @@
                     <v-toolbar dense flat card class="white" light>
                       <v-subheader class="pa-0 text-xs-center ma-0 font-weight-bold">Your Share of All Votes</v-subheader>
                     </v-toolbar>
-                    <div class="text-xs-center secondary--text"><small>You got {{percentage_share}}% of all votes casted</small></div>
+                    <div class="text-xs-center secondary--text"><small v-if="percentage_share">You got {{percentage_share}}% of all votes casted</small></div>
                     <pie-chart class="pt-4" :chart-data="chartData5" :options="chartOptions3"></pie-chart>
                   </v-card>
                 </v-flex>
@@ -381,7 +381,7 @@ export default {
   ],
   watch: {
     'curRoom': function(){
-      console.log({regvoters: this.regVoters, contestants: this.contestants, chardate: this.charDate3, status: this.status, roles: this.roles})
+      // console.log({regvoters: this.regVoters, contestants: this.contestants, chardate: this.charDate3, status: this.status, roles: this.roles})
       this.curRoom ? this.setUp() : ''
     },
   },
@@ -629,7 +629,13 @@ export default {
         totalVotes += vote.score
       })
       
-      this.percentage_share = (votesForContestant / totalVotes * 100).toFixed(2)
+      if(votesForContestant > 0 && totalVotes > 0){
+        this.percentage_share = (votesForContestant / totalVotes * 100).toFixed(2)
+      }
+      else {
+        this.percentage_share = false
+      }
+      
 
       this.chartData5 = {
         datasets: [{

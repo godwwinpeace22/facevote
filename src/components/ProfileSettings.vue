@@ -8,8 +8,22 @@
       <v-toolbar-title>Profile Settings</v-toolbar-title>
       <v-spacer></v-spacer>
       
-      <v-btn dark :small="$vuetify.breakpoint.xs" class="hidden-sm-and-down" tile color="grey lighten-1" :disabled="loading" outline @click.native="$eventBus.$emit('hide_profile_settings', {})">Cancel</v-btn>
-      <v-btn depressed color="orange" @click.native="updateProfile" :disabled="disabled_save" :loading="loading">Save</v-btn>
+      <v-btn dark 
+        :small="$vuetify.breakpoint.xs" 
+        class="hidden-sm-and-down" 
+        tile color="grey lighten-1" 
+        :disabled="loading" outline 
+        @click.native="$eventBus.$emit('hide_profile_settings', {})"
+      >
+        Close
+      </v-btn>
+      <v-btn depressed 
+        color="orange" 
+        @click.native="updateProfile" 
+        :disabled="disabled_save" 
+        :loading="loading">
+        Save
+      </v-btn>
     </v-toolbar>
 
     <v-snackbar v-model="snackbar.show" dark :timeout="5000" 
@@ -29,12 +43,13 @@
                 <v-card tile :flat="$vuetify.breakpoint.xsOnly" style="min-height: 300px;">
                   <v-hover :class="{profile_card: selected_file}">
                     <v-container slot-scope="{ hover }">
-                      <v-img :src="blob_url || getUser.photoURL || `https://ui-avatars.com/api/?name=${getUser.displayName}&size=300`" max-height="250" @click="openFileSelect">
+                      <v-img :src="blob_url || getUser.photoURL || `https://ui-avatars.com/api/?name=${getUser.displayName}&size=300`"
+                        max-height="250" @click="openFileSelect">
                         <v-expand-transition>
-                          <div v-if="hover" class="d-flex transition-fast-in-fast-out teal darken-2 v-card--reveal display-5 white--text"
+                          <div v-if="hover" class=" transition-fast-in-fast-out teal darken-2 v-card--reveal display-5 white--text"
                             style="height: 100%;">
-                            <v-icon x-large class="text-xs-center">photo_camera</v-icon>
-                            <h3>Change profile photo</h3>
+                            <v-icon x-large class="pt-5 text-xs-center d-block">mdi-camera</v-icon>
+                            <h3 class="mt-0 text-xs-center d-block">Change profile photo</h3>
                           </div>
                         </v-expand-transition>
                       </v-img>
@@ -73,6 +88,11 @@
                     <v-text-field required small v-model="form.email" style="text-transform:capitalize"
                       color="secondary" browser-autocomplete="email" :placeholder="getUser.email" disabled
                       label="Your Email">
+                    </v-text-field>
+
+                    <v-text-field required small v-model="form.username" style="text-transform:capitalize"
+                      color="secondary" browser-autocomplete="username" :placeholder="getUser.username"
+                      label="Your Username" >
                     </v-text-field>
 
                     <v-text-field required small v-model="form.phone" style="text-transform:capitalize"
@@ -161,6 +181,7 @@ export default {
     form: {
       name:'',
       email:'',
+      username: '',
       phone:'',
       is_student: '',
       school:'',
@@ -177,7 +198,6 @@ export default {
     }
   }),
   computed: {
-    // Mix your getter(s) into computed with the object spread operator
     ...mapGetters([
       'getUser',
       'getUserInfo',
@@ -191,7 +211,7 @@ export default {
       return `Profile Settings | ${this.$appName}`
     },
     disabled_save(){
-      return !this.form.name.trim() || !this.form.phone.trim()
+      return !this.form.name.trim() || !this.form.phone.trim() || !this.form.username.trim()
     }
   },
   methods:{
@@ -235,7 +255,7 @@ export default {
         formData.append('idToken', idToken)
 
         try {
-          let response = await api().post( 'dashboard/updateUserProfilePhoto',
+          let response = await api2().post( 'dashboard/updateUserProfilePhoto',
             formData,{
               headers: {
                   'Content-Type': 'multipart/form-data'
@@ -276,7 +296,7 @@ export default {
           }
           this.upload_text = 'Update photo'
           this.uploading = false
-          $Nprogress.done()
+          this.$Nprogress.done()
         }
       })
     },
@@ -285,9 +305,10 @@ export default {
       this.loading = true
 
       firebase.auth().currentUser.getIdToken(true).then(async idToken=>{
-        api().post('dashboard/updateProfile', {
+        api().post('updateProfile', {
           name: this.form.name || this.getUser.displayName,
           phone: this.form.phone || this.getUser.phoneNumber || false,
+          username: this.form.username || this.getUserInfo.username,
           idToken: idToken
         }).then(async ()=> {
 
@@ -306,6 +327,10 @@ export default {
                   color: 'purple'
                 }
                 this.loading = false
+                
+                if(this.$route.name == 'profile_posts' || this.$route.params.username){
+                  this.$router.push('/users/' + this.form.username)
+                }
               }
     
             })
@@ -317,7 +342,7 @@ export default {
             color: 'error'
           }
           this.loading = false
-          $Nprogress.done()
+          this.$Nprogress.done()
         })
 
       })
@@ -378,11 +403,11 @@ export default {
     },
     async allSchools(){
       try {
-        let schls = await api().post('dashboard/getSchools')
+        let schls = await api2().post('dashboard/getSchools')
         this.$store.dispatch('setSchools', schls.data)
       } catch (error) {
         // console.log(error)
-        $Nprogress.done()
+        this.$Nprogress.done()
       }
     },
     async setUp(data){
@@ -391,6 +416,7 @@ export default {
         // console.log(this.getUser.photoURL)
         this.form.name = this.getUser.displayName
         this.form.phone = this.getUser.phoneNumber || ''
+        this.form.username = this.getUserInfo.username
 
         if(this.getUserInfo && !this.getUserInfo.was_once_a_student){
           this.form.is_student = this.getUserInfo.is_student
@@ -412,7 +438,8 @@ export default {
   }
 }
 
-import api from '@/services/api2'
+import api from '@/services/api'
+import api2 from '@/services/api2'
 import { mapGetters, mapState } from 'vuex'
 import {firebase, db, database} from '@/plugins/firebase'
 </script>

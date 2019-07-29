@@ -7,20 +7,20 @@
         v-if="read && $vuetify.breakpoint.smAndDown"
         @click="read = false">
         <v-icon>
-          chevron_left
+          mdi-chevron-left
         </v-icon>
       </v-btn>
       <v-toolbar-title>Inbox</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn icon @click="$eventBus.$emit('ToggleInboxDialog', false)">
-        <v-icon>close</v-icon>
+        <v-icon>mdi-close</v-icon>
       </v-btn>
     </v-toolbar>
     
 
     <v-navigation-drawer v-if="$vuetify.breakpoint.smAndDown" v-model="drawer" hide-overlay absolute left class="mt-5" width="150">
      <v-btn color="secondary lighten-2" depressed @click="$eventBus.$emit('Toggle_New_Broadcast', true)">
-       <v-icon class="mr-2">add</v-icon>
+       <v-icon class="mr-2">mdi-plus</v-icon>
        Compose</v-btn>
 
       <v-list dense class="pt-0">
@@ -40,7 +40,7 @@
         <v-flex sm1 shrink class="grey lighten-4" v-if="$vuetify.breakpoint.mdAndUp">
           
           <v-btn small color="ml-3 success lighten-2" icon @click="$eventBus.$emit('Toggle_New_Broadcast', true)">
-            <v-icon class="">add</v-icon>
+            <v-icon class="">mdi-plus</v-icon>
           </v-btn>
 
             <v-list dense class="ml-1 pt-0 grey lighten-4">
@@ -203,9 +203,9 @@ export default {
     },
     items(){
       return [
-        {icon: 'inbox', title: 'inbox', color: 'purple'},
-        {icon: 'send', title: 'sent', color: 'success'},
-        {icon: 'star', title: 'Stared', color: 'purple'},
+        {icon: 'mdi-inbox', title: 'inbox', color: 'purple'},
+        {icon: 'mdi-send', title: 'sent', color: 'success'},
+        {icon: 'mdi-star', title: 'Stared', color: 'purple'},
       ]
     },
     ...mapState([

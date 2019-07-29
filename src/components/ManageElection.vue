@@ -57,10 +57,11 @@
 								
 
 								<v-card-text class="pt-0">
-									<div class="title font-weight-light mb-2 secondary--text">{{$helpers.truncateText(currElection.title, 35)}} 
+									<div class="title font-weight-light mb-2 secondary--text">
 										<v-btn flat icon class="ml-4" @click.native="edit_dialog = !edit_dialog">
-											<v-icon color="orange">settings</v-icon>
+											<v-icon color="orange">mdi-settings</v-icon>
 										</v-btn>
+										{{$helpers.truncateText(currElection.title, 35)}} 
 										
 									</div>
 									<small>Created on {{currElection.dateCreated.toDate().toLocaleString()}}</small>
@@ -69,7 +70,7 @@
 									<v-list dense >
 										<v-list-tile>
 											<v-list-tile-action>
-												<v-icon color="teal">access_time</v-icon>
+												<v-icon color="teal">mdi-clock</v-icon>
 											</v-list-tile-action>
 											<v-list-tile-title class="ml-0">
 												<span class="mr-3">Start Date</span>
@@ -78,7 +79,7 @@
 										</v-list-tile>
 										<v-list-tile>
 											<v-list-tile-action>
-												<v-icon color="teal">timer</v-icon>
+												<v-icon color="teal">mdi-timer</v-icon>
 											</v-list-tile-action>
 											<v-list-tile-title class="ml-0">
 												<span class="mr-3">Duration</span>
@@ -88,7 +89,7 @@
 										
 										<v-list-tile>
 											<v-list-tile-action>
-												<v-icon color="teal">school</v-icon>
+												<v-icon color="teal">mdi-school</v-icon>
 											</v-list-tile-action>
 											<v-list-tile-title class="ml-0">
 												<span class="mr-3">School</span>
@@ -100,7 +101,7 @@
 
 										<v-list-tile v-if="currElection.level == 'Faculty'">
 											<v-list-tile-action>
-												<v-icon color="teal">business</v-icon>
+												<v-icon color="teal">mdi-domain</v-icon>
 											</v-list-tile-action>
 											<v-list-tile-title class="ml-0">
 												<span class="mr-3">Faculty</span>
@@ -110,7 +111,7 @@
 
 										<v-list-tile v-if="currElection.level == 'Department'">
 											<v-list-tile-action>
-												<v-icon color="teal">people</v-icon>
+												<v-icon color="teal">mdi-map-marker</v-icon>
 											</v-list-tile-action>
 											<v-list-tile-title class="ml-0">
 												<span class="mr-3">Department</span>
@@ -120,7 +121,7 @@
 
 										<v-list-tile>
 											<v-list-tile-action>
-												<v-icon color="teal">adjust</v-icon>
+												<v-icon color="teal">mdi-adjust</v-icon>
 											</v-list-tile-action>
 											<v-list-tile-title class="ml-0">
 												<span class="mr-3">Status</span>
@@ -143,7 +144,7 @@
 												size="80"
 												color="success"
 											>
-											{{no_of_voters}}
+											{{no_of_voters || 0}}
 											</v-progress-circular>
 											<span 
 												:class="{'d-block': $vuetify.breakpoint.smAndDown, 'mt-2': $vuetify.breakpoint.smAndDown}" 
@@ -155,7 +156,7 @@
 												:value="80" size="80"
 												color="purple lighten-2"
 											>
-											{{no_of_contestants}}
+											{{no_of_contestants || 0}}
 											</v-progress-circular>
 											<span 
 												:class="{'d-block': $vuetify.breakpoint.smAndDown, 'mt-2': $vuetify.breakpoint.smAndDown}" 
@@ -188,11 +189,12 @@
 								<v-tab-item value="tab-1">
 									<div style="max-height:250px;overflow-y:auto;" class="my-3 mr-1">
 										<v-expansion-panel>
+											<v-subheader v-if="filteredList.length == 0">No voters yet</v-subheader>
 											<v-expansion-panel-content v-for="(voter, index) in filteredList" :key="index">
 												<template slot="actions">
 													<v-tooltip top v-if="voterSuspended(voter)">
 														<v-icon color="error" slot="activator">
-															info
+															mdi-information-outline
 														</v-icon>
 														<span v-if="voterSuspended(voter)">Voter has been suspended</span>
 													</v-tooltip>
@@ -365,7 +367,7 @@
 								<v-spacer></v-spacer>
 								<v-text-field
 									v-model="search"
-									append-icon="search"
+									append-icon="mdi-magnify"
 									label="Search"
 									single-line
 									color="secondary"
@@ -389,7 +391,7 @@
 									<td class="justify-center">
 										<v-tooltip top>
 											<v-icon slot="activator" class="mt-3" color="error" small @click="culprit = props.item; suspend_dialog = true">
-												block
+												mdi-cancel
 											</v-icon>
 											<span>Suspend contestant</span>
 										</v-tooltip>
@@ -415,7 +417,7 @@
 											<v-tooltip top>
 												<v-icon slot="activator" color="secondary" 
 													@click="restore(contestant)">
-													cached
+													mdi-restore
 												</v-icon>
 												<span>Restore {{contestant.name | capitalize}}</span>
 											</v-tooltip>
@@ -433,7 +435,7 @@
 			<v-dialog v-model="edit_dialog" :persistent="saving_edit" hide-overlay max-width="500" scrollable>
 				<v-card flat>
 					<v-toolbar>
-						<v-icon class="mr-2" color="primary">settings</v-icon>
+						<v-icon class="mr-2" color="primary">mdi-settings</v-icon>
 						<span class="font-weight-bold">Edit Election</span>
 					</v-toolbar>
 					<v-card-text class="">
@@ -451,7 +453,7 @@
 
 									<v-text-field slot="activator" hide-details outline color="secondary" v-model="form.date"
 										label="Start Date" readonly>
-										<v-icon color="secondary" slot="prepend-inner">event</v-icon>
+										<v-icon color="secondary" slot="prepend-inner">mdi-calendar</v-icon>
 									</v-text-field>
 									<v-date-picker v-model="form.date" scrollable :allowed-dates="allowedDates" header-color="secondary">
 										<v-spacer></v-spacer>
@@ -467,7 +469,7 @@
 									persistent lazy full-width width="290px" >
 
 									<v-text-field  slot="activator" hide-details outline v-model="form.time"  label="Start Time" color="secondary" readonly >
-										<v-icon color="secondary" slot="prepend-inner">access_time</v-icon>
+										<v-icon color="secondary" slot="prepend-inner">mdi-clock</v-icon>
 									</v-text-field>
 									<v-time-picker v-if="modal2" format="ampm" v-model="form.time" header-color='secondary'>
 										<v-spacer></v-spacer>
@@ -484,7 +486,7 @@
 						</v-slider>
 						
 						<v-btn depressed @click="dialog = true" small color="secondary" class="ml-0 text-capitalize">
-							<v-icon>add</v-icon> Add role
+							<v-icon>mdi-plus</v-icon> Add role
 						</v-btn>
 
 						<v-dialog v-model="dialog"  max-width="500px">
@@ -569,7 +571,7 @@
           <v-toolbar-title>{{flagged_user.name}}</v-toolbar-title>
           <v-spacer></v-spacer>
           <v-btn icon @click="flagged_user_dialog = false">
-            <v-icon>close</v-icon>
+            <v-icon>mdi-close</v-icon>
           </v-btn>
         </v-toolbar>
         <v-card-text>
@@ -910,12 +912,13 @@ export default {
 				this.currElection = this.election ? this.election : this.curRoom 
 
 				// console.log(this.currElection, this.election, this.curRoom)
-				if(this.voters){
+				if(this.election && this.voters){
 					this.regVoters = this.voters
 					this.contestants = this.conts
 					this.setTableData(this.conts)
 					this.setChart()
 					this.ready = true
+					this.getAdmins()
 				}
 				else{
 
@@ -944,6 +947,7 @@ export default {
 					}).then(conts=>{
 						this.setTableData(conts)
 						this.setChart()
+						this.getAdmins()
 						this.ready = true
 					}).catch(err=>{
 						// console.log(err)
@@ -1211,7 +1215,7 @@ export default {
       await this.setUp()
 			await this.getActivities()
 			await this.recentRegActivities()
-			this.getAdmins()
+			// this.getAdmins()
 			this.prefillForm()
       
     } catch (error) {

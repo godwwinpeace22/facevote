@@ -9,7 +9,7 @@
 
     <v-toolbar dense flat>
       <v-btn icon to="/forum">
-        <v-icon>chevron_left</v-icon>
+        <v-icon>mdi-chevron-left</v-icon>
       </v-btn>
     </v-toolbar>
     <v-layout>
@@ -25,7 +25,7 @@
             <span id="online_badge" v-if="user.online"></span>
           </v-card-title>
 
-          <v-btn class="mt-0" v-if="user.email == currUser.email" depressed>
+          <v-btn class="mt-0" v-if="user.uid == currUser.uid" depressed>
             {{user.followers}} Followers
           </v-btn>
 
@@ -39,7 +39,7 @@
             <!-- <v-btn flat outline small color="success" class="text-capitalize" v-else @click="openPrivateChatWindow">Message</v-btn> -->
             
             <v-btn flat outline small color="success" class="text-capitalize" 
-              :to="`/users/${user.email}`" >
+              :to="`/users/${user.username}`" >
               View Profile
             </v-btn>
             
@@ -80,7 +80,7 @@ export default {
     disabled: false,
     members2:'', //just to avoid directly mutating the members prop
   }),
-  props:['email','members', 'thisGroup'],
+  props:['username','members', 'thisGroup'],
   computed:{
     ...mapGetters([
       'getUser',
@@ -91,13 +91,13 @@ export default {
       'curRoom'
     ]),
     isAccOwner(){
-      return this.getUser.email == this.email ? true : false
+      return this.getUser.username == this.username ? true : false
     },
     
   },
   methods:{
-    extractUser(email){ // lets the get this user from the list of regVoters
-      let found = this.members2.find(item=> item.email == this.email)
+    extractUser(username){ // lets the get this user from the list of regVoters
+      let found = this.members2.find(item=> item.username == this.username)
       if(found){
         this.user = found;
         this.show_profile = true
@@ -231,7 +231,7 @@ export default {
   watch: {
     '$route' (to, from) {
       // react to route changes...
-      this.members ? this.extractUser(to.params.email) : ''
+      this.members ? this.extractUser(to.params.username) : ''
     }
   },
   components:{
@@ -239,7 +239,7 @@ export default {
   },
   async mounted(){
     this.members2 = this.members // just to avoid directly mutating the regVoters prop
-    //console.log(this.email)
+    //console.log(this.username)
     
     this.extractUser()
     

@@ -45,7 +45,7 @@
                     <v-btn color="success" @click="getElection" 
                       :disabled="!electionId" :loading="loading">
                       Submit
-                      <v-icon small>chevron_right</v-icon>
+                      <v-icon small>mdi-chevron-right</v-icon>
                     </v-btn>
                   </v-card-actions>
                 </v-card>
@@ -61,7 +61,7 @@
                 </v-card>
 
                 <v-btn color="grey lighten-1" depressed @click="e5 = 1" :disabled="loading">
-                  <v-icon small>chevron_left</v-icon>
+                  <v-icon small>mdi-chevron-left</v-icon>
                   Previous
                 </v-btn>
                 <v-btn color="secondary" @click="enroll" 

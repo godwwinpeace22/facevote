@@ -4,13 +4,20 @@
     <v-toolbar-title v-show="$vuetify.breakpoint.width > 344">
       <slot name='title'>{{$appName}}</slot>
     </v-toolbar-title>
+    <slot name="extension" slot="extension"></slot>
     <v-spacer></v-spacer>
     
     <slot name="nav_item"></slot>
 
+    <v-btn color="success" 
+      v-if="$vuetify.breakpoint.smAndUp && !isSuperUser" 
+      @click="$eventBus.$emit('Open_Upgrade_Dialog')">
+      Upgrade
+    </v-btn>
+
     <v-btn outline icon :to="curRoom ? `/elections/vote` : ''" 
       dark exact>
-      <v-icon color="">how_to_vote</v-icon>
+      <v-icon color="">mdi-vote-outline</v-icon>
     </v-btn>
 
     <v-divider inset vertical class="mr-2"></v-divider>
@@ -23,25 +30,25 @@
             <img v-else-if="getUser.photoURL"  :src="getUser.photoURL" alt="avatar">
             <span v-else class="white--text headline text-capitalize">{{getUser.displayName.charAt(0)}}</span>
           </v-avatar>
-          <v-icon dark>arrow_drop_down</v-icon>
+          <v-icon dark>mdi-menu-down</v-icon>
         </template>
-        <v-icon v-else>more_vert</v-icon>
+        <v-icon v-else>mdi-dots-vertical</v-icon>
       </v-toolbar-title>
       
       <v-list dense>
-        <v-list-tile :to="`/users/${getUser.email}`">
-          <v-icon color="success">person</v-icon>
+        <v-list-tile :to="`/users/${getUserInfo.username}`">
+          <v-icon color="success">mdi-account</v-icon>
           <v-list-tile-title style="margin-left:5px;">My Profile</v-list-tile-title>
         </v-list-tile>
         <v-list-tile @click="settings_dialog = !settings_dialog" >
-          <v-icon color="success">settings</v-icon>
+          <v-icon color="cyan">mdi-settings</v-icon>
           <v-list-tile-title style="margin-left:5px;">Settings</v-list-tile-title>
         </v-list-tile>
 
         <v-divider></v-divider>
 
         <v-list-tile @click="logout">
-            <v-icon color="error">exit_to_app</v-icon>
+            <v-icon color="error">mdi-logout</v-icon>
           <v-list-tile-title style="margin-left:5px;">Logout</v-list-tile-title>
         </v-list-tile>
       </v-list>

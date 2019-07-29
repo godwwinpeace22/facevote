@@ -7,8 +7,8 @@ import Vue from 'vue'
 Vue.use(Router)
 
 const requireAuth = async (to, from, next) => {
-  firebase.auth().onAuthStateChanged((user)=>{
-    if(user){
+  let unsubscribe = firebase.auth().onAuthStateChanged((user)=>{
+    if(user && user.emailVerified){
       $helpers.userDetails(user).then(() =>{
         next() 
       }).catch(() => {})
@@ -16,9 +16,10 @@ const requireAuth = async (to, from, next) => {
     }
     else{
       // firebase.auth().signOut()
-      next('/login')
+      user && !user.emailVerified ? next('/login?verify_email=true') : next('/login')
     }
-  });
+    unsubscribe()
+  }, );
   
 }
 
@@ -46,7 +47,7 @@ const router = new Router({
         {
           path:'',
           name:'feed',
-          component: () => import('@/components/Feed'),
+          component: () => import('@/components/feed/Feed'),
           // beforeEnter: requireAuth,
         },
         {
@@ -56,9 +57,36 @@ const router = new Router({
           // beforeEnter:requireAuth,
         },
         {
-          path:'/users/:email',
-          component: () => import('@/views/Users'),
-          props:true,
+          path:'/users/:username',
+          // name: 'user_profile',
+          component: () => import('@/components/users/Users__Profile'),
+          props: true,
+          children: [
+            {
+              path: '',
+              name: 'profile_posts',
+              component: () => import('@/components/users/Users__Posts'),
+              props: true
+            },
+            // {
+            //   path: 'stats',
+            //   name: 'stats',
+            //   component: () => import('@/components/users/Users__Stats'),
+            //   props: true
+            // },
+            // {
+            //   path: 'events',
+            //   name: 'events',
+            //   component: () => import('@/components/users/Users__Events'),
+            //   props: true
+            // },
+            // {
+            //   path: 'followers',
+            //   name: 'followers',
+            //   component: () => import('@/components/users/Users__Followers'),
+            //   props: true
+            // },
+          ]
           // beforeEnter: requireAuth,
         },
         
@@ -78,7 +106,7 @@ const router = new Router({
               component: () => import('@/components/ForumUsers')
             },
             {
-              path: 'profile/:email',
+              path: 'profile/:username',
               name: 'profile',
               component: () => import('@/components/ForumUsersProfile'),
               props: true
@@ -105,6 +133,12 @@ const router = new Router({
           // beforeEnter: requireAuth,
           props: true,
         },
+        {
+          path: '/events/:eventId',
+          component: () => import('@/views/Events'),
+          props: true
+        },
+
         {
           path:'/notFound',
           name:'notfound',

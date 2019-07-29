@@ -118,13 +118,13 @@
               </div>
               <template v-if="!is_verified">
                 <v-btn color="error" to="/verify">
-                  Verify your Account <v-icon>chevron_right</v-icon>
+                  Verify your Account <v-icon>mdi-chevron-right</v-icon>
                 </v-btn>
                 <small class="d-block ml-2">Verify your account before you can create elections</small>
               </template>
 
               <v-btn color="success" @click="e6 = 2" v-if="!disabled_step_one">
-                Next step <v-icon>chevron_right</v-icon>
+                Next step <v-icon>mdi-chevron-right</v-icon>
               </v-btn>
             </v-stepper-content>
 
@@ -144,7 +144,7 @@
                       <v-flex xs12 sm4>
                         <div>
                           <v-tooltip right max-width="300" dark class="d-inline-block mt-3">
-                            <v-icon slot="activator" small>help</v-icon>
+                            <v-icon slot="activator" small>mdi-help-circle-outline</v-icon>
                             <span>When the election should start</span>
                           </v-tooltip>
                           <v-subheader class="font-weight-bold d-inline-block">Start time</v-subheader>
@@ -156,7 +156,7 @@
 
                           <v-text-field :disabled="!form.timed" slot="activator" color="secondary" v-model="form.date"
                             label="Date" readonly>
-                            <v-icon color="secondary" slot="prepend-inner">event</v-icon>
+                            <v-icon color="secondary" slot="prepend-inner">mdi-calendar</v-icon>
                           </v-text-field>
                           <v-date-picker v-model="form.date" scrollable :allowed-dates="allowedDates" header-color="secondary">
                             <v-spacer></v-spacer>
@@ -172,7 +172,7 @@
                           persistent lazy full-width width="290px" >
 
                           <v-text-field  slot="activator" v-model="form.time"  label="Time" color="secondary" readonly >
-                            <v-icon color="secondary" slot="prepend-inner">access_time</v-icon>
+                            <v-icon color="secondary" slot="prepend-inner">mdi-clock</v-icon>
                           </v-text-field>
                           <v-time-picker v-if="modal2" format="ampm" v-model="form.time" header-color='secondary'>
                             <v-spacer></v-spacer>
@@ -187,7 +187,7 @@
                     <v-layout row v-show="form.timed">
                       <v-flex sm4>
                         <v-tooltip right max-width="300" dark class="d-inline-block mt-3">
-                          <v-icon slot="activator" small>help</v-icon>
+                          <v-icon slot="activator" small>mdi-help-circle-outline</v-icon>
                           <span>How long the election should run</span>
                         </v-tooltip>
                         <v-subheader class='font-weight-bold d-inline-block'>Duration</v-subheader>
@@ -203,11 +203,11 @@
               </v-layout>
 
               <v-btn flat @click="e6 = 1" color="grey">
-                <v-icon small>chevron_left</v-icon>
+                <v-icon small>mdi-chevron-left</v-icon>
                 Previous
               </v-btn>
               <v-btn color="success" @click="e6 = 3" v-if="!disabled_step_two">
-                Next step <v-icon>chevron_right</v-icon>
+                Next step <v-icon>mdi-chevron-right</v-icon>
               </v-btn>
 
             </v-stepper-content>
@@ -216,7 +216,7 @@
               <v-card color="" class=" ma-0 mb-5 mx-1" style="min-height:200px;" light>
                 <v-toolbar color="cyan" light flat height="50px">
                   <v-btn fab  small color="white" bottom left absolute @click.native.stop="dialog = !dialog">
-                    <v-icon>add</v-icon>
+                    <v-icon>mdi-plus</v-icon>
                   </v-btn>
                   <v-toolbar-title class="white--text">Select Roles</v-toolbar-title>
                 </v-toolbar>
@@ -265,11 +265,11 @@
               </v-card>
               <v-card-actions>
                 <v-btn flat @click="e6 = 2" color="grey">
-                  <v-icon small>chevron_left</v-icon>
+                  <v-icon small>mdi-chevron-left</v-icon>
                   Previous
                 </v-btn>
                 <v-btn color="success" @click="e6 = 4" v-if="!disabled_step_three">
-                  Next step <v-icon>chevron_right</v-icon>
+                  Next step <v-icon>mdi-chevron-right</v-icon>
                 </v-btn>
               </v-card-actions>
               
@@ -296,7 +296,7 @@
                           :amount="no_of_voters * price_per_voter * 100"
                           :email="getUser.email"
                           :metadata="metadata"
-                          :paystackkey="paystack_key"
+                          :paystackkey="$paystackKey"
                           :reference="reference"
                           :callback="callback"
                           :close="close"
@@ -311,7 +311,7 @@
               </v-card>
 
               <v-btn flat @click="e6 = 3" color="grey">
-                <v-icon small>chevron_left</v-icon>
+                <v-icon small>mdi-chevron-left</v-icon>
                 Previous
               </v-btn>
 
@@ -385,7 +385,6 @@ export default {
     dialog: false,
     p_text: 'Verifying...',
     creating_election_dialog: false,
-    paystack_key: 'pk_test_fefaa0524871e5ff35d4ec861974c59197cb42e7',
     role_input: '',
     role_input_desc: '',
     modal: false,
@@ -539,9 +538,9 @@ export default {
       }else{
         this.dialog = false;
         this.form.roles.push({
-          title:this.role_input,
-          value:this.role_input,
-          description:this.role_input_desc
+          title: this.$sanitize(this.role_input),
+          value: this.$sanitize(this.role_input),
+          description: this.$sanitize(this.role_input_desc)
         })
         this.role_input = '' //empty it
         this.role_input_desc = ''
@@ -554,7 +553,10 @@ export default {
       this.p_text = 'Creating Election...'
 
       firebase.auth().currentUser.getIdToken().then((token)=>{
-        this.form.fullStartDate = new Date(this.form.date + ' ' + this.form.time)
+        // set the full start date in utc
+        this.form.fullStartDate = (new Date(this.form.date + ' ' + this.form.time)).toISOString()
+        this.form.title = this.$sanitize(this.form.title)
+        
         api().post('create_election',{
           form: this.form,
           userInfo: this.getUserInfo,
@@ -590,7 +592,7 @@ export default {
           this.e6 = 5
         })
         .catch(err => {
-          console.log(err)
+          // console.log(err)
           this.creating_election_dialog = false
           this.plan_dialog = false
           $Nprogress.done()

@@ -14,9 +14,9 @@
     <!-- NO DATA -->
     <v-subheader class="text-xs-center" v-if="!getChatMessages || getChatMessages.length == 0">No recent messages yet. Be the first to write a message</v-subheader>
     
-    <div flat pa-0 id="chat_space" v-on:scroll="scroll">
+    <div flat pa-0 id="chat_space" >
       
-      <div class="chat_space_content" 
+      <div class="chat_space_content" id="chat_space_content"
         v-if="getChatMessages.length > 0 && $vuetify.breakpoint.mdAndUp"
         style="background: white;" :style="styleForChatSpaceContent">
 
@@ -58,10 +58,12 @@
                 </span>
               </div>
               
-              <div style="width:100%;">
+              <div style="width:100%;" >
+
+                <div v-html="msg.body" v-linkified:options="linkify_options"></div>
 
                 <!-- the spice of life -->
-                <template v-for="item in msg.body.split(' ')">
+                <!-- <template v-for="item in msg.body.split(' ')">
                   
                   <router-link event="" @click.native.prevent="goto(item,msg.elecRef)" 
                     v-if="item.charAt(0) == '@'" 
@@ -73,7 +75,7 @@
 
                   <template v-else>{{item}} </template>
 
-                </template>
+                </template> -->
                 
                 <!-- ACTIONS FOR ADMINS OR MODERATORS -->
                 <!-- <div id="moderator_actions" v-if="isAdmin">
@@ -139,8 +141,9 @@
           <div class="me" v-if="msg.onr.uid == getUser.uid" :key="i + 'me'">
             <div class="me_inner elevation-1" :class="[msg.imgs ? 'msg_inner_imgs': 'msg_inner']">
               <div class="body">
+                <div v-html="$sanitize(msg.body)" v-linkified:options="linkify_options"></div>
                 <!-- the spice of life -->
-                <template v-for="item in msg.body.split(' ')">
+                <!-- <template v-for="item in msg.body.split(' ')">
                   
                   <router-link event="" @click.native.prevent="goto(item,msg.elecRef)" 
                     v-if="item.charAt(0) == '@'" 
@@ -152,7 +155,7 @@
 
                   <template v-else>{{item}} </template>
 
-                </template>
+                </template> -->
 
                 <!-- UPLOADED IMAGES -->
                 <v-container grid-list-xs v-if="msg.imgs">
@@ -192,8 +195,10 @@
                 {{msg.onr.name}}
               </div>
               <div class="body">
+
+                <div v-html="$sanitize(msg.body)" v-linkified:options="linkify_options"></div>
                 <!-- the spice of life -->
-                <template v-for="item in msg.body.split(' ')">
+                <!-- <template v-for="item in msg.body.split(' ')">
                   
                   <router-link @click.native.prevent="goto(item,msg.elecRef)" 
                     v-if="item.charAt(0) == '@'" 
@@ -205,7 +210,7 @@
 
                   <template v-else>{{item}} </template>
 
-                </template>
+                </template> -->
 
                 <!-- UPLOADED IMAGES -->
                 <v-container grid-list-xs v-if="msg.imgs">
@@ -263,10 +268,11 @@ export default {
   }),
   props:['members','room','thisGroup', 'loading_messages'],
   watch:{
-    room: function(e){
-      //console.log(e)
-      // this.loading_messages = true // it will set if off when its done
-      // this.chatUpdate()
+    $route: function(e){
+      
+      if(e.name == 'profile'){
+        this.$eventBus.$emit('Toggle_drawerRight', true)
+      }
     }
   },
   computed: {
@@ -292,7 +298,50 @@ export default {
       else{
         return {height: 'calc(100% - 56px)'}
       }
-    }
+    },
+    linkify_options(){
+      return {
+        className: 'linkified',
+        events: {
+          click: function (e) {
+            
+          },
+          mouseover: function (e) {
+           console.log(e)
+           return e
+          }
+        },
+        ignoreTags: [
+          'script',
+          'style'
+        ],
+        format: (value, type) => {
+          if (type === 'url' && value.length > 50) {
+            value = value.slice(0, 50) + '…';
+          }
+          if(type === 'mention'){
+            let found = this.members.find(member => member.username == value.substring(1))
+            value = found ? found.name : value
+          }
+          return value;
+        },
+        formatHref: {
+          mention: (href) => {
+            if(this.members.find(member => member.username == href.substring(1))){
+
+              return location.origin + '/#/forum/profile/'+ href.substring(1);
+            }
+            else {
+              return location.origin + '/#/forum/#'+ href.substring(1);
+            }
+          },
+          hashtag: (href) => {
+            return location.origin + '/#/forum/#' + href.substring(1);
+          }
+        },
+        nl2br: true,
+      }
+    },
   },
 
   methods: {
@@ -304,16 +353,15 @@ export default {
     scroll(e){
       let scrolled_to_bottom = e.target.scrollTop === (e.target.scrollHeight - e.target.offsetHeight)
       let scrolled_to_top = e.target.scrollTop === 0
-      // console.log(e.target.offsetHeight/6)
+      // console.log(e.target)
       if(scrolled_to_bottom){
         // console.log('scrolled to bottom')
       }
       if(scrolled_to_top){
         // console.log('scrolled to top')
-        // this.moreMessages(e)
-        
-        
       }
+
+      
     },
     findAMember(memberEmail){
       let member = this.members.find(member=> member.email == memberEmail)
@@ -456,11 +504,6 @@ export default {
         // console.log(err)
       }
     },
-    scrollChat(){
-       let doc = document.getElementById('chat_space')
-      doc ? doc.scrollTop = doc.scrollHeight - doc.clientHeight : ''
-      //console.log(doc.scrollTop)
-    },
     moreMessages(e){
       if(this.offset != undefined){
         this.loading_more_msgs = true
@@ -485,25 +528,6 @@ export default {
     },
   },
   created() {
-    setTimeout(() => {
-      this.scrollChat()
-    }, 4000);
-    
-    // firebase.auth().onAuthStateChanged((user)=>{
-    //   if (user) {
-    //     // User is signed in.
-    //     this.chatUpdate()
-        
-    //   } else {
-    //     // console.log('No user is signed in.')
-    //   }
-    // });
-    
-
-    this.$eventBus.$on('Scroll_Chat', data=>{
-      //this.scrollChat()
-      // console.log(data)
-    })
     
   },
   destroyed(){
@@ -517,7 +541,11 @@ export default {
 import {mapGetters, mapState} from 'vuex'
   import LoadingBar from '@/spinners/LoadingBar'
   import {firebase, db, database} from '@/plugins/firebase'
-  
+  import * as linkify from 'linkifyjs';;
+  import hashtag from 'linkifyjs/plugins/hashtag';
+  import mention from 'linkifyjs/plugins/mention';
+  hashtag(linkify)
+  mention(linkify)
 </script>
 <style lang="scss" scoped>
 

@@ -21,19 +21,33 @@
               <!--v-toolbar dark dense flat style="background:inherit;text-align:center;">
                 <v-toolbar-item class="text-xs-center">Login</v-toolbar-item>
               </v-toolbar-->
+              <v-alert
+                transition="fade-transition"
+                :type="confirm_text.type"
+                :value="confirm_text.show || $route.query.verify_email"
+              >
+                {{confirm_text.text}}
+              </v-alert>
+
+              <v-btn color="orange" flat block v-if="confirm_text.show || $route.query.verify_email"
+                @click="sendVerificationLInk(true)" 
+                :loading="sending_link"
+                class="text-capitalize">
+                Resend verification link
+              </v-btn>
               <v-card-text>
 
                 <v-form v-model="valid" ref="form">
                   <v-text-field label="Email" color="teal" outline class="mb-2" 
                     v-model="form.email" :rules="nameRules" validate-on-blur
                     required>
-                     <v-icon slot="prepend-inner" color="teal">mail</v-icon>
+                     <v-icon slot="prepend-inner" color="teal">mdi-email</v-icon>
                   </v-text-field>
                   <v-text-field id="text-field" color="teal" 
                     outline  v-model="form.password" type="password" :rules="passwordRules"
                     label="Password" validate-on-blur
                     required>
-                     <v-icon slot="prepend-inner" color="teal">lock</v-icon>
+                     <v-icon slot="prepend-inner" color="teal">mdi-lock</v-icon>
                   </v-text-field>
                 </v-form>
               </v-card-text>
@@ -62,20 +76,23 @@
 <script>
 export default {
   data:()=>({
-    loading:false,
-    sending:false,
-    can_resend_verification: false,
-    snackbar:{},
-    show_spinner:false,
-    form:{
+    loading: false,
+    sending_link: false,
+    confirm_text: {
+      type: 'info',
+      text: 'Please verify your email address'
+    },
+    snackbar: {},
+    show_spinner: false,
+    form: {
       email: '',
-      password:'',
-      password2:'',
+      password: '',
+      password2: '',
     },
     select: null,
     show3: false,
     show4: false,
-    valid:true,
+    valid: true,
     checkbox: false,
     nameRules: [
       v => !!v || 'Please enter your email',
@@ -95,21 +112,20 @@ export default {
   },
   methods:{
     sendVerificationLInk(){
-      this.sending = true
+      this.sending_link = true
       return new Promise((resolve, reject)=>{
         if(firebase.auth().currentUser){
 
           firebase.auth().currentUser.sendEmailVerification().then(done=>{
-            resolve(done)
             
-            this.disabled = true;
-            this.sending = false
+            this.sending_link = false
   
-            this.snackbar = {
+            this.confirm_text = {
               show: true,
-              message: 'Email verification link resent',
-              color: 'purple'
+              text: 'Verification link resent',
+              type: 'success'
             }
+            resolve(done)
           }).catch(err => reject(err))
         }
         else{
@@ -125,20 +141,30 @@ export default {
           firebase.auth().signInWithEmailAndPassword(this.form.email, this.form.password)
           .then((result)=>{
             // console.log(result.user)
-            
+            this.loading = false
+
             firebase.auth().onAuthStateChanged((user)=>{
-              if (user) {
+              if (user && user.emailVerified) {
 
                 firebase.auth().currentUser.getIdTokenResult()
                 .then((idTokenResult) => {
                   
                   this.$store.dispatch('setUser', user)
                   // this.$store.dispatch('setUserInfo', idTokenResult.claims)
-                  this.$router.push('/home')
+                  let isFirstTime = this.$route.query.new
+                  let link = isFirstTime ? '/home?new=true' : '/home'
+                  
+                  this.$router.push(link)
                 })
                 
                 
               } else {
+                this.confirm_text = {
+                  show: true,
+                  text: 'Please verify your email address',
+                  type: 'info'
+                }
+                // console.log(user.emailVerified)
                 // No user is signed in.
               }
             });

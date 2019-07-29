@@ -7,8 +7,8 @@
             <v-toolbar class="white" flat card dense>
               <v-subheader>Who Viewed Your Profile</v-subheader>
               <v-spacer></v-spacer>
-              <v-icon color="#FFC107">bookmark</v-icon>
-              <span>Premium</span>
+              <v-icon color="#FFC107" class="pr-2">mdi-flash-circle</v-icon>
+              <span class="font-weight-bold">Premium</span>
             </v-toolbar>
 
             <v-container grid-list-md>

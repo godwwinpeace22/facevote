@@ -7,7 +7,7 @@
         <v-card>
           <v-toolbar dark color="teal" dense flat>
             <v-btn icon @click.native="$eventBus.$emit('bdialog')" dark class="hidden-sm-and-up">
-              <v-icon>chevron_left</v-icon>
+              <v-icon>mdi-chevron-left</v-icon>
             </v-btn>
             <v-toolbar-title>New Broadcast Message</v-toolbar-title>
             <v-spacer></v-spacer>
@@ -18,13 +18,14 @@
 
           <v-card-text>
             <v-textarea placeholder="Type your message" color="secondary" 
-              outline label="Broadcast message" v-model="message">
+              outline label="Broadcast message" v-model="message" hide-details>
             </v-textarea>
+            <small>Audience: {{curRoom.title}}</small>
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn color="success" depressed :loading="loading" :disabled="disabled" @click="newBroadcast">
-              Send <v-icon class="ml-2">send</v-icon>
+              Send <v-icon class="ml-2">mdi-send</v-icon>
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -79,7 +80,7 @@ export default {
           is_student
         },
 
-        body: this.message.trim(),
+        body: this.$sanitize(this.message.trim()),
         type: 'broadcast', // can be 'default' or 'broadcast'
         tstamp: firebase.firestore.FieldValue.serverTimestamp(),
         by: this.getUserInfo.uid,
