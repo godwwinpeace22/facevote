@@ -23,7 +23,7 @@ const requireAuth = async (to, from, next) => {
         next('/login?verify_email=true')
       }
       else {
-        console.log(to, from)
+        // console.log(to, from)
         next(`/login?returnTo=${to.fullPath}`)
       }
     }
@@ -206,7 +206,8 @@ router.beforeResolve((to, from, next) => {
 router.beforeEach((to, from, next) => {
 
   if($store.state.session_expired){
-    console.log({to, from})
+    // console.log({to, from})
+    // console.log($store.state.session_expired)
     firebase.auth().signOut().then(() => location.reload())
   }
   else if(to.path == '/'){

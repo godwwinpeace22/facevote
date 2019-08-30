@@ -296,7 +296,7 @@ export default {
           color: 'success'
         })
       }).catch(err => {
-        console.log(err)
+        // console.log(err)
         this.loading = false
         this.$eventBus.$emit('Snackbar', {
           show: true,

@@ -397,7 +397,7 @@ export default {
           message: 'Sorry, something went wrong, try again.'
         })
         // eslint-disable-next-line
-        console.log(error)
+        // console.log(error)
       }
       
     },

@@ -90,7 +90,7 @@ export default {
       try{
         if(this.$refs.form.validate()){
           this.loading = true
-          console.log(this.$route.query.token)
+          // console.log(this.$route.query.token)
           let res = await api().post('users/reset', {
             ...this.form,
             reset_password_token:this.$route.query.token

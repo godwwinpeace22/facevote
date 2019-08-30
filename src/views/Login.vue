@@ -171,7 +171,7 @@ export default {
                   // this.$store.dispatch('setUserInfo', idTokenResult.claims)
                   let isFirstTime = this.$route.query.new
                   let returnTo = this.$route.query.returnTo
-                  console.log(this.$route.query)
+                  // console.log(this.$route.query)
                   let link = isFirstTime ? '/home?new=true' : returnTo ? returnTo : '/home'
                   
                   this.$router.push(link)

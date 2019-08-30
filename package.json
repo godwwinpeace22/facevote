@@ -12,6 +12,7 @@
     "babel-polyfill": "^6.26.0",
     "chart.js": "^2.8.0",
     "es6-promise": "^4.2.6",
+    "eslint": "^5.16.0",
     "firebase": "^5.11.1",
     "logrocket": "^0.6.20",
     "logrocket-vuex": "0.0.3",

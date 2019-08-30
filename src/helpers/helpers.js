@@ -78,13 +78,13 @@ export default {
             return await snapshot.ref.getDownloadURL()
 
           }).catch((error) => {
-            console.log(error)
+            // console.log(error)
           });
         }
 
       } catch (error) {
         reject(error)
-        console.log(error)
+        // console.log(error)
       }
     })
   },
@@ -161,7 +161,7 @@ export default {
       return uploaded
     } catch (error) {
       // eslint-disable-next-line
-      console.log(error.response.data)
+      // console.log(error.response.data)
       // alert('Image upload failed')
       Nprogress.done()
       throw new Error(error || error.response.data.message)

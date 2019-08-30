@@ -71,7 +71,7 @@ export default {
         }
       })
       .catch(err => {
-        console.log(err)
+        // console.log(err)
         // organizer.followers += 1
         // this.disabled.splice(this.disabled.indexOf(organizer.uid),1)
         this.disabled_follow  = false

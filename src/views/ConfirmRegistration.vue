@@ -17,7 +17,7 @@ export default {
   async mounted(){
     try {
       let res = await api().post(`/users/confirmUser/${this.$route.params.confirmationHash}`)
-      console.log(res)
+      // console.log(res)
       this.message = 'Account activation successfull. You can now login'
       this.$store.dispatch('setUser', {user:res.data.user,token:res.data.token})
       //this.$store.dispatch('setLoggedInUser', res.data.user)
@@ -25,7 +25,7 @@ export default {
     } catch (error) {
       //alert(error)
       this.message = 'Invalid confirmation link'
-      console.log(error)
+      // console.log(error)
     }
   }
 }

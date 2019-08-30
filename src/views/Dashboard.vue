@@ -228,6 +228,7 @@
                   </v-list-tile>
                 
                 </v-list>
+                <footr/>
               </v-navigation-drawer>
               
               <!-- New Interactive Session -->
@@ -547,7 +548,8 @@ export default {
     Gallery,
     NewBroadcast,
     ManageElection,
-    NewEvent
+    NewEvent,
+    footr: Footer
   },
 
   watch: {
@@ -876,7 +878,7 @@ export default {
             // console.log(error)
           })
         } catch (error) {
-          console.log(error)
+          // console.log(error)
         }
         
       }
@@ -912,7 +914,7 @@ export default {
         }
        
       } catch (error) {
-        console.log(error)
+        // console.log(error)
       }
     },
     updateApp(){
@@ -1008,7 +1010,7 @@ export default {
           // let now = new Date().getTime()
           // let trial_expired = now > user.trial_expiry_date
           
-          console.log(user)
+          // console.log(user)
           if(isSuperUser){
             
             this.$store.dispatch('subscriberState', isSuperUser)
@@ -1034,18 +1036,18 @@ export default {
 
           // let usr = idTokenResult.claims
           // console.log({user})
-          // this.$LogRocket.identify(user.user_id, {
-          //   name: user.name,
-          //   email: user.email,
-          //   isSuperUser: user.superuser,
-          //   dept: user.dept
-          // })
+          this.$LogRocket.identify(user.user_id, {
+            name: user.name,
+            email: user.email,
+            isSuperUser: user.superuser,
+            dept: user.dept
+          })
 
           // console.log(user)
           // show chat widget only on large screens
           if(this.$vuetify.breakpoint.mdAndUp){
 
-            // this.initChatWidget(user)
+            this.initChatWidget(user)
           }
 
           window.fcWidget ? window.fcWidget.on("widget:closed", (resp)=>{
@@ -1058,7 +1060,7 @@ export default {
 
         })
         .catch((error) => {
-          console.log(error);
+          // console.log(error);
         });
       }
       else {
@@ -1079,6 +1081,10 @@ export default {
   },
   async created(){
     
+    if(this.$store.state.session_expired){
+      let to = this.$route.fullPath
+      firebase.auth().signOut().then(() => this.$router.push(`/login?returnTo=${to}`))
+    }
 
   },
   beforeDestroy(){
@@ -1098,6 +1104,7 @@ import { mapGetters, mapState } from 'vuex'
   import NewBroadcast from '@/components/dialogs/NewBroadcast'
   import ManageElection from '@/components/elections/ManageElection'
   import NewEvent from '@/components/events/NewEvent'
+  import Footer from '@/components/Footer'
   import {firebase, db, database} from '@/plugins/firebase'
 </script>
 

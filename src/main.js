@@ -19,9 +19,9 @@ import LoadingBar from '@/spinners/LoadingBar'
 import vuelidate from 'vuelidate'
 // import VueChatScroll from 'vue-chat-scroll'
 
-// import LogRocket from 'logrocket';
+import LogRocket from 'logrocket';
 
-// LogRocket.init('8zkged/voteryte');
+LogRocket.init('8zkged/voteryte');
 
 const plugin = {
   install () {
@@ -42,8 +42,8 @@ Vue.mixin({
 Vue.prototype.$Nprogress = Nprogress
 Vue.prototype.$appName = 'Voteryte'
 Vue.prototype.$paystackKey = 'pk_test_cd14c065dfe123cd983362a4ed795fe1128ec4e2'
-// Vue.prototype.$LogRocket = LogRocket
-// global.$LogRocket = LogRocket
+Vue.prototype.$LogRocket = LogRocket
+global.$LogRocket = LogRocket
 
 const $eventBus = new Vue();
 Vue.prototype.$eventBus = $eventBus

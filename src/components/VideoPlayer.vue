@@ -58,10 +58,6 @@ export default {
     })
 
     this.player.log.level('off')
-
-    // console.log(videojs)
-    // require('videojs-brand/dist/videojs-brand.js')
-    // import 'videojs-brand/dist/videojs-brand.css'
       
   },
   beforeDestroy() {
@@ -72,12 +68,8 @@ export default {
 }
 import videojs from 'video.js'
 import 'video.js/dist/video-js.css'
-// import videojs-brand from 'videojs-brand'
-import 'videojs-brand/src/plugin.js'
-import 'videojs-brand/dist/videojs-brand.css'
 </script>
 <style lang="scss">
-  // @import url('https://vjs.zencdn.net/7.6.0/video-js.css');
   .video-js .vjs-big-play-button {
     top: 50%;
     left: 50%;
