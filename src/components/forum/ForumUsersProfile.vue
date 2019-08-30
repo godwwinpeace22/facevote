@@ -39,7 +39,7 @@
             <!-- <v-btn flat outline small color="success" class="text-capitalize" v-else @click="openPrivateChatWindow">Message</v-btn> -->
             
             <v-btn flat outline small color="success" class="text-capitalize" 
-              :to="`/users/${user.username}`" >
+              :to="`/users/${user.uid}`" >
               View Profile
             </v-btn>
             
@@ -80,7 +80,7 @@ export default {
     disabled: false,
     members2:'', //just to avoid directly mutating the members prop
   }),
-  props:['username','members', 'thisGroup'],
+  props:['userId','members', 'thisGroup'],
   computed:{
     ...mapGetters([
       'getUser',
@@ -91,13 +91,13 @@ export default {
       'curRoom'
     ]),
     isAccOwner(){
-      return this.getUser.username == this.username ? true : false
+      return this.getUser.uid == this.userId ? true : false
     },
     
   },
   methods:{
-    extractUser(username){ // lets the get this user from the list of regVoters
-      let found = this.members2.find(item=> item.username == this.username)
+    extractUser(){ // lets the get this user from the list of regVoters
+      let found = this.members2.find(item=> item.uid == this.userId)
       if(found){
         this.user = found;
         this.show_profile = true
@@ -115,11 +115,6 @@ export default {
         ...this.user,
         last_msg_status:'unknown'
       })
-    },
-    checkIfOnline(){
-      let those_online = this.$store.state.those_online
-      let found = those_online.find(data => data.username == this.user.username)
-      return found ? true : false
     },
     banned(userId){
       let banned = this.thisGroup.bif ? 
@@ -231,28 +226,22 @@ export default {
   watch: {
     '$route' (to, from) {
       // react to route changes...
-      this.members ? this.extractUser(to.params.username) : ''
+      this.members ? this.extractUser() : ''
     }
   },
   components:{
-    ProfileSettings,
+    
   },
   async mounted(){
     this.members2 = this.members // just to avoid directly mutating the regVoters prop
-    //console.log(this.username)
+    
     
     this.extractUser()
     
-    this.$eventBus.$on('hide_profile_settings', _=>{
-      this.dialog = false
-    })
   },
   created(){
-    //this.extractUser(this.$route.params.username)
   }
 }
-//import api from "@/services/api";
-import ProfileSettings from '@/components/ProfileSettings'
 import {mapGetters, mapState} from 'vuex'
 import {firebase, db, database} from '@/plugins/firebase'
 </script>

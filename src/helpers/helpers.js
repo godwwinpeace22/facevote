@@ -1,6 +1,8 @@
 import $store from '../store/store'
-import {firebase, db} from '../plugins/firebase'
+import {firebase, db, storage} from '../plugins/firebase'
+import api from '@/services/api'
 import Nprogress from 'nprogress'
+
 export default {
 
   /**
@@ -32,6 +34,59 @@ export default {
   },
   trigFileSelector(){
     document.getElementById('file_img').click()
+  },
+
+  /**
+   * Upload files to storage
+   * @param options file upload options
+   * @returns String fd
+   */
+  upload(options){
+    return new Promise((resolve, reject ) => {
+      
+      try {
+        
+        let {files, path, file_name=false } = options
+        
+        Promise.all(
+          
+          Array.from(files).map((file, index) => uploadOne(file,index))
+
+        ).then((urls) => {
+
+          resolve(urls)
+          
+        }).catch((error) => {
+
+          reject(error)
+          
+        });
+        
+        function uploadOne(file,index) {
+          
+          return storage.ref(`${path}/${file_name ? file_name : file.name}`).put(file)
+          .then(async (snapshot) => {
+            
+            var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              
+            $store.dispatch('uploadProgress', {
+              progress: Math.round(progress * 100) / 100,
+              no_of_files: files.length,
+              no_uploaded: index + 1,
+              no_remaining: files.length - index -1
+            })
+            return await snapshot.ref.getDownloadURL()
+
+          }).catch((error) => {
+            console.log(error)
+          });
+        }
+
+      } catch (error) {
+        reject(error)
+        console.log(error)
+      }
+    })
   },
   parseDate(timestamp, show_date=false){
     // show_date is used to control which type of date to return - full date or only time
@@ -431,5 +486,3 @@ export default {
   }
 
 }
-
-import api from '@/services/api'

@@ -227,6 +227,7 @@ export default {
     },
     switchMode(mode){
       this.mode = mode
+      this.selected = ''
       // console.log(mode,this.mode)
     },
     divide(timestamp,prev){

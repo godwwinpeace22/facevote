@@ -32,7 +32,7 @@
       right hide-overlay clipped app width="300" class='user_presence_sidebar navdrawr pr-1'>
       
       <v-divider></v-divider>
-      <router-view :members='members' v-if="ready" :thisGroup='this_group'></router-view>
+      <router-view :members='members' v-if="ready" :thisGroup='this_group' :suspended="suspended"></router-view>
       
     </v-navigation-drawer>
 
@@ -69,7 +69,7 @@
               </v-tooltip>
 
               <!-- EMOJIS DIALOG-->
-              <v-menu max-width="350" :close-on-content-click='false'
+              <v-menu max-width="300" :close-on-content-click='false'
                 slot="prepend-inner" max-height="" top offset-y>
 
                 <v-btn slot="activator" icon >
@@ -150,12 +150,12 @@
 
 
     <!-- FILE DIALOG -->
-    <v-dialog v-model="file_dialog" style="background:#fff;" 
+    <v-dialog v-model="file_dialog" style="background:#fff;" :persistent="progress_dialog"
       max-width="600" hide-overlay :fullscreen="breakpoint.xsOnly">
       <v-toolbar dense flat>
         <v-toolbar-title>Upload images</v-toolbar-title>
         <v-spacer></v-spacer>
-        <v-btn flat icon @click="file_dialog = false">
+        <v-btn flat icon @click="file_dialog = false" :disabled="progress_dialog">
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-toolbar>
@@ -166,7 +166,7 @@
             <v-layout row wrap>
               <v-flex xs3 v-for="(blob_url,i) in blob_urls" :key="i">
                 <v-card height="100" class="mb-1">
-                  <v-img :src='blob_url' height="100" @click="carousel_dialog = true;"></v-img>
+                  <v-img :src='blob_url' height="100"></v-img>
                 </v-card>
               </v-flex>
             </v-layout>
@@ -181,7 +181,7 @@
           <v-card-actions>
             <v-btn depressed small color="secondary" @click="uploadImages">Upload Images</v-btn>
           </v-card-actions>
-          
+          {{uploadProgress}}%
         </v-card>
       </v-container>
       
@@ -194,14 +194,14 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn flat icon>
-            <v-icon @click="progress_dialog = false">mdi-close</v-icon>
+            <v-icon @click="progress_dialog = false" :disabled="progress_dialog">mdi-close</v-icon>
           </v-btn>
         </v-card-actions>
         <v-container class="mt-0">
           <v-subheader >Uploading images</v-subheader>
-          <v-progress-linear :indeterminate="true" ></v-progress-linear>
+          <v-progress-linear indeterminate ></v-progress-linear>
         </v-container>
-      
+        {{uploadProgress.no_uploaded || 0}}/{{uploadProgress.no_of_files}} &nbsp; {{uploadProgress.progress || 0}}%
       </v-card>
     </v-dialog>
 
@@ -216,12 +216,6 @@ export default {
     text_label: 'You cannot send messages in this forum',
     left: null,
     ready: false,
-    // emojis: [
-    //   '😀','😂','😁','😈','😃','😄','😅','😆','😉','😊','😋','😎','😍','😘','😐',
-    //   '😶','😏','😣','😯','😪','😛','😜','😒','😲','😟','💋','👽','👌','👍','✌️','👋','❤️','💘','💕',
-    //   '✔️','☑️','🔥','🎯','🎤'
-    // ],
-    // emojis: emojiData,
     loading_messages: true,
     message: "",
     file_message: '',
@@ -236,6 +230,8 @@ export default {
     menu: false,
     regElec: [],
     members: [],
+    members2: [],
+    suspended: [], // suspended voters and contestants
     this_group: [], // the current group
     contestants: [],
     toshow: 0,
@@ -255,6 +251,16 @@ export default {
     curRoom: function(){
       this.loading_messages = true
       this.setCurrRoom()
+    },
+    'suspended.voters': function(to, from){
+      
+      this.members = this.members.filter(member => !to.find(memberId => memberId == member.uid))
+    },
+    members: function(to, from){
+      if(this.suspended.voters){
+        this.members2 = to
+        .filter(member => !this.suspended.voters.find(memberId => memberId == member.uid))
+      }
     }
   },
   computed: {
@@ -265,7 +271,8 @@ export default {
     ...mapState([
       'curRoom',
       'curRoomId',
-      'isSuperUser'
+      'isSuperUser',
+      'uploadProgress'
     ]),
     title(){
       return `Forum | ${this.$appName}`
@@ -275,10 +282,12 @@ export default {
     },
     canSendMessages(){
       // check if current user can send messages to current group
+
       let enrolled = this.getUserInfo.enrolled ? 
         this.getUserInfo.enrolled.find(electionId => electionId == this.this_group.electionId) : false
-      let banned = this.this_group.bif ?
-      this.this_group.bif.find(memberId => memberId == this.getUser.uid) : false
+
+      let banned = this.suspended.voters && !!this.suspended.voters.find(memberId => memberId == this.getUser.uid)
+
       !enrolled ? this.text_label = 'Enroll to join the conversation' : ''
       return enrolled && !banned ? true : false
        
@@ -326,7 +335,7 @@ export default {
       return new Promise((resolve,reject)=>{
         this.membersRef = db.collection('moreUserInfo')
         .where('enrolled','array-contains', this.this_group.electionId)
-        .limit(25)
+        .limit(15)
         .onSnapshot(querySnapshot=>{
           this.members = []
           querySnapshot.forEach(doc=>{
@@ -351,6 +360,8 @@ export default {
         this.chatUpdate()
 
         this.retrieveMembers().then(members=>{
+
+          this.getSuspended()
           this.ready = true;
         }).catch(error=> {})
 
@@ -364,8 +375,14 @@ export default {
     },
     async uploadImages(){
       try {
+
         this.progress_dialog = true
-        let uploaded = await this.$helpers.uploadImage(this.files, this.cloudinary)
+        // let uploaded = await this.$helpers.uploadImage(this.files, this.cloudinary)
+        let uploaded = await this.$helpers.upload({
+          files: this.files,
+          path: `forums/${this.curRoom.electionId}`
+        })
+
         this.progress_dialog = false
         this.file_dialog = false
         this.submit(this.file_message, uploaded)
@@ -374,13 +391,13 @@ export default {
         this.progress_dialog = false
         this.file_dialog = false
         //this.loading = false
-        this.snackbar = {
+        this.$eventBus.$emit('Snackbar', {
           show: true,
           color: 'error',
           message: 'Sorry, something went wrong, try again.'
-        }
+        })
         // eslint-disable-next-line
-        // console.log(error)
+        console.log(error)
       }
       
     },
@@ -458,7 +475,7 @@ export default {
         this.updateRef = db.collection('chat_messages')
         .where('elecRef','==',this.curRoom.electionId)
         .orderBy('tstamp', 'desc')
-        .limit(25)
+        .limit(5)
         .onSnapshot(snapshot=>{
           let msgs = []
           
@@ -481,7 +498,16 @@ export default {
           })
         })
       }
-    }
+    },
+    async getSuspended(){
+      // get suspended voters and contestants
+      
+			db.collection('suspended').doc(this.this_group.electionId)
+			.onSnapshot(doc => {
+				
+				this.suspended = doc.data()
+			})
+		},
     
   },
   mounted(){
@@ -490,12 +516,12 @@ export default {
 			this.files = data.selected_files,
 			this.blob_urls = data.imgSrc
     })
+
     
   },
   created() {
     
     this.setCurrRoom()
-    // this.chatUpdate()
 
     this.$eventBus.$on('Toggle_drawerRight', data=>{
       this.drawerRight = data
@@ -524,13 +550,13 @@ export default {
 // import api from '@/services/api'
   import {mapGetters, mapState} from 'vuex'
   // import uuid from 'uuid/v4'
-  import ForumUsers from '@/components/ForumUsers'
-  import Chatwindow from '@/components/Chatwindow'
-  import ChatwindowVue from './Chatwindow.vue'
+  import ForumUsers from '@/components/forum/ForumUsers'
+  import Chatwindow from '@/components/forum/Chatwindow'
+  // import ChatwindowVue from '@/components/Chatwindow.vue'
   import Navigation from '@/components/Navigation'
-  import ChatMedia from '@/components/ChatMedia'
+  import ChatMedia from '@/components/forum/ChatMedia'
   import LoadingBar from '@/spinners/LoadingBar'
-  import EmojiPicker from '@/components/EmojiPicker'
+  import EmojiPicker from '@/components/emojis/EmojiPicker'
   import {firebase, db, database} from '@/plugins/firebase'
   // import { Picker } from 'emoji-mart-vue'
 </script>

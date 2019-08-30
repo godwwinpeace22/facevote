@@ -12,7 +12,6 @@
             class="elevation-1 d-block mx-auto"
             style="padding-top: 2px;"
           >
-            
             <v-avatar class="d-block mx-auto"
               size="120"
               :color="$helpers.colorMinder(user.name.charAt(0))"
@@ -20,12 +19,14 @@
               <img :src="user.photoURL" :alt="user.name" v-if="user.photoURL">
               <span v-else style="padding-top: 36px;" class="d-block white--text display-2">{{user.name.charAt(0)}}</span>
             </v-avatar>
+
           </v-avatar>
+
         </v-sheet>
       
         <v-card-text class="text-xs-center mt-5">
           <v-tooltip right>
-            <v-icon color="success" slot="activator" v-if="is_verified">mdi-check-decagram</v-icon>
+            <v-icon color="success" style="font-size: 20px;" slot="activator" v-if="is_verified">mdi-check-decagram</v-icon>
             <span>User is verified</span>
           </v-tooltip>
           <span class="title text-capitalize">{{user.name | capitalize}}</span>
@@ -41,16 +42,16 @@
                 @click="getUserProfile"
               >
                 View Profile
-                <template v-slot:loader>
+                <!-- <template v-slot:loader>
                   <span>Loading...</span>
-                </template>
+                </template> -->
               </v-btn>
             </div>
 
             <v-btn depressed
               color="success" class="d-inline-block round text-capitalize" 
               v-if='$store.getters.getUser.uid == user.uid'
-              dark @click="dialog = true;" 
+              dark @click="$eventBus.$emit('show_profile_settings')" 
             >
               Edit Profile
             </v-btn>
@@ -110,28 +111,9 @@ export default {
   methods:{
     getUserProfile(){
 
-      this.loading = true
+      this.$router.push(`/users/${this.user.uid}`)
+      this.$eventBus.$emit('CloseProfile')
       
-      if(this.user.uid == this.getUser.uid){
-        
-        this.loading = false
-        this.$router.push(`/users/${this.getUserInfo.username}`)
-        this.$eventBus.$emit('CloseProfile')
-      }
-      else {
-        
-        db.collection('moreUserInfo').doc(this.user.uid).get()
-        .then(doc => {
-  
-          this.loading = false
-          if(doc.exists){
-            this.$router.push(`/users/${doc.data().username}`)
-            this.$eventBus.$emit('CloseProfile')
-          }else{
-  
-          }
-        })
-      }
     },
     flagUser(){
       // mark the user as flagged
@@ -151,9 +133,6 @@ export default {
       })
     }
   },
-  components:{
-    ProfileSettings,
-  },
   mounted(){
     this.$eventBus.$on('hide_profile_settings', _=>{
       this.dialog = false
@@ -162,7 +141,6 @@ export default {
 }
 
 import {mapGetters, mapState} from 'vuex'
-import ProfileSettings from '@/components/ProfileSettings'
 import {firebase, db, database} from '@/plugins/firebase'
 </script>
 

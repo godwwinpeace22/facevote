@@ -39,20 +39,20 @@
 
                 <v-form v-model="valid" ref="form">
                   <v-text-field label="Email" color="teal" outline class="mb-2" 
-                    v-model="form.email" :rules="nameRules" validate-on-blur
+                    v-model.lazy="$v.form.email.$model" :error-messages="emailErrors"
                     required>
                      <v-icon slot="prepend-inner" color="teal">mdi-email</v-icon>
                   </v-text-field>
                   <v-text-field id="text-field" color="teal" 
-                    outline  v-model="form.password" type="password" :rules="passwordRules"
-                    label="Password" validate-on-blur
+                    outline  v-model.lazy="$v.form.password.$model" type="password" 
+                    label="Password" validate-on-blur :error-messages="passwordErrors"
                     required>
                      <v-icon slot="prepend-inner" color="teal">mdi-lock</v-icon>
                   </v-text-field>
                 </v-form>
               </v-card-text>
               <v-card-actions class="px-3">
-                <v-btn type="submit" block :dark="valid"  @click.prevent="submit" color="success" :disabled="!valid" 
+                <v-btn type="submit" block :dark="valid"  @click.prevent="submit" color="success" 
                    :loading="loading">
                   Login
                 </v-btn>
@@ -94,21 +94,34 @@ export default {
     show4: false,
     valid: true,
     checkbox: false,
-    nameRules: [
-      v => !!v || 'Please enter your email',
-    ],
-    passwordRules: [
-      v => !!v || 'Please enter your password'
-    ],
   }),
-  components:{
-    // 'toolbar':Nav,
-    footr:Footer
+  validations: {
+    form: {
+      email: {
+        required, email
+      },
+      password: {
+        required
+      }
+    }
   },
   computed: {
     title(){
       return `Login | ${this.$appName}`
     },
+    passwordErrors () {
+      const errors = []
+      if (!this.$v.form.password.$dirty) return errors
+      !this.$v.form.password.required && errors.push('Password is required.')
+      return errors
+    },
+    emailErrors () {
+      const errors = []
+      if (!this.$v.form.email.$dirty) return errors
+      !this.$v.form.email.email && errors.push('Must be valid e-mail')
+      !this.$v.form.email.required && errors.push('E-mail is required')
+      return errors
+    }
   },
   methods:{
     sendVerificationLInk(){
@@ -135,7 +148,12 @@ export default {
     },
     async submit(){
       try{
-        if(this.$refs.form.validate()){
+        
+        this.$v.form.$touch()
+
+        let errors = this.$v.form.$anyError
+      
+        if(errors === false){
           this.loading = true
 
           firebase.auth().signInWithEmailAndPassword(this.form.email, this.form.password)
@@ -152,7 +170,9 @@ export default {
                   this.$store.dispatch('setUser', user)
                   // this.$store.dispatch('setUserInfo', idTokenResult.claims)
                   let isFirstTime = this.$route.query.new
-                  let link = isFirstTime ? '/home?new=true' : '/home'
+                  let returnTo = this.$route.query.returnTo
+                  console.log(this.$route.query)
+                  let link = isFirstTime ? '/home?new=true' : returnTo ? returnTo : '/home'
                   
                   this.$router.push(link)
                 })
@@ -204,7 +224,7 @@ export default {
       catch(err){
         // console.log(err)
         this.loading = false
-        $Nprogress.done()
+        this.$Nprogress.done()
         if(err.errorCode){
           
           this.snackbar = {
@@ -227,10 +247,16 @@ export default {
   mounted(){
     document.getElementById('welcome_logo').style.display = 'none'
     // console.log(this.$store.state)
-  }
+  },
+  components:{
+    // 'toolbar':Nav,
+    footr:Footer
+  },
 }
 
   import Footer from '@/components/Footer'
+  import { required, email } from 'vuelidate/lib/validators'
+  // import { validationMixin } from 'vuelidate'
   import {firebase, db, database} from '@/plugins/firebase'
 </script>
 <style lang="scss">

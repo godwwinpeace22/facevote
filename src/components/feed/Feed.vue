@@ -31,11 +31,6 @@
       </v-container>
     </v-navigation-drawer>
 
-    <v-snackbar v-model="snackbar.show" :timeout="5000" :color="snackbar.color" top>
-      {{snackbar.message}} 
-      <v-btn dark flat @click="snackbar.show = false"> Close</v-btn>
-    </v-snackbar>
-
     <transition name="fade" mode="out-in">
       <!-- LOADING WIREFRAME -->
       <v-container grid-list-xl v-if="!ready" fluid>
@@ -121,9 +116,9 @@
                       />
 
                       <post-template 
-                        :posts="posts" 
-                        :posts_offset="posts_offset" 
-                        :loading_more_posts="loading_more_posts" 
+                        :posts="posts"
+                        :loading_more_posts="loading_more_posts"
+                        :is-last-doc="isLastDoc"
                         @loadmore="morePosts"
                       />
                       
@@ -138,7 +133,7 @@
                   <v-layout column fill-height>
                     <v-flex xs12>
                       <v-card flat class="elevation-0" elevation-0 :dark="$store.state.theme == 'dark'">
-                        <v-subheader class="font-weight-bold">Featured Campaigns</v-subheader>
+                        <v-subheader class="font-weight-bold">Campaigns</v-subheader>
                         <v-list dense>
                           <v-list-tile avatar @click="newCampaign" v-if="isSuperUser">
                             <v-list-tile-avatar color="grey">
@@ -172,6 +167,12 @@
                             </v-list-tile-content>
                           </v-list-tile>
                         </v-list>
+
+                        <v-card-actions>
+                          <v-btn flat small v-if="getCampaigns.length >= 15"
+                            color="secondary" class="text-capitalize"
+                            @click="moreCampaigns" :loading="loading_more_campaigns">See More</v-btn>
+                        </v-card-actions>
                       </v-card>
                     </v-flex>
                   </v-layout>
@@ -233,11 +234,13 @@
                             </v-list-tile-sub-title>
                           </v-list-tile-content>
                         </v-list-tile>
-                        <!-- <v-subheader v-if="campaignsLimit && getCampaigns.length > campaignsLimit">
-                          <v-btn small flat @click="campaignsLimit = null" class="text-capitalize" color="secondary">see more</v-btn>
-                        </v-subheader> -->
                       </v-list>
                     </div>
+                    <v-card-actions>
+                      <v-btn flat small v-if="getCampaigns.length >= 15"
+                        color="secondary" class="text-capitalize"
+                        @click="moreCampaigns" :loading="loading_more_campaigns">See More</v-btn>
+                    </v-card-actions>
                   </v-card>
                 </v-flex>
                 
@@ -300,14 +303,7 @@ export default {
   data:()=>({
     title:'Home | Votertye',
     posts: [],
-    snackbar: false,
     feed_model: 'Feed',
-    elections: [],
-    emojis:[
-      '😀','😂','😁','😈','😃','😄','😅','😆','😉','😊','😋','😎','😍','😘','😐',
-      '😶','😏','😣','😯','😪','😛','😜','😒','😲','😟','💋','👽','👌','👍','✌️','👋','❤️','💘','💕',
-      '✔️','☑️','🔥','🎯','🎤'
-    ],
     expanded: [],
     offset: '',
     posts_offset: '',
@@ -316,6 +312,9 @@ export default {
     loading_comments: [],
     loading_more_comments: [],
     loading_more_posts: false,
+    loading_more_campaigns: false,
+    isLastDoc: false,
+    isLastCampaign: false,
     new_campaign: false,
     disabled_btns: [],
     sorted: [],
@@ -337,6 +336,9 @@ export default {
     'curRoom': function(){
       this.latestPosts()
       this.latestCampaigns()
+    },
+    'campaigns': function(){
+      this.sortCampaigns()
     }
   },
   components: {
@@ -346,7 +348,6 @@ export default {
     NewCampaign,
     ViewCampaign,
     ListEvents,
-    // EmojiPicker,
     PostTemplate,
     WelcomePostTemplate
   },
@@ -426,13 +427,20 @@ export default {
 		},
     sortCampaigns(){
       // group campaigns by user
+      const uniqueArray = this.getCampaigns.filter((thing,index) => {
+        return index === this.getCampaigns.findIndex(obj => {
+          return JSON.stringify(obj) === JSON.stringify(thing);
+        })
+      })
+
       let uniques = []
-      this.getCampaigns.forEach((item,i) =>{
+      
+      uniqueArray.forEach((item,i) =>{
         if(!uniques.find(camp => camp.onr.uid == item.onr.uid)){
-          let user_campaigns = this.getCampaigns.filter(u => u.onr.uid == item.onr.uid)
+          let user_campaigns = uniqueArray.filter(u => u.onr.uid == item.onr.uid)
           uniques.push({
             ...item,
-            latest: user_campaigns[user_campaigns.length -1].tstamp, // the latest by the user
+            latest: user_campaigns[0].tstamp, // the latest by the user
             count: user_campaigns.length // number of 
             // campaigns by this user
           })
@@ -454,17 +462,52 @@ export default {
       // Load more, older posts
       this.loading_more_posts = true
 
-      db.collection('posts').where('elecRef','==', this.curRoom.electionId)
-      .orderBy('tstamp','desc').startAfter(this.posts_offset)
-      .limit(25).get().then(querySnapshot =>{
-        let posts = []
-        querySnapshot.forEach(doc => {
-          this.posts.push(doc.data())
-        });
-        // console.log(querySnapshot.docs, this.offset)
-        this.posts_offset = querySnapshot.docs[querySnapshot.docs.length-1]
-        this.loading_more_posts = false
+      let lastPost = this.posts[this.posts.length -1 ]
+      let postsCollection = db.collection('posts')
+
+      postsCollection.doc(lastPost.docId).get().then(documentSnapshot => {
+
+        postsCollection.where('elecRef','==', this.curRoom.electionId)
+        .orderBy('tstamp','desc').startAfter(documentSnapshot)
+        .limit(10).get().then(querySnapshot =>{
+          let posts = []
+          querySnapshot.forEach(doc => {
+            this.posts.push(doc.data())
+          });
+
+          this.isLastDoc = querySnapshot.empty
+          this.loading_more_posts = false
+        })
       })
+
+    },
+    moreCampaigns(){
+      // Load more, older posts
+      this.loading_more_campaigns = true
+
+      let lastCampaign = this.campaigns[this.campaigns.length -1 ]
+      let campaignCollection = db.collection('campaign_posts')
+
+      campaignCollection.doc(lastCampaign.docId).get().then(documentSnapshot => {
+        
+        let now = Date.now()
+        this.campRef = campaignCollection
+          .where('elecRef','==', this.curRoomId)
+          .where('expires_in', '>', now)
+          .orderBy("expires_in")
+          .startAfter(documentSnapshot)
+          .limit(15).get().then(querySnapshot =>{
+          
+          querySnapshot.forEach(doc => {
+            this.campaigns.push(doc.data())
+          });
+
+          
+          this.isLastCampaign = querySnapshot.empty
+          this.loading_more_campaigns = false
+        })
+
+      }).catch(err => this.loading_more_campaigns = false)
 
     },
     latestPosts(){
@@ -473,7 +516,8 @@ export default {
 
           let docRef = db.collection('posts')
           .where('elecRef','==',this.curRoomId)
-          .orderBy('tstamp','desc').limit(25)
+          .orderBy('tstamp','desc')
+          .limit(15)
           docRef.onSnapshot(querySnapshot=>{
             let posts = []
             querySnapshot.forEach(doc => {
@@ -509,13 +553,9 @@ export default {
           .where('elecRef','==', this.curRoomId)
           .where('expires_in', '>', now)
           .orderBy("expires_in")
-          // .limit(100)
+          .limit(15)
           .onSnapshot(docs=>{
             let myArr = []
-
-            // docs.forEach(doc=>{
-            //   myArr.push(doc.data())
-            // })
 
             docs.docChanges().forEach(function(change) {
               if (change.type === "added") {
@@ -526,12 +566,15 @@ export default {
             
             // console.log(myArr)
             this.campaigns = myArr.filter(campaign => {
-              let pass = now - campaign.tstamp.toMillis() < twenty4hrs
-              // console.log({pass, campaign})
-              return pass
+              if(campaign.tstamp){
+
+                let pass = now - campaign.tstamp.toMillis() < twenty4hrs
+                // console.log({pass, campaign})
+                return pass
+              }
             })
 
-            this.sortCampaigns()
+            // this.sortCampaigns()
             this.ready = true;
             this.nodata = false
           },(err)=> reject(err))
@@ -549,9 +592,6 @@ export default {
     this.$eventBus.$on('HideNewCampaignDialog', data=>{
       this.new_campaign = false
     })
-    this.$eventBus.$on('ShowSnackbar', data=>{
-      this.snackbar = data
-    })
     this.$eventBus.$on('PushNewCampaign',data=>{
       // this.posts.unshift(data)
       this.latestCampaigns().then(()=> {
@@ -563,6 +603,8 @@ export default {
       this.selected_campaign = 0
       // console.log(this.view_campaign, this.selected_campaign)
     })
+
+    
   },
   async created(){
     firebase.auth().onAuthStateChanged(async (user)=>{
@@ -584,12 +626,12 @@ export default {
 import Navigation from '@/components/Navigation'
 import PostTemplate from '@/components/feed/PostTemplate'
 import WelcomePostTemplate from '@/components/feed/WelcomePostTemplate'
-import ViewProfile from '@/components/ViewProfile'
+import ViewProfile from '@/components/dialogs/ViewProfile'
 import NewPost from '@/components/profile/NewPost'
 import NewCampaign from '@/components/profile/NewCampaign'
-import ViewCampaign from '@/components/ViewCampaign'
+import ViewCampaign from '@/components/dialogs/ViewCampaign'
 
-import ListEvents from '@/components/ListEvents'
+import ListEvents from '@/components/events/ListEvents'
 import {mapGetters, mapState} from 'vuex'
 import {firebase, db, database} from '@/plugins/firebase'
 

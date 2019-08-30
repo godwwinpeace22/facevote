@@ -318,7 +318,7 @@
       <!-- RESULTS -->
       <v-dialog v-model="show_results_dialog" scrollable
         fullscreen :transition="switchTransition" lazy>
-        <v-card flat>
+        <v-card flat id="print_results">
           <v-toolbar dense card flat dark color="success">
             <v-btn flat icon v-if="$vuetify.breakpoint.xsOnly"
               @click.native="show_results_dialog = false;">
@@ -327,7 +327,9 @@
             <v-divider vertical inset light v-if="$vuetify.breakpoint.xsOnly"></v-divider>
 
             <v-toolbar-title >Election Results: {{currElection.title}}</v-toolbar-title>
+            
             <v-spacer></v-spacer>
+            
             <v-toolbar-items v-if="$vuetify.breakpoint.smAndUp">
               <v-btn icon @click.native="show_results_dialog = false;">
                 <v-icon >mdi-close</v-icon>
@@ -391,7 +393,7 @@
                           <v-divider  :inset="true" :key="index + 'votrsi'"></v-divider>
                         </template>
                       </v-list>
-                      <v-btn color="secondary" flat small @click="moreVoters" v-if="regVoters.length > 25 && currElection.voters > regVoters.length"
+                      <v-btn color="secondary" flat small @click="moreVoters" v-if="regVoters.length >= 25 && !isLastVoter"
                         :loading="loading_more_voters" style="text-transform: initial">
                         See more
                       </v-btn>
@@ -419,11 +421,11 @@
                           </v-layout>
                         </v-timeline-item>
                       </v-timeline>
+                      <v-btn color="secondary" flat small @click="moreActivities" v-if="activities.length >= 25 && !isLastActivity"
+                        :loading="loading_more_activities" style="text-transform: initial">
+                        See more
+                      </v-btn>
                     </div>
-                    <v-btn color="secondary" flat small @click="moreActivities" v-if="activities.length > 25"
-                      :loading="loading_more_activities" style="text-transform: initial">
-                      See more
-                    </v-btn>
                   </div>
                 </v-tab-item>
 
@@ -604,11 +606,11 @@
         transition="dialog-transition"
         lazy
       >
-        <v-card class="grey lighten-4">
+        <v-card class="grey lighten-4" id="print_summary">
           <v-toolbar card color="teal" dark>
             <div class="title">Summary of Results</div>
             <v-spacer></v-spacer>
-            <v-btn flat icon @click.native="printResult" class="hidden-sm-and-down">
+            <v-btn flat icon @click.native="printSummary" class="hidden-sm-and-down">
               <v-icon>mdi-printer</v-icon>
             </v-btn>
             <v-btn flat icon @click.native="show_summary_dialog = false; title_string = 'Vote'">
@@ -623,7 +625,9 @@
               :status="status"
               :timer_ready="timer_ready"
               :contestants="contestants"
-              :all-votes="allVotes">
+              :all-votes="allVotes"
+              :total-votes="totalVotes"
+              :is-printing="isPrinting">
             </results-summary>
           </v-card-text>
         </v-card>
@@ -635,8 +639,7 @@
         :persistent="enrolling"
         :overlay="false"
         max-width="350px"
-        transition="dialog-transition"
-      >
+        transition="dialog-transition">
         <v-card>
           <v-toolbar card dense>
             Enroll
@@ -670,12 +673,15 @@ export default {
     endTime2: 0, // countdown b4 end of election
     start: 0,
     manifestos: [],
-    voters_offset: '',
-    activities_offset: '',
+    isLastVoter: false,
+    isLastActivity: false,
+    lastActivity: '',
+    lastVoter: '',
     loading_more_voters: false,
     loading_more_activities: false,
     enroll_dialog: false,
     enrolling: false,
+    suspended: [],
     disabled: [],
     allVotes: [],
     myEnrolledElc: [], 
@@ -733,7 +739,7 @@ export default {
       }
     },
     tabledata: [],
-    
+    isPrinting: false,
   }),
   props:['electionId'], // this prop is from the vue-router params
   filters: {
@@ -761,8 +767,16 @@ export default {
     getUserInfo: function(){
       this.getUserInfo && this.curRoom ? this.setup() : ''
     },
-    timer_ready: function(to, from){
-      // console.log(this.$refs)
+    'suspended.contestants': function(to, from){
+      if(this.all_contestants){
+        let suspended = to
+        this.contestants = this.all_contestants.filter(item => !suspended.includes(item.uid))
+        this.showCarousel = false
+        setTimeout(()=>this.showCarousel = true, 2000)
+      }
+    },
+    'suspended.voters': function(to, from){
+      this.regVoters = this.regVoters.filter(voter => !to.includes(voter.uid))
     }
   },
   computed:{
@@ -771,11 +785,6 @@ export default {
     },
     getStartDate(){
       return new Date(this.currElection.startDate + ' ' + this.currElection.startTime).getTime();
-    },
-    suspendedContestants(){
-      let suspended = this.currElection.suspended ? this.currElection.suspended.length : 0
-
-      return suspended > 0 ? suspended + ' contestants suspended' : 'No contestant suspended'
     },
     totalVotes(){
       let totalVotes = 0
@@ -797,7 +806,7 @@ export default {
 			}
     },
     no_of_contestants(){
-			let len = this.currElection.contestants
+			let len = this.contestants.length
 			
 			switch (true){
 				case len >= 1000000:
@@ -860,7 +869,7 @@ export default {
       this.show_when_ready = false
 
       this.getCurElection().then(async ()=>{
-
+        await this.getSuspended()
         await this.allContestants()
         await this.getVoters()
         await this.getVotes()
@@ -896,7 +905,7 @@ export default {
             regVoters.push(doc.data())
           })
           this.regVoters = regVoters
-          this.voters_offset = querySnapshot.docs[querySnapshot.docs.length -1]
+          this.lastVoter = querySnapshot.docs[querySnapshot.docs.length -1 ]
           resolve(regVoters)
         }, function(err){
           // console.log(err)
@@ -935,15 +944,44 @@ export default {
           querySnapshot.forEach(doc=>{
             acts.push(doc.data())
           })
-          this.activities_offset = querySnapshot.docs[querySnapshot.docs.length - 1]
+
           this.activities = acts
+          
+          this.lastActivity = querySnapshot.docs[querySnapshot.docs.length - 1]
           resolve(acts)
         }, err => reject(err))
       })
     },
-    printResult(){
-      window.print()
+    printSummary(){
+
+      this.isPrinting = true
+
+      let expandResults = async ()=>{
+        this.isPrinting = true
+      }
+
+      expandResults().then(()=>{
+        let scripts = document.scripts
+        let head = document.head.innerHTML
+
+        let myWindow = window.open()
+        myWindow.document.head.innerHTML = head
+        myWindow.document.body.innerHTML = document.getElementById('print_summary').innerHTML
+
+        myWindow.focus()
+        myWindow.print()
+        this.isPrinting = false
+      })
+
     },
+    async getSuspended(){
+			// get suspended voters and contestants
+			db.collection('suspended').doc(this.currElection.electionId)
+			.onSnapshot(doc => {
+				
+				this.suspended = doc.data()
+			})
+		},
     async allContestants(){
       // get contestants
       
@@ -955,9 +993,8 @@ export default {
 
         querySnapshot.forEach(doc =>{
           // show only contestants that are not suspended. therefore they can't be voted for
-          let isSuspended = this.currElection.suspended ?
-            this.currElection.suspended.includes(doc.data().uid) : 
-            false
+          let isSuspended = !!this.suspended.contestants && 
+            !!this.suspended.contestants.find(item => item == doc.data().uid)
 
           isSuspended ? '' : 
           contestants.push(doc.data())
@@ -1112,31 +1149,50 @@ export default {
     },
     moreVoters(){
 
-      this.loading_more_voters = true
-      db.collection('moreUserInfo')
-      .where('enrolled','array-contains', this.currElection.electionId)
-      .startAfter(this.voters_offset).limit(25)
-      .get().then(querySnapshot =>{
-        querySnapshot.forEach(doc =>{
-          this.regVoters.push(doc.data())
+      if(this.lastVoter != undefined){
+
+        this.loading_more_voters = true
+
+        db.collection('moreUserInfo')
+        .where('enrolled','array-contains', this.currElection.electionId)
+        .startAfter(this.lastVoter).limit(25)
+        .get().then(querySnapshot =>{
+          querySnapshot.forEach(doc =>{
+            this.regVoters.push(doc.data())
+          })
+          this.isLastVoter = querySnapshot.exists
+          this.lastVoter = querySnapshot.docs[querySnapshot.docs.length - 1]
+          this.loading_more_voters = false
         })
-        this.voters_offset = querySnapshot.docs[querySnapshot.docs.length -1]
-        this.loading_more_voters = false
-      })
+        
+      }
+      else {
+        this.isLastVoter = true
+      }
     },
     moreActivities(){
 
-      this.loading_more_activities = true
-      db.collection('moreUserInfo')
-      .where('enrolled','array-contains', this.currElection.electionId)
-      .startAfter(this.activities_offset).limit(25)
-      .get().then(querySnapshot =>{
-        querySnapshot.forEach(doc =>{
-          this.activities.push(doc.data())
+      
+      if(this.lastActivity != undefined){
+
+        this.loading_more_activities = true
+        
+        db.collection('activities')
+        .where('elecRef','==', this.currElection.electionId)
+        .startAfter(this.lastActivity).limit(25)
+        .get().then(querySnapshot =>{
+          querySnapshot.forEach(doc =>{
+            this.activities.push(doc.data())
+          })
+          this.isLastActivity = querySnapshot.exists
+          this.lastActivity = querySnapshot.docs[querySnapshot.docs.length - 1]
+          this.loading_more_activities = false
         })
-        this.activities_offset = querySnapshot.docs[querySnapshot.docs.length - 1]
-        this.loading_more_activities = false
-      })
+      }
+      else {
+        this.isLastActivity = true
+      }
+     
     },
     getRole(contestant){
       let ref = contestant.contestsRef
@@ -1337,32 +1393,6 @@ export default {
       })
        
     },
-    follow_election(){
-      ////console.log(this.getUser)
-      let this_user = this.getUser
-      this.disabled.push(this_user.uid)
-      if(this.currElection.followers.find(data=> data == this_user.uid)){
-        // is following
-        this.currElection.followers.splice(this.currElection.followers.indexOf(this_user),1)
-        db.collection('elections').doc(this.currElection.electionId).update({
-          followers:firebase.firestore.FieldValue.arrayRemove(this_user.uid)
-        }).then(res=>{
-          this.disabled.splice(this.disabled.indexOf(this_user.uid),1)
-          
-        })
-      }
-      else{
-        // not following
-        this.currElection.followers.push(this_user.uid)
-        db.collection('elections').doc(this.currElection.electionId).update({
-          followers:firebase.firestore.FieldValue.arrayUnion(this_user.uid)
-        }).then(res=>{
-          
-          this.disabled.splice(this.disabled.indexOf(this_user.uid),1)
-          
-        })
-      }
-    },
     isVoting(id){
       return this.votingList.indexOf(id) == -1 ? false : true
     },
@@ -1377,15 +1407,15 @@ export default {
     this.curRoom ? this.getUserInfo ? this.setup() : '' : ''
 
     this.$eventBus.$on('Suspend_Contestant', data => {
-      this.contestants = this.contestants.filter(cont => cont.uid != data)
-      this.currElection.suspended.push(data)
-      this.getLabels()
+      // this.contestants = this.contestants.filter(cont => cont.uid != data)
+      // this.currElection.suspended.push(data)
+      // this.getLabels()
     })
     this.$eventBus.$on('Restore_Contestant', data => {
-      let contestant = this.all_contestants.find(cont => cont.uid == data)
-      this.contestants.push(contestant)
-      this.currElection.suspended.splice(this.currElection.suspended.indexOf(data),1)
-      this.getLabels()
+      // let contestant = this.all_contestants.find(cont => cont.uid == data)
+      // this.contestants.push(contestant)
+      // // this.currElection.suspended.splice(this.currElection.suspended.indexOf(data),1)
+      // this.getLabels()
     })
   },
   async created(){
@@ -1426,16 +1456,16 @@ export default {
 import api from '@/services/api'
   import {mapGetters, mapState} from 'vuex'
   //import ViewProfile from '@/components/ViewProfile'
-  import Results from '@/components/Results'
-  import Vote from '@/components/Vote'
+  import Results from '@/components/elections/Results'
+  import Vote from '@/components/elections/Vote'
   import BarChart from '@/charts/barchart'
   import carousel from 'vue-owl-carousel'
   import Navigation from '@/components/Navigation'
   import LoadingBar from '@/spinners/LoadingBar'
-  import ResultsSummary from '@/components/ResultsSummary'
+  import ResultsSummary from '@/components/elections/ResultsSummary'
   // import Manifesto from '@/components/Manifesto'
 // import { setTimeout } from 'timers';
-import ManageElection from '@/components/ManageElection'
+import ManageElection from '@/components/elections/ManageElection'
 import {firebase, db, database} from '@/plugins/firebase'
 </script>
 <style lang="scss" scoped>

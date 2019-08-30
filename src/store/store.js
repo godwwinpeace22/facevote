@@ -34,7 +34,7 @@ export default new Vuex.Store({
     // logrocketPlugin,
     vuexLocalStorage.plugin,
     createMutationsSharer({ predicate: 
-      ['logout', 'setUser', 'switchTheme','saveFeedFilter','setUserInfo', 'curRoom','saveChatMessages','updateFromDb','updateThoseOnline'] })
+      ['logout', 'setUser', 'switchTheme','saveFeedFilter', 'session_expired', 'setUserInfo', 'curRoom', 'curProfile','saveChatMessages','updateFromDb','updateThoseOnline'] })
   ],
   state: {
     userInfo: null, // additional info for logged in user
@@ -44,9 +44,11 @@ export default new Vuex.Store({
     theme: 'light',
     timestamp: null,
     curRoom: null,
+    curProfile: null,
     curRoomId: null, // current room id
     loading_rooms: true, // tells other components that rooms are still being loaded
     myEnrolled: [],
+    uploadProgress: {},
     broadcasts: [],
     last_read_time: {}, // record of last msg read time, for each user in broadcasts
     chat_messages: [],
@@ -58,6 +60,7 @@ export default new Vuex.Store({
     show_right_nav: true,
     show_right_nav_btn: false,
     feedFilter: null,
+    session_expired: null
   },
   mutations: {
     setUserInfo(state,data){
@@ -104,6 +107,9 @@ export default new Vuex.Store({
       state.curRoomId = data.electionId
       state.loading_rooms = false
     },
+    curProfile(state, data){
+      state.curProfile = data
+    },
     setBroadcasts(state,data){
       state.broadcasts = data
     },
@@ -143,6 +149,9 @@ export default new Vuex.Store({
     setVotes(state,data){
       state.votes = data
     },
+    uploadProgress(state, data){
+      state.uploadProgress = data
+    },
     subscriberState(state, data){
       state.isSuperUser = data
     },
@@ -152,6 +161,9 @@ export default new Vuex.Store({
     setLastReadTime(state, data){
       // console.log(data,state.last_read_time)
       state.last_read_time[data] = Date.now()
+    },
+    sessionExpired(state){
+      state.session_expired = true
     }
   },
   actions:{
@@ -176,6 +188,12 @@ export default new Vuex.Store({
 
     curRoom({commit}, data){
       commit('curRoom', data)
+    },
+    curProfile({commit}, data){
+      commit('curProfile', data)
+    },
+    uploadProgress({commit}, data){
+      commit('uploadProgress', data)
     },
     setBroadcasts({commit}, data){
       commit('setBroadcasts', data)
@@ -212,6 +230,9 @@ export default new Vuex.Store({
     },
     setLastReadTime({commit}, data){
       commit('setLastReadTime', data)
+    },
+    sessionExpired({commit}, data){
+      commit('sessionExpired', data)
     }
   },
   getters:{

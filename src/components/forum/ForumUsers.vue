@@ -26,7 +26,7 @@
     <div style="height:calc(100% - 50px);overflow-y:auto;" class="navdrawr" :class="{thin_scrollbar:$vuetify.breakpoint.smAndDown}">
       <v-list subheader dense two-line>
         <v-subheader v-show="filteredList.length == 0">No results found</v-subheader>
-        <v-list-tile v-for="member in filteredList" :key="member.uid" avatar :to="'/forum/profile/' + member.username">
+        <v-list-tile v-for="member in filteredList" :key="member.uid" avatar :to="'/forum/profile/' + member.uid">
           
           <v-list-tile-avatar>
             <!-- prefer to user loggedin user's info rather than his info from voters list -->
@@ -47,7 +47,12 @@
           </v-list-tile-action>
         </v-list-tile>
       </v-list>
-      <v-btn color="teal" dark small depressed @click="nextDocs(members[members.length -1])" v-if="members.length >= 25">See more..</v-btn>
+      <v-btn color="teal" dark 
+        small depressed :loading="loading_more_members"
+        @click="nextDocs(members[members.length -1])" 
+        v-if="members.length >= 15 && !isLastDoc">
+        See more..
+      </v-btn>
       
     </div>
   </div>
@@ -61,8 +66,10 @@ export default {
     right: null,
     left: null,
     right_sidebar:true,
+    isLastDoc: false,
+    loading_more_members: false,
   }),
-  props:['members', 'thisGroup'],
+  props:['members', 'thisGroup', 'suspended'],
   computed: {
     filteredList() {
       // console.log(this.members)
@@ -88,27 +95,38 @@ export default {
     ]),
   },
   methods:{
-    nextDocs(lastVisible){
-      db.collection("moreUserInfo")
-        .where('enrolled','array-contains', this.thisGroup.electionId)
-        .startAfter(lastVisible)
-        .limit(25).get().then(docs=>{
-          docs.forEach(doc=>{
-            //console.log(doc.id, " => ", doc.data());
-            this.members.push(doc.data())
+    nextDocs(lastUser){
+      
+      this.loading_more_members = true
+      db.collection('moreUserInfo').doc(lastUser.uid).get().then(documentSnapshot => {
+        let lastVisible = documentSnapshot;
+        
+        db.collection("moreUserInfo")
+          .where('enrolled','array-contains', this.thisGroup.electionId)
+          .startAfter(lastVisible)
+          .limit(10).get().then(docs=>{
+            docs.forEach(doc=>{
+              
+              let isSuspended = this.suspended.voters && !!this.suspended.voters.find(uid => doc.data().uid == uid)
+              if(!isSuspended){
+
+                this.members.push(doc.data())
+              }
+            })
+
+            this.loading_more_members = false
+            
+            if(docs.empty){
+              this.isLastDoc = true
+            }
+          }).catch(err=>{
+            // console.log(err)
           })
-        }).catch(err=>{
-          // console.log(err)
-        })
+      })
     },
     checkProfile(){
       this.$eventBus.$emit('show_right_sidebar','profile');
     },
-    /*isOnline(userId){
-      console.log(userId,this.onlineMembers)
-      return this.onlineMembers.find(memberId => memberId == userId) ? 
-      true : false
-    },*/
     getRole(member){ // return the role a user is contesting for
       if(member.contestsRef){
         let found = member.contestsRef.find(contest=>contest.electionRef == this.thisGroup.electionId)
@@ -118,11 +136,6 @@ export default {
         return false
       }
     },
-    /*checkIfOnline(username){
-      let those_online = this.$store.state.those_online
-      let found = those_online.find(data => data.username == username)
-      return found ? 'success' : 'grey'
-    },*/
   },
   async mounted(){
     // console.log(this.members)

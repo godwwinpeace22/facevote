@@ -20,7 +20,7 @@
       <v-btn depressed 
         color="orange" 
         @click.native="updateProfile" 
-        :disabled="disabled_save" 
+        :disabled="disabled_save || loading || uploading" 
         :loading="loading">
         Save
       </v-btn>
@@ -328,9 +328,6 @@ export default {
                 }
                 this.loading = false
                 
-                if(this.$route.name == 'profile_posts' || this.$route.params.username){
-                  this.$router.push('/users/' + this.form.username)
-                }
               }
     
             })

@@ -102,7 +102,7 @@
                           </v-tooltip>
 
                           <!-- EMOJIS DIALOG-->
-                          <v-menu max-width="330" :close-on-content-click='false'
+                          <v-menu max-width="300" :close-on-content-click='false'
                             slot="prepend-inner" max-height="" top offset-y>
 
                             <v-btn slot="activator" icon >
@@ -258,12 +258,67 @@
         </v-flex>
         <v-flex sm12 md3 d-flex v-if="$vuetify.breakpoint.mdAndUp">
           <v-card height="">
-            <!-- PROFILE -->
+            <!-- ORGANIZER -->
             <event-organizer :organizer="organizer"/>
           </v-card>
         </v-flex>
       </v-layout>
     </v-container>
+
+    <!-- FILE DIALOG -->
+    <v-dialog v-model="file_dialog" style="background:#fff;" :persistent="progress_dialog"
+      max-width="600" hide-overlay :fullscreen="breakpoint.xsOnly">
+      <v-toolbar dense flat>
+        <v-toolbar-title>Upload images</v-toolbar-title>
+        <v-spacer></v-spacer>
+        <v-btn flat icon @click="file_dialog = false" :disabled="progress_dialog">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+      </v-toolbar>
+      <v-container class="white">
+        <v-card flat>
+          <!-- Selected images preview -->
+          <v-container grid-list-sm px-0>
+            <v-layout row wrap>
+              <v-flex xs3 v-for="(blob_url,i) in blob_urls" :key="i">
+                <v-card height="100" class="mb-1">
+                  <v-img :src='blob_url' height="100" ></v-img>
+                </v-card>
+              </v-flex>
+            </v-layout>
+          </v-container>
+
+          <div class="mt-4">
+            <v-textarea v-model="file_message" box color="deep-purple"
+              label="Add a caption" outline
+              rows="4" auto-grow
+            ></v-textarea>
+          </div>
+          <v-card-actions>
+            <v-btn depressed small color="secondary" @click="uploadImages">Upload Images</v-btn>
+          </v-card-actions>
+          
+        </v-card>
+      </v-container>
+      
+    </v-dialog>
+
+    <!-- File uplaod progres dialog -->
+    <v-dialog v-model="progress_dialog" max-width="300" persistent>
+      <v-card>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn flat icon :disabled="progress_dialog">
+            <v-icon @click="progress_dialog = false">mdi-close</v-icon>
+          </v-btn>
+        </v-card-actions>
+        <v-container class="mt-0">
+          <v-subheader >Uploading images</v-subheader>
+          <v-progress-linear :indeterminate="true" ></v-progress-linear>
+        </v-container>
+      
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 <script>
@@ -276,6 +331,7 @@ export default {
     show: false,
     message: '',
     file_dialog: false,
+    file_message: '',
     files: [],
     blob_urls: [],
     disabled_follow: false,
@@ -302,6 +358,7 @@ export default {
     showing_interest: false,
     saving_changes: false,
     uploading: false,
+    progress_dialog: false,
     cloudinary:{
       cloud_name:'unplugged',
       upload_preset:'pe4iolek'
@@ -326,6 +383,9 @@ export default {
     },
     title(){
       return `${this.eventData.title} - Events | ${this.$appName}`
+    },
+    breakpoint(){
+      return this.$vuetify.breakpoint
     },
     styleInput(){
       if(this.breakpoint.smAndDown){
@@ -467,6 +527,28 @@ export default {
     clearMessage () {
       this.message = ''
     },
+    async uploadImages(){
+      try {
+        this.progress_dialog = true
+        let uploaded = await this.$helpers.uploadImage(this.files, this.cloudinary)
+        this.progress_dialog = false
+        this.file_dialog = false
+        this.submit(this.file_message, uploaded)
+        
+      } catch (error) {
+        this.progress_dialog = false
+        this.file_dialog = false
+        //this.loading = false
+        this.snackbar = {
+          show: true,
+          color: 'error',
+          message: 'Sorry, something went wrong, try again.'
+        }
+        // eslint-disable-next-line
+        // console.log(error)
+      }
+      
+    },
     appendEmoji(emoji){
       this.message += emoji
     },
@@ -591,7 +673,6 @@ export default {
 			this.files = data.selected_files,
       this.blob_urls = data.imgSrc
       
-      // document.getElementById('file_img').value = null
 		})
   },
   components: {
@@ -605,9 +686,9 @@ export default {
 }
 import Navigation from '@/components/Navigation'
 import LoadingBar from '@/spinners/LoadingBar'
-import InteractiveWindow from '@/components/InteractiveWindow'
-import EventOrganizer from '@/components/EventOrganizer'
-import EmojiPicker from '@/components/EmojiPicker'
+import InteractiveWindow from '@/components/events/InteractiveWindow'
+import EventOrganizer from '@/components/events/EventOrganizer'
+import EmojiPicker from '@/components/emojis/EmojiPicker'
 import {firebase, db, database} from '@/plugins/firebase'
 import { mapGetters, mapState } from 'vuex';
 </script>

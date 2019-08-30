@@ -21,6 +21,11 @@
                   <div class="spinner spinner-1"></div>
                 </div>
               </div>
+
+              <div class="half-circle-spinner" v-if="spinnerType == 'circles'">
+                <div class="circle circle-1"></div>
+                <div class="circle circle-2"></div>
+              </div>
             </div>
           </v-layout>
         </div>
@@ -127,7 +132,7 @@ export default {
   $bg-color: #fff; //container background-color;
   $basic-dark-color: #212121; //color of the spinner
   $outer-color: #4caf50; //color of the spinner
-  $inner-color: #008080;
+  $inner-color: orange;
   $border-width: 4px; //width of spinners border
   $basic-spinner-dimensions: 70px; //width and height of spinner
   $main-spinner-dimensions: $basic-spinner-dimensions - $border-width * 2; //width and height of bigger circle
@@ -200,6 +205,49 @@ export default {
     }
   }
 }
+
+
+// Circles
+
+.half-circle-spinner, .half-circle-spinner * {
+      box-sizing: border-box;
+    }
+
+    .half-circle-spinner {
+      width: 60px;
+      height: 60px;
+      border-radius: 100%;
+      position: relative;
+    }
+
+    .half-circle-spinner .circle {
+      content: "";
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 100%;
+      border: calc(60px / 10) solid transparent;
+    }
+
+    .half-circle-spinner .circle.circle-1 {
+      border-top-color: #ff1d5e;
+      animation: half-circle-spinner-animation 1s infinite;
+    }
+
+    .half-circle-spinner .circle.circle-2 {
+      border-bottom-color: #ff1d5e;
+      animation: half-circle-spinner-animation 1s infinite alternate;
+    }
+
+    @keyframes half-circle-spinner-animation {
+      0% {
+        transform: rotate(0deg);
+
+      }
+      100%{
+        transform: rotate(360deg);
+      }
+    }
 </style>
 
 

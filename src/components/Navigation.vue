@@ -1,6 +1,6 @@
 <template>
-  <v-toolbar color="teal" dark flat app clipped-right style='background-color:#29648a;'>
-    <v-toolbar-side-icon @click.stop="$eventBus.$emit('Toggle_Left_Drawer')"></v-toolbar-side-icon>
+  <v-toolbar color="teal" dark dense  flat app clipped-right style='background-color:#29648a;'>
+    <v-toolbar-side-icon class="" @click.stop="$eventBus.$emit('Toggle_Left_Drawer')"></v-toolbar-side-icon>
     <v-toolbar-title v-show="$vuetify.breakpoint.width > 344">
       <slot name='title'>{{$appName}}</slot>
     </v-toolbar-title>
@@ -15,9 +15,12 @@
       Upgrade
     </v-btn>
 
-    <v-btn outline icon :to="curRoom ? `/elections/vote` : ''" 
+    <v-btn depressed color="teal lighten-2" 
+      :icon="$vuetify.breakpoint.xsOnly" class="text-capitalize"
+      :to="curRoom ? `/elections/vote` : ''" 
       dark exact>
-      <v-icon color="">mdi-vote-outline</v-icon>
+      <v-icon color="" :class="{'mr-2': !$vuetify.breakpoint.xsOnly}">mdi-vote-outline</v-icon>
+      <span v-if="!$vuetify.breakpoint.xsOnly">Vote</span>
     </v-btn>
 
     <v-divider inset vertical class="mr-2"></v-divider>
@@ -36,7 +39,7 @@
       </v-toolbar-title>
       
       <v-list dense>
-        <v-list-tile :to="`/users/${getUserInfo.username}`">
+        <v-list-tile :to="`/users/${getUser.uid}`">
           <v-icon color="success">mdi-account</v-icon>
           <v-list-tile-title style="margin-left:5px;">My Profile</v-list-tile-title>
         </v-list-tile>
@@ -98,7 +101,7 @@ export default {
    }
 }
 import { mapGetters, mapState } from 'vuex'
-import ProfileSettings from '@/components/ProfileSettings'
+import ProfileSettings from '@/components/users/ProfileSettings'
 import {firebase, db, database} from '@/plugins/firebase'
 </script>
 <style lang="sass" scoped>

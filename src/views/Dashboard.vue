@@ -90,7 +90,7 @@
                     </v-list-tile>
                     <v-list-tile @click="openBroadcastDialog">
                       <v-list-tile-action>
-                        <v-icon color="success">mdi-email</v-icon>
+                        <v-icon color="success">mdi-inbox</v-icon>
                       </v-list-tile-action>
                       <v-list-tile-title>Inbox</v-list-tile-title>
                       <v-list-tile-action v-show="getUnreadLength > 0">
@@ -215,6 +215,17 @@
                       <small>You've got super powers!</small>
                     </v-list-tile-content>
                   </v-list-tile>
+                  
+                  <!-- Update available -->
+                  <v-list-tile avatar v-if="appUpdateAvailable" class="elevation-2 black" @click="updateApp">
+                    <v-list-tile-action>
+                      <v-icon color="orange">mdi-update</v-icon>
+                    </v-list-tile-action>
+                    <v-list-tile-content>
+                      <v-list-tile-title class="orange--text">Update Available</v-list-tile-title>
+                      <small>Click to refresh</small>
+                    </v-list-tile-content>
+                  </v-list-tile>
                 
                 </v-list>
               </v-navigation-drawer>
@@ -274,7 +285,7 @@
             :fullscreen="$vuetify.breakpoint.smAndDown" hide-overlay lazy scrollable>
             <v-card flat class="pa-0">
               <v-card-text class="pa-0">
-                <private-msg-list v-if="broadcast_dialog" style="min-height:300px;background:#fff;"></private-msg-list>
+                <broadcast v-if="broadcast_dialog" style="min-height:300px;background:#fff;"></broadcast>
               </v-card-text>
             </v-card>
             
@@ -402,6 +413,7 @@
                       <paystack
                         :amount="plan.amount * 100"
                         :email="getUser.email"
+                        :plan="plan.plan_code"
                         :metadata="metadata"
                         :paystackkey="$paystackKey"
                         :reference="reference"
@@ -458,14 +470,27 @@
             @change="onFileSelect($event)" accept="image/jpeg,image/png/gif" multiple>
 
           <v-layout row justify-center>
-            <v-dialog v-model="switch_room_dialog" persistent max-width="290" content-class="switch_room_dialog">
-              
-              <v-card style="height: 150px;" class="pa-5">
-                <p class="title text-xs-center">Switching Election</p>
-                <v-progress-circular indeterminate 
-                  color="primary lighten-3" class="mx-auto d-block">
 
-                </v-progress-circular>
+            <v-dialog v-model="switch_room_dialog" fullscreen persistent transition="fade-transition">
+              
+              <v-card style="height: 100%;" class="pa-5" color="rgba(0,0,0,0.8)">
+                <v-container fluid fill-height>
+                  <v-layout align-center justify-center>
+                    <v-flex xs12 sm8 md4>
+                      <v-card flat color="transparent">
+                        
+                        <v-card-text>
+                          
+                          <p class="title text-xs-center white--text">Switching Election</p>
+                          <v-progress-circular indeterminate 
+                            color="success" class="mx-auto d-block">
+
+                          </v-progress-circular>
+                        </v-card-text>
+                      </v-card>
+                    </v-flex>
+                  </v-layout>
+                </v-container>
               </v-card>
             </v-dialog>
           </v-layout>
@@ -496,13 +521,13 @@ export default {
     procesing_payment: false,
     viewprofile: false,
     voterprofile: {},
-    show_private_chat_window: false,
     broadcast_dialog: false,
     fetching_enrolled: true,
     snackbar: {},
     new_manifesto_dialog: false,
     plan: {
-      title: 'SuperUser',
+      plan_name: 'testplan',
+      plan_code: 'PLN_npflhujgmzdqppi',
       amount: 5000,
       paystack_key:'pk_test_cd14c065dfe123cd983362a4ed795fe1128ec4e2',
     },
@@ -510,11 +535,12 @@ export default {
     drawer: true,
     drawer_right: false,
     drawer_right_persist: false,
+    appUpdateAvailable: window.appUpdateAvailable
   }),
   components:{
     ViewProfile,
     LoadingBar,
-    PrivateMsgList,
+    Broadcast,
     Navigation,
     NewManifesto,
     paystack,
@@ -553,7 +579,7 @@ export default {
       'curRoom',
       'curRoomId',
       'loading_rooms',
-      'is_verified'
+      'is_verified',
       
     ]),
     title(){
@@ -589,13 +615,13 @@ export default {
     },
     metadata: function(){
       return {
-        plan_type: this.plan.title,
+        plan_type: this.plan.plan_name,
         orderid: this.reference,
         custom_fields: [
           {
             display_name: "Plan_type",
             variable_name: "plan",
-            value: 'SuperUser'
+            value: this.plan.plan_name
           },
           {
             display_name: "Amount Paid",
@@ -697,11 +723,12 @@ export default {
       this.broadcast_dialog = true
     },
     verifyTxn(data){
+      
       // verfy on the server that the transaction is ok
       this.procesing_payment = true
       return firebase.auth().currentUser.getIdToken()
       .then(async (token)=>{
-        return api().post('dashboard/verifyTxn', {
+        return api().post('/verifyTxn', {
           token,
           reference: data.reference,
           amount: this.plan.amount * 100,
@@ -738,6 +765,7 @@ export default {
           this.timestamp = Date.now()
           this.upgrade = false
           this.procesing_payment = false
+          this.$Nprogress.done()
         })
         
       })
@@ -745,9 +773,6 @@ export default {
     },
     truncateText(text){
       return text ? text.replace(/(.{18})..+/, "$1...") : '';
-    },
-    logout(){
-      this.$store.dispatch('logout')
     },
     onclose(){
       this.reference = Date.now() + btoa(Math.random()).substring(0,12)
@@ -785,12 +810,6 @@ export default {
             imgSrc: blob_urls,
             selected_files: e.target.files
           })
-
-          setTimeout(() =>{ 
-            // e.target = null
-            // document.getElementById('file_img').value = null
-           
-          }, 2000)
           
 				}
 				else{
@@ -896,6 +915,9 @@ export default {
         console.log(error)
       }
     },
+    updateApp(){
+      window.location.reload(true)
+    }
   },
   async mounted(){
     document.getElementById('welcome_logo').style.display = 'none'
@@ -913,18 +935,8 @@ export default {
         this.getBroadcasts()
       }
 
-      this.$eventBus.$on('Open_Private_Chat_Window', (data)=>{
-        this.broadcasts = data
-        this.show_private_chat_window = true
-        this.show_private_msg_list = false
-      })
-
       this.$eventBus.$on('ToggleInboxDialog', data =>{
         this.broadcast_dialog = data
-      })
-
-      this.$eventBus.$on('Close_Private_Chat_Window', ()=>{
-        this.show_private_chat_window = false
       })
       
       this.$eventBus.$on('OpenNewManifestoDialog', data=>{
@@ -975,8 +987,11 @@ export default {
 
     
     firebase.auth().onAuthStateChanged(u => {
+
+      let sessionTimeout = null
+
       if(u){
-        // console.log(u)
+        
         firebase.auth().currentUser.getIdTokenResult()
         .then((idTokenResult) => {
 
@@ -988,23 +1003,33 @@ export default {
           this.getUser ? this.presenceWatcher() : ''
           this.getUserInfo ? this.setup() : ''
           
-          // console.log(idTokenResult.claims)
 
-          let state = idTokenResult.claims.superuser
-          let now = new Date().getTime()
-          let premium_expired = now > user.trial_expiry_date
+          let isSuperUser = idTokenResult.claims.superuser
+          // let now = new Date().getTime()
+          // let trial_expired = now > user.trial_expiry_date
           
-          // console.log((user.trial_expiry_date - now)/86400000)
-          if(premium_expired){
+          console.log(user)
+          if(isSuperUser){
             
-            this.$store.dispatch('subscriberState', false)
+            this.$store.dispatch('subscriberState', isSuperUser)
           }
           else{
             
-            this.$store.dispatch('subscriberState', state)
+            this.$store.dispatch('subscriberState', false)
           }
 
           this.$store.dispatch('verifiedState', user.is_verified)
+
+          // User sessions should last for only 2 hours
+          // Make sure all the times are in milliseconds!
+          const authTime = idTokenResult.claims.auth_time * 1000;
+          const sessionDuration = 1000 * 60 * 5;
+          const millisecondsUntilExpiration = sessionDuration - (Date.now() - authTime);
+          sessionTimeout = setTimeout(() => {
+
+            this.$store.dispatch('sessionExpired')
+            
+          }, millisecondsUntilExpiration);
 
 
           // let usr = idTokenResult.claims
@@ -1036,6 +1061,12 @@ export default {
           console.log(error);
         });
       }
+      else {
+        // User is logged out.
+        // Clear the session timeout.
+        sessionTimeout && clearTimeout(sessionTimeout);
+        sessionTimeout = null;
+      }
     })
   
 
@@ -1047,6 +1078,7 @@ export default {
     })
   },
   async created(){
+    
 
   },
   beforeDestroy(){
@@ -1055,17 +1087,17 @@ export default {
 }
 
 import { mapGetters, mapState } from 'vuex'
-  import api from '@/services/api2'
-  import ViewProfile from '@/components/ViewProfile'
+  import api from '@/services/api'
+  import ViewProfile from '@/components/dialogs/ViewProfile'
   import LoadingBar from '@/spinners/LoadingBar'
-  import PrivateMsgList from '@/components/PrivateMsgList'
+  import Broadcast from '@/components/Broadcast'
   import Navigation from '@/components/Navigation'
   import NewManifesto from '@/components/profile/NewManifesto'
   import paystack from 'vue-paystack'
   import Gallery from 'vue-gallery';
-  import NewBroadcast from '@/components/NewBroadcast'
-  import ManageElection from '@/components/ManageElection'
-  import NewEvent from '@/components/NewEvent'
+  import NewBroadcast from '@/components/dialogs/NewBroadcast'
+  import ManageElection from '@/components/elections/ManageElection'
+  import NewEvent from '@/components/events/NewEvent'
   import {firebase, db, database} from '@/plugins/firebase'
 </script>
 
@@ -1115,6 +1147,12 @@ $secondary: #1867c0;
   color: $secondary;
   text-decoration: none;
 }
+.text-lowercase {
+  text-transform: lowercase;
+}
+.text-normal {
+  text-transform: initial;
+}
 .fade-enter-active, .fade-leave-active {
   transition: all .5s cubic-bezier(1.0, 0.5, 0.8, 1.0);
 }
@@ -1130,9 +1168,9 @@ $secondary: #1867c0;
   transform: translateY(30px);
 }
 
-.v-dialog--active{
-  @include borderTopRadius(10px)
-}
+// .v-dialog--active{
+//   @include borderTopRadius(10px)
+// }
 
 .switch_room_dialog.v-dialog--active {
   @include borderTopRadius(0px)
@@ -1190,13 +1228,6 @@ a {
     //color:#bfbbbb;
     color:#fff;
   }
-}
-
-.emoji-mart-bar{
-  background: #ececec;
-}
-.emoji-mart-scroll{
-  overflow-x: hidden;
 }
 
 .theme--light.v-text-field--outline .v-input__slot {

@@ -192,11 +192,11 @@
 											<v-subheader v-if="filteredList.length == 0">No voters yet</v-subheader>
 											<v-expansion-panel-content v-for="(voter, index) in filteredList" :key="index">
 												<template slot="actions">
-													<v-tooltip top v-if="voterSuspended(voter)">
+													<v-tooltip top v-if="voter.suspended">
 														<v-icon color="error" slot="activator">
 															mdi-information-outline
 														</v-icon>
-														<span v-if="voterSuspended(voter)">Voter has been suspended</span>
+														<span v-if="voter.suspended">Voter has been suspended</span>
 													</v-tooltip>
 													<v-icon>{{$vuetify.icons.expand}}</v-icon>
 												</template>
@@ -224,8 +224,8 @@
 													<v-card-actions class="grey lighten-2 text-xs-center">
 														<v-tooltip top class="mr-4">
 															<v-btn color="success" depressed small 
-																v-if="!voterSuspended(voter) && !currElection.admins.includes(voter.uid)" 
-																slot="activator" @click="makeAdmin(voter)" :loading="making_admin">
+																v-if="!voter.suspended && !currElection.admins.includes(voter.uid)" 
+																slot="activator" @click="makeAdmin(voter, 'makeAdmin')" :loading="making_admin">
 																Make admin</v-btn>
 															<span>Give this user admin privilages</span>
 														</v-tooltip>
@@ -233,26 +233,32 @@
 														<v-tooltip top class="mr-4">
 															<v-btn color="success" depressed 
 																small v-if="currElection.admins.includes(voter.uid) && voter.uid != currElection.admin" 
-																slot="activator" @click="removeAdmin(voter)" :loading="making_admin">
+																slot="activator" @click="makeAdmin(voter, 'removeAdmin')" :loading="making_admin">
 																Remove admin</v-btn>
 															<span>Remove admin privilages</span>
 														</v-tooltip>
 														
 
-														<v-tooltip top v-if="!voterSuspended(voter) && !currElection.admins.includes(voter.uid)">
+														<v-tooltip top v-if="!voter.suspended && !currElection.admins.includes(voter.uid)">
 															<v-btn color="orange" dark depressed small @click="suspendVoter(voter)" 
-																 :loading="loading" slot="activator">Suspend voter</v-btn>
+																 :loading="loading" :disabled="making_admin" slot="activator">Suspend voter</v-btn>
 															<span>This will deny this voter access to vote and the chat forum</span>
 														</v-tooltip>
 
 														<v-btn color="orange" dark 
 															small depressed @click="restoreVoter(voter)"
-															v-if="voterSuspended(voter)" 
+															v-if="voter.suspended" 
 															:loading="loading">Restore voter</v-btn>
 													</v-card-actions>
 												</v-card>
 											</v-expansion-panel-content>
 										</v-expansion-panel>
+										<v-btn flat small 
+											color="secondary" @click="moreVoters" 
+											:loading="loading_more_voters"
+											v-if="!isLastVoter && regVoters.length < currElection.voters">
+											More voters
+										</v-btn>
 									</div>
 								</v-tab-item>
 
@@ -275,6 +281,12 @@
 												</v-layout>
 											</v-timeline-item>
 										</v-timeline>
+										<v-btn flat small 
+											color="secondary" @click="moreActivities" 
+											:loading="loading_more_activities"
+											v-if="!isLastActivity && activities.length > 1">
+											More activities
+										</v-btn>
 									</div>
 								</v-tab-item>
 							</v-tabs>
@@ -416,7 +428,7 @@
 										<v-list-tile-action>
 											<v-tooltip top>
 												<v-icon slot="activator" color="secondary" 
-													@click="restore(contestant)">
+													@click="restoreContestant(contestant)">
 													mdi-restore
 												</v-icon>
 												<span>Restore {{contestant.name | capitalize}}</span>
@@ -434,7 +446,7 @@
 			<!-- EDIT DIALOG -->
 			<v-dialog v-model="edit_dialog" :persistent="saving_edit" hide-overlay max-width="500" scrollable>
 				<v-card flat>
-					<v-toolbar>
+					<v-toolbar flat>
 						<v-icon class="mr-2" color="primary">mdi-settings</v-icon>
 						<span class="font-weight-bold">Edit Election</span>
 					</v-toolbar>
@@ -522,6 +534,26 @@
 							chips label="Roles"
 							multiple outline
 						></v-select>
+						
+						<v-card height="50" width="50" 
+							v-show="currElection.logo || blob_url" flat :img="blob_url || currElection.logo">
+							
+						</v-card>
+
+						<span v-if="!currElection.logo && !blob_url">
+							<v-icon>mdi-image</v-icon> No logo
+						</span><br>
+
+						<v-btn outline small color="secondary" 
+							v-if="!logo" class="text-normal ml-0"
+							@click="$helpers.trigFileSelector">
+							Upload logo
+						</v-btn>
+						<v-btn outline small color="secondary" 
+							v-if="logo" class="text-normal ml-0"
+							@click="logo = null; blob_url = null">
+							Clear logo
+						</v-btn>
 
 					</v-card-text>
 					<v-card-actions>
@@ -552,7 +584,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn flat @click="suspend_dialog = false; loading = false">Cancel</v-btn>
-          <v-btn color="orange" outline @click="suspend" :loading="loading">Suspend</v-btn>
+          <v-btn color="orange" outline @click="suspendContestant" :loading="loading">Suspend</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -581,10 +613,10 @@
           <p>Note that the user will be notified once they are suspended</p>
         </v-card-text>
         <v-card-actions>
-          <v-btn color="orange" small @click="suspendVoter(flagged_user)" 
-            v-if="!voterSuspended(flagged_user)" :loading="loading">Suspend voter</v-btn>
-          <v-btn color="orange" small @click="restoreVoter(flagged_user)" v-else :loading="loading">Restore voter</v-btn>
-          <v-btn color="secondary" small @click="flagged_user_dialog = false" :disabled="loading">Ignore</v-btn>
+          <!-- <v-btn color="orange" small @click="suspendVoter(flagged_user)" 
+            v-if="!voterSuspended(flagged_user)" :loading="loading">Suspend voter</v-btn> -->
+          <!-- <v-btn color="orange" small @click="restoreVoter(flagged_user)" v-else :loading="loading">Restore voter</v-btn>
+          <v-btn color="secondary" small @click="flagged_user_dialog = false" :disabled="loading">Ignore</v-btn> -->
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -602,6 +634,7 @@ export default {
 		role_input: '',
 		role_input_desc: '',
 		dialog: false,
+		suspended: [],
 		form: {
 			title: '',
 			date: '',
@@ -609,13 +642,21 @@ export default {
 			electionDuration: 5,
 			roles: []
 		},
+		blob_url: '',
+		logo: null,
+		logo_too_large: false,
+		uploading_logo: false,
 		saving_edit: false,
 		modal: false,
     modal2: false,
     today: new Date().getTime(),
     contestants: [],
     currElection: {},
-    regVoters: [],
+		regVoters: [],
+		loading_more_voters: false,
+		loading_more_activities: false,
+		isLastVoter: false,
+		isLastActivity: false,
 		activities: [],
 		regActivities: [],
 		chartData: {},
@@ -676,6 +717,13 @@ export default {
 		'election': function(){
 			this.setUp()
 			this.prefillForm()
+		},
+		'suspended.contestants': function(to, from){
+			if(this.all_contestants){
+        let suspended = to
+        this.contestants = this.all_contestants.filter(item => !suspended.includes(item.uid))
+      }
+			this.setTableData(this.contestants)
 		}
 	},
   filters: {
@@ -716,7 +764,7 @@ export default {
     // purposely duplicated this instead of merging
     // it with above as a method bcs it should be reactive
     no_of_contestants(){
-			let len = this.currElection.contestants
+			let len = this.contestants.length
 			
 			switch (true){
 				case len >= 1000000:
@@ -739,11 +787,23 @@ export default {
     },
     filteredList() {
       if(this.regVoters){
-        return this.regVoters.filter(voter => {
+        return this.all_voters.filter(voter => {
           return voter.name.toLowerCase().includes(this.search_voters.toLowerCase())
         })
       }
-    },
+		},
+		all_voters(){
+			if(this.regVoters){
+
+				return this.regVoters.map(voter => {
+					let suspended = !!this.suspended.voters && this.suspended.voters.find(v => v == voter.uid)
+					return {
+						...voter,
+						suspended
+					}
+				})
+			}
+		},
     electionStartDate(){
       let d = new Date(this.currElection.fullStartDate);
       return d.toLocaleString('en-US',{
@@ -772,14 +832,6 @@ export default {
         return ['Ended','error'] // ended
       }
       
-    },
-    followers(){
-      if(this.regVoters){
-        // return this.regVoters.filter(voter => {
-        //   return this.currElection.followers.includes(voter.uid)
-        // })
-        return []
-      }
     },
     
    
@@ -826,14 +878,18 @@ export default {
 			// Allow changes only when election has not started
 			if(start > now){
 
-				firebase.auth().currentUser.getIdToken().then((token)=>{
+				firebase.auth().currentUser.getIdToken().then(async (token)=>{
 					this.saving_edit = true
-	
-					api().post('edit_election',{
+
+					let logo = this.logo ? await this.uploadLogo() : this.currElection.logo
+
+					await api().post('edit_election',{
 						form: this.form,
 						userInfo: this.getUserInfo,
 						electionId: this.currElection.electionId,
-						idToken: token
+						fullStartDate: (new Date(this.form.date + ' ' + this.form.time)).toISOString(),
+						idToken: token,
+						logo: logo[0]
 					}).then(res =>{ 
 	
 						this.saving_edit = false
@@ -889,63 +945,95 @@ export default {
       // console.log(curHour, val)
       return curHour < val
     },
-    voterSuspended(voter){
-      let finding = voter.suspended &&
-      voter.suspended.find(electionId => electionId == this.currElection.electionId) ?
-      true : false
-      //console.log(finding)
-      return finding
-    },
-    extractVoter(uid){
-      return this.regVoters.find(voter=> voter.uid == uid)
-    },
     getRole(contestant){
       let ref = contestant.contestsRef
       .find(item=>item.electionRef == this.currElection.electionId)
       let role = this.currElection.roles.find(role=>role.value == ref.role).title
       return role
-    },
+		},
+		async uploadLogo(){
+			
+			this.uploading_logo = true
+			
+			return this.$helpers.upload({
+				files: [this.logo],
+				path: `logos/${this.currElection.electionId}`,
+				file_name: `${this.currElection.title.split(' ').join('-')}-logo`
+			}).then(res => {
+				
+				this.uploading_logo = false
+				return res
+			})
+			.catch(err => console.log(err))
+			
+		},
+		async getVoters(){
+			return db.collection('moreUserInfo')
+			.where('enrolled','array-contains',this.currElection.electionId)
+			.limit(15).get()
+			.then(querySnapshot=>{
+				let myArr = []
+				querySnapshot.forEach(doc=>{
+					myArr.push(doc.data())
+				})
+				this.regVoters = myArr
+				
+				return myArr
+			})
+		},
+		moreVoters(){
+			let lastVoter = this.regVoters[this.regVoters.length - 1]
+			this.loading_more_voters = true
+
+			db.collection('moreUserInfo').doc(lastVoter.uid).get()
+			.then(documentSnapshot => {
+
+				db.collection('moreUserInfo')
+				.where('enrolled','array-contains',this.currElection.electionId)
+				.startAfter(documentSnapshot)
+				.limit(15).get()
+				.then(querySnapshot=>{
+					let myArr = []
+					querySnapshot.forEach(doc=>{
+						this.regVoters.push(doc.data())
+					})
+					this.loading_more_voters = false
+					this.isLastVoter = querySnapshot.empty
+					
+				})
+			})
+		},
+		async getContestants(){
+			return db.collection('moreUserInfo')
+			.where('contests', 'array-contains', this.currElection.electionId)
+			.get().then(docs => {
+				let contestants = []
+				docs.forEach(doc => {
+					contestants.push(doc.data())
+				})
+				return this.contestants = contestants
+			})
+		},
     async setUp(){
       try {
 				
         // Set current election
 				this.currElection = this.election ? this.election : this.curRoom 
 
-				// console.log(this.currElection, this.election, this.curRoom)
 				if(this.election && this.voters){
 					this.regVoters = this.voters
 					this.contestants = this.conts
-					this.setTableData(this.conts)
+					this.getSuspended()
 					this.setChart()
 					this.ready = true
 					this.getAdmins()
 				}
 				else{
 
-					db.collection('moreUserInfo')
-					.where('enrolled','array-contains',this.currElection.electionId)
-					.limit(25).get()
-					.then(querySnapshot=>{
-						let myArr = []
-						querySnapshot.forEach(doc=>{
-							myArr.push(doc.data())
-						})
-						this.regVoters = myArr
-						
-						return myArr
-					}).then(result=>{
-						// get contestants
-						let contestants = []
-						result.forEach(voter=>{
-							if(voter.contests && voter.contests.find(id => id == this.currElection.electionId)){
-								contestants.push(voter)
-							}
-						})
-						
-						this.contestants = contestants
-						return contestants
-					}).then(conts=>{
-						this.setTableData(conts)
+					this.getVoters()
+
+					this.getContestants().then(conts=>{
+						this.getSuspended()
 						this.setChart()
 						this.getAdmins()
 						this.ready = true
@@ -959,9 +1047,10 @@ export default {
       }
     },
     setTableData(contestants){
-      this.tabledata = [] // to prevent multiple pushings
+			this.tabledata = [] // to prevent multiple pushings
+			
       contestants.forEach(cont=>{
-        // console.log(this.getRole(cont))
+        
         let myObj = {
           value: false,
           name: cont.name,
@@ -970,13 +1059,10 @@ export default {
           role: this.getRole(cont),
           department: cont.dept,
           faculty: cont.fac,
-					suspended: this.currElection.suspended ? 
-						this.currElection.suspended.includes(cont.uid) : 
-						false
+					suspended: !!this.suspended.contestants.find(item => item == cont.uid)
         }
         this.tabledata.push(myObj)
       })
-      // console.log('tabledata: ', this.tabledata)
 		},
 		setChart(){
 			let votersObj = this.currElection.votersByDept
@@ -1002,7 +1088,7 @@ export default {
 
         db.collection('activities')
         .where('elecRef','==',this.currElection.electionId)
-        .orderBy('tstamp', 'desc').limit(25)
+        .orderBy('tstamp', 'desc').limit(15)
         .get().then(querySnapshot=>{
           let acts = []
           querySnapshot.forEach(doc=>{
@@ -1012,6 +1098,25 @@ export default {
           // console.log('activities: ', acts)
         })
       }
+		},
+		moreActivities(){
+
+			let lastActivity = this.activities[this.activities.length - 1]
+			this.loading_more_activities = true
+
+			db.collection('activities')
+			.where('elecRef', '==', this.currElection.electionId)
+			.orderBy('tstamp', 'desc')
+			.startAfter(lastActivity.tstamp)
+			.limit(20).get().then(querySnapshot => {
+				
+				querySnapshot.forEach(doc => {
+					this.activities.push(doc.data())
+				})
+
+				this.isLastActivity = querySnapshot.empty
+				this.loading_more_activities = false
+			})
 		},
 		recentRegActivities(){
 			// get registrations within a week ago
@@ -1029,6 +1134,14 @@ export default {
 
 				// console.log(acts)
 				this.regActivities = acts
+			})
+		},
+		async getSuspended(){
+			// get suspended voters and contestants
+			db.collection('suspended').doc(this.currElection.electionId)
+			.onSnapshot(doc => {
+				
+				this.suspended = doc.data()
 			})
 		},
 		getAdmins(){
@@ -1108,46 +1221,40 @@ export default {
       }
     
     },
-    async suspend(){
+    async suspendContestant(){
       this.loading = true
-      let index = this.tabledata.findIndex(item =>
-        item.contId == this.culprit.contId
-      )
+     
+			let index = this.tabledata.indexOf(this.culprit)
 
-      // console.log(this.culprit)
-      let elecRef = db.collection('elections').doc(this.currElection.electionId)
-      elecRef.update({
-        suspended: firebase.firestore.FieldValue.arrayUnion(this.culprit.contId)
-			}).then(() => {
-
-				this.tabledata[index].suspended = true
-				this.$eventBus.$emit('Suspend_Contestant', this.culprit.contId)
+			db.collection('suspended').doc(this.currElection.electionId)
+			.update({
+				contestants: firebase.firestore.FieldValue.arrayUnion(this.culprit.contId)
+			})
+			.then(() => {
 
 				this.loading = false
 				this.suspend_dialog = false
-			})
+			}).catch(err => {
+				this.loading = false
 			
-      
-      
+			})
     },
-    async restore(contestant){
+    async restoreContestant(contestant){
       try {
         let index = this.tabledata.findIndex(item =>
           item.contId == contestant.contId
-        )
-        setTimeout(() => {
-          this.tabledata[index].suspended = false
-        }, 1000);
-        
-				this.$eventBus.$emit('Restore_Contestant', contestant.contId)
+				)
 				
-        let elecRef = db.collection('elections').doc(this.currElection.electionId)
-				elecRef.update({
-					suspended: firebase.firestore.FieldValue.arrayRemove(contestant.contId)
+        db.collection('suspended').doc(this.currElection.electionId)
+				.update({
+					contestants: firebase.firestore.FieldValue.arrayRemove(contestant.contId)
+				})
+				.then(() => {
+					
 				})
         
       } catch (error) {
-        alert(error)
+        
         // console.log(error)
       }
       
@@ -1156,14 +1263,11 @@ export default {
       // Suspend a voter from voting
 			this.loading = true
 			
-      db.collection('moreUserInfo').doc(voter.uid)
+      db.collection('suspended').doc(this.currElection.electionId)
       .update({
-        suspended: firebase.firestore.FieldValue.arrayUnion(this.currElection.electionId)
+        voters: firebase.firestore.FieldValue.arrayUnion(voter.uid)
       }).then(()=>{
 				this.loading = false
-				voter.suspended ? 
-					voter.suspended.push(this.currElection.electionId) :
-					voter['suspended'] = [this.currElection.electionId]
 
         this.suspend_dialog = false
       })
@@ -1171,39 +1275,49 @@ export default {
     restoreVoter(voter){
       // Restore a voter to allow them vote
       this.loading = true
-      db.collection('moreUserInfo').doc(voter.uid)
+      db.collection('suspended').doc(this.currElection.electionId)
       .update({
-        suspended: firebase.firestore.FieldValue.arrayRemove(this.currElection.electionId)
+        voters: firebase.firestore.FieldValue.arrayRemove(voter.uid)
       }).then(()=>{
 				this.loading = false
-				voter.suspended.splice(voter.suspended.indexOf(this.currElection.electionId), 1)
-        this.suspend_dialog = false
       })
 		},
-		makeAdmin(voter){
+		makeAdmin(voter, action){
 			// give a voter admin privilages
 			this.making_admin = true
-			db.collection('elections').doc(this.currElection.electionId)
-			.update({
-				admins: firebase.firestore.FieldValue.arrayUnion(voter.uid)
-			}).then(() => {
-				this.adminList.push(voter)
-				this.currElection.admins.push(voter.uid)
+			
+			firebase.auth().currentUser.getIdToken().then((idToken)=>{
+				api().post(action, {
+					idToken,
+					voter,
+					electionId: this.currElection.electionId
+				}).then(res => {
+
+					this.making_admin = false
+					if(action == 'makeAdmin'){
+
+						this.adminList.push(voter)
+					}
+					if(action == 'removeAdmin'){
+						this.adminList = this.adminList.filter(v => v.uid != voter.uid)
+					}
+				}).catch(err => {
+					
+					this.making_admin = false
+					this.$eventBus.$emit('Snackbar', {
+						show: true,
+						message: err.response ? err.response.data.message : 'Something went wrong'
+					})
+				})
+			})
+			.catch(err => {
 				this.making_admin = false
+				this.$eventBus.$emit('Snackbar', {
+					show: true,
+					message: 'Something went wrong'
+				})
 			})
 		},
-		removeAdmin(voter){
-			// remove admin privilages
-			this.making_admin = true
-			db.collection('elections').doc(this.currElection.electionId)
-			.update({
-				admins: firebase.firestore.FieldValue.arrayRemove(voter.uid)
-			}).then(() => {
-				this.adminList = this.adminList.filter(v => v.uid != voter.uid)
-				this.currElection.admins.splice(this.currElection.admins.indexOf(voter.uid),1)
-				this.making_admin = false
-			})
-		}
     
 	},
 	components:{
@@ -1215,12 +1329,23 @@ export default {
       await this.setUp()
 			await this.getActivities()
 			await this.recentRegActivities()
-			// this.getAdmins()
+			
 			this.prefillForm()
       
     } catch (error) {
       // console.log(error)
-    }
+		}
+		
+		this.$eventBus.$on('Selected_Files', data => {
+			if(data.selected_files[0].size > 1000000){
+				alert('Logo must be less than 1mb')
+			}
+			else {
+
+				this.logo = data.selected_files[0],
+				this.blob_url = data.imgSrc[0]
+			}
+		})
     
   }
 }

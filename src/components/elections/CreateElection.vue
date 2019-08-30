@@ -647,8 +647,8 @@ export default {
       });   
     },
     callback(res){
-      // this.verifyTxn(res)
-      this.create(res)
+      this.verifyTxn(res)
+      // this.create(res)
     },
     close(res){
       this.reference = Date.now() + btoa(Math.random()).substring(0,12)
@@ -669,9 +669,11 @@ export default {
     verifyTxn(data){
       // verfy on the server that the transaction is ok
       this.creating_election_dialog = true
+      this.p_text = 'Verifying...'
+
       firebase.auth().currentUser.getIdToken()
       .then((token)=>{
-        api2().post('dashboard/verifyTxn', {
+        api().post('/verifyTxn', {
           token,
           reference: data.reference,
           amount: this.no_of_voters * this.price_per_voter * 100

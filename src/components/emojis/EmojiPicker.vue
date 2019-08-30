@@ -1,18 +1,24 @@
 <template>
   <div>
       <v-tabs v-model="active"
-        color="cyan"
+        color="cyan" centered
         dark show-arrows>
         <v-tabs-slider color="yellow"></v-tabs-slider>
 
-        <v-tab v-for="category in emojiData" 
+        <v-tab v-for="category in categories" 
           :key="category.name" ripple 
           class="text-capitalize"
+          icons-and-text
           :href="'#tab-' + category.name">
-          {{ category.name }}
+          <v-tooltip bottom>
+            <v-icon slot="activator">{{category.icon}}</v-icon>
+            <span>{{category.name}}</span>
+          </v-tooltip>
+          
         </v-tab>
         <v-tabs-items>
-          <v-tab-item :value="'tab-' + emoji.name"
+          <v-tab-item 
+            :value="'tab-' + emoji.name"
             v-for="(emoji, i) in emojiData"
             :key="i + 'e'"
           >
@@ -41,6 +47,15 @@ export default {
   computed: {
     active_tab(){
       return this.emojiData
+    },
+    categories(){
+      return [
+        {name: 'People', icon: 'mdi-emoticon-excited-outline'},
+        {name: 'Nature', icon: 'mdi-nature'},
+        {name: 'Objects', icon: 'mdi-camera'},
+        {name: 'Places', icon: 'mdi-home-city'},
+        {name: 'Symbols', icon: 'mdi-pound-box'},
+      ]
     }
   },
   methods: {
@@ -54,7 +69,7 @@ export default {
   }
 }
 
-import emojiData from '@/components/emojiData'
+import emojiData from '@/components/emojis/emojiData'
 </script>
 
 <style>

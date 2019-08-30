@@ -57,6 +57,8 @@
                         browser-autocomplete="phone" min="0"
                         class="px-4" color="secondary"
                       ></v-text-field>
+
+                      <small>Your BVN is used for verification purposes only. We don't store your BVN or share it with other third-parties.</small>
                     </v-card-text>
                     
                       <p v-if="re_login" class="orange--text">You might need to re-login</p>
@@ -128,7 +130,7 @@ export default {
       this.verifying = true
       
       firebase.auth().currentUser.getIdToken().then((token)=>{
-        api2().post('dashboard/verify', {
+        api().post('/verifyUser', {
           idToken: token,
           bvn: this.bvn,
           phone: this.phone
@@ -173,7 +175,7 @@ export default {
     Navigation
   }
 }
-import api2 from '@/services/api2'
+import api from '@/services/api'
 import Navigation from '@/components/Navigation'
 import { mapGetters, mapState } from 'vuex';
 import {firebase, db, database} from '@/plugins/firebase'

@@ -86,7 +86,7 @@
                       <v-icon color="teal">mdi-vote-outline</v-icon>
                     </v-list-tile-action>
                     <v-list-tile-title>
-                      <span class="mr-3">Number that voted:</span>
+                      <span class="mr-3">People that voted:</span>
                       <span >{{rawVotes.length}}</span>
                     </v-list-tile-title>
                   </v-list-tile>
@@ -148,10 +148,16 @@
                 </v-list>
               </v-flex>
             </v-layout>
+
+            <v-divider></v-divider>
+
+            
+            <v-subheader class="mt-5 font-weight-bold">Contestants and votes</v-subheader>
             <v-data-table
               :headers="headers"
               :items="tabledata"
               :loading='false'
+              :hide-actions="isPrinting"
             >
             <v-progress-linear slot="progress" color="blue" indeterminate></v-progress-linear>
               <template slot="items" slot-scope="props">
@@ -160,6 +166,24 @@
                 <td class="text-xs-left">{{ props.item.department }}</td>
                 <td class="text-xs-left">{{ props.item.faculty }}</td>
                 <td class="text-xs-left">{{props.item.score}}</td>
+              </template>
+            </v-data-table>
+
+            <v-divider></v-divider>
+            <v-subheader class="mt-5 font-weight-bold">Votes Breakdown</v-subheader>
+            <v-data-table
+              :headers="votes_breakdown_headers"
+              :items="votes_breakdown_tabledata"
+              :loading='false' :hide-actions="isPrinting"
+            >
+            <v-progress-linear slot="progress" color="blue" indeterminate></v-progress-linear>
+              <template slot="items" slot-scope="props">
+                <td>{{ props.item.dept | capitalize}}</td>
+                <td class="text-xs-left">{{ props.item.fac }}</td>
+                <td class="text-xs-left">{{ props.item.voters }}</td>
+                <td class="text-xs-left">{{ props.item.voted }}</td>
+                <td class="text-xs-left">{{ props.item.votes_in_dept }}</td>
+                <td class="text-xs-left">{{props.item.percentage_of_total}}%</td>
               </template>
             </v-data-table>
           </v-card>
@@ -176,7 +200,6 @@ export default {
       {
       text: 'Name',
       align: 'left',
-      sortable: false,
       value: 'name'
       },
       {text:'Role', value:'role'},
@@ -184,9 +207,32 @@ export default {
       {text:'Faculty', value:'faculty'},
       {text:'Votes', value:'score'},
     ],
-    tabledata: []
+    votes_breakdown_headers: [
+      {
+        text: 'Department',
+        align: 'left',
+        value: 'dept'
+      },
+      {text:'Faculty', value:'fac'},
+      {text: 'Enrolled', value: 'voters'},
+      {text:'Voted', value:'voted'},
+      {text:'Votes', value:'votes_in_dept'},
+      {text:'Percentage of Total', value:'percentage_of_total'},
+    ],
+    tabledata: [],
+    votes_breakdown_tabledata: [],
   }),
-  props: ['currElection','status','getAdmin','timer_ready','contestants','allVotes','rawVotes'],
+  props: [
+    'currElection',
+    'status',
+    'getAdmin',
+    'timer_ready',
+    'contestants',
+    'allVotes',
+    'rawVotes',
+    'totalVotes', 
+    'isPrinting'
+  ],
   filters: {
     capitalize: function (value) {
       if (!value) return ''
@@ -240,6 +286,7 @@ export default {
     },
     initialize(){
       this.setTableData()
+      this.votesBreakdown()
     },
     getRole(contestant){
       let ref = contestant.contestsRef
@@ -247,6 +294,36 @@ export default {
       let found = this.currElection.roles.find(role=>role.value == ref.role)
       return found ? found.title : false
     },
+    votesBreakdown(){
+      
+      let grouped = this.rawVotes.reduce((r, a) => {
+          const { dept, fac, choices } = a;
+
+          r[a.dept] = [...r[a.dept] || [], {
+            dept,
+            fac,
+            choices
+          }];
+
+          return r;
+        }, {});
+
+        this.votes_breakdown_tabledata = []
+        Object.values(grouped).forEach(group => {
+
+          let votes_in_dept = group.length * Object.keys(group[0].choices).length
+          
+          this.votes_breakdown_tabledata.push({
+            dept: group[0].dept,
+            fac: group[0].fac,
+            voters: this.currElection.votersByDept[group[0].dept],
+            voted: group.length,
+            votes_in_dept,
+            percentage_of_total: votes_in_dept / this.totalVotes * 100
+          })
+
+        })
+    }
   },
   mounted(){
     this.initialize()

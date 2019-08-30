@@ -262,7 +262,7 @@
     </v-container>
 
     <!-- More Charts -->
-    <v-container grid-list-sm pt-0 :pa-0="$vuetify.breakpoint.xsOnly" v-if="isSuperUser">
+    <v-container grid-list-sm pt-0 :pa-0="$vuetify.breakpoint.xsOnly" v-if="isContestant && isSuperUser">
        <v-layout row wrap>
          <v-flex xs12>
            <v-card :class="[{round_top: $vuetify.breakpoint.smAndUp, 'grey lighten-4': $vuetify.breakpoint.mdAndUp}]" 
@@ -453,6 +453,9 @@ export default {
       })
       return totalVotes
     },
+    isContestant(){
+      return !!this.contestants.find(contestant => contestant.uid == this.getUser.uid)
+    },
     ...mapGetters([
       'getUser',
       'getUserInfo',
@@ -482,7 +485,7 @@ export default {
       this.sortResults()
       this.getLabels()
       this.allWinners()
-      this.percentageShareOfAllVotes()
+      this.isContestant ? this.percentageShareOfAllVotes() : ''
       this.currElection.type == 'School' && this.isSuperUser ? this.votesInEachFaculty() : ''
       this.currElection.type == 'School' && this.isSuperUser ? this.votesInEachDepartment() : ''
     },

@@ -14,6 +14,9 @@ import VueQuill from 'vue-quill'
 import vueAwesomeCountdown from 'vue-awesome-countdown'
 import VueSanitize from "vue-sanitize"
 import linkify from 'vue-linkify'
+// import checkView from 'vue-check-view'
+import LoadingBar from '@/spinners/LoadingBar'
+import vuelidate from 'vuelidate'
 // import VueChatScroll from 'vue-chat-scroll'
 
 // import LogRocket from 'logrocket';
@@ -42,20 +45,24 @@ Vue.prototype.$paystackKey = 'pk_test_cd14c065dfe123cd983362a4ed795fe1128ec4e2'
 // Vue.prototype.$LogRocket = LogRocket
 // global.$LogRocket = LogRocket
 
-Vue.prototype.$eventBus = new Vue();
+const $eventBus = new Vue();
+Vue.prototype.$eventBus = $eventBus
 Vue.use(Vuex)
 Vue.component('vue-headful', vueHeadful);
+Vue.component('v-loading', LoadingBar)
 Vue.use(vueAwesomeCountdown, 'vac')
 Vue.config.productionTip = false
 Vue.use(plugin)
 Vue.use(VueQuill)
 // Vue.use(VueChatScroll)
 Vue.use(VueSanitize);
+// Vue.use(checkView)
+Vue.use(vuelidate)
 
 Vue.directive('linkified', linkify)
 
 new Vue({
   router,
   store,
-  render: h => h(App)
+  render: h => h(App),
 }).$mount('#app')

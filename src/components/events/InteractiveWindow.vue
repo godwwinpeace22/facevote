@@ -12,25 +12,25 @@
     </v-snackbar>
 
     <!-- NO DATA -->
-    <v-subheader class="text-xs-center" v-if="!getChatMessages || getChatMessages.length == 0">No recent messages yet. Be the first to write a message</v-subheader>
+    <v-subheader class="text-xs-center" v-if="!msgs || msgs.length == 0">No recent messages yet. Be the first to write a message</v-subheader>
     
-    <div flat pa-0 id="chat_space" >
+    <div flat id="chat_space">
       
       <div class="chat_space_content" id="chat_space_content"
-        v-if="getChatMessages.length > 0 && $vuetify.breakpoint.mdAndUp"
+        v-if="msgs.length > 0 && $vuetify.breakpoint.mdAndUp"
         style="background: white;" :style="styleForChatSpaceContent">
 
         <v-btn flat small @click="moreMessages()"
-          color="secondary" v-if="offset != null && getChatMessages.length <! 25"
+          color="secondary" v-if="offset != null && msgs.length <! 25"
           class="d-block mx-auto text-capitalize" 
           :loading="loading_more_msgs">
           See older messages
         </v-btn>
 
-        <div v-for="(msg,i) in getChatMessages" :key="i">
+        <div v-for="(msg,i) in msgs" :key="i">
           <!-- DATE DIVIDER -->
-          <div v-if="divide(msg.tstamp, getChatMessages[i-1])" class="divide">
-            {{divide(msg.tstamp, getChatMessages[i-1])}}
+          <div v-if="divide(msg.tstamp, msgs[i-1])" class="divide">
+            {{divide(msg.tstamp, msgs[i-1])}}
           </div>
 
           <div class="chat_rectangle ">
@@ -48,8 +48,7 @@
             <div class="chat_content">
               <div style="width:100%;margin-top:0px;margin-bottom:0px;">
                 <span class="text-capitalize" v-if="msg.onr.uid != getUser.uid " style="font-size:15px;margin-right:5px;">
-                  <a class="black--text font-weight-bold" @click.prevent="$router.push(`/forum/profile/${msg.onr.email}`); 
-                    $eventBus.$emit('Toggle_drawerRight', true)">
+                  <a class="black--text font-weight-bold" @click.prevent="''">
                   {{msg.onr.name}}</a>
                 </span>
                 <span v-else style="margin-right:5px;" class="font-weight-bold"><strong>You  </strong></span>
@@ -58,39 +57,11 @@
                 </span>
               </div>
               
-              <div style="width:100%;" >
-
-                <div v-html="msg.body" v-linkified:options="linkify_options"></div>
+              <div style="width:100%;">
 
                 <!-- the spice of life -->
-                <!-- <template v-for="item in msg.body.split(' ')">
-                  
-                  <router-link event="" @click.native.prevent="goto(item,msg.elecRef)" 
-                    v-if="item.charAt(0) == '@'" 
-                    :to="'/forum/profile/' + item.slice(1)" :key="item" class="primary--text text-capitalize">
-                    @{{findAMember(item.slice(1))}}
-                  </router-link>
-
-                  <router-link v-else-if="item.charAt(0) == '#'" :to="item" append :key="item">{{item}} </router-link>
-
-                  <template v-else>{{item}} </template>
-
-                </template> -->
+                <div v-html="$sanitize(msg.body)" v-linkified:options="linkify_options"></div>
                 
-                <!-- ACTIONS FOR ADMINS OR MODERATORS -->
-                <!-- <div id="moderator_actions" v-if="isAdmin">
-                  <v-menu offset-y>
-                    <v-btn flat icon slot="activator">
-                      <v-icon>more_vert</v-icon>
-                    </v-btn>
-                    <v-list dense>
-                      <v-list-tile @click="deleteMessage(msg)">
-                        <v-list-tile-title>Delete this message</v-list-tile-title>
-                      </v-list-tile>
-                    </v-list>
-                  </v-menu>
-                  
-                </div> -->
 
                 <!-- UPLOADED IMAGES -->
                 <v-container grid-list-md v-if="msg.imgs">
@@ -123,7 +94,7 @@
         </div>
       </div>
 
-      <div v-if="getChatMessages.length > 0 && $vuetify.breakpoint.smAndDown" class="chat_space_content"
+      <div v-if="msgs.length > 0 && $vuetify.breakpoint.smAndDown" class="chat_space_content"
         :style="styleForChatSpaceContent">
        
         <v-btn flat small @click="moreMessages()"
@@ -133,9 +104,9 @@
           See older messages
         </v-btn>
 
-        <template v-for="(msg,i) in getChatMessages">
-          <div v-if="divide(msg.tstamp, getChatMessages[i-1])" class="divide" :key="i">
-            {{divide(msg.tstamp, getChatMessages[i-1])}}
+        <template v-for="(msg,i) in msgs">
+          <div v-if="divide(msg.tstamp, msgs[i-1])" class="divide" :key="i">
+            {{divide(msg.tstamp, msgs[i-1])}}
           </div>
 
           <div class="me" v-if="msg.onr.uid == getUser.uid" :key="i + 'me'">
@@ -143,19 +114,6 @@
               <div class="body">
                 <div v-html="$sanitize(msg.body)" v-linkified:options="linkify_options"></div>
                 <!-- the spice of life -->
-                <!-- <template v-for="item in msg.body.split(' ')">
-                  
-                  <router-link event="" @click.native.prevent="goto(item,msg.elecRef)" 
-                    v-if="item.charAt(0) == '@'" 
-                    :to="'/forum/profile/' + item.slice(1)" :key="item">
-                    @{{findAMember(item.slice(1))}}
-                  </router-link>
-
-                  <router-link v-else-if="item.charAt(0) == '#'" :to="item" append :key="item">{{item}} </router-link>
-
-                  <template v-else>{{item}} </template>
-
-                </template> -->
 
                 <!-- UPLOADED IMAGES -->
                 <v-container grid-list-xs v-if="msg.imgs">
@@ -189,28 +147,12 @@
 
           <div class="thm" v-else :key="i + 'thm'">
             <div class="thm_inner elevation-1" :class="[msg.imgs ? 'msg_inner_imgs': 'msg_inner']">
-              <div class="meta1 text-capitalize" :class="[$helpers.colorMinder(msg.onr.name.charAt(0)) + '--text']"
-              @click.prevent="$router.push(`/forum/profile/${msg.onr.email}`); 
-                $eventBus.$emit('Toggle_drawerRight', true)">
+              <div class="meta1 text-capitalize" :class="[$helpers.colorMinder(msg.onr.name.charAt(0)) + '--text']">
                 {{msg.onr.name}}
               </div>
               <div class="body">
-
-                <div v-html="$sanitize(msg.body)" v-linkified:options="linkify_options"></div>
                 <!-- the spice of life -->
-                <!-- <template v-for="item in msg.body.split(' ')">
-                  
-                  <router-link @click.native.prevent="goto(item,msg.elecRef)" 
-                    v-if="item.charAt(0) == '@'" 
-                    :to="'/forum/profile/' + item.slice(1)" :key="item" class="primary--text">
-                    @{{findAMember(item.slice(1))}}
-                  </router-link>
-
-                  <router-link v-else-if="item.charAt(0) == '#'" :to="item" append :key="item">{{item}} </router-link>
-
-                  <template v-else>{{item}} </template>
-
-                </template> -->
+                <div v-html="$sanitize(msg.body)" v-linkified:options="linkify_options"></div>
 
                 <!-- UPLOADED IMAGES -->
                 <v-container grid-list-xs v-if="msg.imgs">
@@ -257,6 +199,8 @@ export default {
     show_reactions: false,
     reactions: {}, // temp holds reactions for quick feedback
     snackbar: {},
+    loading_messages: false,
+    msgs: [],
     carousel_images: [],
     onboarding: 0,
     drawer: null,
@@ -264,14 +208,14 @@ export default {
     chat_messages: [],
     offset: '',
     loading_more_msgs: false,
-    // loading_messages: true,
+    updateRef: '',
   }),
-  props:['members','room','thisGroup', 'loading_messages'],
+  props:['eventId','tabs-value'],
   watch:{
-    $route: function(e){
-      
-      if(e.name == 'profile'){
-        this.$eventBus.$emit('Toggle_drawerRight', true)
+    'tabsValue': function(to, from){
+      if(to == 'tab-2') {
+
+        this.msgs.length == 0 ? this.chatUpdate() : ''
       }
     }
   },
@@ -279,7 +223,6 @@ export default {
     ...mapGetters([
       'getUser',
       'getUserInfo',
-      'getChatMessages'
     ]),
     ...mapState([
       'curRoom',
@@ -292,22 +235,16 @@ export default {
       return this.curRoom.admins.includes(this.getUser.uid)
     },
     styleForChatSpaceContent(){
-      if(this.breakpoint.smAndDown){
-        return {height:'calc(100% - 47px)'}
-      }
-      else{
-        return {height: 'calc(100% - 56px)'}
-      }
+    
+      return { height: '100%'}
     },
     linkify_options(){
       return {
         className: 'linkified',
         events: {
           click: function (e) {
-            
           },
           mouseover: function (e) {
-           console.log(e)
            return e
           }
         },
@@ -319,24 +256,17 @@ export default {
           if (type === 'url' && value.length > 50) {
             value = value.slice(0, 50) + '…';
           }
-          if(type === 'mention'){
-            let found = this.members.find(member => member.username == value.substring(1))
-            value = found ? found.name : value
-          }
+          
           return value;
         },
         formatHref: {
           mention: (href) => {
-            if(this.members.find(member => member.username == href.substring(1))){
 
-              return location.origin + '/#/forum/profile/'+ href.substring(1);
-            }
-            else {
-              return location.origin + '/#/forum/#'+ href.substring(1);
-            }
+            return `${location.origin}/#/events/${this.eventId}/#${href.substring(1)}`;
+            
           },
           hashtag: (href) => {
-            return location.origin + '/#/forum/#' + href.substring(1);
+            return `${location.origin}/#/events/${this.eventId}/#${href.substring(1)}`;
           }
         },
         nl2br: true,
@@ -353,47 +283,19 @@ export default {
     scroll(e){
       let scrolled_to_bottom = e.target.scrollTop === (e.target.scrollHeight - e.target.offsetHeight)
       let scrolled_to_top = e.target.scrollTop === 0
-      // console.log(e.target)
+      // console.log(e.target.offsetHeight/6)
       if(scrolled_to_bottom){
         // console.log('scrolled to bottom')
       }
       if(scrolled_to_top){
         // console.log('scrolled to top')
+        // this.moreMessages(e)
+        
+        
       }
-
-      
-    },
-    findAMember(memberEmail){
-      let member = this.members.find(member=> member.email == memberEmail)
-      return member ? member.name : memberEmail
     },
     getRep(chat){
       return chat.replace(/@([\w]+)/g,'<router-link to="/tag/$1">#$1</router-link>')
-    },
-    goto(item,room){
-      // console.log(item,room)
-      if(this.members.find(member => member.email == item.slice(1))){
-        this.$router.push(`/forum/profile/${item.slice(1)}`)
-        this.$eventBus.$emit('Toggle_drawerRight', true)
-      }
-      else{}
-      
-    },
-    deleteMessage(msg){
-      // Delete an inappropriate msg
-      if(this.isAdmin){
-
-        db.collection('chat_messages').doc(msg.docId)
-        .delete().then(done=>{
-          // remove the message from the store
-          let msgIndex = this.getChatMessages.findIndex(v => v.docId == msg.docId)
-          this.getChatMessages.splice(msgIndex, 1)
-          this.snackbar = {show:true,message:'Message deleted',color:'dark'}
-        }).catch(err=>{
-          // console.log(err)
-          this.snackbar = {show:true,message:'Something went wrong',color:'error'}
-        })
-      }
     },
     divide(timestamp,prev){
       let options = {year: 'numeric', month: 'numeric', day: 'numeric' };
@@ -431,78 +333,14 @@ export default {
         return (new Date()).toLocaleString('en-Us',options) == that_day ? 'Today' : that_day2
       }
     },
-    async add_reaction(msg,reaction){
-      try {
-        let msg_rxns_clone = Object.assign({}, msg.reactions) // bcs of Javascript's Object reassignment issues
-        // console.log(msg_rxns_clone)
-        // console.log(msg,reaction)
-        let docId = `${this.getUser.uid}-${msg.docId}-crxn`
-        let reactionsRef = db.collection('chat_reactions').doc(docId)
-        let chatRef = db.collection('chat_messages').doc(msg.docId)
-
-        if(this.reactions[msg.docId]){
-          // reaction already exists for the msg
-          if(this.reactions[msg.docId] == reaction){
-            // user already reacted same way before, e.g liked already
-            msg.reactions[reaction] = msg.reactions[reaction] > 0 ? msg.reactions[reaction] - 1 : 0
-            this.reactions[msg.docId] = null
-          }
-          else{
-            msg.reactions[reaction] += 1
-            this.reactions[msg.docId] = reaction
-          }
-        }
-        else{
-          msg.reactions[reaction] += 1
-          this.reactions[msg.docId] = reaction
-        }
-        
-        reactionsRef.get().then(doc => {
-          // console.log(msg.reactions)
-          if(doc.exists){
-            if(doc.data().reaction == reaction){
-              // user already reacted same way before, e.g liked already
-              msg_rxns_clone[reaction] = msg_rxns_clone[reaction] > 0 ? msg_rxns_clone[reaction] - 1 : 0 // this is reactive, so view are updated immediately
-              chatRef.update({
-                reactions: msg_rxns_clone
-              })
-              reactionsRef.delete()
-            }
-            else{
-
-              msg_rxns_clone[doc.data().reaction] = msg_rxns_clone[doc.data().reaction] > 0 ? msg_rxns_clone[doc.data().reaction] - 1 : 0 // this is reactive, so view are updated immediately
-              msg.reactions[reaction] += 1
-              chatRef.update({
-                reactions: msg_rxns_clone
-              }).then(()=>{
-                reactionsRef.update({
-                  reaction: reaction
-                })
-              })
-
-            }
-            
-          }
-          else{
-            msg_rxns_clone[reaction] += 1 // this is reactive, so views are updated immediately
-
-            chatRef.update({
-              reactions: msg_rxns_clone
-            }).then(()=>{
-               reactionsRef.set({
-                onr: this.getUser.uid,
-                tstamp: Date.now(),
-                chatRef: msg.docId,
-                reaction: reaction
-              })
-            })
-           
-          }
-        })
-  
-      } catch(err) {
-        // console.log(err)
-      }
+   
+    scrollChat(){
+       let doc = document.getElementById('chat_space_content')
+      //  console.log(doc)
+      doc ? doc.scroll({
+        top: doc.scrollHeight,
+        behavior: 'smooth'
+      }) : ''
     },
     moreMessages(e){
       if(this.offset != undefined){
@@ -518,17 +356,42 @@ export default {
               msgs.unshift(doc.data())
             })
             this.offset = querySnapshot.docs[querySnapshot.docs.length - 1]
-            // this.last_doc_length = querySnapshot.docs.length
-  
-            this.$store.dispatch('updateFromDb', [...this.getChatMessages, ...msgs])
+            
             this.loading_more_msgs = false
-            e ? e.target.scrollTop = 100 : ''
+            setTimeout(() => {
+              this.scrollChat()
+            }, 1000);
           })
       }
     },
-  },
-  created() {
-    
+    chatUpdate(){
+      
+      let msgs = []
+      if(this.curRoom){
+        this.updateRef = db.collection('event_messages')
+        .where('eventId','==',this.eventId)
+        .orderBy('tstamp', 'desc')
+        .limit(25)
+        .onSnapshot(snapshot=>{
+          
+          snapshot.docChanges().forEach(function(change) {
+            if (change.type === "added") {
+              // console.log("New", change.doc.data());
+              msgs.push(change.doc.data())
+            }
+        })
+
+          this.offset = snapshot.docs[snapshot.docs.length - 1]
+          this.msgs = msgs.sort((a,b) => a.tstamp - b.tstamp)
+          // this.$store.dispatch('eventMsgs', msgs)
+          this.loading_messages = false
+
+          setTimeout(() => {
+              this.scrollChat()
+          }, 1000);
+        })
+      }
+    },
   },
   destroyed(){
     // this.chatUpdate()
@@ -546,6 +409,7 @@ import {mapGetters, mapState} from 'vuex'
   import mention from 'linkifyjs/plugins/mention';
   hashtag(linkify)
   mention(linkify)
+  
 </script>
 <style lang="scss" scoped>
 
@@ -569,6 +433,12 @@ a{
   height: 100%;
   background: #f3f2f1;
   //background-color: #00aabb;
+}
+#chat_home {
+  position: absolute;
+  height: calc(100% - 100px);
+  width: 100%;
+  overflow-y: auto;
 }
 .chat_avartar{
   width: 40px;
@@ -707,7 +577,7 @@ a{
 .chat_space_content {
   background: #f3f2f1;
   overflow: auto;
-  // height: 100%;
+  height: 100%;
 }
 // .chat_space_content, #chat_space:hover, #chat_space:focus {
 //   visibility: visible;
