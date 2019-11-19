@@ -6,20 +6,17 @@
         <div class='mx-auto' style="display: table" slot="loading_info">Loading...</div>
       </v-loading>
 
-      <v-layout row wrap v-else>
-        <v-flex xs12 sm9>
+      <v-row row wrap v-else>
+        <v-col cols="12">
           <v-card flat class="grey lighten-4">
             <v-subheader v-if="posts.length == 0">No recent posts</v-subheader>
             <post-template  
-              :posts="posts" 
-              :loading_more_posts="loading_more_posts"
-              :is-last-doc="isLastPost" 
-              @loadmore="morePosts"/>
+              :posts="posts"/>
             
           </v-card>
           
-        </v-flex>
-      </v-layout>
+        </v-col>
+      </v-row>
     </transition>
   </div>
 </template>
@@ -35,11 +32,7 @@ export default {
     isLastPost: false,
     loading_more_posts: false,
   }),
-  props: {
-    userId: {
-      type: String
-    },
-  },
+  props: ['username'],
   watch: {
     'user'(to,from){
       
@@ -49,7 +42,6 @@ export default {
   computed:{
     ...mapGetters([
       'getUser',
-      'getUserInfo',
     ]),
     ...mapState([
       'isSuperUser',
@@ -58,7 +50,8 @@ export default {
     ]),
     user(){
       return this.curProfile
-    }
+    },
+
   },
   methods: {
     async morePosts(){
@@ -87,20 +80,27 @@ export default {
      })
       
     },
+    async postAuthor(username){
+      return await this.$gun.get(username)
+      .then()
+    },
     async getUserPosts(){
-      this.postsRef = db.collection('posts').where('onr.uid','==',this.user.uid)
-      .limit(15)
-      .onSnapshot(querySnapshot=>{
-        let posts = []
+      
+      let posts = []
+      
+      this.$gun.get(this.username)
+        .get('posts')
+        .map()
+        .once(async p => {
+          // console.log('posts: => ', p)
+          // p.author = await this.postAuthor(p.author['#'])
+          posts.push(p)
+        })
 
-        querySnapshot.forEach(doc => {
-          posts.push(doc.data())
-        });
+      
         this.posts = posts.sort((a,b)=> b.tstamp - a.tstamp)
-        //console.log(this.posts)
-      }, err=>{
-        // console.log(err)
-      })
+        // console.log(this.posts)
+      
     },
     initialize(){
       

@@ -1,9 +1,9 @@
 <template>
   <div>
     <v-layout row justify-center>
-      <v-dialog v-model="bdialog" lazy persistent scrollable
-        :fullscreen="$vuetify.breakpoint.xsOnly" :transition="switchTransition2" 
-        :overlay="false" max-width="500">
+      <v-dialog v-model="bdialog" persistent scrollable
+        :fullscreen="$vuetify.breakpoint.xsOnly" 
+        max-width="500">
         <v-card>
           <v-toolbar dark color="teal" dense flat>
             <v-btn icon @click.native="$eventBus.$emit('bdialog')" dark class="hidden-sm-and-up">
@@ -12,19 +12,29 @@
             <v-toolbar-title>New Broadcast Message</v-toolbar-title>
             <v-spacer></v-spacer>
             <v-toolbar-items>
-              <v-btn dark flat class="hidden-xs-only" @click.native="$eventBus.$emit('bdialog')">close</v-btn>
+              <v-btn text class="hidden-xs-only" @click.native="$eventBus.$emit('bdialog')">close</v-btn>
             </v-toolbar-items>
           </v-toolbar>
 
           <v-card-text>
-            <v-textarea placeholder="Type your message" color="secondary" 
-              outline label="Broadcast message" v-model="message" hide-details>
+            <v-textarea placeholder="Type your message" class="mt-5" 
+              outlined label="Broadcast message" v-model.trim="message">
             </v-textarea>
-            <small>Audience: {{curRoom.title}}</small>
+            <v-select
+              name="audience" class="mb-3"
+              label="Target Audience"
+              :items="getMyEnrolled"
+              v-model="audience"
+              outlined item-text="title"
+              item-value="electionId"
+              placeholder="Select your target audience"
+            ></v-select>
+
+            <!-- <small>Audience: {{curRoom.title}}</small> -->
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn color="success" depressed :loading="loading" :disabled="disabled" @click="newBroadcast">
+            <v-btn color="success" depressed :loading="loading" :disabled="disabled" @click="createBroadcast">
               Send <v-icon class="ml-2">mdi-send</v-icon>
             </v-btn>
           </v-card-actions>
@@ -39,13 +49,14 @@ export default {
     return {
       bdialog: true,
       message: '',
+      audience: '',
       loading: false,
     }
   },
   computed: {
     ...mapGetters([
       'getUser',
-      'getUserInfo'
+      'getMyEnrolled'
     ]),
     ...mapState([
       'curRoom',
@@ -62,46 +73,69 @@ export default {
     
   },
   methods: {
-    newBroadcast(){
+    createBroadcast(){
       this.loading = true
+
       // create new broadcast message
-      let broadcastRef = db.collection('broadcasts').doc()
-      let {name, photoURL = false, email, sch=false, fac=false, dept=false, uid, is_student} = this.getUserInfo
+      let broadcastId = this.$uuidv4()
+      let broadcastRef = this.$gun.get('broadcasts')
+        .get(broadcastId)
+
+      let userRef = this.$gun.get(this.getUser.username)
+      let electionRef = this.$gun.get('elections')
+        .get(this.audience)
 
       let data = {
-        onr: {
-          name,
-          photoURL,
-          email,
-          sch,
-          fac,
-          dept,
-          uid,
-          is_student
-        },
-
-        body: this.$sanitize(this.message.trim()),
-        type: 'broadcast', // can be 'default' or 'broadcast'
-        tstamp: firebase.firestore.FieldValue.serverTimestamp(),
-        by: this.getUserInfo.uid,
-        docId: broadcastRef.id,
-        elecRef: this.curRoom.electionId
-        // status:'unread'
+        
+        body: this.$sanitize(this.message),
+        date_created: Date.now(),
+        from: this.getUser.username,
+        docId: broadcastId,
+        elecRef: this.audience,
+        status:'unread'
       }
-      broadcastRef.set(data).then(()=>{
-        this.$eventBus.$emit('Snackbar', {
-          show: true,
-          message: 'Broadcast Sent',
-          // color: 'success'
-        })
-        this.loading = false
-        this.$eventBus.$emit('bdialog')
+
+      // save in broadcaster's outbox
+      let broadcast = userRef.get('broadcasts')
+        .get('outbox')
+        .get(broadcastId)
+        .put(data)
+      broadcast.get('author')
+        .put(userRef)
+
+      
+      electionRef.get('broadcasts')
+        .set(broadcast)
+      
+      // electionRef.get('voters')
+      // .map().once(voter => {
+
+      //   console.log({voter})
+      //   if(voter.username != this.getUser.username){
+
+      //     this.$gun.get(voter.username)
+      //       .get('broadcasts')
+      //       .get('inbox')
+      //       .get(broadcastId)
+      //       .put(broadcast)
+      //   }
+
+      // })
+
+
+      this.$eventBus.$emit('Snackbar', {
+        show: true,
+        message: 'Broadcast Sent',
+        // color: 'success'
       })
+      this.loading = false
+      this.$eventBus.$emit('bdialog')
+      
     }
   }
   
 }
 
 import { mapGetters, mapState } from 'vuex'
-import {firebase, db, database} from '@/plugins/firebase'
+// import {firebase, db, database} from '@/plugins/firebase'
 </script>

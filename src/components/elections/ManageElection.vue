@@ -1,573 +1,792 @@
 <template>
-  <div class="grey lighten-3">
-    
+  <div>
+    <navigation :show_extension="true" color="purple"
+      extension_height="50"
+      :prominent="true"
+      >
+			<template v-slot:title>
+        <span>Election Manager - {{currElection.title}}</span>
+      </template>
+
+      <template v-slot:img="{ props }">
+        <v-img
+          :src="require('@/assets/webinar.jpg')"
+        ></v-img>
+      </template>
+
+      <template v-slot:extension>
+
+        <v-tabs
+          align-with-title
+          v-model="tabs"
+          background-color="transparent"
+          >
+          <v-tab href="#tab-1" class="text-capitalize"> Overview</v-tab>
+          <v-tab href="#tab-2" class="text-capitalize"> General Settings</v-tab>
+          <v-tab href="#tab-3" class="text-capitalize"> Contestants and roles</v-tab>
+          <v-tab href="#tab-4" class="text-capitalize"> Voting and results</v-tab>
+          <v-tab href="#tab-5" class="text-capitalize"> Scheduling </v-tab>
+        </v-tabs>
+      </template>
+    </navigation>
+
 		<transition name="fade" mode="out-in">
 			
-		<loading-bar v-if="!ready" height="80vh"></loading-bar>
+		<loading-bar v-if="!showUi" height="80vh"></loading-bar>
 			
-		<div v-if="ready">
+		<div v-if="showUi">
 
-			<!-- ==STATS CARDS== -->
-    <v-container grid-list-xl fluid class="secondary pb-5 pt-4" v-if="ready">
-      <v-layout row wrap justify-center align-center pb-5>
-        
-      </v-layout>
-    </v-container>
-
-			<!-- ==DETAILS AND CHARTS== -->
-			<v-container grid-list-xl fluid class="pb-0" :px-1="$vuetify.breakpoint.xsOnly">
-				<v-layout row wrap>
-					<v-flex sm12 md8 d-flex>
-						<v-card dark color="cyan" class="round_top v-card--offset pb-2" :height="$vuetify.breakpoint.smAndUp ? 500 : ''" elevation="3">
-							
-							<v-toolbar card color="cyan">
-								<v-list dense class="round_top cyan" dark>
-									<v-list-tile>
-										<v-list-tile-content>
-											
-											<v-list-tile-title class="title">{{currElection.title}}</v-list-tile-title>
-											<v-list-tile-sub-title class="hidden-sm-and-up">Voter Registrations</v-list-tile-sub-title>
-										</v-list-tile-content>
-									</v-list-tile>
-								</v-list>
-								<v-spacer v-if="$vuetify.breakpoint.smAndUp"></v-spacer>
-								<v-subheader v-if="$vuetify.breakpoint.smAndUp">Voter Registrations</v-subheader>
-							</v-toolbar>
-							<v-sheet
-									:height="$vuetify.breakpoint.smAndUp ? 400 : 400"
-									class="mx-auto"
-									style="" flat
-									color="white"
-									elevation=""
-									max-width="calc(100% - 32px)"
-								>
-
-									<bar-chart v-if="currElection.type == 'School'" 
-										:chart-data="chartData" :options="chartOptions">
-									</bar-chart>
-									
-								</v-sheet>
-						</v-card>
-					</v-flex>
-					<v-flex sm12 md4 d-flex>
-						<v-card class="round v-card--offset">
-							<v-card
-								class="mt-3" flat
-							>
-								
-
-								<v-card-text class="pt-0">
-									<div class="title font-weight-light mb-2 secondary--text">
-										<v-btn flat icon class="ml-4" @click.native="edit_dialog = !edit_dialog">
-											<v-icon color="orange">mdi-settings</v-icon>
-										</v-btn>
-										{{$helpers.truncateText(currElection.title, 35)}} 
-										
-									</div>
-									<small>Created on {{currElection.dateCreated.toDate().toLocaleString()}}</small>
-									<v-divider class="my-2"></v-divider>
-
-									<v-list dense >
-										<v-list-tile>
-											<v-list-tile-action>
-												<v-icon color="teal">mdi-clock</v-icon>
-											</v-list-tile-action>
-											<v-list-tile-title class="ml-0">
-												<span class="mr-3">Start Date</span>
-												<span>{{electionStartDate}}</span>
-											</v-list-tile-title>
-										</v-list-tile>
-										<v-list-tile>
-											<v-list-tile-action>
-												<v-icon color="teal">mdi-timer</v-icon>
-											</v-list-tile-action>
-											<v-list-tile-title class="ml-0">
-												<span class="mr-3">Duration</span>
-												<span>{{currElection.duration}} hrs</span>
-											</v-list-tile-title>
-										</v-list-tile>
-										
-										<v-list-tile>
-											<v-list-tile-action>
-												<v-icon color="teal">mdi-school</v-icon>
-											</v-list-tile-action>
-											<v-list-tile-title class="ml-0">
-												<span class="mr-3">School</span>
-												<span>{{currElection.sch}}</span>
-											</v-list-tile-title>
-											<v-list-tile-action>
-											</v-list-tile-action>
-										</v-list-tile>
-
-										<v-list-tile v-if="currElection.level == 'Faculty'">
-											<v-list-tile-action>
-												<v-icon color="teal">mdi-domain</v-icon>
-											</v-list-tile-action>
-											<v-list-tile-title class="ml-0">
-												<span class="mr-3">Faculty</span>
-												<span>{{currElection.fac}}</span>
-											</v-list-tile-title>
-										</v-list-tile>
-
-										<v-list-tile v-if="currElection.level == 'Department'">
-											<v-list-tile-action>
-												<v-icon color="teal">mdi-map-marker</v-icon>
-											</v-list-tile-action>
-											<v-list-tile-title class="ml-0">
-												<span class="mr-3">Department</span>
-												<span>{{currElection.dept}}</span>
-											</v-list-tile-title>
-										</v-list-tile>
-
-										<v-list-tile>
-											<v-list-tile-action>
-												<v-icon color="teal">mdi-adjust</v-icon>
-											</v-list-tile-action>
-											<v-list-tile-title class="ml-0">
-												<span class="mr-3">Status</span>
-												<span :class="[electionStatus[1] + '--text']">
-													{{electionStatus[0]}}
-												</span>
-											</v-list-tile-title>
-										</v-list-tile>
-
-									</v-list>
-
-								</v-card-text>
-
-								<v-card-actions>
-									<v-layout row wrap justify-center>
-										
-										<v-flex shrink class="">
-											<v-progress-circular
-												:value="100"
-												size="80"
-												color="success"
-											>
-											{{no_of_voters || 0}}
-											</v-progress-circular>
-											<span 
-												:class="{'d-block': $vuetify.breakpoint.smAndDown, 'mt-2': $vuetify.breakpoint.smAndDown}" 
-												class="text-xs-center"> Voters</span>
-										</v-flex>
-
-										<v-flex shrink class="mr-4">
-											<v-progress-circular
-												:value="80" size="80"
-												color="purple lighten-2"
-											>
-											{{no_of_contestants || 0}}
-											</v-progress-circular>
-											<span 
-												:class="{'d-block': $vuetify.breakpoint.smAndDown, 'mt-2': $vuetify.breakpoint.smAndDown}" 
-												class="text-xs-center"> Contestants</span>
-										</v-flex>
-
-									</v-layout>
-								</v-card-actions>
-
-							</v-card>
-						</v-card>
-					</v-flex>
-				</v-layout>
-			</v-container>
-
-			<!-- VOTERS, ACTIVITIES, ADMINS, AND TOKENS -->
-			<v-container grid-list-xl  fluid class="pt-0">
-				<v-layout row wrap>
-					<!-- VOTERS, ACTIVITIES -->
-					<v-flex xs12 sm4 md4 d-flex>
-						<v-card class="round_top" height="350" style="overflow: hidden;">
-
-							<v-tabs left color="teal" dark show-arrows>
-								<v-tabs-slider color="orange"></v-tabs-slider>
-
-								<v-tab href="#tab-1" class="text-capitalize"> Voters </v-tab>
-
-								<v-tab href="#tab-2" class="text-capitalize"> Activity </v-tab>
-
-								<v-tab-item value="tab-1">
-									<div style="max-height:250px;overflow-y:auto;" class="my-3 mr-1">
-										<v-expansion-panel>
-											<v-subheader v-if="filteredList.length == 0">No voters yet</v-subheader>
-											<v-expansion-panel-content v-for="(voter, index) in filteredList" :key="index">
-												<template slot="actions">
-													<v-tooltip top v-if="voter.suspended">
-														<v-icon color="error" slot="activator">
-															mdi-information-outline
-														</v-icon>
-														<span v-if="voter.suspended">Voter has been suspended</span>
-													</v-tooltip>
-													<v-icon>{{$vuetify.icons.expand}}</v-icon>
-												</template>
-												<template slot="header">
-													<v-list dense>
-														<v-list-tile avatar>
-															<v-list-tile-avatar :color="$helpers.colorMinder(voter.name.charAt(0))">
-																<img :src="voter.photoURL" v-if="voter.photoURL">
-																<span class="white--text" v-else>
-																	{{voter.name.charAt(0)}}
-																</span>
-															</v-list-tile-avatar>
-															<v-list-tile-content>
-																<v-list-tile-title  class="text-capitalize secondary--text" 
-																	@click.stop="$eventBus.$emit('ViewProfile', voter)">{{voter.name}}</v-list-tile-title>
-																<v-list-tile-sub-title v-if="isContestant(voter.uid)" class="text--primary">Contestant</v-list-tile-sub-title>
-																
-															</v-list-tile-content>
-														</v-list-tile>
-													</v-list>
-												</template>
-												<v-card>
-													<v-card-text class="grey lighten-2">
-													</v-card-text>
-													<v-card-actions class="grey lighten-2 text-xs-center">
-														<v-tooltip top class="mr-4">
-															<v-btn color="success" depressed small 
-																v-if="!voter.suspended && !currElection.admins.includes(voter.uid)" 
-																slot="activator" @click="makeAdmin(voter, 'makeAdmin')" :loading="making_admin">
-																Make admin</v-btn>
-															<span>Give this user admin privilages</span>
-														</v-tooltip>
-
-														<v-tooltip top class="mr-4">
-															<v-btn color="success" depressed 
-																small v-if="currElection.admins.includes(voter.uid) && voter.uid != currElection.admin" 
-																slot="activator" @click="makeAdmin(voter, 'removeAdmin')" :loading="making_admin">
-																Remove admin</v-btn>
-															<span>Remove admin privilages</span>
-														</v-tooltip>
-														
-
-														<v-tooltip top v-if="!voter.suspended && !currElection.admins.includes(voter.uid)">
-															<v-btn color="orange" dark depressed small @click="suspendVoter(voter)" 
-																 :loading="loading" :disabled="making_admin" slot="activator">Suspend voter</v-btn>
-															<span>This will deny this voter access to vote and the chat forum</span>
-														</v-tooltip>
-
-														<v-btn color="orange" dark 
-															small depressed @click="restoreVoter(voter)"
-															v-if="voter.suspended" 
-															:loading="loading">Restore voter</v-btn>
-													</v-card-actions>
-												</v-card>
-											</v-expansion-panel-content>
-										</v-expansion-panel>
-										<v-btn flat small 
-											color="secondary" @click="moreVoters" 
-											:loading="loading_more_voters"
-											v-if="!isLastVoter && regVoters.length < currElection.voters">
-											More voters
-										</v-btn>
-									</div>
-								</v-tab-item>
-
-								<v-tab-item value="tab-2">
-									<div class="scrollbar my-3 mr-1" style="max-height:250px;overflow-y:auto;overflow-x:hidden;">
-										<v-timeline align-top dense class="" >
-											<v-timeline-item :color="getColor(activity)" small v-for="(activity, i) in activities" :key="i + 'activity'">
-												<v-layout pt-3>
-													<!-- <v-flex xs3>
-														<strong>{{$helpers.parseDate(activity.tstamp)}}</strong>
-													</v-flex> -->
-													<v-flex>
-														<strong>
-															<span class="secondary--text linkify" @click="$eventBus.$emit('ViewProfile', activity.onr)">
-																{{activity.onr.uid == getUser.uid ? 'Admin' : activity.onr.name}}
-															</span> 
-															{{activity.body}}</strong>
-														<div class="caption">{{$helpers.parseDate(activity.tstamp)}}</div>
-													</v-flex>
-												</v-layout>
-											</v-timeline-item>
-										</v-timeline>
-										<v-btn flat small 
-											color="secondary" @click="moreActivities" 
-											:loading="loading_more_activities"
-											v-if="!isLastActivity && activities.length > 1">
-											More activities
-										</v-btn>
-									</div>
-								</v-tab-item>
-							</v-tabs>
-							<v-divider></v-divider>
-						</v-card>
-					</v-flex>
+			<v-tabs-items v-model="tabs">
+				<v-tab-item value="tab-1">
 					
-					<!-- ADMINS -->
-					<v-flex xs12 sm4 md4 d-flex>
-						<v-card class="round">
-							<v-list dense class="grey lighten-4">
-								<v-list-tile>
-									<v-list-tile-title class="font-weight-bold">Election Admins</v-list-tile-title>
-								</v-list-tile>
-							</v-list>
-							<v-divider></v-divider>
-							<div style="max-height:350px;overflow-y:auto;" class="scrollbar my-3 mr-1">
-								<v-list two-line dense>
-									<v-subheader v-if="adminList.length == 0">No admins</v-subheader>
-									<div v-for="(admin, index) in adminList" :key="index">
-										<v-list-tile  :key="admin.name" avatar @click="$eventBus.$emit('ViewProfile', admin)" color="'default'">
-											<v-list-tile-avatar>
-												<img :src="admin.photoURL" v-if="admin.photoURL">
-												<v-avatar size="38" class="white--text" :color="$helpers.colorMinder(admin.name.charAt(0))" v-else>
-													{{admin.name.charAt(0)}}
-												</v-avatar>
-											</v-list-tile-avatar>
+					<!-- == OVERVIEW == -->
+					<v-container class="pb-0">
+						<v-row>
+							<v-col cols="12" md="8">
+								<transition name="fade">
+									<v-card color="" class="" 
+										dark flat tile outlined>
 
-											<v-list-tile-content>
-												<v-list-tile-title  class="text-capitalize secondary--text">
-													{{admin.name}}
-												</v-list-tile-title>
-												<v-list-tile-sub-title v-if="admin.uid == currElection.admin">
-													Creator
-												</v-list-tile-sub-title>
-												<v-list-tile-sub-title v-else>
-													<span class="online_badge" :class="[admin.online ? 'success' : 'orange']"></span>
-													{{admin.online ? 'online' : 'offline'}}
-												</v-list-tile-sub-title>
-											</v-list-tile-content>
-										</v-list-tile>
-										<v-divider  :inset="true" :key="index"></v-divider>
-									</div>
-								</v-list>
-							</div>
-						</v-card>
-					</v-flex>
-
-					<!-- TOKENS -->
-					<v-flex xs12 sm4 d-flex>
-						<v-card class="round">
-							<v-list dense class="grey lighten-4">
-								<v-list-tile >
-									<span class="font-weight-bold">Tokens</span>
-								</v-list-tile>
-							</v-list>
-							<v-divider></v-divider>
-							<div style="max-height:250px;overflow-y:auto;">
-								<v-expansion-panel inset>
-									<v-expansion-panel-content
-										v-for="(role,i) in currElection.roles"
-										:key="i"
-									>
-										<div slot="header" class="secondary--text font-weight-bold text-uppercase" style="color:;">{{role.title}}</div>
+										<v-list>
+											<v-list-item  ref="list">
+												<v-list-item-avatar color="teal">
+													<img :src="currElection.logo" v-if="currElection.logo">
+													<span v-else class="text-capitalize">{{currElection.title.charAt(0)}}</span>
+												</v-list-item-avatar>
+												<v-list-item-content>
+													<v-list-item-title>{{currElection.title}}</v-list-item-title>
+													<v-list-item-subtitle>{{currElection.official ? 'Official' : currElection.sch}}</v-list-item-subtitle>
+												</v-list-item-content>
+												<v-list-item-action>
+													<v-menu offset-y>
+														<template v-slot:activator="{on}">
+															<v-icon @click="''" v-on="on">mdi-dots-vertical</v-icon>
+														</template>
+														<!-- <v-btn color="info" dark slot="activator">text</v-btn> -->
+														<v-list dense>
+															<v-list-item @click="''">
+																<v-list-item-title>Copy election link</v-list-item-title>
+															</v-list-item>
+														</v-list>
+													</v-menu>
+												</v-list-item-action>
+											</v-list-item>
+										</v-list>
 										
-										<v-card>
-											<v-card-text>This token should be issued to contestants who wants to contest for the role of 
-												<strong>{{role.title}}</strong> and has met your requirements
+											<v-card-text  v-if="showUi">
+												<!-- <h4  v-if="status.not_started">Election starts in</h4>
+												<h4  v-if="status.inprogress" class="title error--text lighten-4">Election in progress</h4> -->
+
+												<v-container justify-center fill-height>
+													<v-row align-center justify-center>
+														<v-col cols="12" sm="12">
+															<v-card-text class="">
+																<div class="d-block">
+
+																	<div class="text-xs-left py-5" style="display:table;margin:auto;">
+																		<h3 class="display-1">
+																			{{electionStatus[0]}}
+																		</h3>
+																		</div>
+																	
+																</div>
+																
+															</v-card-text>
+														</v-col>
+													</v-row>
+												</v-container>
+
+											</v-card-text>
+											<v-card-actions>
+												<v-btn color="success" 
+													depressed small 
+													@click="changeElectionStatus('inprogress')"
+													v-if="!currElection.timed && currElection.status == 'inRegistration'"
+													class="text-capitalize">
+													Start Election
+												</v-btn>
+												<v-btn color="purple" depressed 
+													v-if="!currElection.timed && currElection.status == 'inprogress'"
+													@click="changeElectionStatus('ended')"
+													small class="text-capitalize">
+													End Election
+												</v-btn>
+											</v-card-actions>
+
+									</v-card>
+                </transition>
+							</v-col>
+							<v-col cols="12" md="4">
+								<v-card outlined class="pt-4" flat>
+										
+										<v-card-text class="pt-0">
+
+											<v-list dense >
+												<v-list-item>
+													<v-list-item-action>
+														<v-icon color="teal">mdi-clock</v-icon>
+													</v-list-item-action>
+													<v-list-item-title class="ml-0">
+														<span class="mr-3">Start Date</span>
+														<span>{{electionStartDate}}</span>
+													</v-list-item-title>
+												</v-list-item>
+												<v-list-item>
+													<v-list-item-action>
+														<v-icon color="teal">mdi-timer</v-icon>
+													</v-list-item-action>
+													<v-list-item-title class="ml-0">
+														<span class="mr-3">Duration</span>
+														<span>{{currElection.duration}} hrs</span>
+													</v-list-item-title>
+												</v-list-item>
+												
+												<v-list-item>
+													<v-list-item-action>
+														<v-icon color="teal">mdi-school</v-icon>
+													</v-list-item-action>
+													<v-list-item-title class="ml-0">
+														<span class="mr-3">School</span>
+														<span>{{currElection.sch}}</span>
+													</v-list-item-title>
+													<v-list-item-action>
+													</v-list-item-action>
+												</v-list-item>
+
+												<v-list-item v-if="currElection.level == 'Faculty'">
+													<v-list-item-action>
+														<v-icon color="teal">mdi-domain</v-icon>
+													</v-list-item-action>
+													<v-list-item-title class="ml-0">
+														<span class="mr-3">Faculty</span>
+														<span>{{currElection.fac}}</span>
+													</v-list-item-title>
+												</v-list-item>
+
+												<v-list-item v-if="currElection.level == 'Department'">
+													<v-list-item-action>
+														<v-icon color="teal">mdi-map-marker</v-icon>
+													</v-list-item-action>
+													<v-list-item-title class="ml-0">
+														<span class="mr-3">Department</span>
+														<span>{{currElection.dept}}</span>
+													</v-list-item-title>
+												</v-list-item>
+
+												<v-list-item>
+													<v-list-item-action>
+														<v-icon color="teal">mdi-adjust</v-icon>
+													</v-list-item-action>
+													<v-list-item-title class="ml-0">
+														<span class="mr-3">Status</span>
+														<span :class="[electionStatus[1] + '--text']">
+															{{electionStatus[0]}}
+														</span>
+													</v-list-item-title>
+												</v-list-item>
+
+											</v-list>
+
+										</v-card-text>
+
+										<v-card-actions>
+											<v-row justify="center" align="center">
+												
+												<div class="mr-10">
+													<v-progress-circular
+														:value="100"
+														size="60" 
+														color="success"
+													>
+													{{no_of_voters || 0}}
+													</v-progress-circular>
+													<span	class="d-sm-block mt-sm-2 text-center"> Voters</span>
+												</div>
+
+												<div class="ml-10 ">
+													<v-progress-circular
+														:value="80" size="60"
+														color="purple lighten-2"
+													>
+													{{no_of_contestants || 0}}
+													</v-progress-circular>
+													<span	class="d-sm-block mt-sm-2">Contestants</span>
+												</div>
+
+											</v-row>
+										</v-card-actions>
+
+									</v-card>
+							</v-col>
+						</v-row>
+					</v-container>
+
+				</v-tab-item>
+
+				<v-tab-item value="tab-2">
+					<v-container>
+						<v-row justify="center">
+							<v-col cols="12" sm="8">
+								<v-card outlined>
+					
+									<v-card-text class="pt-3">
+										<v-subheader class="pl-0 font-weight-bold">Election title</v-subheader>
+										<v-text-field
+											class="mb-5"
+											name="title" hide-details color="primary"
+											label="Edit Title" outlined
+											:value="currElection.title" v-model="form.title"
+										></v-text-field>
+
+										<v-textarea
+											class="mb-5"
+											name="desc" hide-details color="primary"
+											label="About election" outlined
+											:value="currElection.about" v-model="form.about"
+										></v-textarea>
+										
+										<v-subheader class="pl-0 font-weight-bold">Election logo</v-subheader>
+										<v-file-input 
+											show-size outlined 
+											v-model="logo" 
+											:disabled="uploading_logo" 
+											label="Select logo">
+										</v-file-input>
+
+										<v-btn outlined small color="primary" 
+											v-if="logo" class="text-normal ml-0"
+											:loading="uploading_logo"
+											@click="uploadLogo">
+											Upload logo
+										</v-btn>
+
+										<v-textarea
+											name="terms" outlined
+											label="Terms and conditions"
+											v-model="form.terms"
+										></v-textarea>
+
+									</v-card-text>
+									<v-card-actions>
+										<v-spacer></v-spacer>
+										<v-btn color="success"
+											depressed
+											:disabled="currElection.status == 'ended'"
+											@click="updateGeneralSettings">
+											Save Changes
+										</v-btn>
+									</v-card-actions>
+								</v-card>
+							</v-col>
+						</v-row>
+					</v-container>
+				</v-tab-item>
+
+				<v-tab-item value="tab-3">
+					<v-container>
+						<v-row justify="center">
+							<v-col cols="12" sm="10">
+								<v-card outlined class="my-5" style="min-height:200px;">
+									<v-card-text>
+										<v-list three-line subheader>
+											<!-- <v-subheader class="font-weight-bold mb-0">Voting</v-subheader> -->
+											<v-list-item>
+												<v-list-item-action>
+													<v-checkbox 
+														:disabled="form.manually_add_contestants"
+														v-model="form.unrestricted_contesting"
+														class="mt-0"
+														color="success">
+													</v-checkbox>
+													
+												</v-list-item-action>
+												<v-list-item-content>
+													<v-list-item-title>Contestants enrollment</v-list-item-title>
+													<v-list-item-subtitle>Allow users to contest without access token</v-list-item-subtitle>
+													<!-- <v-list-item-subtitle class="warning--text">Note: This option is not available for school elections.</v-list-item-subtitle> -->
+												</v-list-item-content>
+											</v-list-item>
+
+											<v-list-item>
+												<v-list-item-action>
+													<v-checkbox 
+														v-model="form.manually_add_contestants"
+														class="mt-0"
+														color="success">
+													</v-checkbox>
+													
+												</v-list-item-action>
+												<v-list-item-content>
+													<v-list-item-title>Manually add contestants</v-list-item-title>
+													<v-list-item-subtitle>Uncheck this to let contestants register apply by themselves</v-list-item-subtitle>
+													<!-- <v-list-item-subtitle class="warning--text">Note: This option is not available for school elections.</v-list-item-subtitle> -->
+												</v-list-item-content>
+											</v-list-item>
+										</v-list>
+
+										<v-divider></v-divider>
+										<v-toolbar light flat height="50px">
+											<v-toolbar-title class="">Set Roles</v-toolbar-title>
+											<v-spacer></v-spacer>
+											<v-btn 
+												color="primary" class="text-capitalize"
+												depressed left 
+												@click.native.stop="dialog = !dialog">
+												<v-icon>mdi-plus</v-icon>
+												New Role
+											</v-btn>
+
+											
+										</v-toolbar>
+
+										<v-dialog v-model="dialog" max-width="500px">
+											<v-card>
+												<v-card-title primary-title class="title mb-0 pb-0">Create A New Role</v-card-title>
+												<v-card-text>
+													<v-text-field label="Role title" v-model="role_input" color="primary" 
+														hint="e.g president, secretary, vice-chancellor"></v-text-field>
+													<small class="grey--text"></small>
+													<p>
+														<small class="grey--text">* try not to use abbreviations</small>
+													</p>
+													<v-divider></v-divider>
+													<v-textarea v-model="role_input_desc"
+														label="Role description (optional)" outlined
+														name="name" color="primary" hint="e.g what this role can do"
+													></v-textarea>
+												</v-card-text>
+												<v-card-actions>
+													<v-spacer></v-spacer>
+														<v-btn text @click.native="dialog = false">Cancel</v-btn>
+														<v-btn text color="success" @click.native="addrole" :disabled="!role_input.trim()">Add role</v-btn>
+												</v-card-actions>
+											</v-card>
+										</v-dialog>
+
+										<v-select class="mt-4" deletable-chips
+											v-model="form.roles" dense
+											:items="form.roles" return-object
+											item-text="title" cache-items
+											item-disabled="disabled"
+											color="primary"
+											chips label="Roles"
+											multiple outlined
+										></v-select>
+									</v-card-text>
+									<v-card-actions>
+										<v-spacer></v-spacer>
+										<v-btn color="success" class="ml-3" depressed
+											@click="updateRoles">
+											Save Changes
+										</v-btn>
+									</v-card-actions>
+								</v-card>
+
+							</v-col>
+						</v-row>
+					</v-container>
+
+					<!-- CONTESTANTS -->
+					<v-container>
+						<v-row justify="center">
+
+							<v-col cols="12" sm="10">
+								<v-card class="round_top" outlined>
+									<v-card-title primary-title>
+										Contestants
+										<v-spacer></v-spacer>
+										<v-text-field
+											v-model="search"
+											append-icon="mdi-magnify"
+											label="Search"
+											single-line
+											color="primary"
+											hide-details
+										></v-text-field>
+
+										<v-dialog
+											v-model="add_contestant_dialog"
+											 
+											persistent :overlay="false"
+											max-width="500px"
+											transition="dialog-transition">
+
+											<template v-slot:activator="{on}">
+												<v-btn color="info" v-on="on" depressed class="ml-3 text-capitalize">Add contestant</v-btn>
+											</template>
+
+											<v-card flat>
+												<div class="v-card__title">
+													Add contestants
+												</div>
+												<v-card-text>
+													<v-text-field
+														name="username"
+														label="Enter contestant username"
+														v-model="form2.username"
+													></v-text-field>
+
+													<v-select
+														:items="roles"
+														v-model="form2.role"
+														item-value="value"
+														item-text="title"
+														return-object
+														label="Assign Role or position"
+													></v-select>
+												</v-card-text>
+												<v-card-actions>
+													<v-spacer></v-spacer>
+													<v-btn @click="add_contestant_dialog = false" depressed>Close</v-btn>
+													<v-btn color="info" 
+														depressed :loading="loading"
+														@click="addContestant">
+														Add
+													</v-btn>
+												</v-card-actions>
+											</v-card>
+										</v-dialog>
+									</v-card-title>
+									
+									<v-data-table
+										:headers="headers"
+										:items="contestants"
+										:search="search"
+										:loading='false'
+										class="elevation-0"
+									>
+									<v-progress-linear slot="progress" color="blue" indeterminate></v-progress-linear>
+										<template v-slot:item.actions="{item}" >
+											
+											<td class="justify-center">
+												<v-tooltip top>
+													<template v-slot:activator="{on}">
+														<v-icon v-on="on"
+															class="mt-3" color="error" 
+															small @click="culprit = item; 
+															suspend_dialog = true"
+															:disabled="item.suspended">
+															mdi-cancel
+														</v-icon>
+													</template>
+													<span>Disable contestant</span>
+												</v-tooltip>
+											</td>
+										</template>
+									</v-data-table>
+								</v-card>
+							</v-col>
+							
+							<v-col cols="12" sm="10">
+								<v-card class="round" outlined>
+									<v-list dense class="grey lighten-4">
+										<v-list-item >
+											<span class="font-weight-bold">Tokens</span>
+										</v-list-item>
+									</v-list>
+									<v-divider></v-divider>
+									<div class="" style="max-height:250px;overflow-y:auto;">
+										<v-expansion-panels inset >
+											<v-expansion-panel v-for="(role,i) in roles"
+												:key="i">
+												<v-expansion-panel-header>
+													<div
+														class="primary--text font-weight-bold text-uppercase" style="color:;">
+														{{role.title}}
+													</div>
+												</v-expansion-panel-header>
+												<v-expansion-panel-content>
+													
+													<v-card flat>
+														<v-card-text>This token should be issued to contestants who wants to contest for the role of 
+															<strong>{{role.title}}</strong> and has met your requirements
+														</v-card-text>
+													</v-card>
+													<v-card-actions>
+														<h4 class="pl-2">{{role.token}}</h4>
+													</v-card-actions>
+												</v-expansion-panel-content>
+											</v-expansion-panel>
+										</v-expansion-panels>
+									</div>
+								</v-card>
+							</v-col>
+							
+						</v-row>
+					</v-container>
+
+				</v-tab-item>
+				
+				<v-tab-item value="tab-4">
+					<v-container>
+						<v-row justify="center">
+							<v-col cols="12" sm="8">
+								<v-card color="" outlined class="mb-5">
+									<v-card-text>
+
+										<v-subheader class="font-weight-bold mb-2">Voter registration</v-subheader>
+										<p class="ml-4">How would you register voters?</p>
+										<v-radio-group class="ml-4" readonly v-model="form.self_registration" mandatory>
+											
+											<v-radio label="Voters register by themselves" :value="true"></v-radio>
+											<v-radio label="Add voters manually" :value="false"></v-radio>
+										</v-radio-group>
+
+										<v-card flat v-if="form.self_registration" max-width="900">
+											<v-card-text>
+												
+												<p class="">Estimated number of voters</p>
+												<v-slider 
+													:label="no_of_voters.toString()"
+													color="primary" 
+													:min="100" :max="50000" 
+													v-model="no_of_voters">
+												</v-slider>
+
 											</v-card-text>
 										</v-card>
-										<v-card-actions>
-											<h4 class="pl-2">{{role.token}}</h4>
-										</v-card-actions>
-									</v-expansion-panel-content>
-								</v-expansion-panel>
-							</div>
-						</v-card>
-					</v-flex>
 
-				</v-layout>
-			</v-container>
-			
-			<!-- CONTESTANTS -->
-			<v-container grid-list-lg fluid>
-				<v-layout row wrap>
-					<v-flex xs12 sm9>
-						<v-card class="round_top">
-							<v-card-title primary-title>
-								Contestants
-								<v-spacer></v-spacer>
-								<v-text-field
-									v-model="search"
-									append-icon="mdi-magnify"
-									label="Search"
-									single-line
-									color="secondary"
-									hide-details
-								></v-text-field>
-							</v-card-title>
-							
-							<v-data-table
-								:headers="headers"
-								:items="tabledata"
-								:search="search"
-								:loading='false'
-								class="elevation-1"
-							>
-							<v-progress-linear slot="progress" color="blue" indeterminate></v-progress-linear>
-								<template slot="items" slot-scope="props" v-if="!props.item.suspended">
-									<td>{{ props.item.name | capitalize}}</td>
-									<td class="text-xs-left">{{ props.item.role }}</td>
-									<td class="text-xs-left">{{ props.item.department }}</td>
-									<td class="text-xs-left">{{ props.item.faculty }}</td>
-									<td class="justify-center">
-										<v-tooltip top>
-											<v-icon slot="activator" class="mt-3" color="error" small @click="culprit = props.item; suspend_dialog = true">
-												mdi-cancel
-											</v-icon>
-											<span>Suspend contestant</span>
-										</v-tooltip>
-									</td>
-								</template>
-							</v-data-table>
-						</v-card>
-					</v-flex>
-					<v-flex xs12 sm3 d-flex>
-						<v-card class="round_top">
-							<v-list class="grey lighten-4" dense>
-								<v-list-tile>
-									<v-list-tile-title class="font-weight-bold">Suspended</v-list-tile-title>
-								</v-list-tile>
-							</v-list>
-							<v-divider></v-divider>
-							<v-subheader v-if="tabledata.filter(item => item.suspended == true).length == 0">0 suspended contestants</v-subheader>
-							<v-list dense>
-								<template v-for="contestant in tabledata.filter(cont => cont.suspended == true)">
-									<v-list-tile :key="contestant.contId">
-										<v-list-tile-title>{{contestant.name | capitalize}}</v-list-tile-title>
-										<v-list-tile-action>
-											<v-tooltip top>
-												<v-icon slot="activator" color="secondary" 
-													@click="restoreContestant(contestant)">
-													mdi-restore
-												</v-icon>
-												<span>Restore {{contestant.name | capitalize}}</span>
-											</v-tooltip>
-										</v-list-tile-action>
-									</v-list-tile>
-									<v-divider :key="contestant.name"></v-divider>
-								</template>
-							</v-list>
-						</v-card>
-					</v-flex>
-				</v-layout>
-			</v-container>
-			
-			<!-- EDIT DIALOG -->
-			<v-dialog v-model="edit_dialog" :persistent="saving_edit" hide-overlay max-width="500" scrollable>
-				<v-card flat>
-					<v-toolbar flat>
-						<v-icon class="mr-2" color="primary">mdi-settings</v-icon>
-						<span class="font-weight-bold">Edit Election</span>
-					</v-toolbar>
-					<v-card-text class="">
-						<v-text-field
-							name="title" hide-details color="secondary"
-							label="Election Title" outline
-							:value="currElection.title" v-model="form.title"
-						></v-text-field>
+										<v-card v-else flat width="500" class="grey lighten-4">
+											<v-card-text>
+												<span class="v-card--title">
+													List of voters
+												</span>
+												<v-textarea rows="10" 
+													label="Enter comma seperated list of phone numbers"
+													outlined>
+												</v-textarea>
+												
+											</v-card-text>
+										</v-card>
 
-						<v-layout column mt-4>
-						
-							<v-flex xs12 sm6 mb-4>
-								<v-dialog ref="dialog" v-model="modal" :return-value.sync="form.date"
-									persistent lazy full-width width="290px" >
+										<v-divider class="m"></v-divider>
 
-									<v-text-field slot="activator" hide-details outline color="secondary" v-model="form.date"
-										label="Start Date" readonly>
-										<v-icon color="secondary" slot="prepend-inner">mdi-calendar</v-icon>
-									</v-text-field>
-									<v-date-picker v-model="form.date" scrollable :allowed-dates="allowedDates" header-color="secondary">
+										
+
+										<v-list three-line subheader>
+											<v-subheader class="font-weight-bold mb-0">Voting</v-subheader>
+											<v-list-item>
+												<v-list-item-action>
+													<v-checkbox 
+														:readonly="currElection.type == 'School'"
+														v-model="form.allow_multiple_voting"
+														class="mt-0"
+														color="success">
+													</v-checkbox>
+													
+												</v-list-item-action>
+												<v-list-item-content>
+													<v-list-item-title>Allow multiple voting</v-list-item-title>
+													<v-list-item-subtitle>This is useful for peagentries, tv shows, e.t.c</v-list-item-subtitle>
+													<v-list-item-subtitle class="warning--text">Note: This option is not available for school elections.</v-list-item-subtitle>
+												</v-list-item-content>
+											</v-list-item>
+											<v-list-item>
+												<v-list-item-action>
+													<v-checkbox 
+														:readonly="currElection.type == 'Scool'"
+														class="mt-0"
+														v-model="form.secret_ballot"
+														color="success">
+													</v-checkbox>
+													
+												</v-list-item-action>
+												<v-list-item-content>
+													<v-list-item-title>Secret ballot</v-list-item-title>
+													<v-list-item-subtitle>Votes are anonymous - votes can't be linked with voters.</v-list-item-subtitle>
+													<v-list-item-subtitle class="warning--text">Note: This option is mandatory for school elections</v-list-item-subtitle>
+												</v-list-item-content>
+											</v-list-item>
+										</v-list>
+
+										<v-divider></v-divider>
+										<v-list three-line subheader>
+											<v-subheader class="font-weight-bold mb-0">Result</v-subheader>
+											<v-list-item>
+												<v-list-item-action>
+													<v-checkbox v-model="form.realtime_results"></v-checkbox>
+												</v-list-item-action>
+												<v-list-item-content>
+													<v-list-item-title>Real-time results</v-list-item-title>
+													<v-list-item-subtitle>Show results in real time as votes are casted, otherwise after the election.</v-list-item-subtitle>
+												</v-list-item-content>
+											</v-list-item>
+											<v-list-item>
+												<v-list-item-action>
+													<v-checkbox v-model="form.results_visible_to_all"></v-checkbox>
+												</v-list-item-action>
+												<v-list-item-content>
+													<v-list-item-title>Result visibility</v-list-item-title>
+													<v-list-item-subtitle>Results are visible to all voters and contestants</v-list-item-subtitle>
+												</v-list-item-content>
+											</v-list-item>
+										</v-list>
+									
+									</v-card-text>
+									<v-card-actions>
 										<v-spacer></v-spacer>
-										<v-btn flat   @click="modal = false">Cancel</v-btn>
-										<v-btn flat small outline color="success" @click="$refs.dialog.save(form.date)">OK</v-btn>
-									</v-date-picker>
-								</v-dialog>
-							</v-flex>
+										<v-btn color="primary" class="" 
+											@click="updateVotingSettings" 
+											:disabled="currElection.status == 'ended'"
+											depressed>
+											Save Changes
+										</v-btn>
+									</v-card-actions>
+								</v-card>
 
-							<v-flex xs12 sm6>
-								
-								<v-dialog ref="dialog2" v-model="modal2" :return-value.sync="form.time"
-									persistent lazy full-width width="290px" >
+							</v-col>
+						</v-row>
+					</v-container>
+				</v-tab-item>
 
-									<v-text-field  slot="activator" hide-details outline v-model="form.time"  label="Start Time" color="secondary" readonly >
-										<v-icon color="secondary" slot="prepend-inner">mdi-clock</v-icon>
-									</v-text-field>
-									<v-time-picker v-if="modal2" format="ampm" v-model="form.time" header-color='secondary'>
+				<v-tab-item value="tab-5">
+					<v-container>
+						<v-row justify="center">
+							<v-col cols="12" sm="8">
+								<v-card class="mb-5 mr-1 ml-1 mt-3 pa-3" outlined max-width="800">
+									<v-subheader class="title primary--text pl-0 mb-0">Schedule Election</v-subheader>
+									
+									<v-row>
+										
+										<v-col cols="6" sm="6">
+											<v-subheader class="font-weight-bold mb-0 pl-0">Start date</v-subheader>
+
+											<v-dialog ref="dialog" v-model="modal" :return-value.sync="form.date"
+												persistent width="290px" >
+												
+												<template v-slot:activator="{on}">
+													<v-text-field v-on="on" color="primary" v-model="form.date"
+														label="Choose date" readonly outlined>
+														<v-icon color="primary" slot="prepend-inner">mdi-calendar</v-icon>
+													</v-text-field>
+												</template>
+
+												<v-date-picker v-model="form.date" 
+													scrollable :allowed-dates="allowedDates" 
+													header-color="primary">
+													<v-spacer></v-spacer>
+														<v-btn text   @click="modal = false">Cancel</v-btn>
+
+														<v-btn text small outlined color="success" 
+														@click="$refs.dialog.save(form.date)">OK
+													</v-btn>
+												</v-date-picker>
+											</v-dialog>
+										</v-col>
+
+										<v-col cols="6" sm="6" :class="$vuetify.breakpoint.xsOnly ? ['mr-0','px-2'] : ['px-2']">
+											<v-subheader class="mb-0 pl-0 font-weight-bold">Start time</v-subheader>
+
+											<v-dialog ref="dialog2" v-model="modal2" :return-value.sync="form.time"
+												persistent width="290px">
+
+												<template v-slot:activator="{on}">
+													<v-text-field  v-on="on" v-model="form.time"  
+														label="Time" color="primary" readonly outlined>
+														<v-icon color="primary" slot="prepend-inner">mdi-clock</v-icon>
+													</v-text-field>
+												</template>
+												<v-time-picker v-if="modal2" format="ampm" v-model="form.time" header-color='primary'>
+													<v-spacer></v-spacer>
+														<v-btn text  @click="modal2 = false">Cancel</v-btn>
+														<v-btn text color="success" outlined @click="$refs.dialog2.save(form.time)">OK</v-btn>
+												</v-time-picker>
+											</v-dialog>
+										</v-col>
+
+										<v-col cols="6" sm="6">
+											<v-subheader class="font-weight-bold mb-0 pl-0">End date</v-subheader>
+
+											<v-dialog ref="dialog6" v-model="modal3" :return-value.sync="form.enddate"
+												persistent width="290px" >
+												
+												<template v-slot:activator="{on}">
+													<v-text-field v-on="on" color="primary" v-model="form.enddate"
+														label="Choose date" readonly outlined>
+														<v-icon color="primary" slot="prepend-inner">mdi-calendar</v-icon>
+													</v-text-field>
+												</template>
+
+												<v-date-picker v-model="form.enddate" 
+													scrollable :allowed-dates="allowedDates" 
+													header-color="primary">
+													<v-spacer></v-spacer>
+														<v-btn text   @click="modal3 = false">Cancel</v-btn>
+
+														<v-btn text small outlined color="success" 
+														@click="$refs.dialog6.save(form.enddate)">OK
+													</v-btn>
+												</v-date-picker>
+											</v-dialog>
+										</v-col>
+
+										<v-col cols="6" sm="6" :class="$vuetify.breakpoint.xsOnly ? ['mr-0','px-2'] : ['px-2']">
+											<v-subheader class="mb-0 pl-0 font-weight-bold">End time</v-subheader>
+
+											<v-dialog ref="dialog3" v-model="modal4" :return-value.sync="form.endtime"
+												persistent width="290px">
+
+												<template v-slot:activator="{on}">
+													<v-text-field  v-on="on" v-model="form.endtime"  
+														label="Time" color="primary" readonly outlined>
+														<v-icon color="primary" slot="prepend-inner">mdi-clock</v-icon>
+													</v-text-field>
+												</template>
+												<v-time-picker v-if="modal4" format="ampm" v-model="form.endtime" header-color='primary'>
+													<v-spacer></v-spacer>
+														<v-btn text  @click="modal4 = false">Cancel</v-btn>
+														<v-btn text color="success" outlined @click="$refs.dialog3.save(form.endtime)">OK</v-btn>
+												</v-time-picker>
+											</v-dialog>
+										</v-col>
+
+										<!-- <v-col cols="12" sm="6">
+											<v-subheader class='font-weight-bold mb-0 pl-0'>Duration
+												<v-tooltip right max-width="300" dark class="d-inline-block mt-3">
+													<template v-slot:activator="{on}">
+														<v-icon v-on="on" small class="ml-2">mdi-help-circle</v-icon>
+													</template>
+													<span>How long the election should run</span>
+												</v-tooltip>
+											</v-subheader>
+											
+											<v-slider 
+												v-model="form.electionDuration" 
+												thumb-color="primary"
+												:thumb-size="24" ticks thumb-label 
+												:label="form.electionDuration + ' hrs'" 
+												:min="1" :max='24'>
+											</v-slider>
+										</v-col> -->
+
+										<v-col sm="12" style="padding-bottom:0px;">
+											<v-subheader class="font-weight-bold pl-0 mb-0">Auto start </v-subheader>
+											<v-switch 
+												class="mt-0"
+												v-model="form.timed" 
+												label="Election begins and ends automatically at the selected date and time"
+												color="success">
+											</v-switch>
+										</v-col>
+									</v-row>
+
+									<v-card-actions>
 										<v-spacer></v-spacer>
-										<v-btn flat  @click="modal2 = false">Cancel</v-btn>
-										<v-btn flat color="success" outline @click="$refs.dialog2.save(form.time)">OK</v-btn>
-									</v-time-picker>
-								</v-dialog>
-							</v-flex>
-						</v-layout>
+										<v-btn color="primary" depressed
+											:disabled="currElection.status == 'ended'"
+											@click="updateScheduleSettings">Save Changes
+										</v-btn>
+									</v-card-actions>
+								</v-card>
 
-						<!-- duration -->
-						<v-slider v-model="form.electionDuration" thumb-color="secondary"
-							:thumb-size="24" ticks thumb-label :label="'Duration: ' + form.electionDuration + ' hrs'" :min="1" :max='24'>
-						</v-slider>
+							</v-col>
+						</v-row>
 						
-						<v-btn depressed @click="dialog = true" small color="secondary" class="ml-0 text-capitalize">
-							<v-icon>mdi-plus</v-icon> Add role
-						</v-btn>
+					</v-container>
+				</v-tab-item>
 
-						<v-dialog v-model="dialog"  max-width="500px">
-
-							<v-card>
-								<v-card-title primary-title class="title mb-0 pb-0">Add A New Role</v-card-title>
-								<v-card-text>
-									<v-text-field label="Role title" v-model="role_input" color="secondary" 
-										hint="e.g president, secretary, vice-chancellor"></v-text-field>
-									<small class="grey--text"></small>
-									<p>
-										<small class="grey--text">* try not to use abbreviations</small>
-									</p>
-									<v-divider></v-divider>
-									<v-textarea v-model="role_input_desc"
-										label="Role description (optional)" outline
-										name="name" color="secondary" hint="e.g what this role can do"
-									></v-textarea>
-								</v-card-text>
-								<v-card-actions>
-									<v-spacer></v-spacer>
-									<v-btn flat @click.native="dialog = false">Cancel</v-btn>
-									<v-btn flat color="success" @click.native="addrole" :disabled="!role_input.trim()">Add role</v-btn>
-								</v-card-actions>
-							</v-card>
-						</v-dialog>
-
-						<v-select class="mt-2" deletable-chips
-							v-model="form.roles" dense
-							:items="form.roles" return-object
-							item-text="title" cache-items
-							color="secondary"
-							chips label="Roles"
-							multiple outline
-						></v-select>
-						
-						<v-card height="50" width="50" 
-							v-show="currElection.logo || blob_url" flat :img="blob_url || currElection.logo">
-							
-						</v-card>
-
-						<span v-if="!currElection.logo && !blob_url">
-							<v-icon>mdi-image</v-icon> No logo
-						</span><br>
-
-						<v-btn outline small color="secondary" 
-							v-if="!logo" class="text-normal ml-0"
-							@click="$helpers.trigFileSelector">
-							Upload logo
-						</v-btn>
-						<v-btn outline small color="secondary" 
-							v-if="logo" class="text-normal ml-0"
-							@click="logo = null; blob_url = null">
-							Clear logo
-						</v-btn>
-
-					</v-card-text>
-					<v-card-actions>
-						<v-spacer></v-spacer>
-						<v-btn color="success" 
-							:loading="saving_edit" 
-							:disabled="!!disabled_save" 
-							depressed
-							@click="saveChanges">
-							Save Changes
-						</v-btn>
-					</v-card-actions>
-				</v-card>
-			</v-dialog>
+			</v-tabs-items>
+			
 		</div>
 		</transition>
     
@@ -583,40 +802,8 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn flat @click="suspend_dialog = false; loading = false">Cancel</v-btn>
-          <v-btn color="orange" outline @click="suspendContestant" :loading="loading">Suspend</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <!-- FLAGGED USER DIALOG -->
-    <v-dialog hide-overlay v-model="flagged_user_dialog" 
-      v-if="flagged_user.name"
-      max-width="500px" transition="dialog-transition" lazy>
-      
-      <v-card>
-        <v-toolbar card color="grey lighten-3" dense>
-          <v-avatar size="38" class="white--text" :color="$helpers.colorMinder(flagged_user.name.charAt(0))">
-            <img :src="flagged_user.photoURL" v-if="flagged_user.photoURL" alt="alt">
-            <span v-else>{{flagged_user.name.charAt(0)}}</span>
-          </v-avatar>
-          <v-toolbar-title>{{flagged_user.name}}</v-toolbar-title>
-          <v-spacer></v-spacer>
-          <v-btn icon @click="flagged_user_dialog = false">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-        </v-toolbar>
-        <v-card-text>
-          <p>This user has been flagged as suspicious. This usually happens when a voter is not 
-          recognized by other voters</p>
-          <p>You can suspend this user to prevent them from voting or ignore the flags. Do this with caution</p>
-          <p>Note that the user will be notified once they are suspended</p>
-        </v-card-text>
-        <v-card-actions>
-          <!-- <v-btn color="orange" small @click="suspendVoter(flagged_user)" 
-            v-if="!voterSuspended(flagged_user)" :loading="loading">Suspend voter</v-btn> -->
-          <!-- <v-btn color="orange" small @click="restoreVoter(flagged_user)" v-else :loading="loading">Restore voter</v-btn>
-          <v-btn color="secondary" small @click="flagged_user_dialog = false" :disabled="loading">Ignore</v-btn> -->
+          <v-btn text @click="suspend_dialog = false; loading = false">Cancel</v-btn>
+          <v-btn color="orange" outlined @click="suspendContestant" :loading="loading">Suspend</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -626,29 +813,52 @@
 <script>
 export default {
   data:()=>({
-    ready: false,
+    showUi: false,
     flagged_user_dialog: false,
 		flagged_user: {},
-		e9: 1,
+		tabs: 'tab-1',
 		edit_dialog: false,
 		role_input: '',
 		role_input_desc: '',
 		dialog: false,
 		suspended: [],
+		add_contestant_dialog: false,
 		form: {
-			title: '',
+      title: '',
+      type: '',
+      school: '',
+			level: '',
+			about: '',
+      timed: true,
+      faculty: '',
+      department: '',
 			date: '',
-			time: '',
-			electionDuration: 5,
-			roles: []
-		},
+			enddate: '',
+			endtime: '',
+      time: '',
+      electionDuration: 5,
+      auto_enroll_admin: true,
+      // public: true,
+      roles: [],
+      self_registration: false,
+      voter_list: [],
+      allow_multiple_voting: false,
+      secret_ballot: true,
+      realtime_results: true,
+      results_visible_to_all: true,
+			verification_method: 'phone',
+			terms: '',
+			unrestricted_contesting: false,
+			manually_add_contestants: false,
+    },
 		blob_url: '',
 		logo: null,
-		logo_too_large: false,
 		uploading_logo: false,
 		saving_edit: false,
 		modal: false,
     modal2: false,
+		modal3: false,
+		modal4: false,
     today: new Date().getTime(),
     contestants: [],
     currElection: {},
@@ -659,6 +869,10 @@ export default {
 		isLastActivity: false,
 		activities: [],
 		regActivities: [],
+		form2: {
+			username: '',
+			role: '',
+		},
 		chartData: {},
 		chartOptions:{
       responsive: true, maintainAspectRatio: false,
@@ -686,27 +900,22 @@ export default {
       minute:'numeric'
     },
     search: '', // search contestants
-    search_voters: '', // search voters
     headers: [
       {
-      text: 'Name',
-      align: 'left',
-      sortable: false,
-      value: 'name'
+				text: 'Name',
+				align: 'left',
+				value: 'author.name'
       },
-      {text:'Role', value:'role'},
-      {text:'Department', value:'department'},
-      {text:'Faculty', value:'faculty'},
-      {text:'Actions', value:'actions'},
+      {text:'Role', value: 'role.title'},
+      // {text:'Department', value:'department'},
+      // {text:'Faculty', value:'faculty'},
+      {text:'Actions', value: 'actions'},
     ],
 		loading: false,
 		making_admin: false,
     suspend_dialog: false,
-    culprit: {},
-    cloudinary: {
-      uploadPreset: 'r9tlxvid',
-      cloudName: 'unplugged'
-    },
+		culprit: {},
+		roles: [],
   }),
   props:['election', 'acts', 'voters', 'conts'],
 	watch: {
@@ -740,7 +949,6 @@ export default {
   computed:{
     ...mapGetters([
       'getUser',
-      'getUserInfo'
     ]),
     ...mapState([
       'isSuperUser',
@@ -750,7 +958,7 @@ export default {
 			return !this.form.title.trim() || !this.form.date.trim() || !this.form.time.trim()
 		},
 		no_of_voters(){
-      let len = this.currElection.voters
+      let len = this.currElection.voters_count
         
 			switch (true){
 				case len >= 1000000:
@@ -778,20 +986,13 @@ export default {
     overviewItems(){
       return [
         ['Election title',this.currElection.title],
-        ['Creation Date', this.currElection.dateCreated.toDate().toDateString('en-Us',{day:'numeric'})],
+        ['Creation Date', this.currElection.dateCreated.toDateString('en-Us',{day:'numeric'})],
         ['School',this.currElection.sch],
         ['Faculty',this.currElection.fac],
         ['Department',this.currElection.dept],
         ['Start Date',new Date(this.currElection.fullStartDate).toDateString('en-Us',this.date_options)],
       ]
     },
-    filteredList() {
-      if(this.regVoters){
-        return this.all_voters.filter(voter => {
-          return voter.name.toLowerCase().includes(this.search_voters.toLowerCase())
-        })
-      }
-		},
 		all_voters(){
 			if(this.regVoters){
 
@@ -817,34 +1018,53 @@ export default {
     electionStatus(){
       // BEWARE THIS FUNCTION USES LOCAL TIME, WHICH MIGHT BE INACCURATE
       // Get the status of the current election
-    
-      let start = new Date(this.currElection.fullStartDate).getTime();
-			let one_hour = 1000 * 60 * 60
-			let now = new Date().getTime()
+	
+			if(this.currElection.timed){
 
-      if(start > now){
-        return ['Not Started', 'secondary'] // not started
-      }
-      else if(start + this.currElection.duration * one_hour > now){
-        return ['In Progress', 'success'] // in progress
-      }
-      else{
-        return ['Ended','error'] // ended
-      }
+				let start = new Date(this.currElection.fullStartDate).getTime();
+				let end = new Date(this.currElection.endDate + ' ' + this.currElection.endTime).getTime();
+				let one_hour = 1000 * 60 * 60
+				let now = new Date().getTime()
+	
+				if(start > now){
+					return ['Not Started', 'primary'] // not started
+				}
+				else if(end > now){
+					return ['In Progress', 'success'] // in progress
+				}
+				else{
+					return ['Ended','error'] // ended
+				}
+			}
+
+			else {
+				switch(this.currElection.status){
+					case 'inprogress': return ['In Progress', 'success'];
+					case 'ended': return ['Ended', 'error'];
+					default: return ['Not Started', 'primary']
+				}
+
+			}
       
-    },
+		},
+		electionId(){
+			return this.$route.params.electionId
+		},
     
-   
   },
   methods:{
 		prefillForm(){
-			this.form = {
-				title: this.currElection.title,
-				date: this.currElection.startDate,
-				time: this.currElection.startTime,
-				electionDuration: this.currElection.duration
-			}
-			this.form.roles = this.currElection.roles.map(role => {
+			// console.log(this.currElection)
+
+			this.form = Object.assign({}, this.currElection)
+			this.form.title = this.currElection.title
+			this.form.date = this.currElection.startDate
+			this.form.time = this.currElection.startTime
+			this.form.enddate = this.currElection.endDate
+			this.form.endtime = this.currElection.endTime
+			this.form.electionDuration = this.currElection.duration
+
+			this.form.roles = this.roles.map(role => {
 				return {
 					...role,
 					disabled: true
@@ -872,65 +1092,214 @@ export default {
         }
       
 		},
-		saveChanges(){
-			let start = new Date(this.currElection.fullStartDate).getTime();
-			let now = new Date().getTime()
-			// Allow changes only when election has not started
-			if(start > now){
+		changeElectionStatus(new_status='inprogress'){
+			if(!this.currElection.timed){
 
-				firebase.auth().currentUser.getIdToken().then(async (token)=>{
-					this.saving_edit = true
-
-					let logo = this.logo ? await this.uploadLogo() : this.currElection.logo
-
-					await api().post('edit_election',{
-						form: this.form,
-						userInfo: this.getUserInfo,
-						electionId: this.currElection.electionId,
-						fullStartDate: (new Date(this.form.date + ' ' + this.form.time)).toISOString(),
-						idToken: token,
-						logo: logo[0]
-					}).then(res =>{ 
-	
-						this.saving_edit = false
-	
-						this.$eventBus.$emit('Snackbar', {
-							show: true,
-							message: res.data.message,
-							color: 'success'
-						})
-						this.edit_dialog = false
-						this.setUp()
-	
-					}).catch((err) => {
-						this.saving_edit = false;
-						this.$Nprogress.done()
-						
-						this.$eventBus.$emit('Snackbar', {
-							show: true,
-							message: err.response ? err.response.data.message : 'Something went wrong, try again',
-							color: 'error'
-						})
-					})
-	
-				})
-				.catch(err => {
-					this.$eventBus.$emit('Snackbar', {
-						show: true,
-						message: 'Something went wrong, try again',
-						color: 'error'
-					})
-				})
-			}
-			else {
-				// election has started or ended
+				this.$gun.get('elections')
+					.get(this.electionId)
+					.get('status').put(new_status)
+					
 				this.$eventBus.$emit('Snackbar', {
 					show: true,
-					message: "You can't update election after it has started",
-					color: 'error'
+					message: 'Status Updated',
+					color: 'success'
 				})
+
 			}
 		},
+		updateVotingSettings(){
+			let elecRef = this.$gun.get('elections')
+				.get(this.electionId)
+
+			elecRef.put({
+				allow_multiple_voting: this.currElection.type == 'School' ? false : this.form.allow_multiple_voting,
+        secret_ballot: this.currElection.type == 'School' ? true : this.form.secret_ballot,
+        realtime_results: this.form.realtime_results,
+        results_visible_to_all: this.form.results_visible_to_all,
+			})
+
+			this.$eventBus.$emit('Snackbar', {
+				show: 'true',
+				message: 'Preferences updated',
+				color: 'success'
+			})
+		},
+		updateScheduleSettings(){
+			let elecRef = this.$gun.get('elections')
+				.get(this.electionId)
+
+			elecRef.put({
+				startDate: this.form.date,
+				startTime: this.form.time,
+				endDate: this.form.enddate,
+				endTime: this.form.endtime,
+				duration: this.form.electionDuration,
+				timed: this.form.timed
+			})
+
+			this.$eventBus.$emit('Snackbar', {
+				show: 'true',
+				message: 'Preferences updated',
+				color: 'success'
+			})
+
+		},
+		updateGeneralSettings(){
+			let elecRef = this.$gun.get('elections')
+				.get(this.electionId)
+			
+			elecRef.put({
+				title: this.$sanitize(this.form.title),
+				about: this.$sanitize(this.form.about),
+				terms: this.$sanitize(this.form.terms)
+			})
+
+			this.$eventBus.$emit('Snackbar', {
+				show: 'true',
+				message: 'Preferences updated',
+				color: 'success'
+			})
+		},
+		updateRoles(){
+			let elecRef = this.$gun.get('elections')
+				.get(this.electionId)
+
+			let new_roles = this.form.roles.filter(r => r.disabled == false)
+
+			new_roles.forEach(role => {
+
+				let new_token = randomWords({exactly:2, join: '-'})
+
+				elecRef.get('roles')
+					.get(this.$uuidv4())
+					.put({
+						title: role.title,
+						description: role.description,
+						value: new_token,
+						token: new_token
+					})
+			})
+
+			elecRef.get('unrestricted_contesting')
+				.put(this.form.unrestricted_contesting)
+			elecRef.get('manually_add_contestants')
+				.put(this.form.manually_add_contestants)
+
+			this.$eventBus.$emit('Snackbar', {
+				show: 'true',
+				message: 'Preferences updated',
+				color: 'success'
+			})
+		},
+		async addContestant(){
+			let has_contested = await this.hasContested(this.form2.username)
+			let elecRef = this.$gun.get('elections')
+				.get(this.electionId)
+
+      console.log({has_contested})
+
+      // check if user is in same sch, fac,dept; if election not started; if has enrolled
+      let not_started = this.currElection.status == 'inRegistration'
+
+      if(has_contested == false){
+        
+        // this.step = 2
+        this.$eventBus.$emit('Snackbar', {
+          show: true,
+          message: 'Sorry, that account was not found',
+          color: 'error'
+        })
+      }
+
+      // check if user is already a contestant
+      // else if(has_contested != undefined){
+      //   this.$eventBus.$emit('Snackbar', {
+      //     show: true,
+      //     message:'Sorry, you are already a contestant in this election',
+      //     color: 'error'
+      //   })
+      // }
+
+      // check if contesting is still possible
+      // else if(!not_started){
+      //   this.$eventBus.$emit('Snackbar', {
+      //     show: true,
+      //     message:'Sorry, you cannot add contestants at this time',
+      //     color: 'error'
+      //   })
+      // }
+
+
+      // create a contestant
+      else{
+        this.loading = true
+
+        let data = {
+          electionId: this.electionId,
+          date_created: this.$Gun.state(),
+          author: this.form2.username,
+          suspended: false,
+        }
+      
+        let contestant = elecRef
+          .get('contestants')
+          .get(this.form2.username)
+          .put(data)
+
+				let role_node = elecRef
+					.get('roles')
+					.get(this.form2.role.key)
+
+        contestant.get('role').put(role_node)
+
+				elecRef.get('contestants_count')
+					.put(this.currElection.contestants_count + 1)
+					
+        this.$gun
+          .get(this.form2.username)
+          .get('contests')
+          .get(this.electionId)
+          .put(contestant)
+
+				this.loading = false
+				this.add_contestant_dialog = false
+
+        this.$eventBus.$emit('Snackbar', {
+          show: true,
+          message: 'Successfull',
+          color: 'success'
+        })
+
+
+      }
+		},
+		hasContested(username){
+			return new Promise((resolve,reject) => {
+
+				let u;
+
+				let userRef = this.$gun.get('users').get(username)
+				this.$gun.get('users').get(username, async (ack)=> {
+					if(ack.err || ack.put !== u){
+
+						let contest = await userRef
+							.get('contests')
+							.get(this.electionId)
+							.then()
+						console.log(contest)
+						resolve(contest)
+					}
+					else {
+
+						console.log(ack.put)
+						resolve(false)
+
+					}
+				})
+
+			})
+
+    },
 		allowedDates(val){
 			// only allow dates greater than or equal to today
 			let today = this.today
@@ -955,13 +1324,24 @@ export default {
 			
 			this.uploading_logo = true
 			
-			return this.$helpers.upload({
+			return this.$helpers.uploadMedia({
 				files: [this.logo],
 				path: `logos/${this.currElection.electionId}`,
 				file_name: `${this.currElection.title.split(' ').join('-')}-logo`
 			}).then(res => {
 				
+				this.$gun.get('elections')
+					.get(this.electionId)
+					.get('logo')
+					.put(res[0])
+
 				this.uploading_logo = false
+				
+				this.$eventBus.$emit('Snackbar', {
+					show: true,
+					message: 'Logo uploaded',
+					color: 'success'
+				})
 				return res
 			})
 			.catch(err => console.log(err))
@@ -1004,43 +1384,75 @@ export default {
 			})
 		},
 		async getContestants(){
-			return db.collection('moreUserInfo')
-			.where('contests', 'array-contains', this.currElection.electionId)
-			.get().then(docs => {
-				let contestants = []
-				docs.forEach(doc => {
-					contestants.push(doc.data())
+
+			let elecRef = this.$gun.get('elections')
+				.get(this.electionId)
+				.get('contestants')
+				.map().once(async c => {
+
+					let author = await this.$gun.get('users')
+						.get(c.author).then()
+
+					let contestant = Object.assign({}, c)
+					console.log(contestant)
+					contestant.author = author
+
+					let role = this.roles.find(r => r.soul == c.role['#'])
+					contestant.role = role
+					// console.log(role, this.roles)
+
+
+					this.contestants.find(ct => ct.username == c.username) ? '' : 
+					this.contestants.push(contestant)
 				})
-				return this.contestants = contestants
-			})
+			
 		},
     async setUp(){
       try {
 				
         // Set current election
-				this.currElection = this.election ? this.election : this.curRoom 
+				this.$gun.get('elections')
+        .get(this.electionId)
+        .on( async election => {
+          
+          if(election){
+						if(election.admin['#'] == this.getUser.username){
+							this.currElection = election
 
-				if(this.election && this.voters){
-					this.regVoters = this.voters
-					this.contestants = this.conts
-					this.getSuspended()
-					this.setChart()
-					this.ready = true
-					this.getAdmins()
-				}
-				else{
+							// get election roles
+							this.$gun.get('elections').get(this.electionId)
+								.get('roles').map().on((r,key) => {
+									r.key = key
+									r.soul = r['_']['#']
+									// console.log(r)
+									this.roles.find(rl => rl.value == r.value) ? '' : 
+									this.roles.push(r)
+								})
 
-					this.getVoters()
+							setTimeout(() => {
+								
+								this.showUi = true
+							}, 1000)
+						}
+						else {
+							this.$router.push('/notFound')
+						}
+					}
+					else {
+						$router.push('/notFound')
+					}
 
-					this.getContestants().then(conts=>{
-						this.getSuspended()
-						this.setChart()
-						this.getAdmins()
-						this.ready = true
-					}).catch(err=>{
-						// console.log(err)
-					})
-				}
+					this.prefillForm()
+				})
+
+
+				this.getContestants()
+				.then(()=>{
+
+				}).catch(err=>{
+					// console.log(err)
+				})
+				
 
       } catch (error) {
         // console.log(error)
@@ -1173,7 +1585,7 @@ export default {
           return 'error'
           break
         case 'logo_updated':
-          return 'secondary'
+          return 'primary'
           break
         case 'new_contestant':
           return 'teal'
@@ -1322,15 +1734,16 @@ export default {
 	},
 	components:{
 		LoadingBar,
-		BarChart
+		BarChart,
+		Navigation
 	},
   async mounted(){
     try {
       await this.setUp()
+			
 			await this.getActivities()
 			await this.recentRegActivities()
 			
-			this.prefillForm()
       
     } catch (error) {
       // console.log(error)
@@ -1349,13 +1762,14 @@ export default {
     
   }
 }
+import Navigation from '@/components/Navigation'
 import api from '@/services/api'
 import {mapGetters, mapState} from 'vuex'
 import LoadingBar from '@/spinners/LoadingBar'
 import BarChart from '@/charts/barchart'
-import {firebase, db, database} from '@/plugins/firebase'
+import randomWords from 'random-words'
 </script>
-<style scopped>
+<style scoped>
   .linkify{
     cursor: pointer;
   }

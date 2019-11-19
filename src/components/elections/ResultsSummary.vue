@@ -1,153 +1,153 @@
 <template>
   <div>
     <v-container grid-list-sm fluid>
-      <v-layout row wrap justify-center>
-        <v-flex sm12 md8>
+      <v-row justify="center">
+        <v-col sm="12" md="8">
           <v-card class="round">
             <v-card-title primary-title>
               {{currElection.title}}
             </v-card-title>
-            <v-layout row wrap>
-              <v-flex xs12 sm6>
+            <v-row row wrap>
+              <v-col cols="12" sm="6">
                 <v-list dense>
-                  <v-list-tile v-if="currElection.timed" @click="''">
-                    <v-list-tile-action>
+                  <v-list-item v-if="currElection.timed" @click="''">
+                    <v-list-item-action>
                       <v-icon color="teal">mdi-stop</v-icon>
-                    </v-list-tile-action>
-                    <v-list-tile-title>
+                    </v-list-item-action>
+                    <v-list-item-title>
                       <span class="mr-3">Title:</span>
                       <span>{{currElection.title}}</span>
-                    </v-list-tile-title>
-                  </v-list-tile>
+                    </v-list-item-title>
+                  </v-list-item>
                   
-                  <v-list-tile v-if="currElection.type == 'School'" @click="''">
-                    <v-list-tile-action>
+                  <v-list-item v-if="currElection.type == 'School'" @click="''">
+                    <v-list-item-action>
                       <v-icon color="teal">mdi-school</v-icon>
-                    </v-list-tile-action>
-                    <v-list-tile-title class="text-capitalize">
+                    </v-list-item-action>
+                    <v-list-item-title class="text-capitalize">
                       <span class="mr-3">School:</span>
                       <span>{{currElection.sch}}</span>
-                    </v-list-tile-title>
-                  </v-list-tile>
+                    </v-list-item-title>
+                  </v-list-item>
 
-                  <v-list-tile @click="''">
-                    <v-list-tile-action>
+                  <v-list-item @click="''">
+                    <v-list-item-action>
                       <v-icon color="teal">mdi-layers</v-icon>
-                    </v-list-tile-action>
-                    <v-list-tile-title>
+                    </v-list-item-action>
+                    <v-list-item-title>
                       <span class="mr-3">Level:</span>
                       <span>{{currElection.level}} Election</span>
-                    </v-list-tile-title>
-                  </v-list-tile>
+                    </v-list-item-title>
+                  </v-list-item>
 
-                  <v-list-tile v-if="currElection.type == 'School' 
+                  <v-list-item v-if="currElection.type == 'School' 
                     && (currElection.level != 'General')" @click="''">
-                    <v-list-tile-action>
+                    <v-list-item-action>
                       <v-icon color="teal">mdi-domain</v-icon>
-                    </v-list-tile-action>
-                    <v-list-tile-title class="text-capitalize">
+                    </v-list-item-action>
+                    <v-list-item-title class="text-capitalize">
                       <span class="mr-3">Faculty:</span>
                       <span>{{currElection.fac}}</span>
-                    </v-list-tile-title>
-                  </v-list-tile>
+                    </v-list-item-title>
+                  </v-list-item>
 
-                  <v-list-tile v-if="currElection.level == 'Department'" @click="''">
-                    <v-list-tile-action>
+                  <v-list-item v-if="currElection.level == 'Department'" @click="''">
+                    <v-list-item-action>
                       <v-icon>mdi-map-marker</v-icon>
-                    </v-list-tile-action>
-                    <v-list-tile-title class="text-capitalize">
+                    </v-list-item-action>
+                    <v-list-item-title class="text-capitalize">
                       <span class="mr-3">Department:</span>
                       <span>{{currElection.dept}}</span>
-                    </v-list-tile-title>
-                  </v-list-tile>
+                    </v-list-item-title>
+                  </v-list-item>
 
-                  <v-list-tile v-if="currElection.timed" @click="''">
-                    <v-list-tile-action>
+                  <v-list-item v-if="currElection.timed" @click="''">
+                    <v-list-item-action>
                       <v-icon color="teal">mdi-poll</v-icon>
-                    </v-list-tile-action>
-                    <v-list-tile-title>
+                    </v-list-item-action>
+                    <v-list-item-title>
                       <span class="mr-3">Contestants:</span>
                       <span>{{currElection.contestants}}</span>
-                    </v-list-tile-title>
-                  </v-list-tile>
+                    </v-list-item-title>
+                  </v-list-item>
                   
-                  <v-list-tile v-if="currElection.timed" @click="''">
-                    <v-list-tile-action>
+                  <v-list-item v-if="currElection.timed" @click="''">
+                    <v-list-item-action>
                       <v-icon color="teal">mdi-account-group</v-icon>   
-                    </v-list-tile-action>
-                    <v-list-tile-title>
+                    </v-list-item-action>
+                    <v-list-item-title>
                       <span class="mr-3">Enrolled Voters:</span>
                       <span>{{currElection.voters}}</span>
-                    </v-list-tile-title>
-                  </v-list-tile>
+                    </v-list-item-title>
+                  </v-list-item>
                   
-                  <v-list-tile @click="''">
-                    <v-list-tile-action>
+                  <v-list-item @click="''">
+                    <v-list-item-action>
                       <v-icon color="teal">mdi-vote-outline</v-icon>
-                    </v-list-tile-action>
-                    <v-list-tile-title>
+                    </v-list-item-action>
+                    <v-list-item-title>
                       <span class="mr-3">People that voted:</span>
                       <span >{{rawVotes.length}}</span>
-                    </v-list-tile-title>
-                  </v-list-tile>
+                    </v-list-item-title>
+                  </v-list-item>
                 </v-list>
                 
-              </v-flex>
-              <v-flex xs12 sm6>
+              </v-col>
+              <v-col cols="12" sm="6">
                 <v-list dense>
-                  <v-list-tile v-if="currElection.timed" @click="''">
-                    <v-list-tile-action>
+                  <v-list-item v-if="currElection.timed" @click="''">
+                    <v-list-item-action>
                       <v-icon color="teal">mdi-clock</v-icon>
-                    </v-list-tile-action>
-                    <v-list-tile-title>
+                    </v-list-item-action>
+                    <v-list-item-title>
                       <span class="mr-3">Date Created:</span>
                       <span>{{(new Date(currElection.dateCreated.toMillis())).toLocaleString('en-Us')}}</span>
-                    </v-list-tile-title>
-                  </v-list-tile>
+                    </v-list-item-title>
+                  </v-list-item>
 
-                  <v-list-tile v-if="currElection.timed" @click="''">
-                    <v-list-tile-action>
+                  <v-list-item v-if="currElection.timed" @click="''">
+                    <v-list-item-action>
                       <v-icon color="teal">mdi-account</v-icon>
-                    </v-list-tile-action>
-                    <v-list-tile-title>
+                    </v-list-item-action>
+                    <v-list-item-title>
                       <span class="mr-3">Created By:</span>
                       <span class="text-capitalize">{{getAdmin.name | capitalize}}</span>
-                    </v-list-tile-title>
-                  </v-list-tile>
+                    </v-list-item-title>
+                  </v-list-item>
 
-                  <v-list-tile v-if="currElection.timed" @click="''">
-                    <v-list-tile-action>
+                  <v-list-item v-if="currElection.timed" @click="''">
+                    <v-list-item-action>
                       <v-icon color="teal">mdi-clock</v-icon>
-                    </v-list-tile-action>
-                    <v-list-tile-title>
+                    </v-list-item-action>
+                    <v-list-item-title>
                       <span class="mr-3">Start Date:</span>
                       <span>{{(new Date(currElection.fullStartDate))}}</span>
-                    </v-list-tile-title>
-                  </v-list-tile>
+                    </v-list-item-title>
+                  </v-list-item>
                   
-                  <v-list-tile v-if="currElection.timed" @click="''">
-                    <v-list-tile-action>
+                  <v-list-item v-if="currElection.timed" @click="''">
+                    <v-list-item-action>
                       <v-icon color="teal">mdi-timer</v-icon>   
-                    </v-list-tile-action>
-                    <v-list-tile-title>
+                    </v-list-item-action>
+                    <v-list-item-title>
                       <span class="mr-3">Duration:</span>
                       <span>{{currElection.duration}} hrs</span>
-                    </v-list-tile-title>
-                  </v-list-tile>
+                    </v-list-item-title>
+                  </v-list-item>
 
-                  <v-list-tile @click="''">
-                    <v-list-tile-action>
+                  <v-list-item @click="''">
+                    <v-list-item-action>
                       <v-icon color="teal">mdi-adjust</v-icon>
-                    </v-list-tile-action>
-                    <v-list-tile-title>
+                    </v-list-item-action>
+                    <v-list-item-title>
                       <span class="mr-3">Status:</span>
                       <span v-if="!timer_ready">Checking...</span>
                       <span v-else>{{status.not_started ? 'Not started' : status.inprogress ? 'In progress' : 'Ended'}}</span>
-                    </v-list-tile-title>
-                  </v-list-tile>
+                    </v-list-item-title>
+                  </v-list-item>
                 </v-list>
-              </v-flex>
-            </v-layout>
+              </v-col>
+            </v-row>
 
             <v-divider></v-divider>
 
@@ -157,7 +157,7 @@
               :headers="headers"
               :items="tabledata"
               :loading='false'
-              :hide-actions="isPrinting"
+              :hide-default-footer="isPrinting"
             >
             <v-progress-linear slot="progress" color="blue" indeterminate></v-progress-linear>
               <template slot="items" slot-scope="props">
@@ -174,7 +174,7 @@
             <v-data-table
               :headers="votes_breakdown_headers"
               :items="votes_breakdown_tabledata"
-              :loading='false' :hide-actions="isPrinting"
+              :loading='false' :hide-default-footer="isPrinting"
             >
             <v-progress-linear slot="progress" color="blue" indeterminate></v-progress-linear>
               <template slot="items" slot-scope="props">
@@ -187,9 +187,9 @@
               </template>
             </v-data-table>
           </v-card>
-        </v-flex>
+        </v-col>
         
-      </v-layout>
+      </v-row>
     </v-container>
   </div>
 </template>

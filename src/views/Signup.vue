@@ -10,10 +10,19 @@
 
           <v-snackbar v-model="snackbar.show" dark :color="snackbar.color" :timeout="5000" top>
              <span v-html='snackbar.message'></span>
-            <v-btn dark flat color="white" @click="snackbar.show = false"> Close</v-btn>
+            <v-btn dark text color="white" @click="snackbar.show = false"> Close</v-btn>
           </v-snackbar>
 
-          <h1 class="text-xs-center white--text mb-4" ><a href="/" style="text-decoration:none;color:#fff">{{$appName}}</a></h1>
+          <v-alert
+            :value="alert.show"
+            dismissible
+            transition="fade-transition"
+            :type="alert.type"
+          >
+            {{alert.message}}
+          </v-alert>
+
+          <h1 class="text-center white--text mb-4" ><a href="/" style="text-decoration:none;color:#fff">{{$appName}}</a></h1>
           
           <v-card class="" max-width="800" v-if="!show_confirm_text">
             <v-card-title class="title font-weight-bold justify-space-around">
@@ -24,10 +33,10 @@
             <v-window v-model="step">
 
               <v-window-item :value="1">
-                <v-card-text :class="{'px-0':$vuetify.breakpoint.xsOnly}">
-                  <v-form ref="form" class="text-xs-center pa-3">
-                    <!-- <p class="text-xs-center"></p> -->
-                    <v-text-field
+                <v-card-text >
+                  <v-form ref="form" class="text-center pa-3">
+                    <!-- <p class="text-center"></p> -->
+                    <v-text-field outlined dense
                       label="Full Name" class="mb-0"
                       v-model.lazy="$v.form.name.$model" :error-messages="nameErrors"
                       color="secondary" required>
@@ -40,6 +49,14 @@
                       color="secondary" :error-messages="emailErrors"
                       required type="email">
                       <v-icon slot="prepend-inner" color="teal">mdi-email</v-icon>
+                    </v-text-field>
+
+                    <v-text-field 
+                      label="Username" class="mb-0"
+                      v-model.lazy="$v.form.username.$model" :error-messages="usernameErrors" 
+                      color="secondary"
+                      required>
+                      <v-icon slot="prepend-inner" color="teal">mdi-account</v-icon>
                     </v-text-field>
 
                     <v-text-field class="mb-0"
@@ -63,12 +80,11 @@
 
               <v-window-item :value="2">
                 <v-card-text>
-                  <!-- <v-subheader class="px-4">Are you a student? </v-subheader> -->
                   <v-radio-group v-model="form.is_student" row class="px-3">
                     <v-radio label="I am a student" :value="true"></v-radio>
-                    <v-radio label="I am not a student" :value="false" disabled></v-radio>
+                    <v-radio label="I am not a student" :value="false"></v-radio>
                   </v-radio-group>
-                  <v-form ref="form2" v-if="form.is_student == true" v-model="valid2" class="text-xs-center pa-3">
+                  <v-form ref="form2" v-if="form.is_student == true" v-model="valid2" class="text-center pa-3">
                     <v-autocomplete
                       v-model.lazy="form2.mySchool" hint="Select your school"
                       :items="schools" return-object item-text="text" hide-no-data  class="mb-0"
@@ -89,14 +105,18 @@
                       <v-icon slot="prepend-inner" color="teal">mdi-map-marker</v-icon>
                     </v-autocomplete>
                   </v-form>
-                  <div class="text-xs-center">
+                  <div class="text-center">
                   <span class="caption grey--text text--darken-1">
-                    * Please note that you need to be a student to paticipate in student elections
+                    * Please note that you need to be a student to paticipate in student elections.
                   </span><br>
                   <small class="grey--text text--darken-1">By signing up, you agree with our </small><br>
                   <small class="grey--text text--darken-1">
-                    <v-btn href="https://voteryte.com/terms" color="primary" style="font-size: 12px" target="blank" class="text-capitalize" flat small>Terms of Use</v-btn> and 
-                    <v-btn href="https://voteryte.com/privacy" color="primary" style="font-size: 12px" target="blank" class="text-capitalize" flat small> Privacy Policy</v-btn></small>
+                    <v-btn href="https://voteryte.com/terms" 
+                      color="primary" style="font-size: 12px" 
+                      target="blank" class="text-capitalize" text small>Terms of Use</v-btn> and 
+                    <v-btn href="https://voteryte.com/privacy" 
+                      color="primary" style="font-size: 12px" 
+                      target="blank" class="text-capitalize" text small> Privacy Policy</v-btn></small>
                   </div>
                 </v-card-text>
               </v-window-item>
@@ -106,12 +126,12 @@
             <v-divider></v-divider>
 
             <v-card-actions>
-              <v-btn :disabled="step === 1 || loading" flat @click="step--">
+              <v-btn :disabled="step === 1 || loading" text @click="step--">
                 Back
               </v-btn>
               <v-spacer></v-spacer>
               <v-btn v-if="step !== 3"
-                :disabled="$v.form.$anyError || disable_step_two"
+                
                 color="success" :loading="loading" 
                 depressed @click="next"
               >
@@ -121,26 +141,28 @@
           </v-card>
 
           <v-card v-else>
-            <v-alert
-              color="success"
-              dismissible
-              transition="fade-transition"
-              type="success"
-              :value="show_confirm_text"
-            >
-              {{confirm_text}}
-            </v-alert>
-
+            
             <v-card-text>
-              <p class="subheading">We've sent an email to <b>{{form.email}}</b>. Click the confirmation link in that email to begin using {{$appName}}</p>
+              <p class="subheading">
+                We've sent an email to <b>{{form.email}}</b>. 
+                Click the confirmation link in that email to begin using {{$appName}}
+              </p>
               <p>Didn't get the verification link ? <br>
-                <v-btn color="info" flat @click="sendVerificationLInk(true)" :loading="sending_link">Resend verification link</v-btn>
+                <v-btn color="info" text 
+                  @click="sendVerificationLInk(true)" 
+                  :loading="sending_link">
+                  Resend verification link
+                </v-btn>
               </p>
             </v-card-text>
           </v-card>
 
-          <v-subheader class="ml-5 white--text text-xs-center">Already have an account? 
-            <router-link to="/login" class="pl-2 font-weight-bold success--text" style="text-decoration:none;"> Sign in</router-link>
+          <v-subheader class="ml-5 white--text text-center">Already have an account? 
+            <router-link to="/login" 
+              class="pl-2 font-weight-bold success--text" 
+              style="text-decoration:none;">
+               Sign in
+            </router-link>
           </v-subheader>
         </v-flex>
       </v-layout>
@@ -155,6 +177,7 @@ export default {
   data:()=>({
     step: 1,
     message: 'Login',
+    alert: {show: false},
     snackbar: {},
     loading: false,
     sending_link: false,
@@ -164,6 +187,7 @@ export default {
     form: {
       name: '',
       email: '',
+      username: '',
       is_student: true, // whether is student or not
       password1: '',
       password2: '',
@@ -185,6 +209,7 @@ export default {
   validations: {
     form: {
       name: {required},
+      username: {required},
       email: {required, email},
       is_student: {required},
       password1: {required, minLength: minLength(6)},
@@ -239,6 +264,13 @@ export default {
       !this.$v.form.name.required && errors.push('Name is required')
       return errors
     },
+    usernameErrors () {
+      const errors = []
+      if (!this.$v.form.username.$dirty) return errors
+      !this.$v.form.username.required && errors.push('Username is required')
+      this.usernameIsTaken() && errors.push('Username is taken')
+      return errors
+    },
     disable_step_two(){
       return this.step == 2 && 
       (!this.form2.mySchool ||
@@ -258,14 +290,14 @@ export default {
       }
       else {
         // console.log(this.$v.form2)
-        this.step == 2 ? this.submit() : this.step++
+        this.step == 2 ? this.signup() : this.step++
       }
     },
     async getSchools(){
       try {
-        let schls = await api2().post('dashboard/getSchools')
-        // console.log(schls)
-        this.schools = schls.data
+        // let schls = await api2().post('dashboard/getSchools')
+        
+        this.schools = schools
       } catch (error) {
         // console.log(error)
       }
@@ -369,17 +401,66 @@ export default {
         })
         
       }
+    },
+    usernameIsTaken(){
+      // check that username does not exist already
+      let isTaken = true;
+
+      this.$gun.get('users').get(this.form.username).not(function(key){
+        isTaken = key ? false : true
+      })
+
+      return isTaken
+    },
+    async signup(){
+      try {
+        let data = {
+          name: this.form.name,
+          email: this.form.email,
+          username: this.form.username,
+          is_student: this.form.is_student,
+          was_once_a_student: this.form.is_student,
+          displayName: this.form.name,
+          photoURL: '',
+          password: this.form.password1,
+          sch: this.form2.mySchool.text,
+          dept: this.form2.myDepartment.text,
+          fac: this.form2.myFaculty.text
+        }
+
+        if(this.usernameIsTaken()){
+          this.loading = false
+          this.step = 1
+          this.alert = {
+            show: true,
+            message: 'Sorry that username is already taken',
+            type: 'error'
+          }
+        }
+
+        else {
+          this.loading = true
+          await Auth.signup(data)
+          this.loading = false
+        }
+        
+      } catch (error) {
+        console.log(error)
+      }
     }
   },
   mounted(){
     this.getSchools()
     document.getElementById('welcome_logo').style.display = 'none'
+    // this.usernameIsTaken()
   }
 }
 
 // import Nav from '@/components/Nav'
   import api from '@/services/api'
   import api2 from '@/services/api2'
+  import Auth from '@/plugins/auth'
+  import {schools} from '@/assets/js/schools'
   import Footer from '@/components/Footer'
   import { required, minLength, email, sameAs } from 'vuelidate/lib/validators'
   import {firebase, db, database} from '@/plugins/firebase'
@@ -394,18 +475,11 @@ export default {
     background:#042943;
     //background:#e8e8e8;
   }
-  .v-input{
-    margin-top:0;
-  }
+  
   .form_buttons button{
     text-transform:none;
   }
-  .v-card{
-    border-radius:6px;
-  }
-  //.theme--light.v-text-field--outline .v-input__slot {
-   // border: 1px solid rgba(115, 114, 114, 0.54);
-  //}
+  
 </style>
 
 

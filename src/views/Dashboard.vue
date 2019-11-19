@@ -5,277 +5,248 @@
         <loading-bar v-if="!showUi" color="grey"></loading-bar>
         
         <div v-else>
-          <v-layout >
-            <v-flex>
-              <vue-headful :title="title"/>
+          
+          <vue-headful :title="title"/>
 
-              <v-navigation-drawer fixed v-model="drawer" app dark width="230" 
-                style="background-color:#1c1f35;color:bfbbbb;z-index:20" class="navdrawr">
-                <v-toolbar flat tile id="step1" class="" style="background-color:rgba(51, 54, 78, 0.9);color:#fff;">
-                  <v-avatar
-                    size="40"
-                    color="transparent"
-                  >
-                    <img src="@/assets/logo-50x50.png" alt="logo">
-                  </v-avatar>
+          <v-navigation-drawer fixed v-model="drawer" 
+            app width="250" :mini-variant="mini"
+            dark color="#1c1f35"
+            class="navdrawr">
+            <v-toolbar flat tile id="step1" 
+              style="background-color:#1c1f35; color:bfbbbb; z-index:20">
+              <v-avatar
+                size="40"
+                color="transparent"
+              >
+                <img src="@/assets/logo-50x50.png" alt="logo">
+              </v-avatar>
 
-                  <v-toolbar-title>{{$appName}}</v-toolbar-title>
-                </v-toolbar>
-                <v-divider></v-divider>
+              <v-toolbar-title class="ml-4" v-show="!mini">{{$appName}}</v-toolbar-title>
+            </v-toolbar>
+            <v-divider></v-divider>
 
-                <!-- Switch Elections -->
-                <v-expansion-panel>
-                  <v-expansion-panel-content style="background: #2f324a;">
-                    <template slot="actions">
-                      <v-icon color="primary">$vuetify.icons.expand</v-icon>
-                    </template>
-                    <template slot="header">
-                      <div >
-                        <span class="text-capitalize text-truncate success--text font-weight-bold">
-                          {{truncateText(curRoom ? curRoom.title : 'Set Current Election')}}
-                        </span><br>
-                        <small class="grey--text darken-1">Switch election</small>
-                      </div>
-                    </template>
-                    <v-card class="main lighten-1">
-                      <v-progress-linear :indeterminate="true" height="4" v-if="loading_rooms" color="primary"></v-progress-linear>
-                      <v-list class="main lighten-1" dense>
-                        <v-subheader v-if="!loading_rooms && getMyEnrolled && getMyEnrolled.length == 0">No Election</v-subheader>
-                        
-                        <v-list-tile v-for="election in getMyEnrolled" :key="election.electionId"
-                          @click="$store.dispatch('curRoom', election)">
-                          <v-list-tile-content>
-                            <v-list-tile-title class="grey--text darken-1">
-                              {{election.title}}
-                            </v-list-tile-title>
-                          </v-list-tile-content>
-                          <v-list-tile-action v-if="curRoom && curRoom.electionId == election.electionId">
-                            <v-icon color="success">mdi-check</v-icon>
-                          </v-list-tile-action>
-                        </v-list-tile>
-                      </v-list>
-                      <v-btn color="info" 
-                        ripple flat :loading="getting_enrolled"
-                        class="ml-0 text-capitalize" 
-                        small @click="setup">
-                        Refresh
-                      </v-btn>
-                    </v-card>
-                  </v-expansion-panel-content>
-                </v-expansion-panel>
-
-                <v-list dense 
-                  style="background-color:#1c1f35;color:bfbbbb;padding-top:0;" 
-                  v-if="getUser" class="home_list">
-            
-                  <v-list-tile to="/home" exact >
-                    <v-list-tile-action>
-                      <v-icon>mdi-home</v-icon>
-                    </v-list-tile-action>
-                    <v-list-tile-title>Home</v-list-tile-title>
-                  </v-list-tile>
-
-                  <!-- FORUM -->
-                  <v-list-tile :to="curRoom ? `/forum` : '/#forum'">
-                    <v-list-tile-action>
-                      <v-icon color="">mdi-forum</v-icon>
-                    </v-list-tile-action>
-                    <v-list-tile-title>Forum</v-list-tile-title>
-                  </v-list-tile>
-
-                  <!-- Messages -->
-                  <v-list-group prepend-icon="mdi-message-text" no-action :value="true">
-                    <v-list-tile slot="activator">
-                      <v-list-tile-title>Messages</v-list-tile-title>
-                    </v-list-tile>
-                    <v-list-tile @click="openBroadcastDialog">
-                      <v-list-tile-action>
-                        <v-icon color="success">mdi-inbox</v-icon>
-                      </v-list-tile-action>
-                      <v-list-tile-title>Inbox</v-list-tile-title>
-                      <v-list-tile-action v-show="getUnreadLength > 0">
-                        <v-badge right color="red">
-                          <span class="caption" slot="badge">{{getUnreadLength}}</span>
-                        </v-badge>
-                      </v-list-tile-action>
-                    </v-list-tile>
-
-                    <v-list-tile @click="isSuperUser || isAdmin ? new_broadcast = true : upgrade = true" :disabled="!curRoom">
-                      <v-list-tile-action>
-                        <v-icon color="">mdi-bullhorn</v-icon>
-                      </v-list-tile-action>
-                      <v-list-tile-content>
-                        <v-list-tile-title>New Broadcast </v-list-tile-title>
-                      </v-list-tile-content>
-                    </v-list-tile>
-                  </v-list-group>
-
-                  <!-- ELECTIONS -->
-                  <v-list-group prepend-icon="mdi-poll-box" no-action :value="false">
-                    <v-list-tile slot="activator">
-                      <v-list-tile-title>Elections</v-list-tile-title>
-                    </v-list-tile>
-                    <v-list-tile  to="/elections/create">
-                      <v-list-tile-action>
-                        <v-icon color="success">mdi-plus-box</v-icon>
-                      </v-list-tile-action>
-                      <v-list-tile-title>Create Election</v-list-tile-title>
-                    </v-list-tile>
-
-                    <v-list-tile :to="curRoom ? `/elections/vote` : '/#vote'">
-                      <v-list-tile-action>
-                        <v-icon color="info">mdi-vote-outline</v-icon>
-                      </v-list-tile-action>
-                      <v-list-tile-title>Vote</v-list-tile-title>
-                    </v-list-tile>
-                    <v-list-tile  to="/contest">
-                      <v-list-tile-action>
-                        <v-icon color="">mdi-trophy</v-icon>
-                      </v-list-tile-action>
-                      <v-list-tile-title>Contest</v-list-tile-title>
-                    </v-list-tile>
-
-                    <v-list-tile @click="isSuperUser ? new_manifesto_dialog = true : upgrade = true" 
-                      v-if="curRoom"
-                      :disabled="!isContestant">
-                        <v-list-tile-action>
-                          <v-icon color="">mdi-plus-circle</v-icon>
-                        </v-list-tile-action>
-                      <v-list-tile-title>New Manifesto </v-list-tile-title>
-                    </v-list-tile>
-
-                    <v-tooltip right v-if="isAdmin">
-                      <v-list-tile @click="show_manager = !show_manager" slot="activator">
-                        <v-list-tile-action>
-                          <v-icon color="cyan">mdi-tune</v-icon>
-                        </v-list-tile-action>
-                        <v-list-tile-title>Manage Election</v-list-tile-title>
-                      </v-list-tile>
-                      <span>Manage Election</span>
-                    </v-tooltip>
-                  </v-list-group>
-                  
-                  <v-list-tile to="/verify" exact >
-                    <v-list-tile-action>
-                      <v-icon color="success">mdi-check-decagram</v-icon>
-                    </v-list-tile-action>
-                    <v-list-tile-title>Verify Account</v-list-tile-title>
-                  </v-list-tile>
-
-                  <!-- SETTINGS -->
-                  <v-list-tile  @click="$eventBus.$emit('show_profile_settings')">
-                    <v-list-tile-action>
-                      <v-icon color="success">mdi-settings</v-icon>
-                    </v-list-tile-action>
-                    <v-list-tile-title>Settings</v-list-tile-title>
-                  </v-list-tile>
-
-                  <!-- HELP -->
-                  <v-list-group prepend-icon="mdi-help-circle" no-action>
-                    <v-list-tile slot="activator">
-                      <v-list-tile-title>Help</v-list-tile-title>
-                    </v-list-tile>
-                    <v-list-tile href="https://voteryte.com/faq" target="blank">
-                      <v-list-tile-action>
-                        <v-icon color="success">mdi-frequently-asked-questions</v-icon>
-                      </v-list-tile-action>
-                      <v-list-tile-content>
-                        <v-list-tile-title>FAQ</v-list-tile-title>
-                      </v-list-tile-content>
-                      <v-list-tile-avatar>
-                        <v-icon small>mdi-open-in-new</v-icon>
-                      </v-list-tile-avatar>
-                    </v-list-tile>
-
-                      <v-list-tile href="https://support.voteryte.com" target="blank">
-                        <v-list-tile-action>
-                          <v-icon color="grey">mdi-headset</v-icon>
-                        </v-list-tile-action>
-                        <v-list-tile-content>
-                          <v-list-tile-title>Helpdesk </v-list-tile-title>
-                        </v-list-tile-content>
-                      </v-list-tile>
-                  </v-list-group>
-
-                  <!-- NOT SUPERUSER -->
-                  <v-list-tile v-if="!isSuperUser">
-                    <v-list-tile-content>
-                      <v-btn color="success" block @click="upgrade = true">
-                        <v-icon color="secondary" class="mr-2">mdi-star</v-icon>
-                        Upgrade</v-btn>
-                    </v-list-tile-content>
-                  </v-list-tile>
-
-                  <v-list-tile avatar v-if="isSuperUser" style="background: #2f324a;">
-                    <v-list-tile-action>
-                      <v-icon color="orange">mdi-flash-circle</v-icon>
-                    </v-list-tile-action>
-                    <v-list-tile-content>
-                      <v-list-tile-title>Premium User</v-list-tile-title>
-                      <small>You've got super powers!</small>
-                    </v-list-tile-content>
-                  </v-list-tile>
-                  
-                  <!-- Update available -->
-                  <v-list-tile avatar v-if="appUpdateAvailable" class="elevation-2 black" @click="updateApp">
-                    <v-list-tile-action>
-                      <v-icon color="orange">mdi-update</v-icon>
-                    </v-list-tile-action>
-                    <v-list-tile-content>
-                      <v-list-tile-title class="orange--text">Update Available</v-list-tile-title>
-                      <small>Click to refresh</small>
-                    </v-list-tile-content>
-                  </v-list-tile>
+            <!-- Switch Elections -->
+            <!-- <v-expansion-panels accordion>
+              <v-expansion-panel style="background: #2f324a;">
+                <v-expansion-panel-header>
+                  <div >
+                    <span class="text-capitalize text-truncate success--text font-weight-bold">
+                      {{truncateText(curRoom ? curRoom.title : 'Set Current Election')}}
+                    </span><br>
+                    <small class="grey--text darken-1">Switch election</small>
+                  </div>
+                </v-expansion-panel-header>
                 
-                </v-list>
-                <footr/>
-              </v-navigation-drawer>
+                <v-expansion-panel-content>
+                  
+                  <v-card class="lighten-1" color="#2f324a" flat>
+                    <v-progress-linear 
+                      :indeterminate="true" height="4" 
+                      v-if="loading_rooms" color="primary">
+                    </v-progress-linear>
+                    <v-list class=" lighten-1" dense>
+                      <v-subheader 
+                        v-if="!loading_rooms && getMyEnrolled && getMyEnrolled.length == 0">
+                        No Election
+                      </v-subheader>
+                      
+                      <v-list-item v-for="election in getMyEnrolled" 
+                        :key="election.electionId"
+                        @click="$store.dispatch('curRoom', election)">
+                        <v-list-item-content>
+                          <v-list-item-title class="grey--text darken-1">
+                            {{election.title}}
+                          </v-list-item-title>
+                        </v-list-item-content>
+                        <v-list-item-action v-if="curRoom && curRoom.electionId == election.electionId">
+                          <v-icon color="success">mdi-check</v-icon>
+                        </v-list-item-action>
+                      </v-list-item>
+                    </v-list>
+                    <v-btn color="info" 
+                      ripple text :loading="getting_enrolled"
+                      class="ml-0 text-capitalize" 
+                      small @click="initialize">
+                      Refresh
+                    </v-btn>
+                  </v-card>
+                </v-expansion-panel-content>
+              </v-expansion-panel>
+            </v-expansion-panels> -->
+
+            <v-list dense nav
+              v-if="getUser">
+        
+              <v-list-item to="/home" exact >
+                <v-list-item-action>
+                  <v-icon color="teal">mdi-view-dashboard-outline</v-icon>
+                </v-list-item-action>
+                <v-list-item-content>
+                  <v-list-item-title>Home</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+
+              <!-- FORUM -->
+              <v-list-item to="/forum/d">
+                <v-list-item-action>
+                  <v-icon color="teal">mdi-forum-outline</v-icon>
+                </v-list-item-action>
+                <v-list-item-title>Forum</v-list-item-title>
+              </v-list-item>
+
+              <!-- Messages -->
+              <v-list-group prepend-icon="mdi-message-text-outline" no-action :value="true">
+                <v-list-item slot="activator">
+                  <v-list-item-title>Messages</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="openBroadcastDialog">
+                  <v-list-item-action>
+                    <v-icon color="success">mdi-inbox</v-icon>
+                  </v-list-item-action>
+                  <v-list-item-title>Inbox</v-list-item-title>
+                  <v-list-item-action v-show="getUnreadLength > 0">
+                    <v-badge right color="red">
+                      <span class="caption" slot="badge">{{getUnreadLength}}</span>
+                    </v-badge>
+                  </v-list-item-action>
+                </v-list-item>
+
+                <v-list-item @click="isSuperUser || isAdmin ? new_broadcast = true : upgrade = true" :disabled="!curRoom">
+                  <v-list-item-action>
+                    <v-icon color="">mdi-bullhorn</v-icon>
+                  </v-list-item-action>
+                  <v-list-item-content>
+                    <v-list-item-title>New Broadcast </v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+              </v-list-group>
+
+              <!-- ELECTIONS -->
+              <v-list-group prepend-icon="mdi-poll-box" no-action :value="false">
+                <v-list-item slot="activator">
+                  <v-list-item-title>Elections</v-list-item-title>
+                </v-list-item>
+                <v-list-item  to="/elections/create">
+                  <v-list-item-action>
+                    <v-icon color="success">mdi-plus-box</v-icon>
+                  </v-list-item-action>
+                  <v-list-item-title>Create Election</v-list-item-title>
+                </v-list-item>
+
+                <v-list-item :to="curRoom ? `/elections/${curRoom.electionId}/vote` : '/#vote'">
+                  <v-list-item-action>
+                    <v-icon color="info">mdi-vote-outline</v-icon>
+                  </v-list-item-action>
+                  <v-list-item-title>Vote</v-list-item-title>
+                </v-list-item>
+                <v-list-item  to="/contest">
+                  <v-list-item-action>
+                    <v-icon color="">mdi-trophy</v-icon>
+                  </v-list-item-action>
+                  <v-list-item-title>Contest</v-list-item-title>
+                </v-list-item>
+
+              </v-list-group>
               
-              <!-- New Interactive Session -->
-              <v-navigation-drawer temporary
-                :stateless="drawer_right_persist"
-                v-model="drawer_right" right app width="800">
+              <v-list-item to="/discover" exact >
+                <v-list-item-action>
+                  <v-icon color="teal">mdi-pound-box</v-icon>
+                </v-list-item-action>
+                <v-list-item-title>Discover</v-list-item-title>
+              </v-list-item>
 
-                <new-event 
-                  @persist-drawer="drawer_right_persist = true" 
-                  @close-event-drawer="drawer_right = false">
-                </new-event>
+              <!-- HELP -->
+              <v-list-item href="https://support.voteryte.com" target="blank">
+                <v-list-item-action>
+                  <v-icon color="grey">mdi-help-circle</v-icon>
+                </v-list-item-action>
+                <v-list-item-content>
+                  <v-list-item-title>Help</v-list-item-title>
+                </v-list-item-content>
+                <v-list-item-avatar>
+                  <v-icon small>mdi-open-in-new</v-icon>
+                </v-list-item-avatar>
+              </v-list-item>
 
-              </v-navigation-drawer>
+              <v-divider></v-divider>
 
-              <!-- SNACKBAR -->
-              <v-snackbar v-model="snackbar.show" :timeout="5000" :color="snackbar.color" top right>
-                {{snackbar.message}}
-                <v-btn dark flat @click="snackbar.show = false"> Close</v-btn>
-              </v-snackbar>
+              <!-- NOT SUPERUSER -->
+              <v-list-item v-if="!isSuperUser">
+                <v-list-item-content>
+                  <v-btn color="success" block @click="upgrade = true">
+                    <v-icon color="secondary" class="mr-2">mdi-star</v-icon>
+                    Upgrade</v-btn>
+                </v-list-item-content>
+              </v-list-item>
+
+              <!-- <v-list-item v-if="isSuperUser" style="">
+                <v-list-item-action>
+                  <v-icon color="orange">mdi-flash-circle</v-icon>
+                </v-list-item-action>
+                <v-list-item-content>
+                  <v-list-item-title>Premium User</v-list-item-title>
+                  <small>You've got super powers!</small>
+                </v-list-item-content>
+              </v-list-item> -->
               
-              <!-- FAB -->
-              <v-speed-dial v-if="showFab"
-                v-model="fab" fixed
-                bottom right
-                direction="top"
-                transition="slide-y-reverse-transition">
-                <template v-slot:activator>
-                  <v-btn v-model="fab" color="teal" dark fab>
-                    <v-icon v-if="fab">mdi-close</v-icon>
-                    <v-icon v-else>mdi-view-dashboard</v-icon>
-                  </v-btn>
-                </template>
-                <v-btn fab dark small @click="$router.push({path: '/elections/vote'})"
-                   color="green">
-                  <v-icon>mdi-vote-outline</v-icon>
-                </v-btn>
-                <v-btn fab dark small class=""
-                  color="indigo" @click="$router.push({path: '/forum'})">
-                  <v-icon>mdi-forum</v-icon>
-                </v-btn>
-              </v-speed-dial>
+              <!-- Update available -->
+              <v-list-item v-if="appUpdateAvailable" class="elevation-2 black" @click="updateApp">
+                <v-list-item-action>
+                  <v-icon color="orange">mdi-update</v-icon>
+                </v-list-item-action>
+                <v-list-item-content>
+                  <v-list-item-title class="orange--text">Update Available</v-list-item-title>
+                  <small>Click to refresh</small>
+                </v-list-item-content>
+              </v-list-item>
+            
+            </v-list>
+            <footr/>
+          </v-navigation-drawer>
+          
+          <!-- New Interactive Session -->
+          <v-navigation-drawer temporary
+            :stateless="drawer_right_persist"
+            v-model="drawer_right" right app width="800">
 
-              <loading-bar v-if="show_loading_bar" color="grey"></loading-bar>
-              <router-view v-else></router-view>
+            <new-event 
+              @persist-drawer="drawer_right_persist = true" 
+              @close-event-drawer="drawer_right = false">
+            </new-event>
+
+          </v-navigation-drawer>
+
+          <!-- SNACKBAR -->
+          <v-snackbar v-model="snackbar.show" :timeout="5000" :color="snackbar.color" top right>
+            {{snackbar.message}}
+            <v-btn dark text @click="snackbar.show = false"> Close</v-btn>
+          </v-snackbar>
+          
+          <!-- FAB -->
+          <v-speed-dial v-if="showFab"
+            v-model="fab" fixed
+            bottom right
+            direction="top"
+            transition="slide-y-reverse-transition">
+            <template v-slot:activator>
+              <v-btn v-model="fab" color="teal" dark fab>
+                <v-icon v-if="fab">mdi-close</v-icon>
+                <v-icon v-else>mdi-view-dashboard</v-icon>
+              </v-btn>
+            </template>
+            <v-btn fab dark small @click="$router.push({path: '/elections/vote'})"
+                color="green">
+              <v-icon>mdi-vote-outline</v-icon>
+            </v-btn>
+            <v-btn fab dark small class=""
+              color="indigo" @click="$router.push({path: '/forum'})">
+              <v-icon>mdi-forum</v-icon>
+            </v-btn>
+          </v-speed-dial>
+
+          <loading-bar v-if="show_loading_bar" color="grey"></loading-bar>
+          <router-view v-else></router-view>
               
-            </v-flex>
-          </v-layout>
         
 
           <!-- GALLERY VIEWER -->
@@ -283,7 +254,7 @@
           
           <!-- Broadcast Dialog -->
           <v-dialog v-model="broadcast_dialog" max-width="1000"
-            :fullscreen="$vuetify.breakpoint.smAndDown" hide-overlay lazy scrollable>
+            :fullscreen="$vuetify.breakpoint.smAndDown" hide-overlay scrollable>
             <v-card flat class="pa-0">
               <v-card-text class="pa-0">
                 <broadcast v-if="broadcast_dialog" style="min-height:300px;background:#fff;"></broadcast>
@@ -293,17 +264,17 @@
           </v-dialog>
 
           <!-- NEW MANIFESTO DIALOG -->
-          <v-dialog v-model="new_manifesto_dialog" lazy :fullscreen="$vuetify.breakpoint.xsOnly"
+          <v-dialog v-model="new_manifesto_dialog" :fullscreen="$vuetify.breakpoint.xsOnly"
             max-width="800px" :transition="switchTransition" hide-overlay v-if="new_manifesto_dialog" scrollable>
             <v-card flat>
               <v-toolbar card dense flat>
-                <v-btn flat icon v-if="$vuetify.breakpoint.xsOnly"
+                <v-btn text icon v-if="$vuetify.breakpoint.xsOnly"
                   @click="new_manifesto_dialog = false">
                   <v-icon>mdi-chevron-left</v-icon> 
                 </v-btn>
                 <span>Create a Manifesto</span>
                 <v-spacer></v-spacer>
-                <v-btn flat icon @click="new_manifesto_dialog = false" class="hidden-xs-only">
+                <v-btn text icon @click="new_manifesto_dialog = false" class="hidden-xs-only">
                   <v-icon>mdi-close</v-icon>
                 </v-btn>
               </v-toolbar>
@@ -317,7 +288,7 @@
           <new-broadcast v-if="new_broadcast" ></new-broadcast>
 
           <!-- VIEW PROFILE -->
-          <v-dialog v-model="viewprofile" v-if="viewprofile" lazy :style="styleObj"
+          <v-dialog v-model="viewprofile" v-if="viewprofile" :style="styleObj"
             width="300" hide-overlay scrollable
             :transition="switchTransition">
             <v-card flat :class="{'round_top': $vuetify.breakpoint.smAndUp}">
@@ -328,29 +299,13 @@
             </v-card>
           </v-dialog>
 
-          <!-- MANAGE ELECTION DIALOG -->
-          <v-dialog v-model="show_manager" fullscreen lazy
-            hide-overlay transition="dialog-bottom-transition" scrollable>
-            <v-card tile>
-              <v-toolbar card color="secondary" flat dark>
-                <v-toolbar-title>Election Manager</v-toolbar-title>
-                <v-spacer></v-spacer>
-                <v-btn color="" icon @click="show_manager = false">
-                  <v-icon>mdi-close</v-icon>
-                </v-btn>
-              </v-toolbar>
-
-              <v-card-text class="pa-0">
-                <manage-election v-if="isAdmin"/>
-              </v-card-text>
-            </v-card>
-          </v-dialog>
+          <profile-card></profile-card>
 
           <!-- GO PREMIUM -->
-          <v-dialog v-model="upgrade" lazy :persistent="procesing_payment"
+          <v-dialog v-model="upgrade" :persistent="procesing_payment"
             max-width="950px" :transition="switchTransition" content-class="round_top" >
             <v-card class="round_top" flat>
-              <v-toolbar color="white" card>
+              <v-toolbar color="white" flat>
                 <v-card-title primary-title class="pl-1 font-weight-bold title">
                   Upgrade To Premium
                 </v-card-title>
@@ -360,9 +315,11 @@
                   <v-icon>mdi-close</v-icon>
                 </v-btn>
               </v-toolbar>
-              <v-layout row wrap class="pl-2" justify-space-between>
-                <v-flex xs12 sm4>
-                  <v-subheader class="black--text">Voteryte premium gives you all the tools you need to rise above the competition</v-subheader>
+              <v-row row wrap class="" justify="space-between">
+                <v-col cols="12" sm="4">
+                  <v-subheader class="black--text">
+                    Voteryte premium gives you all the tools you need to rise above the competition
+                  </v-subheader>
                   <v-card flat>
                     
                     <v-card-text class="px-0">
@@ -398,7 +355,7 @@
                           Overview of contestant Insights and who's viewed your profile
                         </div>
                       </div>
-                      <div style="overflow: auto" class="mb-2">
+                      <div style="overflow: auto" class="mb-1">
                         <div style="width: 30px; height: 30px;float: left;" class="ml-3 d-inline-block">
                           <v-icon color="success">mdi-check</v-icon>
                         </div>
@@ -422,14 +379,14 @@
                         :close="onclose"
                         :embed="false"
                       >
-                        <v-btn color="teal" dark block large class="ml-2 text-capitalize" depressed :loading="procesing_payment">Upgrade Now</v-btn>
+                        <v-btn color="teal" dark block class="ml-2 text-capitalize" depressed :loading="procesing_payment">Upgrade Now</v-btn>
                       </paystack>
                     </v-card-actions>
                     <small class="ml-3">Cancel at any time</small> <br>
                     <v-btn color="secondary" 
                       style="text-transform: initial;margin-bottom: 15px;" 
                       small class="" target="blank" href="https://voteryte.com/contestants" 
-                      flat>
+                      text>
                       <span style="text-decoration: underline;">Learn more  </span>
                       <v-icon small class="pl-1">mdi-open-in-new</v-icon>
                     </v-btn>
@@ -449,8 +406,8 @@
                       </v-card>
                     </v-dialog>
                   </v-card>
-                </v-flex>
-                <v-flex xs0 sm7 class="hidden-xs-only">
+                </v-col>
+                <v-col cols="0" sm="7" class="hidden-xs-only">
                   <v-card id="pay_card" flat tile>
                     <div class="slider">
                       <div class="slide1"></div>
@@ -462,39 +419,39 @@
                       <div class="slide7"></div>
                     </div>
                   </v-card>
-                </v-flex>
-              </v-layout>
+                </v-col>
+              </v-row>
             </v-card>
           </v-dialog>
 
-          <input type="file" name="file" id="file_img" style="visibility:hidden;position:absolute;" 
+          <input type="file" name="file" class="d-none" id="file_img" style="visibility:hidden;position:absolute;" 
             @change="onFileSelect($event)" accept="image/jpeg,image/png/gif" multiple>
 
-          <v-layout row justify-center>
+          <v-row row justify-center>
 
             <v-dialog v-model="switch_room_dialog" fullscreen persistent transition="fade-transition">
               
               <v-card style="height: 100%;" class="pa-5" color="rgba(0,0,0,0.8)">
                 <v-container fluid fill-height>
-                  <v-layout align-center justify-center>
-                    <v-flex xs12 sm8 md4>
+                  <v-row align-center justify-center>
+                    <v-col cols="12" sm="8" md="4">
                       <v-card flat color="transparent">
                         
                         <v-card-text>
                           
-                          <p class="title text-xs-center white--text">Switching Election</p>
+                          <p class="title text-center white--text">Switching Election</p>
                           <v-progress-circular indeterminate 
                             color="success" class="mx-auto d-block">
 
                           </v-progress-circular>
                         </v-card-text>
                       </v-card>
-                    </v-flex>
-                  </v-layout>
+                    </v-col>
+                  </v-row>
                 </v-container>
               </v-card>
             </v-dialog>
-          </v-layout>
+          </v-row>
         </div>
 
 
@@ -505,7 +462,7 @@
 
 <script>
 export default {
-  data:()=>({
+  data: () =>({
     showUi: false,
     fab: false,
     switch_room_dialog: false,
@@ -532,14 +489,15 @@ export default {
       amount: 5000,
       paystack_key:'pk_test_cd14c065dfe123cd983362a4ed795fe1128ec4e2',
     },
-    reference: Date.now() + btoa(Math.random()).substring(0,12),
+    reference: reference(), // Date.now() + btoa(Math.random()).substring(0,12),
     drawer: true,
+    mini: false,
     drawer_right: false,
     drawer_right_persist: false,
     appUpdateAvailable: window.appUpdateAvailable
   }),
   components:{
-    ViewProfile,
+    ProfileCard,
     LoadingBar,
     Broadcast,
     Navigation,
@@ -547,7 +505,7 @@ export default {
     paystack,
     Gallery,
     NewBroadcast,
-    ManageElection,
+    // ManageElection,
     NewEvent,
     footr: Footer
   },
@@ -555,24 +513,18 @@ export default {
   watch: {
     'curRoom': function(to, from) {
       if(this.curRoom){
-        this.getBroadcasts()
 
         this.switch_room_dialog = true
+
         setTimeout(()=>{
           this.switch_room_dialog = false
         }, 1000)
       }
     },
-    'getUserInfo': function() {
-      this.getUserInfo ? 
-      this.setup() : ''
-    }
   },
   computed: {
     ...mapGetters([
       'getUser',
-      'getUserInfo',
-      'getRecentBroadcasts',
       'getMyEnrolled',
       'getUnreadLength'
     ]),
@@ -587,8 +539,21 @@ export default {
     title(){
       return `Dashboard | ${this.$appName}`
     },
-    isAdmin(){
-      return this.curRoom ? this.curRoom.admins.includes(this.getUser.uid) : false
+    async isAdmin(){
+      let is_admin = false
+      let admins = []
+
+      if(this.curRoom){
+
+        await this.$gun.get('elections')
+          .get(this.curRoom.electionId)
+          .get('admins').map().once((a,key) => {
+            admins.push(a.username)
+            // console.log(a)
+          })
+      }
+
+      return this.curRoom ? admins.includes(this.getUser.username) : false
     },
     switchTransition(){
       return this.$vuetify.breakpoint.smAndDown ? 
@@ -652,71 +617,43 @@ export default {
       }
     },
     isContestant(){ // return the role a user is contesting for
-      if(this.getUserInfo && this.getUserInfo.contestsRef){
-        let found = this.getUserInfo.contestsRef.find(contest=>contest.electionRef == this.curRoom.electionId)
-        //console.log(res)
-        return found ? this.curRoom.roles.find(role => role.value == found.role).title : false
-      }else{
-        return false
-      }
+      return false
     },
   },
   
   methods:{
-    async setup () {
+    async initialize () {
       //get dept elections in user dept
       // get fac elections in user fac
       // get sch elections in user school
       // populate myEnrolled with the retrieved elections
-      // console.log(this.getUser)
-      // console.log(this.getUser, this.getUserInfo)
-      if(this.getUserInfo.is_student) {
 
-        let elections = []
-        this.getting_enrolled = true
-        // get user's General elections
-        await db.collection('elections')
-        .where('sch', '==', this.getUserInfo.sch)
-        .where('level', '==', 'General')
-        .get().then(docs => {
-          docs.forEach(doc => {
-            elections.push(doc.data())
-          })
+      // get elections user has enrolled in
+
+      let elections = []
+      // let el = this.$gun.get('elections').get('realize-refused')
+      this.$gun.get(this.getUser.username)
+        .get('enrolled')
+        // .set(el)
+        .map().on(data => {
+          // console.log(data)
+          elections.push(data)
+
         })
+      
+      this.getBroadcasts()
 
-        // get user's fac elections
-        await db.collection('elections')
-        .where('sch', '==', this.getUserInfo.sch)
-        .where('fac', '==', this.getUserInfo.fac)
-        .where('level', '==', 'Faculty')
-        .get().then(docs => {
-          docs.forEach(doc => {
-            elections.push(doc.data())
-          })
-        })
+      let sorted = elections.sort((a,b) => b.dateCreated - a.dateCreated)
+      this.$store.dispatch('setMyEnrolled', sorted)
+      this.getting_enrolled = false
 
-        // get user's dept elections
-        await db.collection('elections')
-        .where('sch', '==', this.getUserInfo.sch)
-        .where('dept', '==', this.getUserInfo.dept)
-        .where('level', '==', 'Department')
-        .get().then(docs => {
-          docs.forEach(doc => {
-            elections.push(doc.data())
-          })
-        })
-        // sort elections by creation date and dispatch to store
-        let sorted = elections.sort((a,b) => b.dateCreated.toMillis() - a.dateCreated.toMillis())
-        this.$store.dispatch('setMyEnrolled', sorted)
-        this.getting_enrolled = false
+      // set current room if there is none
 
-        // set current room if there is none
+      this.curRoom ? '' : 
+        sorted.length > 0 ? 
+        this.$store.dispatch('curRoom', sorted[0]) : ''
 
-        this.curRoom ? '' : sorted.length > 0 ? this.$store.dispatch('curRoom', sorted[0]) : ''
-      }
-      else {
-        this.getting_enrolled = false
-      }
+      // this.getMessages()
     },
     openBroadcastDialog(){
       this.$vuetify.breakpoint.smAndDown ? 
@@ -831,56 +768,54 @@ export default {
         }
 			}
     },
-    presenceWatcher(){
-      // Fetch the current user's ID from Firebase Authentication.
-      let userId = this.getUser.uid;
-
-      const usersRef = db.collection('users'); // Get a reference to the Users collection;
-      const onlineRef = database.ref('.info/connected'); // Get a reference to the list of connections
-
-      onlineRef.on('value', snapshot => {
-        
-        database
-          .ref(`/status/${userId}`)
-          .onDisconnect() // Set up the disconnect hook
-          .set('offline') // The value to be set for this key when the client disconnects
-          .then(() => {
-              // Set the Firestore User's online status to true
-              usersRef
-                .doc(this.getUser.uid)
-                .set({
-                  online: true,
-                }, { merge: true});  
-
-              // Let's also create a key in our real-time database
-              // The value is set to 'online'
-              database.ref(`/status/${userId}`).set('online');
-          });
-        
-      });
-    },
     getBroadcasts(){
-      if(this.curRoom){
-        
-        try {
-          this.broadcastsRef = db.collection('broadcasts')
-          .where('elecRef', '==', this.curRoom.electionId)
-          .orderBy('tstamp', 'desc')
-          .limit(100)
-          .onSnapshot(docs =>{
-            let d = []
-            docs.forEach(doc =>{
-              d.push(doc.data())
+      
+      try {
+
+        let arr = []
+        this.$gun.get(this.getUser.username)
+          .get('enrolled')
+          .map()
+          .get('broadcasts')
+          .map().on((broadcast, key) => {
+
+            // console.log({broadcast, key})
+
+            this.$gun.get(broadcast.author['#'])
+            .once(a => {
+              broadcast.author = a
             })
-            this.$store.dispatch('setBroadcasts', d)
-            // console.log('broadcasts: ', d)
-          }, error => {
-            // console.log(error)
+
+            arr.push(broadcast)
+
           })
-        } catch (error) {
-          // console.log(error)
-        }
+          
+          // console.log('broadcasts: ==>', {arr})
+          this.$store.dispatch('setBroadcasts', arr)
+          
+      } catch (error) {
+        // console.log(error)
+      }
         
+    },
+    getMessages(){
+      // get recent chats
+      let chats = []
+      if(this.curRoom){
+
+        this.$gun.get('chat_messages')
+          .get(this.curRoom.electionId)
+          .map()
+          .on(data => {
+            this.$gun.get(data.author)
+            .once(author => {
+              data.author = author
+              chats.push(data)
+            })
+            
+          })
+        chats.mutation = 'setChatMsgs'
+        this.$store.dispatch('generalAction', chats)
       }
     },
     isMobile() {
@@ -896,7 +831,7 @@ export default {
     },
     initChatWidget(){
       try {
-        let user = this.getUserInfo
+        let user = this.getUser
         if(window.fcWidget){
 
           window.fcWidget.init({
@@ -926,16 +861,14 @@ export default {
       document.querySelector('body').style.backgroundColor = '#fff'
 
       this.$eventBus.$on('Toggle_Left_Drawer', data=>{
-        this.drawer = !this.drawer
+        // this.drawer = !this.drawer
+        this.mini = !this.mini
       })
 
       this.$eventBus.$on('Toggle_New_Broadcast', data=>{
         this.new_broadcast = data
       })
       
-      if(this.curRoom){
-        this.getBroadcasts()
-      }
 
       this.$eventBus.$on('ToggleInboxDialog', data =>{
         this.broadcast_dialog = data
@@ -946,14 +879,6 @@ export default {
       })
       this.$eventBus.$on('CloseNewManifestoDialog', data=>{
         this.new_manifesto_dialog = false
-      })
-
-      this.$eventBus.$on('ViewProfile', data=>{
-        this.viewprofile = true
-        this.voterprofile = data
-      })
-      this.$eventBus.$on('CloseProfile', data=>{
-        this.viewprofile = false
       })
       
       this.$eventBus.$on('Show_Upgrade_Dialog', data=>{
@@ -973,7 +898,7 @@ export default {
       })
 
       this.$eventBus.$on('bdialog', ()=> this.new_broadcast = false)
-      this.$eventBus.$on('NewInteractive', data => {
+      this.$eventBus.$on('NewEvent', data => {
         this.drawer_right = data
       })
 
@@ -988,91 +913,98 @@ export default {
       })
 
     
-    firebase.auth().onAuthStateChanged(u => {
+    // firebase.auth().onAuthStateChanged(u => {
 
-      let sessionTimeout = null
+    //   let sessionTimeout = null
 
-      if(u){
+    //   if(u){
         
-        firebase.auth().currentUser.getIdTokenResult()
-        .then((idTokenResult) => {
+    //     firebase.auth().currentUser.getIdTokenResult()
+    //     .then((idTokenResult) => {
 
-          let user = idTokenResult.claims
+    //       let user = idTokenResult.claims
 
-          // user.phoneNumber = u.phoneNumber
-          this.$store.dispatch('setUser', u)
-          this.showUi = true
-          this.getUser ? this.presenceWatcher() : ''
-          this.getUserInfo ? this.setup() : ''
+    //       // user.phoneNumber = u.phoneNumber
+    //       this.$store.dispatch('setUser', u)
+    //       this.showUi = true
+    //       this.getUser ? this.presenceWatcher() : ''
+    //       this.getUserInfo ? this.setup() : ''
           
 
-          let isSuperUser = idTokenResult.claims.superuser
-          // let now = new Date().getTime()
-          // let trial_expired = now > user.trial_expiry_date
+    //       let isSuperUser = idTokenResult.claims.superuser
+    //       // let now = new Date().getTime()
+    //       // let trial_expired = now > user.trial_expiry_date
           
-          // console.log(user)
-          if(isSuperUser){
+    //       // console.log(user)
+    //       if(isSuperUser){
             
-            this.$store.dispatch('subscriberState', isSuperUser)
-          }
-          else{
+    //         this.$store.dispatch('subscriberState', isSuperUser)
+    //       }
+    //       else{
             
-            this.$store.dispatch('subscriberState', false)
-          }
+    //         this.$store.dispatch('subscriberState', false)
+    //       }
 
-          this.$store.dispatch('verifiedState', user.is_verified)
+    //       this.$store.dispatch('verifiedState', user.is_verified)
 
-          // User sessions should last for only 2 hours
-          // Make sure all the times are in milliseconds!
-          const authTime = idTokenResult.claims.auth_time * 1000;
-          const sessionDuration = 1000 * 60 * 5;
-          const millisecondsUntilExpiration = sessionDuration - (Date.now() - authTime);
-          sessionTimeout = setTimeout(() => {
+    //       // User sessions should last for only 2 hours
+    //       // Make sure all the times are in milliseconds!
+    //       // const authTime = idTokenResult.claims.auth_time * 1000;
+    //       // const sessionDuration = 1000 * 60 * 5;
+    //       // const millisecondsUntilExpiration = sessionDuration - (Date.now() - authTime);
+    //       // sessionTimeout = setTimeout(() => {
 
-            this.$store.dispatch('sessionExpired')
+    //       //   this.$store.dispatch('sessionExpired')
             
-          }, millisecondsUntilExpiration);
+    //       // }, millisecondsUntilExpiration);
 
 
-          // let usr = idTokenResult.claims
-          // console.log({user})
-          this.$LogRocket.identify(user.user_id, {
-            name: user.name,
-            email: user.email,
-            isSuperUser: user.superuser,
-            dept: user.dept
-          })
+    //       // let usr = idTokenResult.claims
+    //       // console.log({user})
+    //       // this.$LogRocket.identify(user.user_id, {
+    //       //   name: user.name,
+    //       //   email: user.email,
+    //       //   isSuperUser: user.superuser,
+    //       //   dept: user.dept
+    //       // })
 
-          // console.log(user)
-          // show chat widget only on large screens
-          if(this.$vuetify.breakpoint.mdAndUp){
+    //       // console.log(user)
+    //       // show chat widget only on large screens
+    //       // if(this.$vuetify.breakpoint.mdAndUp){
 
-            this.initChatWidget(user)
-          }
+    //       //   this.initChatWidget(user)
+    //       // }
 
-          window.fcWidget ? window.fcWidget.on("widget:closed", (resp)=>{
-            // console.log('Widget Closed');
-            // destroy the widget on close in small screen
-            if(this.$vuetify.breakpoint.smAndDown){
-              window.fcWidget.destroy()
-            }
-          }) : ''
+    //       // window.fcWidget ? window.fcWidget.on("widget:closed", (resp)=>{
+    //       //   // console.log('Widget Closed');
+    //       //   // destroy the widget on close in small screen
+    //       //   if(this.$vuetify.breakpoint.smAndDown){
+    //       //     window.fcWidget.destroy()
+    //       //   }
+    //       // }) : ''
 
-        })
-        .catch((error) => {
-          // console.log(error);
-        });
-      }
-      else {
-        // User is logged out.
-        // Clear the session timeout.
-        sessionTimeout && clearTimeout(sessionTimeout);
-        sessionTimeout = null;
-      }
-    })
-  
+    //     })
+    //     .catch((error) => {
+    //       // console.log(error);
+    //     });
+    //   }
+    //   else {
+    //     // User is logged out.
+    //     // Clear the session timeout.
+    //     // sessionTimeout && clearTimeout(sessionTimeout);
+    //     // sessionTimeout = null;
+    //   }
+    // })
 
-    this.$vuetify.breakpoint.smAndDown ? this.drawer = false : this.drawer = true
+    if(this.getUser){
+      this.showUi = true
+      this.initialize()
+      this.$store.dispatch('verifiedState', true)
+      this.$store.dispatch('subscriberState', true)
+    }
+
+    this.$vuetify.breakpoint.smAndDown ? 
+      this.drawer = false : this.drawer = true
     
     this.$eventBus.$on('Change_Title', (data)=>{
       //console.log('changing the title')
@@ -1081,10 +1013,10 @@ export default {
   },
   async created(){
     
-    if(this.$store.state.session_expired){
-      let to = this.$route.fullPath
-      firebase.auth().signOut().then(() => this.$router.push(`/login?returnTo=${to}`))
-    }
+    // if(this.$store.state.session_expired){
+    //   let to = this.$route.fullPath
+    //   firebase.auth().signOut().then(() => this.$router.push(`/login?returnTo=${to}`))
+    // }
 
   },
   beforeDestroy(){
@@ -1092,9 +1024,18 @@ export default {
   }
 }
 
+function reference(){
+  let text = "";
+  let possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+  for( let i=0; i < 10; i++ )
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+  return text;
+}
+
 import { mapGetters, mapState } from 'vuex'
   import api from '@/services/api'
-  import ViewProfile from '@/components/dialogs/ViewProfile'
   import LoadingBar from '@/spinners/LoadingBar'
   import Broadcast from '@/components/Broadcast'
   import Navigation from '@/components/Navigation'
@@ -1102,15 +1043,13 @@ import { mapGetters, mapState } from 'vuex'
   import paystack from 'vue-paystack'
   import Gallery from 'vue-gallery';
   import NewBroadcast from '@/components/dialogs/NewBroadcast'
-  import ManageElection from '@/components/elections/ManageElection'
   import NewEvent from '@/components/events/NewEvent'
+  import ProfileCard from '@/components/ProfileCard'
   import Footer from '@/components/Footer'
-  import {firebase, db, database} from '@/plugins/firebase'
+  // import {firebase, db, database} from '@/plugins/firebase'
 </script>
 
 <style lang='scss' >
-@import url('https://unpkg.com/nprogress@0.2.0/nprogress.css');
-// @import url('https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons');
 
 @mixin borderRadius($radius) {
   border-radius: $radius;
@@ -1140,6 +1079,18 @@ $secondary: #1867c0;
 
 .round {
   @include borderRadius(10px);
+}
+
+.round-1 {
+  @include borderRadius(5px)
+}
+
+.round-2 {
+  @include borderRadius(7px)
+}
+
+.round-3 {
+  @include borderRadius(9px)
 }
 
 .magnify {
@@ -1175,74 +1126,11 @@ $secondary: #1867c0;
   transform: translateY(30px);
 }
 
-// .v-dialog--active{
-//   @include borderTopRadius(10px)
-// }
-
-.switch_room_dialog.v-dialog--active {
-  @include borderTopRadius(0px)
-}
-.v-dialog--fullscreen{
-  @include borderTopRadius(0px)
-}
-.view_dialog .v-dialog--fullscreen{
-  background: transparent !important;
-}
-h3 {
-  margin: 40px 0 0;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
-}
-
 #pay_card {
   background: url('../assets/abstract.png');
   background-size: 100%;
   background-position: center;
   background-repeat: no-repeat;
-}
-.menu_tabs{
-  .v-tabs__div{
-    text-transform:capitalize
-  }
-  .v-list__tile{
-    font-size: 14px;
-  }
-}
-.v-list__group__header .v-list__group__header__prepend-icon{
-  min-width: 35px;
-}
-.home_list{
-
-  // height: calc(100vh - 40%);
-  // overflow-y: auto;
-
-  .v-list__tile__action, .v-list__group__header .v-list__group__header__prepend-icon{
-    min-width:35px;
-  }
-  .v-icon{
-    color:#adabab;
-  }
-  .v-list__tile{
-    //color:#bfbbbb;
-    color:#fff;
-  }
-}
-
-.theme--light.v-text-field--outline .v-input__slot {
-  border: 1px solid rgba(115, 114, 114, 0.54) !important;
-}
-.v-content{
-  background:#eceff1;
-  // background: #fff;
 }
 
 .online_badge{
@@ -1251,96 +1139,6 @@ a {
   height: 10px;
   border-radius: 50%;
   margin-left: 5px;
-}
-
-/* --scrollbar --*/
-.navdrawr::-webkit-scrollbar {
-    width: 8px;
-    background-color: $mainBgColor;
-    @include borderRadius(10px);
-  }
-.navdrawr::-webkit-scrollbar-track {
-  background-color: $mainBgColor;
-  // @include borderRadius(10px)
-}
-.navdrawr::-webkit-scrollbar-thumb {
-  background-color:#87899c ;
-  @include borderRadius(10px);
-}
-
-.emoji-picker::-webkit-scrollbar-track {
-  background-color: #fff;
-}
-
-
-/* --slider-- */
-
-.slider {
-	max-width: 209px;
-	height: 434px;
-	margin: 20px auto;
-	position: relative;
-	// box-shadow: 2px -1px 5px 1px #a29f9f;
-	// border-radius: 5px;
-  }
-
-  @media (max-width: 400px){
-	  .slider {
-		  height: 160px;
-	  }
-  }
-
-.slide1,.slide2,.slide3,.slide4,.slide5,.slide6,.slide7 {
-	position: absolute;
-	width: 100%;
-  height: 100%;
-  animation-name: fade; 
-  animation-duration: 18s; 
-  animation-iteration-count: infinite;
-	// border-radius: 5px;
-}
-.slide1 {
-	background: url('../assets/insight.png') no-repeat center;
-	background-size: cover;
-  animation-delay: 0s;
-}
-.slide2 {
-	background: url('../assets/insight2.png')no-repeat center;
-	background-size: cover;
-  animation-delay: 3s;
-}
-.slide3 {
-	background: url('../assets/profile-viewers.png')no-repeat center;
-	background-size: cover;
-  animation-delay: 6s;
-}
-.slide4 {
-	background: url('../assets/profile-viewers2.png')no-repeat center;
-	background-size: cover;
-  animation-delay: 9s;
-} 
-.slide5 {
-	background: url('../assets/create-post.png')no-repeat center;
-	background-size: cover;
-  animation-delay: 12s;
-}
-.slide6 {
-	background: url('../assets/create-campaign.png')no-repeat center;
-	background-size: cover;
-  animation-delay: 15s;
-}
-.slide7 {
-	background: url('../assets/create-manifesto.png')no-repeat center;
-	background-size: cover;
-  animation-delay: 18s;
-}
-
-@keyframes fade
-  {
-	0%   {opacity:1}
-	33.333% { opacity: 0}
-	66.666% { opacity: 0}
-	100% { opacity: 1}
 }
 
 </style>

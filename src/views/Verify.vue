@@ -6,34 +6,38 @@
       <span slot="title">Verify Account</span>
     </navigation>
     
-    <v-container grid-list-xs pa-0 >
-      <v-layout row wrap>
-        <v-flex>
-          <v-card class="text-xs-center pt-5 grey lighten-3" flat height="">
+    <v-container pa-0 >
+      <v-row row wrap>
+        <v-col>
+          <v-card class="text-center pt-5 grey lighten-3" flat height="">
             <v-container grid-list-xs >
-              <v-layout row wrap justify-center>
-                <v-flex xs12 sm8 md5>
-                  <v-card height="" class="round" color="">
-                    <v-sheet flat width="61%" height="100" dark style="position: absolute;top: -40px;left: 20%;" color="transparent">
+              <v-row row wrap justify="center">
+                <v-col cols="12" sm="8" md="5">
+                  <v-card class="round" outlined>
+                    <v-sheet flat width="61%" height="100" dark 
+                      style="position: absolute;top: -40px;left: 20%;" 
+                      color="transparent">
                       <v-avatar
                         size="100"
                         color="success"
-                        class="elevation-1 d-block mx-auto"
+                        class="elevation-0"
                         style="padding-top: 2px;"
                       >
                         
-                        <v-avatar class="d-block mx-auto"
-                          size="100"
-                        >
-                        <v-progress-circular :value="100" :indeterminate="verifying" size="98" width="2" style="margin-top: -1.5px">
+                        <!-- <v-avatar class="" size="100"> -->
+                        <!-- <v-progress-circular :value="100" 
+                          :indeterminate="verifying" 
+                          size="98" width="2" 
+                          style="margin-top: -1.5px">
                           <v-icon v-if="!verified" large>mdi-shield</v-icon>
                           <v-icon v-if="verified" large>mdi-check</v-icon>
-                        </v-progress-circular>
-                        </v-avatar>
+                        </v-progress-circular> -->
+                        <!-- </v-avatar> -->
+                        
                       </v-avatar>
                     </v-sheet>
 
-                    <v-card-text class="pt-5 text-xs-center">
+                    <v-card-text class="pt-5 text-center">
                       <div class="mt-4">
                         <span>Verify your account so that you can enroll in elections and participate in chat forums. It takes less than a minute. </span><br>
                         <span>You will only need to do this <strong>once</strong>.</span><br>
@@ -45,7 +49,7 @@
                         hint="Please provide your valid bvn"
                         @click:append="show = !show"
                         counter="11"
-                        :browser-autocomplete="(new Date()).toISOString()"
+                        :autocomplete="(new Date()).toISOString()"
                         class="px-4" color="secondary"
                       ></v-text-field>
 
@@ -58,12 +62,12 @@
                         class="px-4" color="secondary"
                       ></v-text-field>
 
-                      <small>Your BVN is used for verification purposes only. We don't store your BVN or share it with other third-parties.</small>
+                      <small>Your BVN is used for verification purposes only. We don't store your BVN or share it with any third-party.</small>
                     </v-card-text>
                     
                       <p v-if="re_login" class="orange--text">You might need to re-login</p>
                     <v-card-actions>
-                      <v-btn color="success" block flat v-if="is_verified">Your account is verified</v-btn>
+                      <v-btn color="success" block text v-if="is_verified">Your account is verified</v-btn>
                       <v-btn
                         v-else
                         color="success" 
@@ -73,12 +77,12 @@
                         :disabled="disabled_verify">Verify</v-btn>
                     </v-card-actions>
                   </v-card>
-                </v-flex>
-              </v-layout>
+                </v-col>
+              </v-row>
             </v-container>
           </v-card>
-        </v-flex>
-      </v-layout>
+        </v-col>
+      </v-row>
     </v-container>
 
   </div>

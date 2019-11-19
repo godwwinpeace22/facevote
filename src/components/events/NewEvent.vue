@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-toolbar color="secondary" dark>
+    <v-toolbar color="primary" dark>
       <v-toolbar-title>Create New Event</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn color="" icon @click.native="$emit('close-event-drawer', false)">
@@ -18,16 +18,16 @@
           <v-card-text>
             <p>What would be the title of your new event?<p>
             <p>Events can be webiners, online interactive sessions e.t.c</p>
-            <v-text-field outline color="secondary"
+            <v-text-field outlined color="primary"
               name="title" counter
               label="Title" :rules="[rules.counter]"
-              v-model="new_event.title"
+              v-model.trim="new_event.title"
             ></v-text-field>
           </v-card-text>
         </v-card>
-        <v-btn color="secondary" @click="stepper = 2" depressed 
+        <v-btn color="primary" @click="stepper = 2" depressed 
           class="text-capitalize"
-          :disabled="!new_event.title.trim() || new_event.title.length > 100">
+          :disabled="!new_event.title || new_event.title.length > 100">
           Next step
           <v-icon>mdi-chevron-right</v-icon>
         </v-btn>
@@ -43,17 +43,17 @@
           <v-card-text>
             <p>Write a brief description about this event.</p>
             <v-textarea
-              name="summary" v-model="new_event.desc"
+              name="summary" v-model.trim="new_event.desc"
               label="Describe your event"
-              color="secondary" outline
+              color="primary" outlined
             ></v-textarea>
           </v-card-text>
           
         </v-card>
-        <v-btn flat @click.native="stepper = 1">Previous</v-btn>
-        <v-btn color="secondary" @click="stepper = 3" 
+        <v-btn text @click.native="stepper = 1">Previous</v-btn>
+        <v-btn color="primary" @click="stepper = 3" 
           depressed class="text-capitalize"
-          :disabled="!new_event.desc.trim()">
+          :disabled="!new_event.desc">
           Next step
           <v-icon>mdi-chevron-right</v-icon>
         </v-btn>
@@ -85,10 +85,10 @@
             
           </v-card-actions>
         </v-card>
-        <v-btn flat @click.native="stepper = 2">Previous</v-btn>
-        <v-btn color="secondary" @click="stepper = 4" 
+        <v-btn text @click.native="stepper = 2">Previous</v-btn>
+        <v-btn color="primary" @click="stepper = 4" 
           depressed class="text-capitalize"
-          :disabled="uploaded == false">
+          >
           Next step
           <v-icon>mdi-chevron-right</v-icon>
         </v-btn>
@@ -101,57 +101,57 @@
         <v-card color="grey lighten-5" flat class="mb-5" height="">
             <v-subheader>Select date and time for the event</v-subheader>
           <v-card-text>
-            <v-layout row wrap>
-              <v-flex xs12 sm6>
+            <v-row row wrap>
+              <v-col cols="12" sm="6">
                 <v-menu ref="menu"
                   v-model="date_dialog"
                   :close-on-content-click="false"
                   :nudge-right="40"
                   :return-value.sync="new_event.date"
-                  lazy transition="scale-transition"
-                  offset-y full-width
+                  transition="scale-transition"
+                  offset-y
                   min-width="290px">
                   <template v-slot:activator="{ on }">
                     <v-text-field
                       v-model="new_event.date"
-                      label="Start date"
+                      label="Start date" dense
                       prepend-inner-icon="mdi-calendar"
-                      readonly color="secondary" outline
+                      readonly color="primary" outlined
                       v-on="on"
                     ></v-text-field>
                   </template>
                   <v-date-picker v-model="new_event.date" no-title scrollable>
                     <v-spacer></v-spacer>
-                    <v-btn flat color="primary" @click="date_dialog = false">Cancel</v-btn>
-                    <v-btn flat color="primary" @click="$refs.menu.save(new_event.date)">OK</v-btn>
+                    <v-btn text color="primary" @click="date_dialog = false">Cancel</v-btn>
+                    <v-btn text color="primary" @click="$refs.menu.save(new_event.date)">OK</v-btn>
                   </v-date-picker>
                 </v-menu>
-              </v-flex>
-              <v-flex xs12 sm6 class="pl-3">
+              </v-col>
+              <v-col cols="12" sm="6" class="pl-3">
                 <v-dialog ref="menu2"
                   v-model="time_dialog"
                   persistent
                   :return-value.sync="new_event.time"
-                  lazy transition="scale-transition"
-                  offset-y full-width
+                  transition="scale-transition"
+                  offset-y
                   width="290px">
                   <template v-slot:activator="{ on }">
                     <v-text-field
                       v-model="new_event.time"
-                      label="Start time"
+                      label="Start time" dense
                       prepend-inner-icon="mdi-calendar"
-                      readonly color="secondary" outline
+                      readonly color="primary" outlined
                       v-on="on"
                     ></v-text-field>
                   </template>
-                  <v-time-picker v-model="new_event.time" scrollable color="secondary">
+                  <v-time-picker v-model="new_event.time" scrollable color="primary">
                     <v-spacer></v-spacer>
-                    <v-btn flat color="primary" @click="time_dialog = false">Cancel</v-btn>
-                    <v-btn flat color="primary" @click="$refs.menu2.save(new_event.time)">OK</v-btn>
+                    <v-btn text color="primary" @click="time_dialog = false">Cancel</v-btn>
+                    <v-btn text color="primary" @click="$refs.menu2.save(new_event.time)">OK</v-btn>
                   </v-time-picker>
                 </v-dialog>
-              </v-flex>
-            </v-layout>
+              </v-col>
+            </v-row>
             
 
             <v-subheader class="pl-0">Venue for event</v-subheader>
@@ -160,24 +160,25 @@
               <v-radio label="Offline" :value="false"></v-radio>
             </v-radio-group>
 
-            <v-text-field outline color="secondary"
+            <v-text-field outlined color="primary"
               name="venue" v-if="!new_event.online"
-              label="Venue"
-              v-model="new_event.venue"
+              label="Enter address" dense
+              v-model.trim="new_event.venue"
             ></v-text-field>
 
           </v-card-text>
         </v-card>
         <template v-if="!event_created">
-          <v-btn flat @click="stepper = 3" :disabled="loading">Previous</v-btn>
-          <v-btn color="secondary" :loading="loading" 
+          <v-btn text @click="stepper = 3" :disabled="loading">Previous</v-btn>
+          <v-btn color="primary" :loading="loading" 
             @click="createEvent" depressed 
             class="text-capitalize"
-            :disabled="!new_event.date || !new_event.time || (!new_event.online && !new_event.venue.trim())">
+            :disabled="!new_event.date || !new_event.time || (!new_event.online && !new_event.venue)">
             Create event
           </v-btn>
         </template>
-        <v-btn color="info" depressed @click.native="$router.push(`/events/${eventId}`); $emit('close-event-drawer', false)" 
+        <v-btn color="info" depressed 
+          @click.native="$router.push(`/events/${eventId}`); $emit('close-event-drawer', false)" 
           v-if="event_created" class="text-capitalize">
           Visit Event page
         </v-btn>
@@ -218,7 +219,6 @@ export default {
   computed: {
     ...mapGetters([
       'getUser',
-      'getUserInfo',
     ]),
     ...mapState([
       'curRoom',
@@ -256,37 +256,47 @@ export default {
       })
     },
     createEvent(){
-      this.loading = true
-      this.$emit('persist-drawer')
+      try {
+        this.loading = true
+        this.$emit('persist-drawer')
 
-      function getRandomNumber(min, max) {
-        return Math.floor(Math.random() * (max - min) + min)
-      }
-      
-      let eventId = `${randomWords({exactly: 2, maxLength: 5, join: '-'})}-${getRandomNumber(10000, 99999)}`
-      this.eventId = eventId
-      // console.log(eventId)
-
-      let eventRef = db.collection('events').doc(this.eventId)
-      this.new_event.title = this.$sanitize(this.new_event.title)
-      this.new_event.desc = this.$sanitize(this.new_event.desc)
-      this.new_event.venue = this.$sanitize(this.new_event.venue)
-      
-      eventRef.set({
-        eventId: this.eventId,
-        onr: {
-          uid: this.getUser.uid,
-        },
-        dateCreated: firebase.firestore.FieldValue.serverTimestamp(),
-        ...this.new_event,
-        imgSrc: this.uploaded,
-        elecRef: this.curRoom.electionId,
-        interested: 0,
-        started: false,
-        live: false,
-        ended: false,
+        function getRandomNumber(min, max) {
+          return Math.floor(Math.random() * (max - min) + min)
+        }
         
-      }).then(() => {
+        let eventId = `${randomWords({exactly: 2, maxLength: 5, join: '-'})}-${getRandomNumber(10000, 99999)}`
+        this.eventId = eventId
+        // console.log(eventId)
+
+        let userRef = this.$gun.get(this.getUser.username)
+        this.new_event.title = this.$sanitize(this.new_event.title)
+        this.new_event.desc = this.$sanitize(this.new_event.desc)
+        this.new_event.venue = this.$sanitize(this.new_event.venue)
+        
+        let eventData = {
+          eventId: eventId,
+          dateCreated: Date.now(),
+          ...this.new_event,
+          imgSrc: this.uploaded,
+          elecRef: this.curRoom.electionId,
+          interested: 0,
+          started: false,
+          live: false,
+          ended: false,
+          
+        }
+        
+        // create an event
+        let event = this.$gun.get('events')
+          .get(eventId)
+          .put(eventData)
+
+        event.get('author').put(userRef)
+        userRef.get('events')
+          .set(event)
+
+
+        
         this.loading = false
         this.event_created = true
 
@@ -295,15 +305,16 @@ export default {
           message: 'Event Created',
           color: 'success'
         })
-      }).catch(err => {
-        // console.log(err)
+      }
+      catch(err){
+        console.log(err)
         this.loading = false
         this.$eventBus.$emit('Snackbar', {
           show: true,
           message: 'Something went wrong. Try again',
           color: 'error'
         })
-      })
+      }
     }
   },
   mounted(){

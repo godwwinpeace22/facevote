@@ -1,7 +1,8 @@
 import $store from '../store/store'
-import {firebase, db, storage} from '../plugins/firebase'
+import gun from '@/plugins/gun'
 import api from '@/services/api'
 import Nprogress from 'nprogress'
+import ImageKit from 'imagekit-javascript'
 
 export default {
 
@@ -18,7 +19,7 @@ export default {
     return charIndex <= 4 ? 'teal' :
     charIndex <= 8 ? 'purple' : 
     charIndex <= 12 ? 'success' : 
-    charIndex <= 18 ? 'secondary' : 
+    charIndex <= 18 ? 'primary' : 
     charIndex <= 24 ? 'orange' : 
     'primary'
   },
@@ -283,58 +284,73 @@ export default {
     return new Promise(async (resolve, reject)=>{
       // helper function to follow a user
       // followee is the one to be followed by follower
-
-      let docId = `${follower.uid}-${followee.uid}-fol`
-      let followerRef = db.collection('ufollowers').doc(docId)
-      // let userRef = db.collection('moreUserInfo').doc(followee.uid)
-      let {name, photoURL = false, email, sch=false, fac=false, dept=false, uid, is_student} = follower
-      let onr = {
-        name,
-        photoURL,
-        email,
-        sch,
-        fac,
-        dept,
-        uid,
-        is_student
-      }
-
-      let is_following = followerRef.get()
-        .then(doc =>{
-          return doc.exists
-        }).catch(err => reject(err))
-
-      if(await is_following){
-        // unfollow
-
-        let batch = db.batch();
-        batch.delete(followerRef)
+      
+      try {
         
-        // batch.update(userRef, {
-        //   followers: firebase.firestore.FieldValue.increment(-1)
-        // })
+        let followeeRef = gun.get(followee.username)
+        let followerRef = gun.get(follower.username)
+        let followings_count = followee.followings_count || 0
+        let followers_count = follower.followers_count || 0
+  
+        
+        
+        let arr = []
+        followeeRef.get('followers')
+          .get(follower.username)
+          .once((p,k) => {
+            p ?
+            arr.push(p) : ''
+            
+          })
+        
+        console.log(arr)
+        let is_following = arr.find(u => u.username == follower.username)
+        console.log({is_following})
+  
+        if(is_following){
+          // unfollow
+          let ref = followeeRef
+            .get('followers')
+            .unset(followerRef)
+            
+            
+            followerRef.get('following')
+            .unset(followeeRef)
+            
+            followerRef.get('followings_count')
+              .put(followings_count ? followings_count - 1 : 0)
+  
+            followeeRef.get('followers_count')
+              .put(followers_count ? followers_count - 1 : 0)
 
-        batch.commit().then(()=> resolve({following: false}))
-        .catch(err => reject(err))
-      }
-
-      else{
-
-        let batch = db.batch();
-
-        batch.set(followerRef, {
-          onr: onr,
-          follower: follower.uid, // add this for convenience
-          followee: followee.uid,
-          tstamp: firebase.firestore.FieldValue.serverTimestamp()
-        })
-
-        // batch.update(userRef, {
-        //   followers: firebase.firestore.FieldValue.increment(1)
-        // })
-
-        batch.commit().then(()=> resolve({following: true}))
-        .catch(err => reject(err))
+            resolve({following: false})
+  
+        }
+  
+        else{
+  
+          // follow a user
+  
+          followeeRef
+            .get('followers')
+            .set(followerRef) // so that unfollowing can work
+            // .put(followerRef)
+          
+          followerRef
+            .get('following')
+            .set(followeeRef)
+            
+          followeeRef.get('followings_count')
+            .put(followings_count + 1)
+          
+          followerRef.get('followers_count')
+            .put(followers_count + 1)
+          
+            resolve({following: true})
+        }
+      } catch (error) {
+        console.log(error)
+        reject({success: false})
       }
     })
     
@@ -483,6 +499,72 @@ export default {
         .catch(err => reject(err))
       }
     })
-  }
+  },
+
+  openProfile(event, profile){
+    
+    profile.x = event.x
+    profile.y = event.y
+    $store.dispatch('openProfile', profile)
+  },
+  async uploadMedia({files,path}){
+
+    return new Promise((resolve, reject) => {
+
+      console.log(files)
+      try {
+  
+        var imagekit = new ImageKit({
+          publicKey : "public_UFN7xUAq01gwavZjCcqsFPb/384=",
+          urlEndpoint : "https://ik.imagekit.io/voteryte",
+          authenticationEndpoint : "http://localhost:5000/api/sign",
+      })
+  
+      let uploaded = []
+  
+      for(let i = 0; i < files.length; i++){
+  
+        imagekit.upload({
+          file : files[i],
+          fileName : files[i].name,
+          // tags : ["tag1"]
+        }, function(err, result) {
+
+          if(err){
+            console.log(err)
+            reject(err)
+          }
+
+          else {
+            
+            console.log(arguments);
+            let imgUrl =imagekit.url({
+              src: result.url,
+              transformation : [{ HEIGHT: 400, WIDTH: 700}]
+            })
+            
+            uploaded.push(imgUrl)
+
+            if(i == files.length -1){
+              resolve(uploaded)
+            }
+          }
+        })
+
+        
+      }
+      
+        
+      } catch (error) {
+        // eslint-disable-next-line
+        console.log(error)
+        reject(error)
+        alert('Image upload failed')
+        Nprogress.done()
+        throw new Error(error)
+        
+      }
+    })
+  },
 
 }

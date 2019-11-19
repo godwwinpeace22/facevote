@@ -9,35 +9,35 @@
       <div v-else>
 
         <v-subheader>Your Events</v-subheader>
-        <v-layout row wrap style="max-height:350px;overflow:auto;">
+        <v-row row wrap style="max-height:400px;overflow:auto;">
           <v-subheader v-if="events.length == 0">No events</v-subheader>
-          <v-flex xs12 sm6 v-for="event in events" :key="event.eventId" mb-3>
-            <v-card>
-              <v-layout row wrap>
-                <v-flex xs4>
-                  <v-img :src="event.imgSrc || require('@/assets/abstract.png')" height="130" />
-                </v-flex>
-                <v-flex xs8>
+          <v-col cols="12" sm="6" v-for="event in events" :key="event.eventId" mb-3>
+            <v-card outlined>
+              <v-row row wrap>
+                <v-col cols="4">
+                  <v-img :src="event.imgSrc || require('@/assets/abstract.png')" height="125" />
+                </v-col>
+                <v-col cols="8">
                   <v-list two-line>
-                    <v-list-tile avatar>
-                      <v-list-tile-content>
-                        <v-list-tile-title>{{event.title}}</v-list-tile-title>
-                        <v-list-tile-sub-title>{{event.date}}</v-list-tile-sub-title>
-                      </v-list-tile-content>
-                    </v-list-tile>
+                    <v-list-item>
+                      <v-list-item-content>
+                        <v-list-item-title>{{event.title}}</v-list-item-title>
+                        <v-list-item-subtitle>{{event.date}}</v-list-item-subtitle>
+                      </v-list-item-content>
+                    </v-list-item>
                   </v-list>
                   <v-card-actions>
-                    <v-btn flat small class="text-capitalize">{{event.interested}} Interested</v-btn>
-                    <v-btn flat color="purple" class="text-capitalize" :to="`/events/${event.eventId}`">Visit page</v-btn>
+                    <v-btn text small class="text-capitalize">{{event.interested}} Interested</v-btn>
+                    <v-btn text color="purple" class="text-capitalize" :to="`/events/${event.eventId}`">Visit page</v-btn>
                     
                   </v-card-actions>
-                </v-flex>
-              </v-layout>
+                </v-col>
+              </v-row>
             </v-card>
-          </v-flex>
-        </v-layout>
+          </v-col>
+        </v-row>
 
-        <v-btn flat small 
+        <v-btn text small 
           color="secondary" 
           class="ml-0 text-normal"
           @click="moreEvents"
@@ -69,7 +69,6 @@ export default {
   computed: {
     ...mapGetters([
       'getUser',
-      'getUserInfo'
     ]),
     ...mapState([
       'isSuperUser',

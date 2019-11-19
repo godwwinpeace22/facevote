@@ -3,21 +3,23 @@
     <v-subheader v-if="events.length == 0">No recent events</v-subheader>
     <v-list two-line dense class="grey lighten-3">
       <template v-for="event in events">
-        <v-list-tile avatar :key="event.eventId" :to="`/events/${event.eventId}`">
-          <v-list-tile-avatar>
+        <v-list-item :key="event.eventId" :to="`/events/${event.eventId}`">
+          <v-list-item-avatar>
             <img :src="event.imgSrc">
-          </v-list-tile-avatar>
-          <v-list-tile-content>
-            <v-list-tile-title>{{event.title}}</v-list-tile-title>
-            <v-list-tile-sub-title>{{new Date(event.date + ' ' + event.time).toLocaleString('en-US', options)}}</v-list-tile-sub-title>
-          </v-list-tile-content>
-        </v-list-tile>
+          </v-list-item-avatar>
+          <v-list-item-content>
+            <v-list-item-title>{{event.title}}</v-list-item-title>
+            <v-list-item-subtitle>
+              {{new Date(event.date + ' ' + event.time).toLocaleString('en-US', options)}}
+            </v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
         <v-divider :key="event.eventId + 'k'"></v-divider>
       </template>
     </v-list>
 
-    <v-btn flat small  
-      color="secondary" 
+    <v-btn text small  
+      color="primary" 
       class="text-capitalize"
       v-if="!isLastEvent && events.length >= 5"
       @click="moreEvents"
@@ -50,7 +52,6 @@ export default {
   computed: {
     ...mapGetters([
       'getUser',
-      'getUserInfo',
     ]),
     ...mapState([
       'curRoom',

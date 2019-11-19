@@ -1,60 +1,27 @@
 <template>
-  <div id="forum_users" style="height:100%;overflow-y:auto;" class="navdrawr pb-2">
-    <v-container grid-list-xs fluid v-if='members.length == 0'>
-      <v-layout>
-        <v-flex xs12>
-          <div style="height:100%">
-            <v-layout align-center justify-center fill-height>
-              <v-progress-circular indeterminate color="grey lighten-2"></v-progress-circular>
-            </v-layout>
-          </div>
-        </v-flex>
-      </v-layout>
-    </v-container>
-  
-    <v-list dense class="">
-      <v-list-tile @click.stop="'a'">
-        <v-list-tile-content>
-          <v-text-field hide-details v-model="search"
-            prepend-icon="mdi-account-search" color="secondary"
-            label="Search members..."
-          ></v-text-field>
-        </v-list-tile-content>
-      </v-list-tile>
-    </v-list>
-    <v-divider></v-divider>
-    <div style="height:calc(100% - 50px);overflow-y:auto;" class="navdrawr" :class="{thin_scrollbar:$vuetify.breakpoint.smAndDown}">
-      <v-list subheader dense two-line>
-        <v-subheader v-show="filteredList.length == 0">No results found</v-subheader>
-        <v-list-tile v-for="member in filteredList" :key="member.uid" avatar :to="'/forum/profile/' + member.uid">
-          
-          <v-list-tile-avatar>
-            <!-- prefer to user loggedin user's info rather than his info from voters list -->
-            <img :src="member.photoURL" v-if="member.photoURL">
-            <v-avatar v-else :color="$helpers.colorMinder(member.name.charAt(0))" size="40">
-              <span class="white--text headline">{{member.name.charAt(0)}}</span>
-            </v-avatar>
-          </v-list-tile-avatar>
-
-          <v-list-tile-content>
-            <v-list-tile-title class="text-capitalize">{{member.name}}</v-list-tile-title>
-            <v-list-tile-sub-title v-if="getRole(member)"><i>for</i> {{getRole(member)}}</v-list-tile-sub-title>
-            <v-list-tile-sub-title v-else>{{member.dept}}</v-list-tile-sub-title>
-          </v-list-tile-content>
-          <v-list-tile-action>
-            <!-- <v-icon :color="member.online ? 'success' : 'grey'" small>lens</v-icon> -->
-            <span class="online_badge" :class="[member.online ? 'success' : 'orange']"></span>
-          </v-list-tile-action>
-        </v-list-tile>
-      </v-list>
-      <v-btn color="teal" dark 
-        small depressed :loading="loading_more_members"
-        @click="nextDocs(members[members.length -1])" 
-        v-if="members.length >= 15 && !isLastDoc">
-        See more..
-      </v-btn>
+  <div class="">
+    
+    <v-card flat tile outlined min-width="100%" class="forum-members pt-4">
       
-    </div>
+      <v-text-field hide-details dense v-model="search"
+        prepend-inner-icon="mdi-account-search" color="primary"
+        label="Search members..." class="mb-3 px-1" outlined
+      ></v-text-field>
+      <!-- <v-divider></v-divider> -->
+
+      <template v-for="member in filteredList">
+        <v-avatar @click="$helpers.openProfile($event, member)"
+          :color="$helpers.colorMinder(member.name.charAt(0))" 
+          size="35" tile
+          class="ma-1 round-1 linkify" 
+          :key="member.uid" :id="member.uid">
+
+          <img :src="member.photoURL" v-if="member.photoURL">
+          <span v-else class="white--text headline">{{member.name.charAt(0)}}</span>
+        </v-avatar>
+      </template>
+      
+    </v-card>
   </div>
 </template>
 <script>
@@ -68,6 +35,8 @@ export default {
     right_sidebar:true,
     isLastDoc: false,
     loading_more_members: false,
+    profile_menu: false,
+    selected_profile: {},
   }),
   props:['members', 'thisGroup', 'suspended'],
   computed: {
@@ -93,6 +62,9 @@ export default {
     ...mapGetters([
       'getUser'
     ]),
+    forumId(){
+      return this.$route.params.forumId
+    }
   },
   methods:{
     nextDocs(lastUser){
@@ -177,6 +149,14 @@ import {firebase, db, database} from '@/plugins/firebase'
     margin-left: 5px;
   }
 
+.forum-members {
+  // width: 100%;
+  height: calc(100vh - 102px);
+}
+
+.navdrawr {
+  width: 100%;
+}
   /* --style the scrollbar --*/
 .navdrawr::-webkit-scrollbar {
     width: 8px;

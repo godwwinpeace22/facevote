@@ -9,31 +9,31 @@
       <v-card flat style="" v-else>
         <v-card-text >
           
-          <v-layout row wrap justify-center align-center>
-            <v-flex xs6 sm3 v-for="stat in stats" :key="stat.title">
-              <v-card class="text-xs-center" flat style="border: 1px solid #eee;" height="90">
+          <v-row row wrap justify="center" align="center">
+            <v-col cols="12" sm="4" v-for="stat in stats" :key="stat.title">
+              <v-card class="text-center" flat style="border: 1px solid #eee;" height="90">
                 
-                <v-list two-line class="">
-                  <v-list-tile avatar>
+                <v-list>
+                  <v-list-item>
                     
-                    <v-list-tile-content>
-                      <v-list-tile-sub-title class="font-weight-bold">{{stat.title}}</v-list-tile-sub-title>
-                      <v-list-tile-title class="font-weight-bold">{{stat.value}}</v-list-tile-title>
-                    </v-list-tile-content>
-                    <v-list-tile-avatar >
+                    <v-list-item-content>
+                      <v-list-item-subtitle class="font-weight-bold">{{stat.title}}</v-list-item-subtitle>
+                      <v-list-item-title class="font-weight-bold">{{stat.value}}</v-list-item-title>
+                    </v-list-item-content>
+                    <v-list-item-avatar >
                       <v-icon large :color="stat.iconColor">{{stat.icon}}</v-icon>
-                    </v-list-tile-avatar>
-                  </v-list-tile>
+                    </v-list-item-avatar>
+                  </v-list-item>
                   
                 </v-list>
               </v-card>
               
-            </v-flex>
-          </v-layout>
-          <v-layout row wrap>
+            </v-col>
+          </v-row>
+          <v-row row wrap>
             
           <!-- ELECTIONS -->
-          <v-flex xs12 sm10 d-flex>
+          <v-col cols="12" sm="10">
             <div>
               <v-subheader>Your Elections</v-subheader>
               <v-card flat style="border: 1px solid #eee;">
@@ -50,15 +50,15 @@
                     <v-card flat>
                       <v-list two-line dense>
                         <template v-for="(election, i) in myCreated">
-                          <v-list-tile avatar :key="election.electionId  + i" @click="'manage_dialog = true; managing = election.electionId'">
-                            <v-list-tile-content>
-                              <v-list-tile-title>{{election.title}}</v-list-tile-title>
-                              <v-list-tile-sub-title>
+                          <v-list-item :key="election.electionId  + i" @click="'manage_dialog = true; managing = election.electionId'">
+                            <v-list-item-content>
+                              <v-list-item-title>{{election.title}}</v-list-item-title>
+                              <v-list-item-subtitle>
                                 <span class="online_badge" :class="[electionStatus(election)[1]]"></span>
                                 {{electionStatus(election)[0]}}
-                              </v-list-tile-sub-title>
-                            </v-list-tile-content>
-                          </v-list-tile>
+                              </v-list-item-subtitle>
+                            </v-list-item-content>
+                          </v-list-item>
                           <v-divider :key="election.electionId  + i + 5" v-if="i + 1 != myCreated.length"></v-divider>
                         </template>
                       </v-list>
@@ -69,43 +69,46 @@
                     <v-subheader v-if="myContests.length == 0">No contests</v-subheader>
                     <v-list two-line dense>
                       <template v-for="(election, i) in myContests" >
-                        <v-list-tile avatar :key="election.electionId  + i" @click="''">
-                          <v-list-tile-content>
-                            <v-list-tile-title>{{election.title}}</v-list-tile-title>
-                            <v-list-tile-sub-title>
+                        <v-list-item :key="election.electionId  + i" @click="''">
+                          <v-list-item-content>
+                            <v-list-item-title>{{election.title}}</v-list-item-title>
+                            <v-list-item-subtitle>
                               <span class="online_badge" :class="[electionStatus(election)[1]]"></span>
                               {{electionStatus(election)[0]}}
-                            </v-list-tile-sub-title>
-                          </v-list-tile-content>
-                        </v-list-tile>
+                            </v-list-item-subtitle>
+                          </v-list-item-content>
+                        </v-list-item>
                         <v-divider :key="election.electionId  + i + myContests.length" v-if="i + 1 != myContests.length"></v-divider>
                       </template>
                     </v-list>
                   </v-tab-item>
 
                   <v-tab-item value="tab-3">
-                    <v-subheader v-if="myEnrolled.length == 0">You have not enrolled any election yet</v-subheader>
+                    <v-subheader v-if="getMyEnrolled && getMyEnrolled.length == 0">
+                      You have not enrolled any election yet
+                    </v-subheader>
+
                     <v-list two-line dense>
-                      <template v-for="(election,i) in myEnrolled">
-                        <v-list-tile avatar @click="''" :key="election.electionId + 'df'">
-                          <v-list-tile-content>
-                            <v-list-tile-title>{{election.title}}</v-list-tile-title>
-                            <v-list-tile-sub-title>
+                      <template v-for="(election,i) in getMyEnrolled">
+                        <v-list-item @click="''" :key="election.electionId + 'df'">
+                          <v-list-item-content>
+                            <v-list-item-title>{{election.title}}</v-list-item-title>
+                            <v-list-item-subtitle>
                               <span class="online_badge" :class="[electionStatus(election)[1]]"></span>
                               {{electionStatus(election)[0]}}
-                            </v-list-tile-sub-title>
-                          </v-list-tile-content>
-                        </v-list-tile>
-                        <v-divider :key="election.electionId  + 'as'" v-if="i + 1 != myEnrolled.length"></v-divider>
+                            </v-list-item-subtitle>
+                          </v-list-item-content>
+                        </v-list-item>
+                        <v-divider :key="election.electionId  + 'as'" v-if="i + 1 != getMyEnrolled.length"></v-divider>
                       </template>
                     </v-list>
                   </v-tab-item>
                 </v-tabs>
               </v-card>
             </div>
-          </v-flex>
+          </v-col>
 
-        </v-layout>
+        </v-row>
         </v-card-text>
       </v-card>
     </transition>
@@ -117,84 +120,73 @@ export default {
     showUi: false,
     myCreated:[],
     myContests:[],
-    myEnrolled:[],
   }),
   props: {
-    userId: {
+    username: {
       type: String,
     }
   },
   watch: {
     'user'(to,from){
       
-      this.getManifestos()
+      //this.getManifestos()
     }
   },
   computed:{
     ...mapGetters([
       'getUser',
-      'getUserInfo',
+      'getMyEnrolled'
     ]),
     ...mapState([
       'isSuperUser',
       'curRoom',
-      'curProfile'
+      'curProfile',
     ]),
     user(){
       return this.curProfile
     },
     isSameUser(){
-      return this.getUser.uid == this.user.uid
+      return this.getUser.username == this.username
     },
     stats(){
       return [
-        {title:'Followers', value: this.user.followers ? this.user.followers.toLocaleString() : 0, icon: 'mdi-account-group',iconColor:'secondary'},
+        {title:'Posts', value: this.user.posts ? this.user.posts.toLocaleString() : 0, icon: 'mdi-equalizer', iconColor: 'cyan'},
+        // {title:'Followers', value: this.user.followers ? this.user.followers.toLocaleString() : 0, icon: 'mdi-account-group',iconColor:'secondary'},
         {title:'Contests', value: this.myContests.length.toLocaleString(), icon:'mdi-trophy', iconColor:'orange'},
         {title:'Elections', value: this.myCreated.length.toLocaleString(), icon: 'mdi-vote', iconColor:'success'},
-        {title:'Posts', value: this.user.posts ? this.user.posts.toLocaleString() : 0, icon: 'mdi-equalizer', iconColor: 'cyan'}
       ]
     },
   },
   methods: {
     async getCreated(){
       // election user created or is managing (is admin)
-      let elecRef = db.collection('elections')
-      let myArr = []
-      elecRef.where('admins','array-contains',this.user.uid)
-      .get().then(doc=>{
-        myArr = []
-        doc.forEach(item=>{
-          //console.log(item.id, " => ", item.data());
-          myArr.push(item.data())
+      let arr = []
+      this.$gun.get(this.getUser.username)
+        .get('created')
+        .map()
+        .once(es => {
+          console.log(es)
+          arr.push(es)
         })
-        this.myCreated = myArr
-      })
+      this.myCreated = arr
+    
     },
     async getContested(){
-      let elecs = []
-      // console.log(this.user)
-      if(this.user.contests){
-
-        this.user.contests.forEach(async contest =>{
-          let doc  = await db.collection('elections').doc(contest).get()
-          doc.exists ? elecs.push(doc.data()) : ''
-        })
-      }
-      
-      this.myContests = elecs.sort((a,b) => b.dateCreated.toMillis() - a.dateCreated.toMillis())
-    },
-    async getEnrolled(){
-    
       let arr = []
-      if(this.user.enrolled){
+      this.$gun.get(this.getUser.username)
+        .get('contests')
+        .map()
+        .once(es => {
+          this.$gun.get('elections')
+            .get(es.electionId)
+            .once(election => {
 
-        for(const electionId of this.user.enrolled){
-          // console.log(electionId)
-          let doc = await db.collection('elections').doc(electionId).get()
-          doc.exists ? arr.push(doc.data()) : ''
-        }
-      }
-      this.myEnrolled = arr.sort((a,b) => b.dateCreated.toMillis() - a.dateCreated.toMillis())
+              console.log('contested: ', election)
+              arr.push(election)
+            })
+        })
+      
+      this.myContests = arr.sort((a,b) => b.date_created - a.date_created)
     },
     electionStatus(election){
       // BEWARE THIS FUNCTION USES LOCAL TIME, WHICH MIGHT BE INACCURATE
@@ -215,10 +207,14 @@ export default {
     initialize(){
       if(this.isSameUser){
         Promise.all(
-          [this.getCreated(), this.getContested(), this.getEnrolled()]
+          [this.getCreated(), this.getContested(),]
         ).then(done => {
           this.showUi = true
         }).catch(err => console.log(err))
+      }
+
+      else {
+        this.$router.push(`/users/${this.username}/`)
       }
       
     }

@@ -4,15 +4,15 @@
     <navigation></navigation>
     <v-container fluid fill-height id="notfound" style="min-height:84.6vh;">
 
-      <v-layout align-center justify-center>
-        <v-flex xs12 sm8 md4>
+      <v-row align="center" justify="center">
+        <v-col cols="12" sm="8" md="4">
           <h1 class="text-xs-center mb-3" style="color:#333;" >Page Not Found</h1>
           <v-btn color="success" class="d-block" style="line-height:2.5" depressed
-            to="/home">
+            @click="$router.back()">
             Take me out of here
           </v-btn>
-        </v-flex>
-      </v-layout>
+        </v-col>
+      </v-row>
     </v-container>
 
     <footr></footr>

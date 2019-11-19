@@ -1,9 +1,37 @@
 <template>
   <v-card flat tile :style="styleObj" height="500" style="overflow-y: hidden;">
 
-    <v-toolbar color="cyan" dark dense card flat>
-      <v-toolbar-side-icon @click="drawer = !drawer" v-if="!read && $vuetify.breakpoint.smAndDown"></v-toolbar-side-icon>
-      <v-btn flat icon
+
+    
+    <v-navigation-drawer
+      v-model="drawer" hide-overlay 
+      left class="" width="150"
+      v-if="$vuetify.breakpoint.smAndDown">
+
+     <!-- <v-btn color="primary lighten-2" 
+      depressed 
+      @click="$eventBus.$emit('Toggle_New_Broadcast', true)">
+       <v-icon class="mr-2">mdi-plus</v-icon>
+       Compose</v-btn> -->
+
+      <v-list dense class="pt-0">
+        <v-list-item v-for="item in items" :key="item.title" @click="switchMode(item.title)">
+          <v-list-item-action>
+            <v-icon :color="mode == item.title ? 'orange' : ''">{{ item.icon }}</v-icon>
+          </v-list-item-action>
+          <v-list-item-content>
+            <v-list-item-title>{{ item.title }}</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
+    </v-navigation-drawer>
+
+    <v-app-bar color="cyan" dark dense flat>
+      <v-toolbar-side-icon 
+        @click="drawer = !drawer" 
+        v-if="!read && $vuetify.breakpoint.smAndDown">
+      </v-toolbar-side-icon>
+      <v-btn text icon
         v-if="read && $vuetify.breakpoint.smAndDown"
         @click="read = false">
         <v-icon>
@@ -15,135 +43,99 @@
       <v-btn icon @click="$eventBus.$emit('ToggleInboxDialog', false)">
         <v-icon>mdi-close</v-icon>
       </v-btn>
-    </v-toolbar>
+    </v-app-bar>
     
-
-    <v-navigation-drawer v-if="$vuetify.breakpoint.smAndDown" v-model="drawer" hide-overlay absolute left class="mt-5" width="150">
-     <v-btn color="secondary lighten-2" depressed @click="$eventBus.$emit('Toggle_New_Broadcast', true)">
-       <v-icon class="mr-2">mdi-plus</v-icon>
-       Compose</v-btn>
-
-      <v-list dense class="pt-0">
-        <v-list-tile v-for="item in items" :key="item.title" @click="switchMode(item.title)">
-          <v-list-tile-action>
-            <v-icon :color="mode == item.title ? 'orange' : ''">{{ item.icon }}</v-icon>
-          </v-list-tile-action>
-          <v-list-tile-content>
-            <v-list-tile-title>{{ item.title }}</v-list-tile-title>
-          </v-list-tile-content>
-        </v-list-tile>
-      </v-list>
-    </v-navigation-drawer>
-    
-    <v-container grid-list-xs class="pa-0 px-1">
-      <v-layout row wrap>
-        <v-flex sm1 shrink class="grey lighten-4" v-if="$vuetify.breakpoint.mdAndUp">
+    <v-container class="pt-0">
+      <v-row >
+        <v-col sm="2" class="grey lighten-4" v-if="$vuetify.breakpoint.mdAndUp">
           
-          <v-btn small color="ml-3 success lighten-2" icon @click="$eventBus.$emit('Toggle_New_Broadcast', true)">
-            <v-icon class="">mdi-plus</v-icon>
-          </v-btn>
+          <v-list dense nav class="ml-1 pt-0 grey lighten-4">
+            <v-list-item @click="$eventBus.$emit('Toggle_New_Broadcast', true)">
+              <v-list-item-action >
+                <v-icon color="ml-3 success lighten-2">mdi-plus</v-icon>
+              </v-list-item-action>
+              <v-list-item-title>New</v-list-item-title>
+            </v-list-item>
 
-            <v-list dense class="ml-1 pt-0 grey lighten-4">
-              <v-list-tile v-for="(item, i) in items" :key="'item' + i" @click="switchMode(item.title)">
-                <v-list-tile-action>
-                  <v-icon :color="mode == item.title ? 'orange' : ''">{{ item.icon }}</v-icon>
-                </v-list-tile-action>
-              </v-list-tile>
-              <v-list-tile avatar>
-                <v-list-tile-title>{{mode}}</v-list-tile-title>
-              </v-list-tile>
-            </v-list>
-        </v-flex>
+            <v-list-item v-for="(item, i) in items" :key="'item' + i" @click="switchMode(item.title)">
+              <v-list-item-action>
+                <v-icon :color="mode == item.title ? 'orange' : ''">{{ item.icon }}</v-icon>
+              </v-list-item-action>
+              <v-list-item-title>{{item.title}}</v-list-item-title>
+            </v-list-item>
+            <!-- <v-list-item>
+              <v-list-item-title>{{mode}}</v-list-item-title>
+            </v-list-item> -->
+          </v-list>
+        </v-col>
         
         <!-- LIST -->
-        <v-flex xs12 sm12 md4 
+        <v-col cols="12" sm="12" md="4" 
           style="border-right: 1px solid #eee;" 
           :class="{'hidden-sm-and-down': read}"
         >
           <v-text-field class="px-2" solo flat style="border-bottom: 1px solid #eee"
-            name="name" color="secondary"
+            name="name" color="primary"
             label="Search"
             hide-details
           ></v-text-field>
           <v-card flat tile :height="$vuetify.breakpoint.smAndUp ? '400' : ''">
             
             <v-list two-line dense >
-              <v-subheader v-if="getRecentBroadcasts[mode] && getRecentBroadcasts[mode].length == 0">
-                {{mode == 'inbox' ? 'No recent messages' : 'No Messages'}}
-              </v-subheader>
               
-              <template v-if="mode == 'inbox'">
+              <template v-for="(item,index) in msgs">
+                <v-list-item :class="{'selected': selected == item[0]}" ripple @click="selectItem(item)" :key="index + 'sent'">
+                  <v-list-item-avatar :color="item[0].author.photoURL ? '' : $helpers.colorMinder(item[0].author.name.charAt(0))">
+                    <img :src="item[0].author.photoURL" v-if="item[0].author.photoURL">
+                    <span v-else class="white--text">{{item[0].author.name.charAt(0)}}</span>
+                  </v-list-item-avatar>
 
-                <template v-for="(item,index) in getRecentBroadcasts.inbox">
-                  <v-list-tile :class="{'selected': selected.onr == item.onr}" ripple  avatar @click="selectItem(item)" :key="index + 'inbox'">
-                    <v-list-tile-avatar :color="item.onr.photoURL ? '' : $helpers.colorMinder(item.onr.name.charAt(0))">
-                      <img :src="item.onr.photoURL" v-if="item.onr.photoURL">
-                      <span v-else class="white--text">{{item.onr.name.charAt(0)}}</span>
-                    </v-list-tile-avatar>
+                  <v-list-item-content>
+                    <v-list-item-title class="text-capitalize">{{item[0].author.name}}</v-list-item-title>
+                  
+                    <v-list-item-subtitle>
+                      <span >{{item[0].body}}</span>
+                    </v-list-item-subtitle>
 
-                    <v-list-tile-content>
-                      <v-list-tile-title class="text-capitalize">{{item.onr.name}}</v-list-tile-title>
-                    
-                      <v-list-tile-sub-title>
-                        <span v-for="(msg, i) in item.msgs" :key="i + 'msg'">{{msg.body}}. </span>
-                      </v-list-tile-sub-title>
+                  </v-list-item-content>
 
-                    </v-list-tile-content>
-                    <v-list-tile-action v-if="item.unread.length > 0 && mode == 'inbox'">
-                      <v-badge color="success" left>
-                        <span slot="badge" class="">{{item.unread.length}}</span>
-                      </v-badge>
-                    </v-list-tile-action>
-                  </v-list-tile>
-                  <v-divider :key="index + 'dividr'"></v-divider>
-                </template>
+                  <v-list-item-action>
+                   
+                    <v-avatar
+                      size="24" class="white--text"
+                      color="primary"
+                    >
+                      {{item.length}}
+                    </v-avatar>
+                  </v-list-item-action>
 
+                </v-list-item>
+                <v-divider :key="index + 'dv'"></v-divider>
               </template>
 
-              <template v-if="mode == 'sent'">
-
-                <template v-for="(item,index) in getRecentBroadcasts.sent">
-                  <v-list-tile :class="{'selected': selected == item}" ripple  avatar @click="selectItem(item)" :key="index + 'sent'">
-                    <v-list-tile-avatar :color="item.onr.photoURL ? '' : $helpers.colorMinder(item.onr.name.charAt(0))">
-                      <img :src="item.onr.photoURL" v-if="item.onr.photoURL">
-                      <span v-else class="white--text">{{item.onr.name.charAt(0)}}</span>
-                    </v-list-tile-avatar>
-
-                    <v-list-tile-content>
-                      <v-list-tile-title class="text-capitalize">{{item.onr.name}}</v-list-tile-title>
-                    
-                      <v-list-tile-sub-title>
-                        <span >{{item.body}}</span>
-                      </v-list-tile-sub-title>
-
-                    </v-list-tile-content>
-
-                  </v-list-tile>
-                  <v-divider :key="index + 'dv'"></v-divider>
-                </template>
-
-              </template>
             </v-list>
           </v-card>
-        </v-flex>
+        </v-col>
 
         <!-- MAIN -->
-        <v-flex sm12 md7 :class="{'hidden-sm-and-down': !read}">
+        <v-col sm="12" md="6" :class="{'hidden-sm-and-down': !read}">
           <v-card flat tile style="overflow: auto;" :height="$vuetify.breakpoint.smAndUp ? '450' : ''">
             <v-subheader v-if="!selected">Select a message</v-subheader>
 
             <template v-if="selected">
               <v-list two-line dense>
-                <v-list-tile avatar @click="$eventBus.$emit('ViewProfile', selected.onr)">
-                  <v-list-tile-avatar :color="selected.onr.photoURL ? '' : $helpers.colorMinder(selected.onr.name.charAt(0))">
-                    <img :src="selected.onr.photoURL" v-if="selected.onr.photoURL">
-                    <span v-else class="white--text">{{selected.onr.name.charAt(0)}}</span>
-                  </v-list-tile-avatar>
-                  <v-list-tile-content>
-                    <v-list-tile-title class="text-capitalize"> {{selected.onr.name}}</v-list-tile-title>
-                    <v-list-tile-sub-title>Dept. of {{selected.onr.dept}}</v-list-tile-sub-title>
-                  </v-list-tile-content>
-                </v-list-tile>
+                <v-list-item @click="$eventBus.$emit('ViewProfile', selected[0].author)">
+                  <v-list-item-avatar :color="selected[0].author.photoURL ? '' : $helpers.colorMinder(selected[0].author.name.charAt(0))">
+                    <img :src="selected[0].author.photoURL" v-if="selected[0].author.photoURL">
+                    <span v-else class="white--text">{{selected[0].author.name.charAt(0)}}</span>
+                  </v-list-item-avatar>
+                  <v-list-item-content>
+                    <v-list-item-title class="text-capitalize"> {{selected[0].author.name}}</v-list-item-title>
+                    <v-list-item-subtitle v-show="selected[0].author.is_student">
+                      Dept. of {{selected[0].author.dept}}
+                    </v-list-item-subtitle>
+                  </v-list-item-content>
+                </v-list-item>
               </v-list>
 
               <v-divider></v-divider>
@@ -151,24 +143,25 @@
               <v-card-text>
                 
                 <template v-if="mode == 'sent'">
-                  <v-card class="round my-3 grey lighten-4" flat>
+                  <v-card class="round my-3 grey lighten-4" flat 
+                    v-for="(msg,i) of selected" :key="i + 'rd'">
                     <v-card-text>
-                      {{selected.body}}
-                      <div class="font-weight-light">{{$helpers.parseDate(selected.tstamp)}}</div>
+                      {{msg.body}}
+                      <div class="font-weight-light">{{$helpers.parseDate(msg.date_created)}}</div>
                     </v-card-text>
                   </v-card>
                 </template>
 
                 <template v-if="mode == 'inbox'">
 
-                  <div v-for="(msg, i) in selected.msgs" :key="i + 'selectd'">
-                    <div v-if="divide(msg.tstamp, selected.msgs[i-1])" class="time_divider">
-                      {{divide(msg.tstamp, selected.msgs[i-1])}}
+                  <div v-for="(msg, i) in selected" :key="i + 'selectd'">
+                    <div v-if="divide(msg.date_created, selected[i-1])" class="time_divider">
+                      {{divide(msg.date_created, selected[i-1])}}
                     </div>
                     <v-card class="round my-3 grey lighten-4" flat>
                       <v-card-text>
                         {{msg.body}}
-                        <div class="font-weight-light">{{$helpers.parseDate(msg.tstamp)}}</div>
+                        <div class="font-weight-light">{{$helpers.parseDate(msg.date_created)}}</div>
                       </v-card-text>
                     </v-card>
                   </div>
@@ -178,9 +171,9 @@
             </template>
           </v-card>
           
-        </v-flex>
+        </v-col>
 
-      </v-layout>
+      </v-row>
     </v-container>
 
   </v-card>
@@ -191,7 +184,8 @@ export default {
     drawer: null,
     read: false,
     selected: '',
-    mode: 'inbox'
+    mode: 'inbox',
+    outbox: [],
   }),
   computed:{
     styleObj(){
@@ -205,25 +199,65 @@ export default {
       return [
         {icon: 'mdi-inbox', title: 'inbox', color: 'purple'},
         {icon: 'mdi-send', title: 'sent', color: 'success'},
-        {icon: 'mdi-star', title: 'Stared', color: 'purple'},
+        // {icon: 'mdi-star', title: 'Stared', color: 'purple'},
       ]
+    },
+    msgs(){
+      return this.mode == 'inbox' ?
+      this.inbox : this.sent
+    },
+    inbox(){
+      
+      let inbox = this.broadcasts
+
+      let u = 
+      // uniqBy(this.broadcasts, 'key')
+        this.broadcasts
+        .filter(msg => 
+          msg.author.username != this.getUser.username
+        )
+        .map(m => {
+            return {...m, username: m.author.username}
+          })
+      let c = groupBy(u, 'username')
+      console.log(inbox, c)
+
+      return Object.values(c)
+    },
+    sent(){
+      let u = uniqBy(this.outbox, 'key')
+      .map(m => {
+          return {...m, username: m.author.username}
+        })
+        
+      let c = groupBy(u, 'username')
+
+      console.log({c})
+
+      return Object.values(c)
     },
     ...mapState([
       'curRoom',
-      'isSuperUser'
+      'isSuperUser',
+      'broadcasts'
     ]),
     ...mapGetters([
       'getUser',
-      'getUserInfo',
-      'getRecentBroadcasts'
     ])
   },
   methods:{
-    selectItem(item){
-      this.selected = item
-      // console.log(this.selected)
-      this.read = true
-      this.$store.dispatch('setLastReadTime', item.onr.uid)
+    selectItem(items){
+      this.selected = items
+
+      if(this.mode == 'inbox'){
+        for(let item of items){
+          // console.log({item})
+
+          this.$gun.get(this.getUser.username)
+            .get('read_broadcasts')
+            .set(item.docId)
+        }
+      }
     },
     switchMode(mode){
       this.mode = mode
@@ -239,9 +273,9 @@ export default {
           year:'numeric', month:'short', weekday:'short', day:'numeric'
         })
 
-      if(prev && prev.tstamp){
+      if(prev && prev.date_created){
         // for msg other than the first. If the previous date is same as the cur date return false
-        if((new Date(prev.tstamp)).toLocaleString("en-US", options) == that_day){
+        if((new Date(prev.date_created)).toLocaleString("en-US", options) == that_day){
           return false
         }
         else{
@@ -267,29 +301,33 @@ export default {
         return (new Date()).toLocaleString('en-Us',options) == that_day ? 'Today' : that_day2
       }
     },
-    openPrivateChatWindow(item){
-      this.$eventBus.$emit('Open_Private_Chat_Window', {
-        user: item.user,
-        msgs: item.msgs,
-        // last_msg_status: item.msgs[item.msgs.length-1].status
-      })
+    getOutbox(){
+      // get msgs sent by user
+      this.$gun.get(this.getUser.username)
+        .get('broadcasts')
+        .get('outbox')
+        .map().on((d,k) => {
+          console.log('outbox ==> ', {d})
+          d.author = this.getUser
+          d.key = k
+          this.outbox.push(d)
+        })
     },
   },
   components:{
-    //LoadingBar,
-    //PrivateChatWindow,
+    
   },
   mounted(){
-    // console.log(this.getRecentBroadcasts, 1 > undefined)
-    //this.items = this.sortMsg()
-    // console.log(this.items)
+
+    this.getOutbox()
+
   }
 }
 //import LoadingBar from '@/spinners/LoadingBar'
 import {mapState, mapGetters} from 'vuex'
-import {firebase, db, database} from '@/plugins/firebase'
+import { uniqBy, orderBy, groupBy } from "lodash";
 </script>
-<style>
+<style scoped>
   .selected {
     border-left: 3px solid orange;
   }

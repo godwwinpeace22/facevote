@@ -1,9 +1,9 @@
 <template>
-  <v-container grid-list-xs fluid :class="[background]">
-    <v-layout column>
-      <v-flex xs6 d-flex>
+  <v-container fluid :class="[background]">
+    <v-row column>
+      <v-col cols="6">
         <div :style="styleObj">
-          <v-layout align-center justify-center fill-height>
+          <v-row align-content="center" justify="center" fill-height>
             <div>
               <slot name='loading_info'></slot>
               <v-progress-circular indeterminate :color="color" v-if="spinnerType == 'circle'"></v-progress-circular>
@@ -27,10 +27,10 @@
                 <div class="circle circle-2"></div>
               </div>
             </div>
-          </v-layout>
+          </v-row>
         </div>
-      </v-flex>
-    </v-layout>
+      </v-col>
+    </v-row>
   </v-container>
   
 </template>

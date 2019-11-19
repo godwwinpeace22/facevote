@@ -69,7 +69,7 @@ export default {
 import videojs from 'video.js'
 import 'video.js/dist/video-js.css'
 </script>
-<style lang="scss">
+<style lang="scss" scoped>
   .video-js .vjs-big-play-button {
     top: 50%;
     left: 50%;

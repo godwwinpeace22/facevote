@@ -1,6 +1,7 @@
 import 'babel-polyfill'
 import Vue from 'vue'
-import './plugins/vuetify'
+// import './plugins/vuetify'
+import vuetify from './plugins/vuetify'
 import App from './App.vue'
 import store from '@/store/store'
 import 'es6-promise/auto'
@@ -17,11 +18,20 @@ import linkify from 'vue-linkify'
 // import checkView from 'vue-check-view'
 import LoadingBar from '@/spinners/LoadingBar'
 import vuelidate from 'vuelidate'
+import {gun, Gun} from '@/plugins/gun'
+const uuidv4 = require('uuid/v4');
+// import Auth from './plugins/auth'
 // import VueChatScroll from 'vue-chat-scroll'
 
-import LogRocket from 'logrocket';
+// import LogRocket from 'logrocket';
 
-LogRocket.init('8zkged/voteryte');
+// LogRocket.init('8zkged/voteryte');
+
+
+Vue.prototype.$gun = gun
+Vue.prototype.$Gun = Gun
+Vue.prototype.$gUser = gun.user()
+Vue.prototype.$uuidv4 = uuidv4
 
 const plugin = {
   install () {
@@ -42,8 +52,8 @@ Vue.mixin({
 Vue.prototype.$Nprogress = Nprogress
 Vue.prototype.$appName = 'Voteryte'
 Vue.prototype.$paystackKey = 'pk_test_cd14c065dfe123cd983362a4ed795fe1128ec4e2'
-Vue.prototype.$LogRocket = LogRocket
-global.$LogRocket = LogRocket
+// Vue.prototype.$LogRocket = LogRocket
+// global.$LogRocket = LogRocket
 
 const $eventBus = new Vue();
 Vue.prototype.$eventBus = $eventBus
@@ -61,8 +71,11 @@ Vue.use(vuelidate)
 
 Vue.directive('linkified', linkify)
 
-new Vue({
+const vm = new Vue({
   router,
   store,
+  vuetify,
   render: h => h(App),
 }).$mount('#app')
+
+export {vm}

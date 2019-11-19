@@ -4,138 +4,142 @@
   </loading-bar>
 
   
-  <div v-else style="background:#fff;" class="pa-0 px-1 chat_home" id="chat_home">
-    <v-snackbar v-model="snackbar.show" :timeout="5000" :color="snackbar.color" 
-      class="white--text" top right>
-      {{snackbar.message}} 
-      <v-btn dark flat @click="snackbar.show = false"> Close</v-btn>
-    </v-snackbar>
-
+  <v-container fluid v-else style="background:#fff;" class="pa-0 px-1">
+    <div class="text-center" v-show="forumId == 'd'">Select a forum to join</div>
     <!-- NO DATA -->
-    <v-subheader class="text-xs-center" v-if="!getChatMessages || getChatMessages.length == 0">No recent messages yet. Be the first to write a message</v-subheader>
+    <!-- <v-subheader class="text-center" 
+      v-if="!getChatMessages || getChatMessages.length == 0">
+      No recent messages yet. Be the first to write a message
+    </v-subheader>
+
+    <v-btn text small @click="moreMessages()"
+      color="primary" v-if="!isLastDoc && getChatMessages.length >= 4"
+      class="d-block mx-auto text-capitalize" 
+      :loading="loading_more_msgs">
+      See older messages
+    </v-btn> -->
     
-    <div flat pa-0 id="chat_space" >
+    <v-row>
       
-      <div class="chat_space_content" id="chat_space_content"
-        v-if="getChatMessages.length > 0 && $vuetify.breakpoint.mdAndUp"
-        style="background: white;" :style="styleForChatSpaceContent">
+      <!-- <v-col
+        v-if="$vuetify.breakpoint.mdAndUp"> -->
 
-        <v-btn flat small @click="moreMessages()"
-          color="secondary" v-if="!isLastDoc && getChatMessages.length >= 4"
-          class="d-block mx-auto text-capitalize" 
-          :loading="loading_more_msgs">
-          See older messages
-        </v-btn>
 
-        <div v-for="(msg,i) in getChatMessages" :key="i">
-          <!-- DATE DIVIDER -->
-          <div v-if="divide(msg.tstamp, getChatMessages[i-1])" class="divide">
-            {{divide(msg.tstamp, getChatMessages[i-1])}}
-          </div>
-
-          <div class="chat_rectangle ">
-
-            <div class="chat_avartar">
-              <v-avatar
-                size="40" tile
-                :color="$helpers.colorMinder(msg.onr.name.charAt(0))"
-              >
-                <img v-if="msg.onr.photoURL" :src="msg.onr.photoURL" alt="alt">
-                <span v-else class="white--text">{{msg.onr.name.charAt(0)}}</span>
-              </v-avatar>
-            </div>
-            
-            <div class="chat_content">
-              <div style="width:100%;margin-top:0px;margin-bottom:0px;">
-                <span class="text-capitalize" v-if="msg.onr.uid != getUser.uid " style="font-size:15px;margin-right:5px;">
-                  <a class="black--text font-weight-bold" 
-                    @click.prevent="$router.push(`/forum/profile/${msg.onr.uid}`); 
-                    $eventBus.$emit('Toggle_drawerRight', true)"
-                    :class="[$helpers.colorMinder(msg.onr.name.charAt(0)) + '--text']">
-                  {{msg.onr.name}}</a>
-                </span>
-                <span v-else style="margin-right:5px;" class="font-weight-bold"><strong>You  </strong></span>
-                <span style="font-size:.83em;color:#555;" color="grey lighten-5">
-                  {{$helpers.parseDate(msg.tstamp)}}
-                </span>
+        <!-- <v-row> -->
+          <v-col cols="12" v-for="(msg,i) in getChatMessages" :key="i" class="py-0">
+            <div>
+              <!-- DATE DIVIDER -->
+              <div v-if="divide(msg.date_created, getChatMessages[i-1])" class="divide">
+                {{divide(msg.date_created, getChatMessages[i-1])}}
               </div>
+
+
+            </div>
+            <v-card flat>
+
+              <v-card-title class="pl-0 pt-0">
+                <v-list dense class="py-0">
+                  <v-list-item @click.prevent="$helpers.openProfile($event, msg.author)">
+
+                    <v-list-item-avatar
+                      size="30" tile class=""
+                      :color="$helpers.colorMinder(msg.author.name.charAt(0))">
+                      <img v-if="msg.author.photoURL" :src="msg.author.photoURL" alt="alt">
+                      <span v-else class="white--text">{{msg.author.name.charAt(0)}}</span>
+                    </v-list-item-avatar>
+
+                    <v-list-item-content>
+                      <v-list-item-title>
+                        {{msg.author.name}} 
+                        <span class="grey--text">{{$helpers.parseDate(msg.date_created)}}</span>
+                      </v-list-item-title>
+                      <v-list-item-subtitle>
+                        @{{msg.author.username}}
+                        
+                      </v-list-item-subtitle>
+                    </v-list-item-content>
+                  </v-list-item>
+                </v-list>
+              </v-card-title>
               
-              <div style="width:100%;" >
+              <v-card-text class="ml-12 pb-0">
+                
 
                 <div v-html="msg.body" v-linkified:options="linkify_options"></div>
 
                 <!-- UPLOADED IMAGES -->
-                <v-layout row wrap >
-                  <v-flex xs12 sm8>
-                    <image-grid :imgs="msg.imgs" v-if="msg.imgs"/>
-                  </v-flex>
-                </v-layout>
+                <v-row v-if="msg.imgs">
+                  <v-col cols="12" sm="8">
+                    <image-grid :imgs="msg.imgs"/>
+                  </v-col>
+                </v-row>
 
-              </div>
-              
-            </div>
-          </div>
+                
+              </v-card-text>
+            </v-card>
 
-        </div>
-      </div>
+          </v-col>
+        <!-- </v-row> -->
+      <!-- </v-col> -->
 
-      <div v-if="getChatMessages.length > 0 && $vuetify.breakpoint.smAndDown" class="chat_space_content"
+      <!-- <div v-if="getChatMessages.length > 0 && $vuetify.breakpoint.smAndDown" class="chat_space_content"
         :style="styleForChatSpaceContent">
        
-        <v-btn flat small @click="moreMessages()"
-          color="secondary" v-if="offset != null"
+        <v-btn text small @click="moreMessages()"
+          color="primary" 
           class="d-block mx-auto text-capitalize" 
           :loading="loading_more_msgs">
           See older messages
         </v-btn>
 
         <template v-for="(msg,i) in getChatMessages">
-          <div v-if="divide(msg.tstamp, getChatMessages[i-1])" class="divide" :key="i">
-            {{divide(msg.tstamp, getChatMessages[i-1])}}
+          <div v-if="divide(msg.date_created, getChatMessages[i-1])" class="divide" :key="i">
+            {{divide(msg.date_created, getChatMessages[i-1])}}
           </div>
 
-          <div class="me" v-if="msg.onr.uid == getUser.uid" :key="i + 'me'">
+          <div class="me" v-if="msg.author.username == getUser.username" :key="i + 'me'">
             <div class="me_inner elevation-1" :class="[msg.imgs ? 'msg_inner_imgs': 'msg_inner']">
               <div class="body">
                 <div v-html="$sanitize(msg.body)" v-linkified:options="linkify_options"></div>
                 
-                <!-- UPLOADED IMAGES -->
                 <image-grid :imgs="msg.imgs" v-if="msg.imgs"/>
 
               </div>
               <div class="meta2">
-                {{(new Date(msg.tstamp)).toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'}) }}
+                {{(new Date(msg.date_created))
+                .toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'}) }}
               </div>
             </div>
           </div>
 
           <div class="thm" v-else :key="i + 'thm'">
             <div class="thm_inner elevation-1" :class="[msg.imgs ? 'msg_inner_imgs': 'msg_inner']">
-              <div class="meta1 text-capitalize" :class="[$helpers.colorMinder(msg.onr.name.charAt(0)) + '--text']"
-              @click.prevent="$router.push(`/forum/profile/${msg.onr.uid}`); 
+              <div class="meta1 text-capitalize" :class="[$helpers.colorMinder(msg.author.name.charAt(0)) + '--text']"
+              @click.prevent="$router.push(`/forum/profile/${msg.author.username}`); 
                 $eventBus.$emit('Toggle_drawerRight', true)">
-                {{msg.onr.name}}
+                {{msg.author.name}}
               </div>
               <div class="body">
 
                 <div v-html="$sanitize(msg.body)" v-linkified:options="linkify_options"></div>
 
-                <!-- UPLOADED IMAGES -->
                 <image-grid :imgs="msg.imgs" v-if="msg.imgs"/>
 
               </div>
               <div class="meta2">
-                <strong>{{(new Date(msg.tstamp)).toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'}) }}</strong>
+                <strong>{{(new Date(msg.date_created))
+                  .toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'}) }}
+                </strong>
               </div>
             </div>
           </div>
 
         </template>
-      </div>
+      </div> -->
 
-    </div>
+    </v-row>
 
-  </div>
+  </v-container>
 </template>
 
 <script>
@@ -145,8 +149,6 @@ export default {
     show_reactions: false,
     reactions: {}, // temp holds reactions for quick feedback
     snackbar: {},
-    carousel_images: [],
-    onboarding: 0,
     drawer: null,
     message: 'Type a message',
     chat_messages: [],
@@ -154,32 +156,37 @@ export default {
     loading_more_msgs: false,
     // loading_messages: true,
   }),
-  props:['members','room','thisGroup', 'loading_messages'],
+  props:['members', 'thisGroup', 'loading_messages',],
   watch:{
     $route: function(e){
       
       if(e.name == 'profile'){
         this.$eventBus.$emit('Toggle_drawerRight', true)
       }
+      
+    },
+    'forumId': function(to,from){
+      if(to != 'd'){
+        console.log({to})
+        this.getMessages()
+      }
     }
   },
   computed: {
     ...mapGetters([
       'getUser',
-      'getUserInfo',
-      'getChatMessages'
+      // 'getChatMessages'
     ]),
     ...mapState([
       'curRoom',
       'isSuperUser'
     ]),
+    forumId(){
+      return this.$route.params.forumId
+    },
     breakpoint(){
       return this.$vuetify.breakpoint
     },
-    isAdmin(){
-      return this.curRoom.admins.includes(this.getUser.uid)
-    },
-    
     styleForChatSpaceContent(){
       if(this.breakpoint.smAndDown){
         return {
@@ -220,56 +227,33 @@ export default {
             let member = this.members.find(member => member.username == href.substring(1))
             if(member){
 
-              return location.origin + '/#/forum/profile/'+ member.uid;
+              return location.origin + '/forum/profile/'+ member.username;
             }
             else {
-              return location.origin + '/#/forum/#'+ href.substring(1);
+              return location.origin + '/forum/#'+ href.substring(1);
             }
           },
           hashtag: (href) => {
-            return location.origin + '/#/forum/#' + href.substring(1);
+            return location.origin + '/forum/#' + href.substring(1);
           }
         },
         nl2br: true,
       }
     },
+    getChatMessages(){
+     let sorted = this.chat_messages.sort((a,b) => a.tstamp - b.tstamp)
+     .filter(msg => msg.elecRef == this.forumId)
+  
+     // remove duplicates caused by push
+     return sorted.reduce((acc, cur) => [
+        ...acc.filter((msg) => msg.docId !== cur.docId), cur
+      ], []);
+    },
   },
 
   methods: {
-    carouselDialog(images,index){
-      this.$eventBus.$emit('Open_Image_Gallery', {
-        images, index
-      })
-    },
-    
-    scroll(e){
-      let scrolled_to_bottom = e.target.scrollTop === (e.target.scrollHeight - e.target.offsetHeight)
-      let scrolled_to_top = e.target.scrollTop === 0
-      // console.log(e.target)
-      if(scrolled_to_bottom){
-        // console.log('scrolled to bottom')
-      }
-      if(scrolled_to_top){
-        // console.log('scrolled to top')
-      }
-
-      
-    },
-    findAMember(memberEmail){
-      let member = this.members.find(member=> member.email == memberEmail)
-      return member ? member.name : memberEmail
-    },
     getRep(chat){
       return chat.replace(/@([\w]+)/g,'<router-link to="/tag/$1">#$1</router-link>')
-    },
-    goto(item,room){
-      // console.log(item,room)
-      if(this.members.find(member => member.email == item.slice(1))){
-        this.$router.push(`/forum/profile/${item.slice(1)}`)
-        this.$eventBus.$emit('Toggle_drawerRight', true)
-      }
-      else{}
-      
     },
     divide(timestamp,prev){
       let options = {year: 'numeric', month: 'numeric', day: 'numeric' };
@@ -279,9 +263,9 @@ export default {
           year:'numeric', month:'short', weekday:'short', day:'numeric'
         })
 
-      if(prev && prev.tstamp){
+      if(prev && prev.date_created){
         // for msg other than the first. If the previous date is same as the cur date return false
-        if((new Date(prev.tstamp)).toLocaleString("en-US", options) == that_day){
+        if((new Date(prev.date_created)).toLocaleString("en-US", options) == that_day){
           return false
         }
         else{
@@ -308,34 +292,34 @@ export default {
       }
     },
     moreMessages(e){
-      // if(this.offset != undefined){
-        this.loading_more_msgs = true
-        let lastDoc = this.getChatMessages[0]
-        let msgCollection = db.collection('chat_messages')
-
-        msgCollection.doc(lastDoc.docId).get().then(documentSnapshot => {
-
-          msgCollection
-            .where('elecRef','==',this.curRoom.electionId)
-            .orderBy('tstamp', 'desc')
-            .startAfter(documentSnapshot)
-            .limit(5).get().then(querySnapshot =>{
-              let msgs = []
-              querySnapshot.forEach(doc =>{
-                msgs.unshift(doc.data())
-              })
-              this.isLastDoc = querySnapshot.empty
-    
-              this.$store.dispatch('updateFromDb', [...this.getChatMessages, ...msgs])
-              this.loading_more_msgs = false
-              e ? e.target.scrollTop = 100 : ''
-            })
+      
+    },
+    getMessages(){
+      // get recent chats
+      
+      this.$gun.get('chat_messages')
+        .get(this.forumId)
+        .map()
+        .on(data => {
+          // console.log({data})
+          this.$gun.get(data.author)
+          .once(author => {
+            console.log({author})
+            data.author = author
+            this.chat_messages.push(data)
+          })
+          
         })
-      // }
+
+        console.log(this.forumId, this.chat_messages)
+      
     },
   },
-  created() {
-    
+  mounted() {
+
+    if(this.forumId != 'd'){
+      this.getMessages()
+    }
   },
   destroyed(){
     // this.chatUpdate()
@@ -348,7 +332,6 @@ export default {
 import {mapGetters, mapState} from 'vuex'
   import LoadingBar from '@/spinners/LoadingBar'
   import ImageGrid from '@/components/ImageGrid'
-  import {firebase, db, database} from '@/plugins/firebase'
   import * as linkify from 'linkifyjs';;
   import hashtag from 'linkifyjs/plugins/hashtag';
   import mention from 'linkifyjs/plugins/mention';
@@ -368,7 +351,7 @@ $mainBgColor: #1c1f35;
 $secondary: #1867c0;
 
 a{
-  color:$secondary;
+  color: $secondary;
 }
 
 .chat_home{
@@ -473,6 +456,11 @@ a{
   width: calc(100% - 50px);
   min-height: 40px;
 }
+.chat_details {
+  width: 100%;
+  margin-top: 0px;
+  margin-bottom: 0px;
+}
 .chat_rectangle {
   padding: 5px 15px;
   margin-bottom: 5px;
@@ -526,25 +514,31 @@ a{
   cursor: pointer;
 }
 /* --scrollbar --*/
-.chat_space::-webkit-scrollbar {
-    width: 8px;
+.chat_home::-webkit-scrollbar {
+    width: 9px;
     background-color: $mainBgColor;
     @include borderRadius(10px)
   }
+
   .thin_scrollbar::-webkit-scrollbar{
     width: 2px;
   }
-.chat_space::-webkit-scrollbar-track {
+.chat_home::-webkit-scrollbar-track {
   // box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
   // -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
   // -moz-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
   // -o-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-  background-color: #fff;
+  background-color: transparent;
   // @include borderRadius(10px)
 }
-.chat_space::-webkit-scrollbar-thumb {
+.chat_home::-webkit-scrollbar-thumb {
   background-color:#87899c ;
   @include borderRadius(10px);
+  border-radius: 10px;
+  background-color: rgba(100,100,100,.2);
+  margin-right: 1px;
+  -webkit-transition: opacity .3s ease-in-out;
+  transition: opacity .3s ease-in-out;
 }
 .show_reactions{
   position: relative;

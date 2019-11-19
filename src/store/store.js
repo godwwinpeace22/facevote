@@ -2,12 +2,10 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import VuexPersist from 'vuex-persist';
 import createMutationsSharer from 'vuex-shared-mutations'
-import {firebase} from '@/plugins/firebase'
-// import LogRocket from 'logrocket';
-// import createPlugin from 'logrocket-vuex';
+import {gun} from '../plugins/gun';
+import { vm } from '@/main'
+import { uniq } from "lodash";
 
-// const logrocketPlugin = createPlugin(LogRocket);
-// import router from '@/router.js'
 Vue.use(Vuex)
 
 // include states to be persisted in local storage
@@ -31,10 +29,15 @@ const vuexLocalStorage = new VuexPersist({
 })
 export default new Vuex.Store({
   plugins:[
-    // logrocketPlugin,
     vuexLocalStorage.plugin,
     createMutationsSharer({ predicate: 
-      ['logout', 'setUser', 'switchTheme','saveFeedFilter', 'session_expired', 'setUserInfo', 'curRoom', 'curProfile','saveChatMessages','updateFromDb','updateThoseOnline'] })
+      ['logout', 'setUser', 
+      'switchTheme','saveFeedFilter', 
+      'session_expired', 'setUserInfo', 
+      'curRoom', 'curProfile',
+      'saveChatMessages','updateFromDb',
+      'updateThoseOnline'] 
+    })
   ],
   state: {
     userInfo: null, // additional info for logged in user
@@ -45,8 +48,9 @@ export default new Vuex.Store({
     timestamp: null,
     curRoom: null,
     curProfile: null,
+    selectedProfile: {},
     curRoomId: null, // current room id
-    loading_rooms: true, // tells other components that rooms are still being loaded
+    loading_rooms: false, // tells other components that rooms are still being loaded
     myEnrolled: [],
     uploadProgress: {},
     broadcasts: [],
@@ -68,16 +72,19 @@ export default new Vuex.Store({
       state.userInfo = data
     },
     setUser(state,data){
+      // console.log({data})
       // data['displayName'] = data.name
       // data.user_id ? data['uid'] = data.user_id : ''
 
       state.isAuthenticated = data
-      // state.userInfo = data
+      state.userInfo = data
       // state.userInfo = null
     },
-    logout(state){
+    async logout(state){
       // eslint-disable-next-line
-      firebase.auth().signOut().then(function() {
+        vm.$router.push('/login')
+        gun.user().leave()
+        
         // Sign-out successful.
         state.userInfo = null
         state.isAuthenticated = false
@@ -89,12 +96,7 @@ export default new Vuex.Store({
         state.chat_messages = []
         state.pUnreadMsgs = []
         
-        // router.push('/login')
-        window.location.reload()
-      }).catch(function(error) {
-        // eslint-disable-next-line
-        // console.log(error)
-      });
+        // window.location.reload()
     },
     switchTheme(state){
       state.theme == 'dark' ? state.theme = 'light' : state.theme = 'dark'
@@ -107,23 +109,21 @@ export default new Vuex.Store({
       state.curRoomId = data.electionId
       state.loading_rooms = false
     },
+    openProfile(state, data){
+      state.curProfile = data
+      state.selectedProfile = data
+    },
     curProfile(state, data){
       state.curProfile = data
     },
     setBroadcasts(state,data){
       state.broadcasts = data
     },
-    saveChatMessage(state, data){
-      state.chat_messages = [...state.chat_messages, data]
+    setChatMsgs(state, data){
+      state.chat_messages = data
     },
     pUnreadMsgs(state,data){
       state.pUnreadMsgs = data
-    },
-    updateFromDb(state,data){
-      state.chat_messages = [...state.chat_messages, ...data]
-    },
-    updateThoseOnline(state,data){
-      state.those_online = data
     },
     showRightNav(state,data){
       state.show_right_nav = data[0]
@@ -189,8 +189,8 @@ export default new Vuex.Store({
     curRoom({commit}, data){
       commit('curRoom', data)
     },
-    curProfile({commit}, data){
-      commit('curProfile', data)
+    openProfile({commit}, data){
+      commit('openProfile', data)
     },
     uploadProgress({commit}, data){
       commit('uploadProgress', data)
@@ -233,70 +233,53 @@ export default new Vuex.Store({
     },
     sessionExpired({commit}, data){
       commit('sessionExpired', data)
+    },
+    curProfile({commit}, data){
+      commit('curProfile', data)
+    },
+    generalAction({commit}, data){
+      commit(data.mutation, data)
     }
   },
   getters:{
     getUnreadLength: state => {
       let ids = []
-      let unread = 0
-      state.broadcasts.forEach(msg =>{
-        if(!ids.find(id => msg.onr.uid == id)){
-          ids.push(msg.onr.uid)
-          unread = unread + state.broadcasts.filter(item => {
-            if(item.tstamp){
-              let foo = state.last_read_time[item.onr.uid] ? 
-              item.tstamp.seconds * 1000 > state.last_read_time[item.onr.uid] : true
-              return foo && item.onr.uid != state.userInfo.uid && item.onr.uid == msg.onr.uid 
-            }
+      let read_msgs = []
 
-          }).length
-        }
-      })
-      state.no_of_unread_msgs = unread
-      return state.no_of_unread_msgs
-    },
-    getRecentBroadcasts: state => {
-      let sorted = state.broadcasts.sort((a,b)=>a.tstamp.toMillis() - b.tstamp.toMillis())
-      // the senders should not recieve their own messages
-      // sorted = sorted.filter(msg => msg.sender != state.userInfo.uid)
-      let myArr = []
-      let track = []
-
-      // state.no_of_unread_msgs = sorted.filter(msg => msg.tstamp.toMillis() > state.last_read_time).length
-      // eslint-disable-next-line
-      // console.log('getbroadcast runnig', state.no_of_unread_msgs)
-      // get the unread private messages from the store and map each user to all his messages
+      // get user list of read
+      gun.get(state.isAuthenticated.username)
+        .get('read_broadcasts')
+        .map()
+        .once((read,key)=> {
+          // console.log({read,key})
+          
+          read_msgs.push(read)
+        })
       
-      let sent = sorted.filter(msg =>{
-        return msg.onr.uid == state.userInfo.uid
-      })
-
-      let inbox = sorted.filter(msg=>{
-        return msg.onr.uid != state.userInfo.uid
-      })
-
-      for(let item of inbox){
-        // if user has seen the last msg then he has seen all others
-        // let last_msg = msgs.sort((a,b)=> a.timestamp - b.timestamp)[msgs.length -1]
-        
-        track.indexOf(item.by) == -1 ? myArr.push({
-          onr: item.onr,
-          msgs: inbox.filter(msg => msg.onr.uid == item.onr.uid),
-          unread: inbox.filter(item => item.tstamp.toMillis() > state.last_read_time[item.onr.uid])
-        }) : ''
-        track.push(item.by)
-      }
       
-      return {
-        sent: sent,
-        inbox: myArr
-      }
+      return state.broadcasts
+        .filter(msg => 
+          msg.author.username != state.isAuthenticated.username && 
+          !read_msgs.includes(msg.docId)
+        )
+        .length
+       
     },
     
     getUser: (state) => {
-      return state.isAuthenticated
+      let u = ''
+      if(state.isAuthenticated){
+
+        gun.get(state.isAuthenticated.username).once(user => {
+          u = user
+          // console.log(u, user)
+        })
+        return u
+      }
+      else {
+        return false
+      }
     },
-    getUserInfo: state => state.userInfo, // additional info for user
     getChatMessages: (state)=>{
      let sorted = state.chat_messages.sort((a,b) => a.tstamp - b.tstamp)
      .filter(msg => msg.elecRef == state.curRoom.electionId)
@@ -310,7 +293,7 @@ export default new Vuex.Store({
     getContestants: state => state.curElectionContestants,
     getCurElectionResults: state => state.curElectionResults,
     getCurElectionActivities: state => state.curElectionActivities,
-    getMyEnrolled: state => state.myEnrolled,
+    getMyEnrolled: state => uniq(state.myEnrolled),
     getMyCreated: state => state.myCreated,
     getMyContested: state => state.myContested,
     getVotes: state => state.votes,
@@ -324,8 +307,9 @@ export default new Vuex.Store({
       })
       return arr
     },
-    getFeedFilter: state => state.feedFilter,
   }
 })
 
-//console.log(store.state.count)
+// gun.on('auth', function(v){
+//   // console.log({v})
+// })

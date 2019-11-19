@@ -145,9 +145,6 @@ import Nav from '@/components/Nav'
       margin-top:25%;
     }
   }
-    .theme--light.v-text-field--outline .v-input__slot {
-  border: 1px solid rgba(115, 114, 114, 0.54) !important;
-}
   
 </style>
 

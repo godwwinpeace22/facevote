@@ -3,7 +3,7 @@
     <v-card>
 
       <v-toolbar dense flat color="grey lighten-3">
-        <v-btn flat icon class="hidden-md-and-up" 
+        <v-btn text icon class="hidden-md-and-up" 
           @click="$eventBus.$emit('HideNewPostDialog',true)">
           <v-icon>mdi-chevron-left</v-icon>
         </v-btn>
@@ -41,70 +41,80 @@
       </v-toolbar>
 
       <v-card-text v-if="form.post_type == 'image'">
-        <v-textarea auto-grow color="secondary" rows="1"
+        <v-textarea auto-grow color="primary" rows="1"
           label="Image caption" v-model="form.message"
-          name="broadcast" outline
+          name="broadcast" outlined class="mt-8"
         ></v-textarea>
 
-          <v-container grid-list-sm px-0 v-if="type == 'post' && blob_urls">
-            <v-layout row wrap>
-              <v-flex xs3 v-for="(blob_url,i) in blob_urls" :key="i">
-                <v-card height="100" class="mb-1">
-                  <v-img :src='blob_url' height="100"></v-img>
-                </v-card>
-              </v-flex>
-            </v-layout>
-          </v-container>
-          
-          <v-btn round dark 
-            class="teal text-capitalize" 
-            :disabled="loading" flat
-            v-if="type == 'post'" 
-            @click="$helpers.trigFileSelector">
-            <v-icon class="mr-2">mdi-image</v-icon>
-            
-            Select Photos
-          </v-btn>
+        <v-file-input show-size counter
+          outlined append-icon="mdi-image" prepend-icon=""
+          multiple label="Select images" chips
+          v-model="selected_files">
 
-          <v-btn round dark 
-            class="grey text-capitalize" 
-            :disabled="loading" 
-            v-if="type == 'post' && blob_urls.length > 0" 
-            @click="blob_urls = [];selected_files = []">
+          <template v-slot:selection="{ index, text }">
+            <v-chip
+              v-if="index < 3"
+              color="deep-purple accent-4"
+              dark
+              label
+              small
+            >
+              {{ text }}
+            </v-chip>
 
-            <v-icon color="error" class="mr-2">mdi-close</v-icon>
-            Clear All
-          </v-btn>
+            <span
+              v-else-if="index > 3"
+              class="overline grey--text text--darken-3 mx-2"
+            >
+              +{{ selected_files.length - 3 }} File(s)
+            </span>
+          </template>
+        </v-file-input>
+        
       </v-card-text>
 
       <v-card-text v-if="form.post_type == 'video'">
-        <v-textarea auto-grow color="secondary" rows="1"
+        <v-textarea auto-grow color="primary" rows="1"
           label="Video caption" v-model="form.message"
-          name="broadcast" outline
+          name="broadcast" outlined class="mt-8"
         ></v-textarea>
 
-        <v-text-field
-          name="video_file"
-          label="Select video"
-          @change.native="selectVideo($event)"
-          type="file" outline persistent-hint
-          hint="Max video size is 15mb"
-        ></v-text-field>
+        <v-file-input show-size counter
+          outlined append-icon="mdi-video" prepend-icon=""
+          label="Select video" chips accept="video/mp4"
+          v-model="video_file">
+        </v-file-input>
       </v-card-text>
 
       <v-card-text class="" v-if="form.post_type == 'text'">
         
-        <v-card color="" flat tile class="" min-height="200px">
-          <v-textarea auto-grow color="secondary"
+        <v-card color="" flat tile class="mt-6" min-height="200px">
+          <v-textarea auto-grow color="primary"
             label="Type your message" v-model="form.message"
-            name="broadcast" outline
+            name="broadcast" outlined
           ></v-textarea>
+
+          <v-select
+            :items="getMyEnrolled"
+            v-model="audience"
+            item-value="electionId"
+            item-text="title"
+            label="Select your audience"
+            outlined dense
+          ></v-select>
         </v-card>
             
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="success" :disabled="p_msg_rules" :loading="loading" @click="newPost">Publish</v-btn>
+
+        <v-btn color="success" 
+          :disabled="p_msg_rules" 
+          :loading="loading" 
+          @click="create">
+          Publish
+        </v-btn>
+
       </v-card-actions>
     </v-card>
 </template>
@@ -115,6 +125,7 @@ export default {
     file_modal: false,
     video_file: null,
     e14: 1,
+    audience: '',
     blob_urls: [],
     selected_files: [],
     form: {
@@ -133,19 +144,19 @@ export default {
   computed: {
     p_msg_rules(){
       if(this.form.post_type == 'text'){
-        return !this.form.message.trim()
+        return !this.form.message || !this.audience
       }
       if(this.form.post_type == 'image'){
-        return this.selected_files.length == 0
+        return this.selected_files.length == 0 || !this.audience
       }
-      if(this.form.post_type == 'video'){
-        return !this.video_file
-      }
+      // if(this.form.post_type == 'video'){
+      //   return !this.video_file || !this.audience
+      // }
     },
     
     ...mapGetters([
       'getUser',
-      'getUserInfo'
+      'getMyEnrolled'
     ]),
     ...mapState([
       'isSuperUser',
@@ -167,95 +178,86 @@ export default {
 
       }
     },
-    async newPost(){
-      // Create a new posts
-      try{
+    create(){
 
-        this.loading = true
-        let options = {
-          files: this.form.post_type == 'video' ? [this.video_file] : this.selected_files,
-          path: `posts/${this.curRoom.electionId}/${this.form.post_type}s`
-        }
-        // console.log(options)
+      this.loading = true
+      console.log(this.selected_files)
 
-        let uploaded = []
+      let options = {
+        files: this.form.post_type == 'video' ? [this.video_file] : this.selected_files,
+        path: `posts/${this.audience}/${this.form.post_type}s`
+      }
 
-        if(this.form.post_type == 'image' || this.form.post_type == 'video'){
+      let uploaded = []
 
-          uploaded = await this.$helpers.upload(options)
-        }
-        
-        
+      if(this.form.post_type == 'image' || this.form.post_type == 'video'){
+        if(this.selected_files.length > 0){
 
-        let postRef = db.collection('posts').doc()
-        let userRef = db.collection('moreUserInfo').doc(this.getUser.uid)
-        let {name, photoURL = false, email, sch=false, fac=false, dept=false, uid, is_student} = this.getUserInfo
-        let onr = {
-          name,
-          photoURL,
-          email,
-          sch,
-          fac,
-          dept,
-          uid,
-          is_student
-        }
-
-        let post = {
-          docId: postRef.id,
-          body: this.$sanitize(this.form.message),
-          imgs: this.form.post_type == 'image' ? uploaded : false,
-          videoSrc: this.form.post_type == 'video' ? uploaded[0] : false,
-          elecRef: this.curRoom.electionId,
-          tstamp: firebase.firestore.FieldValue.serverTimestamp(),
-          type: this.type,
-          post_type: this.form.post_type,
-          reactions: 0,
-          comments: 0,
-          dept: this.user.dept,
-          fac: this.user.fac,
-          sch: this.user.sch,
-          onr: onr,
-          weight: 0,
-        }
-
-        // Get a new write batch
-        let batch = db.batch()
-
-        batch.set(postRef, post)
-        // batch.update(userRef, {
-        //   posts: firebase.firestore.FieldValue.increment(1)
-        // })
-        
-        batch.commit().then(()=>{
-          this.loading = false
-          
-          this.$eventBus.$emit('HideNewPostDialog',true)
-          this.$eventBus.$emit('PushNewPost',post)
-          
-          this.e14 = 1;
-          this.form = {message: '', post_type: 'text'}
-          
-          this.$eventBus.$emit('ShowSnackbar',{
-            show:true,
-            color:'success',
-            message:'Post was created successfully'
+          this.$helpers.uploadMedia(options).then(async uploaded => {
+            console.log(await uploaded)
+            this.createPost(await uploaded)
           })
-        }).catch(err => {
-          this.loading = false
-        })
-        
-        
-      }catch(err){
-        // console.log(err)
-        this.loading = false
-        this.$eventBus.$emit('Snackbar',{
-          show:true,
-          color:'error',
-          message:'Sorry, something went wrong, try again'
-        })
+        }
+        else {
+
+          this.createPost()
+        }
       }
     },
+    async createPost(uploaded){
+      
+      this.loading = true
+      let postId = uuidv4()
+
+      let user = this.$gun.get(this.getUser.username)
+      let postRef = this.$gun.get('elections')
+        .get(this.audience)
+        .get('posts')
+        .get(postId)
+
+      let body = this.$sanitize(this.form.message)
+
+      let post_data = {
+        docId: postId,
+        body: body,
+        elecRef: this.curRoom.electionId,
+        tstamp: Date.now(),
+        type: this.type,
+        img: false,
+        videoSrc: false,
+        post_type: this.form.post_type,
+        dept: this.getUser.dept,
+        fac: this.getUser.fac,
+        sch: this.getUser.sch,
+        weight: 0,
+      }
+
+      let post = postRef
+        .put(post_data)
+        .get('author')
+        .put(user)
+
+      if(uploaded && uploaded.length > 0){
+        
+        // add images and videos
+        uploaded.forEach(u => {
+          if(this.form.post_type == 'image'){
+            postRef.get('imgs').set(u)
+          }
+        })
+  
+        if(this.form.post_type == 'video'){
+          postRef.get('videoSrc').put(uploaded[0])
+        }
+      }
+      
+
+      // save for user
+      user.get('posts').set(postRef)
+
+      this.loading = false
+      this.$eventBus.$emit('HideNewPostDialog',true)
+    }
   },
   mounted(){
     this.$eventBus.$on('Selected_Files', data=>{
@@ -265,5 +267,6 @@ export default {
   }
 }
 import {mapGetters, mapState} from 'vuex'
-import {firebase, db, database} from '@/plugins/firebase'
+const uuidv4 = require('uuid/v4');
+// import {firebase, db, database} from '@/plugins/firebase'
 </script>

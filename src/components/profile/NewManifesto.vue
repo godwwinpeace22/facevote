@@ -7,22 +7,36 @@
 
 		<v-card flat tile>
 			<v-card-text>
-				<v-text-field	label="Manifesto title" class="mb-3" v-model="manifesto_title" color="secondary" outline>
+				<v-text-field	label="Manifesto title" 
+					class="mb-3" 
+					v-model.trim="manifesto_title" 
+					color="primary" outline>
 
 				</v-text-field>
 
-				<template v-if="manifesto_type == 'text'">
-					<quill v-model="manifesto_text" :config="config" output="html"></quill>
-					<small>Note: You can create only one manifesto per election</small>
-        </template>
+				<quill v-model.trim="manifesto_text" :config="config" output="html"></quill>
+				<small>Note: You can create only one manifesto per election</small>
+        
 
 			</v-card-text>
+
 			<v-card-actions>
+
 				<v-spacer></v-spacer>
-				<v-btn color="grey" depressed dark @click="$helpers.trigFileSelector" v-if="imgSrc" :disabled="loading">
-					Change photo</v-btn>
-				<v-btn color="secondary" @click="submit" :disabled="disabled" :loading="loading">Submit</v-btn>
+
+				<!-- <v-btn color="grey" depressed dark 
+					@click="$helpers.trigFileSelector" 
+					v-if="imgSrc" :disabled="loading">
+					Change photo</v-btn> -->
+
+				<v-btn color="primary" 
+					@click="submit" 
+					:disabled="disabled" 
+					:loading="loading">
+					Create
+				</v-btn>
 			</v-card-actions>
+
 		</v-card>
 	</div>
 </template>
@@ -33,6 +47,7 @@ export default {
 			loading: false,
 			snackbar: {},
 			color: 'red',
+			manifestos: [],
 			config: { // config for rich text editor
 				placeholder: 'Compose an epic...',
 				modules: {
@@ -58,10 +73,6 @@ export default {
 			imgSrc: null,
 			selected_file: null,
 			group: '',
-			cloudinary:{
-				cloud_name:'unplugged',
-				upload_preset:'pe4iolek'
-			},
 		}
 	},
 	props:['mycontests'],
@@ -70,14 +81,11 @@ export default {
 			let doc = document.getElementById('manifesto_text')
 			let text = doc ? doc.innerText.trim() : null
 			if(this.manifesto_type == 'text'){
-				return !this.manifesto_text.trim() || !this.manifesto_title.trim()
+				return !this.manifesto_text || !this.manifesto_title
 			}
 		},
 		...mapGetters([
-      'isAuthenticated',
       'getUser',
-      'getUserInfo',
-      'getFeedFilter',
       'getMyEnrolled'
 		]),
 		...mapState([
@@ -89,7 +97,7 @@ export default {
   
 		async submit(){
 			this.loading = true
-			// console.log(this.manifesto_text)
+			
 			if(this.manifesto_type == 'photo'){
 				let image = await this.$helpers.uploadImage(this.selected_file, this.cloudinary)
 				this.createManifesto(image[0])
@@ -99,57 +107,110 @@ export default {
 			}
 		},
 		createManifesto(image){
-			let docRef = db.collection('manifestos').doc(`${this.getUser.uid}-${this.curRoom.electionId}-man`)
-			let {name, photoURL = false, email, sch=false, fac=false, dept=false, uid, is_student} = this.getUserInfo
-			let onr = {
-				name,
-				photoURL,
-				email,
-				sch,
-				fac,
-				dept,
-				uid,
-				is_student
-			}
 
-			docRef.set({
-				onr: onr,
-				tstamp: firebase.firestore.FieldValue.serverTimestamp(),
-				elecRef: this.curRoom.electionId,
-				body: this.$sanitize(this.manifesto_text.trim()),
-				title: this.$sanitize(this.manifesto_title)
+			try{
+			
+				this.loading = true;
+
+				let data = {
+					date_created: Date.now(),
+					elecRef: this.curRoom.electionId,
+					body: this.$sanitize(this.manifesto_text),
+					title: this.$sanitize(this.manifesto_title)
+					
+				}
+
+				let userRef = this.$gun.get(this.getUser.username)
+				let manifestoId = this.$uuidv4()
 				
-			}).then(done=>{
+console.log(this.manifestos)
+
+				let has_m_for_election = this.manifestos
+					.find(m => m.elecRef == this.curRoom.electionId)
+
+				if(has_m_for_election){
+
+					this.$eventBus.$emit('Snackbar', {
+						show: true,
+						message: 'You already have a manifesto for this election',
+						color:'success',
+					})
+				}
+
+				else {
+
+					// create a manifesto
+					let electionRef = this.$gun.get('elections')
+						.get(this.curRoom.electionId)
+	
+					let manifesto = userRef.get('manifestos')
+						.get(manifestoId)
+						.put(data)
+	
+					manifesto.get('author')
+						.put(userRef)
+					manifesto.get('electionRef')
+						.put(electionRef)
+					electionRef
+						.get('manifestos')
+						.set(manifesto)
+					this.$gun.get('manifestos')
+							.get(manifestoId)
+							.put(manifesto)
+							
+							
+					this.loading = false
+					this.$eventBus.$emit('CloseNewManifestoDialog')
+	
+					this.$eventBus.$emit('Snackbar', {
+						show: true,color:'success',
+						message: 'Manifesto created successfully'
+					})
+				}
+			
+			}
+			catch(err){
 				this.loading = false
-				this.$eventBus.$emit('CloseNewManifestoDialog')
-				this.$eventBus.$emit('Snackbar', {
-					show: true,color:'success',
-					message: 'Manifesto created successfully'
-				})
-			}).catch(err=>{
-				this.loading = false
-				
+				console.log(err)
+
 				this.$eventBus.$emit('Snackbar',{
 					show: true, color:'error',
 					message: 'Something went wrong, try again'
 				})
-			})
+			}
+		},
+		getManifestos(){
+			let userRef = this.$gun.get(this.getUser.username)
+
+			userRef
+				.get('manifestos')
+				.map()
+				.on((m,k) => {
+
+					
+					console.log({m,k})
+					
+					m.author = this.user
+					m.key = k
+					this.manifestos.push(m)
+				})
 		}
 	},
 	mounted(){
+		this.getManifestos()
 		this.$eventBus.$on('Selected_Files', data=>{
 			this.selected_file = data.selected_files
 			this.imgSrc = data.imgSrc[0]
 		})
-		// console.log(this.manifesto_text)
 	}
 }
 import api from '@/services/api'
 import {mapGetters, mapState} from 'vuex'
 import {firebase, db, database} from '@/plugins/firebase'
+import '@/assets/css/quill.snow.css'
 </script>
 <style lang="scss">
-	@import url(https://cdn.quilljs.com/1.2.6/quill.snow.css);
+	
 	#manifesto_text div{
 		margin-top:5px;
 	}

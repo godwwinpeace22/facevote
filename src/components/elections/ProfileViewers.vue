@@ -1,31 +1,31 @@
 <template>
   <div>
-    <v-container grid-list-xs :px-2="$vuetify.breakpoint.xsOnly">
-      <v-layout row wrap>
-        <v-flex xs12>
-          <v-card height="" class="round_top" style="border-top: 4px solid gold">
-            <v-toolbar class="white" flat card dense>
+    <v-container px-2>
+      <v-row >
+        <v-col cols="12">
+          <v-card outlined shaped style="border-top: 4px solid gold">
+            <v-toolbar class="white" flat dense>
               <v-subheader>Who Viewed Your Profile</v-subheader>
               <v-spacer></v-spacer>
               <v-icon color="#FFC107" class="pr-2">mdi-flash-circle</v-icon>
               <span class="font-weight-bold">Premium</span>
             </v-toolbar>
 
-            <v-container grid-list-md>
-              <v-layout row wrap>
-                <v-flex xs12 sm4>
+            <v-container>
+              <v-row row wrap>
+                <v-col cols="12" sm="4">
                   <v-card flat>
                     <pie-chart :chart-data="chartdata" :chartOptions="chartOptions"></pie-chart>
                   </v-card>
-                </v-flex>
-                <v-flex xs12 sm4>
+                </v-col>
+                <v-col cols="12" sm="4">
                   <v-card flat>
                     <bar-chart :chart-data="chartdata2" :options="chartOptions2"></bar-chart>
                   </v-card>
-                </v-flex>
-                <v-flex xs12 sm4>
+                </v-col>
+                <v-col cols="12" sm="4">
                   <v-card flat class="round_top" style="border: 1px solid #eee;">
-                    <v-toolbar flat card dense light color="grey lighten-3">
+                    <v-toolbar flat dense light color="grey lighten-3">
                       <v-subheader class="pl-0 font-weight-bold black--text">Your Profile Viewers</v-subheader>
                       
                     </v-toolbar>
@@ -33,33 +33,32 @@
                       <v-list two-line dense>
                         <v-subheader v-if="profileViews.length == 0">0 profile views</v-subheader>
                         <template v-for="(item, index) in profileViews">
-                          <v-list-tile avatar :key="index" @click="$eventBus.$emit('ViewProfile', item.onr)">
-                            <v-list-tile-avatar :color="$helpers.colorMinder(item.onr.name.charAt(0))">
+                          <v-list-item :key="index" @click="$eventBus.$emit('ViewProfile', item.onr)">
+                            <v-list-item-avatar :color="$helpers.colorMinder(item.onr.name.charAt(0))">
                               <img :src="item.onr.photoURL" v-if="item.onr.photoURL">
                               <span v-else class="white--text">{{item.onr.name.charAt(0)}}</span>
-                            </v-list-tile-avatar>
-                            <v-list-tile-content>
-                              <v-list-tile-title >
+                            </v-list-item-avatar>
+                            <v-list-item-content>
+                              <v-list-item-title >
                                 {{$helpers.capitalize(item.onr.name)}}
-                              </v-list-tile-title>
-                              <v-list-tile-sub-title>
+                              </v-list-item-title>
+                              <v-list-item-subtitle>
                                 {{item.onr.dept}}
-                              </v-list-tile-sub-title>
+                              </v-list-item-subtitle>
                               
-                            </v-list-tile-content>
-                          </v-list-tile>
+                            </v-list-item-content>
+                          </v-list-item>
                         </template>
                       </v-list>
                     </v-card-text>
                   </v-card>
-                </v-flex>
-              </v-layout>
-              <v-divider></v-divider>
+                </v-col>
+              </v-row>
               
             </v-container>
           </v-card>
-        </v-flex>
-      </v-layout>
+        </v-col>
+      </v-row>
     </v-container>
   </div>
 </template>
@@ -128,6 +127,7 @@ export default {
     },
     async getProfileViewers(){
       // get profile views by voters in curRoom
+      // this.$gun.get()
       db.collection('profile_views').where('viewee', '==', this.getUser.uid)
       .get().then(querySnapshot =>{
         let views = []
@@ -199,7 +199,7 @@ export default {
       }
     }
   },
-  created(){
+  mounted(){
     this.getProfileViewers()
   },
   components: {
@@ -210,5 +210,4 @@ export default {
 import PieChart from '@/charts/piechart'
 import BarChart from '@/charts/barchart'
 import { mapGetters, mapState } from 'vuex';
-import {firebase, db, database} from '@/plugins/firebase'
 </script>

@@ -1,92 +1,92 @@
 <template>
   <div>
     <v-container grid-list-md :px-2="$vuetify.breakpoint.xsOnly">
-      <v-layout row wrap>
-        <v-flex xs12>
+      <v-row row wrap>
+        <v-col cols="12">
           <v-card height="" class="round_top" style="border-top: 4px solid gold">
-            <v-toolbar class="white" flat card dense>
+            <v-toolbar class="white" flat dense>
               <v-subheader>Contestants Insight</v-subheader>
               <v-spacer></v-spacer>
               <v-icon color="#FFC107" class="pr-2">mdi-flash-circle</v-icon>
               <span class="font-weight-bold"> Premium</span>
             </v-toolbar>
             <v-container grid-list-lg pt-3 v-if="curRoom">
-              <v-layout row wrap>
-                <v-flex xs12 sm4>
+              <v-row row wrap>
+                <v-col cols="12" sm="4">
                   <v-card flat>
                     <bar-chart v-if="spyReady" :chart-data="chartdata" :options="chartOptions2"></bar-chart>
                   </v-card>
-                </v-flex>
+                </v-col>
 
                 <!-- YOUR OPPONENTS -->
-                <v-flex xs12 sm4 d-flex>
+                <v-col cols="12" sm="4">
                   <v-card flat class="round_top" style="border: 1px solid #eee;">
-                    <v-toolbar flat card dense light color="grey lighten-3">
+                    <v-toolbar flat dense light color="grey lighten-3">
                       <v-subheader class="pl-0 font-weight-bold black--text">Your Opponents</v-subheader>
                     </v-toolbar>
                     <v-card-text class="pa-0" style="height: 300px; overflow:auto;">
                       <v-list two-line dense>
                         <v-subheader v-if="myOpponents.length == 0">No opponents</v-subheader>
                         <template v-for="(item, index) in myOpponents">
-                          <v-list-tile avatar :key="index + 'opponent'" @click="$eventBus.$emit('ViewProfile', item)">
-                            <v-list-tile-avatar :color="$helpers.colorMinder(item.name.charAt(0))">
+                          <v-list-item :key="index + 'opponent'" @click="$eventBus.$emit('ViewProfile', item)">
+                            <v-list-item-avatar :color="$helpers.colorMinder(item.name.charAt(0))">
                               <img :src="item.photoURL" v-if="item.photoURL">
                               <span v-else class="white--text">{{item.name.charAt(0)}}</span>
-                            </v-list-tile-avatar>
-                            <v-list-tile-content>
-                              <v-list-tile-title class="text-capitalize">
+                            </v-list-item-avatar>
+                            <v-list-item-content>
+                              <v-list-item-title class="text-capitalize">
                                 {{item.name}}
-                              </v-list-tile-title>
-                              <v-list-tile-sub-title >
+                              </v-list-item-title>
+                              <v-list-item-subtitle >
                                 <span class="online_badge" :class="item.online ? 'success' : 'orange'"></span>
                                 {{item.online ? 'online' : 'offline'}}
-                              </v-list-tile-sub-title>
-                            </v-list-tile-content>
-                          </v-list-tile>
+                              </v-list-item-subtitle>
+                            </v-list-item-content>
+                          </v-list-item>
                         </template>
                       </v-list>
                     </v-card-text>
                     
                   </v-card>
-                </v-flex>
+                </v-col>
 
                 <!-- OTHER CONTESTANTS -->
-                <v-flex xs12 sm4 d-flex mb-5>
+                <v-col cols="12" sm="4" mb-12>
                   <v-card height="300" class="round_top" flat style="border: 1px solid #eee;">
-                    <v-toolbar flat card dense light color="grey lighten-3">
+                    <v-toolbar flat dense light color="grey lighten-3">
                       <v-subheader class="pl-0 font-weight-bold black--text">Other Contestants</v-subheader>
                     </v-toolbar>
                     <v-card-text class="pa-0" style="height: 300px; overflow:auto;">
                       <v-list two-line dense>
                         <v-subheader v-if="otherContestants.length == 0">No contestants</v-subheader>
                         <template v-for="(item, index) in otherContestants" v-else>
-                          <v-list-tile avatar :key="index" @click="$eventBus.$emit('ViewProfile', item)">
-                            <v-list-tile-avatar :color="$helpers.colorMinder(item.name.charAt(0))">
+                          <v-list-item :key="index" @click="$eventBus.$emit('ViewProfile', item)">
+                            <v-list-item-avatar :color="$helpers.colorMinder(item.name.charAt(0))">
                               <img :src="item.photoURL" v-if="item.photoURL">
                               <span v-else class="white--text">{{item.name.charAt(0)}}</span>
-                            </v-list-tile-avatar>
-                            <v-list-tile-content>
-                              <v-list-tile-title class="text-capitalize">
+                            </v-list-item-avatar>
+                            <v-list-item-content>
+                              <v-list-item-title class="text-capitalize">
                                 {{item.name}}
                                 <span class="online_badge" :class="item.online ? 'success' : 'orange'"></span>
-                              </v-list-tile-title>
-                              <v-list-tile-sub-title>{{item.role}}</v-list-tile-sub-title>
-                            </v-list-tile-content>
-                          </v-list-tile>
+                              </v-list-item-title>
+                              <v-list-item-subtitle>{{item.role}}</v-list-item-subtitle>
+                            </v-list-item-content>
+                          </v-list-item>
                         </template>
                       </v-list>
                     </v-card-text>
                   </v-card>
-                </v-flex>
-              </v-layout>
+                </v-col>
+              </v-row>
 
-              <v-layout row wrap>
+              <v-row row wrap>
                 
-              </v-layout>
+              </v-row>
             </v-container>
           </v-card>
-        </v-flex>
-      </v-layout>
+        </v-col>
+      </v-row>
     </v-container>
   </div>
 </template>

@@ -11,12 +11,12 @@
       </v-loading>
 
       <v-container grid-list-xs v-else>
-        <v-layout row wrap>
-          <v-flex xs12 md8>
+        <v-row row wrap>
+          <v-col cols="12" md="8">
             <post-template :posts="[post]" :expanded="[0]" view_type="single_post"/>
             
-          </v-flex>
-        </v-layout>
+          </v-col>
+        </v-row>
       </v-container>
     </transition>
 
@@ -67,6 +67,6 @@ export default {
 
 import Navigation from '@/components/Navigation'
 import PostTemplate from '@/components/feed/PostTemplate'
-import { db } from '@/plugins/firebase'
+// import { db } from '@/plugins/firebase'
 import { mapState, mapGetters } from 'vuex'
 </script>

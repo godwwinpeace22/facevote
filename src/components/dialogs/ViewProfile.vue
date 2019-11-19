@@ -101,7 +101,6 @@ export default {
   computed:{
     ...mapGetters([
       'getUser',
-      'getUserInfo'
     ]),
     ...mapState([
       'isSuperUser',
@@ -141,7 +140,7 @@ export default {
 }
 
 import {mapGetters, mapState} from 'vuex'
-import {firebase, db, database} from '@/plugins/firebase'
+// import {firebase, db, database} from '@/plugins/firebase'
 </script>
 
 <style lang="scss" scoped>

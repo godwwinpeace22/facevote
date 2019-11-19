@@ -2,7 +2,7 @@
 	<div>
 		<v-snackbar	v-model="snackbar.show">
 			{{snackbar.message}}
-			<v-btn flat :color="snackbar.color" @click.native="snackbar.show = false">Close</v-btn>
+			<v-btn text :color="snackbar.color" @click.native="snackbar.show = false">Close</v-btn>
 		</v-snackbar>
 
 		<v-card flat tile>
@@ -20,11 +20,16 @@
 					></v-radio>
 				</v-radio-group>
 				<template v-if="campaign_type == 'text'">
-					<v-card class="white--text title pa-3" id="campaign_text" flat :color="color" style="width:100%;min-height:200px;border:1px solid #3ee;" contenteditable>
+					<v-card class="white--text title pa-3" 
+						id="campaign_text" 
+						flat :color="color" 
+						style="width:100%;min-height:200px;border:1px solid #3ee;" 
+						contenteditable>
 						
 							Type your message
 						
 					</v-card>
+
 					<v-radio-group v-model="color" row>
 						<v-radio class="mr-0"
 							color="red"
@@ -120,10 +125,7 @@ export default {
 			}
 		},
 		...mapGetters([
-      'isAuthenticated',
       'getUser',
-      'getUserInfo',
-      'getFeedFilter',
       'getMyEnrolled'
 		]),
 		...mapState([
@@ -142,52 +144,50 @@ export default {
 			}
 		},
 		postCampaign(image){
-			let docRef = db.collection('campaign_posts').doc()
+
+			let docId = this.$uuidv4()
+			let userRef = this.$gun.get(this.getUser.username)
 			let doc = document.getElementById('campaign_text')
+
 			let campaign_text = doc ? doc.innerText : false
 			let twenty4hrs = 24 * 60 * 60 * 1000
-			// console.log(campaign_text)
 
-			let {name, photoURL = false,username, email, sch=false, fac=false, dept=false, uid, is_student} = this.getUserInfo
+			let body = this.$sanitize(campaign_text)
+			let imgSrc = image ? image : false
+			let date_key = (new Date()).toISOString().substr(0,10)
+			
+
 			let data = {
-				docId: docRef.id,
-				imgSrc: image ? image : false,
+				docId: docId,
+				imgSrc: imgSrc,
 				img_caption: this.img_caption,
-				body: campaign_text,
+				body: body,
+				author: this.getUser.username,
 				type: this.campaign_type,
 				color: this.color,
 				elecRef: this.curRoom.electionId,
-				onr: {
-            name,
-            photoURL,
-            email,
-            sch,
-            fac,
-            dept,
-						uid,
-						is_student,
-						username
-          },
-				tstamp: firebase.firestore.FieldValue.serverTimestamp(),
+				date_created: Date.now(),
 				expires_in: Date.now() + twenty4hrs
 			}
-			docRef.set(data).then(done=>{
+
+			let campaign = userRef.get('campaigns')
+				.get(docId).put(data)
+
+			this.$gun.get('campaigns')
+				.get(this.curRoom.electionId)
+				.get(date_key)
+				.get(docId) // add a key to enable deletion
+				.put(campaign)
+	
+
+			
 				this.loading = false
 				this.$eventBus.$emit('HideNewCampaignDialog')
-
-				this.$eventBus.$emit('PushNewCampaign', data)
 				this.$eventBus.$emit('Snackbar', {
 					show: true, color:'dark',
 					message: 'Campaign added'
 				})
-			}).catch(err=>{
-				this.loading = false
-				
-				this.$eventBus.$emit('Snackbar', {
-					show: true,color:'error',
-					message: 'Something went wrong, try again'
-				})
-			})
+			
 		}
 	},
 	mounted(){

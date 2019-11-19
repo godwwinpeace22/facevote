@@ -1,56 +1,62 @@
 <template>
   <div>
     <v-container grid-list-xs pa-0>
-      <v-layout row wrap>
-        <v-flex xs12 sm6 >
+      <v-row row wrap>
+        <v-col cols="12" sm="6" >
           <v-card flat>
             <v-subheader>Your subscriptions</v-subheader>
             <v-subheader v-if="!subscription">No active subscriptions</v-subheader>
             <v-card-text class="pt-0 " v-if="subscription && subscription.plan">
-              <v-layout row wrap>
-                <v-flex >
+              <v-row row wrap>
+                <v-col >
                   <span class="pr-5 font-weight-bold">Plan Name: </span>
-                </v-flex>
-                <v-flex class="text-xs-left">
+                </v-col>
+                <v-col class="text-xs-left">
                   <span>{{subscription.plan.name}}</span>
-                </v-flex>
-              </v-layout>
-              <v-layout row wrap>
-                <v-flex >
+                </v-col>
+              </v-row>
+              <v-row row wrap>
+                <v-col >
                   <span class="pr-5 font-weight-bold">Amount: </span>
-                </v-flex>
-                <v-flex class="text-xs-left">
+                </v-col>
+                <v-col class="text-xs-left">
                   <span>{{subscription.plan.amount/100}}</span>
-                </v-flex>
-              </v-layout>
-              <v-layout row wrap>
-                <v-flex >
+                </v-col>
+              </v-row>
+              <v-row row wrap>
+                <v-col >
                   <span class="pr-5 font-weight-bold">Interval: </span>
-                </v-flex>
-                <v-flex class="text-xs-left">
+                </v-col>
+                <v-col class="text-xs-left">
                   <span>{{subscription.plan.interval}}</span>
-                </v-flex>
-              </v-layout>
-              <v-layout row wrap>
-                <v-flex >
+                </v-col>
+              </v-row>
+              <v-row row wrap>
+                <v-col >
                   <span class="pr-5 font-weight-bold">Paid At: </span>
-                </v-flex>
-                <v-flex class="text-xs-center">
+                </v-col>
+                <v-col class="text-xs-center">
                   <span>{{payment_date}}</span>
-                </v-flex>
-              </v-layout>
-              <v-layout row wrap>
-                <v-flex >
+                </v-col>
+              </v-row>
+              <v-row row wrap>
+                <v-col >
                   <span class="pr-5 font-weight-bold">Next Payment: </span>
-                </v-flex>
-                <v-flex class="text-xs-center">
+                </v-col>
+                <v-col class="text-xs-center">
                   <span>{{next_payment_date}}</span>
-                </v-flex>
-              </v-layout>
+                </v-col>
+              </v-row>
             </v-card-text>
             <v-card-actions>
               
-              <v-btn color="secondary" dark @click="dialog = true" v-if="subscription && subscription.plan" flat class="text-normal pl-2">Cancel subscription</v-btn>
+              <v-btn color="secondary" dark 
+                @click="dialog = true" 
+                v-if="subscription && 
+                subscription.plan" text 
+                class="text-normal pl-2">
+                  Cancel subscription
+              </v-btn>
             </v-card-actions>
           </v-card>
 
@@ -63,14 +69,14 @@
               </v-card-text>
               <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn color="primary" flat @click.native="dialog = false" :disabled="cancelling">No</v-btn>
-                <v-btn color="primary" flat @click.native="cancelSubscription" :loading="cancelling">Continue</v-btn>
+                <v-btn color="primary" text @click.native="dialog = false" :disabled="cancelling">No</v-btn>
+                <v-btn color="primary" text @click.native="cancelSubscription" :loading="cancelling">Continue</v-btn>
               </v-card-actions>
             </v-card>
           </v-dialog>
 
-        </v-flex>
-      </v-layout>
+        </v-col>
+      </v-row>
     </v-container>
   </div>
 </template>
@@ -91,7 +97,6 @@ export default {
   computed: {
     ...mapGetters([
       'getUser',
-      'getUserInfo'
     ]),
     ...mapState([
       'isSuperUser',

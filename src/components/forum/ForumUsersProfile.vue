@@ -12,8 +12,8 @@
         <v-icon>mdi-chevron-left</v-icon>
       </v-btn>
     </v-toolbar>
-    <v-layout>
-      <v-flex xs12 px-2 v-if="show_profile">
+    <v-row>
+      <v-row cols="12" px-2 v-if="show_profile">
         <v-card flat>
           <v-img :alt="`${user.name}'s profile_img`" 
             :src="user.photoURL ||  require('@/assets/avatar.png')" 
@@ -59,8 +59,8 @@
           </v-container>
           <v-divider></v-divider>
         </v-card>
-      </v-flex>
-    </v-layout>
+      </v-row>
+    </v-row>
   </div>
 </template>
 <script>

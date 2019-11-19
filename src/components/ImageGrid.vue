@@ -3,7 +3,7 @@
     <v-container grid-list-xs class="px-0" v-if="imgs.length > 0">
       <v-layout row wrap>
         <v-flex :class="{xs6: imgs.length == 2, xs12: imgs.length == 1 || imgs.length > 2}">
-          <v-card flat dark :height="imgHeight">
+          <v-card flat tile dark :height="imgHeight">
             <v-img :src="imgs[0]" :lazy-src="`https://picsum.photos/10/6?image=${5 + 10}`" 
               alt="" class="grey lighten-2 magnify" max-height="300" aspect-ratio="2" height="100%" width="100%"
               @click="carouselDialog(imgs,0)">
@@ -19,7 +19,7 @@
         
         <v-flex v-for="(image,i) in imgs.slice(1,4)" :key="i" style="position: relative"
           :class="{'xs6': imgs.length < 4,'xs4': imgs.length >= 4}">
-          <v-card flat dark max-height="400px" :height="imgHeight2">
+          <v-card flat tile dark max-height="400px" :height="imgHeight2">
             <v-img :src="image" :lazy-src="`https://picsum.photos/10/6?image=${i * 5 + 10}`" 
               alt="" class="grey lighten-2 magnify" height="100%" width="100%"
               @click="carouselDialog(imgs, i+1)">
@@ -77,7 +77,7 @@ export default {
   }
 }
 </script>
-<style lang="scss" scopped>
+<style lang="scss" scoped>
   .overlay {
     height: 98%;
     width: 98%;

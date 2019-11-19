@@ -1,14 +1,14 @@
 <template>
 	<div>
 		<v-container grid-list-sm class="white">
-			<v-layout row wrap>
+			<v-row row wrap>
 				<v-subheader v-show="allMedia.length == 0">No items</v-subheader>
-				<v-flex xs6 sm4 md2 v-for="(image,i) in allMedia" :key="i">
+				<v-col cols="6" sm="4" md="2" v-for="(image,i) in allMedia" :key="i">
 					<v-card height="150" class="mb-1 linkify" flat>
 						<v-img :src="image" height="150" @click="carouselDialog(allMedia,i)"></v-img>
 					</v-card>
-				</v-flex>
-			</v-layout>
+				</v-col>
+			</v-row>
 		</v-container>
 	</div>
 </template>

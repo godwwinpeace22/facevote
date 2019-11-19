@@ -222,7 +222,6 @@ export default {
   computed: {
     ...mapGetters([
       'getUser',
-      'getUserInfo',
     ]),
     ...mapState([
       'curRoom',

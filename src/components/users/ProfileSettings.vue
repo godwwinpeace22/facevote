@@ -1,178 +1,173 @@
 <template>
-  <v-card tile color="grey lighten-3">
-    <v-toolbar card dark color="teal">
-      <v-btn icon dark class="hidden-md-and-up"
-        @click.native="$eventBus.$emit('hide_profile_settings', {})">
-        <v-icon>chevron_left</v-icon>
-      </v-btn>
-      <v-toolbar-title>Profile Settings</v-toolbar-title>
-      <v-spacer></v-spacer>
-      
-      <v-btn dark 
-        :small="$vuetify.breakpoint.xs" 
-        class="hidden-sm-and-down" 
-        tile color="grey lighten-1" 
-        :disabled="loading" outline 
-        @click.native="$eventBus.$emit('hide_profile_settings', {})"
-      >
-        Close
-      </v-btn>
-      <v-btn depressed 
-        color="orange" 
-        @click.native="updateProfile" 
-        :disabled="disabled_save || loading || uploading" 
-        :loading="loading">
-        Save
-      </v-btn>
-    </v-toolbar>
-
-    <v-snackbar v-model="snackbar.show" dark :timeout="5000" 
-      :color="snackbar.color" :vertical="$vuetify.breakpoint.xsOnly" top right>
-      {{snackbar.message}}
-      <v-btn dark flat :color="snackbar.color == 'error' ? 'black' : 'orange'" @click="snackbar.show = false"> Close</v-btn>
-    </v-snackbar>
+  <div>
+    <navigation>
+      <span slot="title">Profile Settings</span>
+    </navigation>
     
-    <v-card-text class="pa-0">
-      <v-layout row wrap>
+    <v-container>
+      
+      <v-row>
+        <v-col cols="12" sm="8" class="pt-0">
 
-        <v-flex sm4 xs12 order-sm2>
-          <v-container :pa-0="$vuetify.breakpoint.xsOnly">
-            <v-layout row justify-center>
-              <v-flex xs12>
+          <v-row >
+            <v-col cols="12" sm="10">
+              <v-card outlined>
+                <v-card-title> Basic Info</v-card-title>
+                <v-card-text class="mt-4">
+                  <v-text-field class="mb-4 text-capitalize" required outlined dense v-model.trim="form.name" 
+                    color="primary" autocomplete="name" :placeholder="getUser.name" 
+                    label="Your Name">
+                  </v-text-field>
+
+                  <v-text-field required outlined dense v-model.trim="form.email"
+                    color="primary" autocomplete="email" :placeholder="getUser.email" disabled
+                    label="Your Email">
+                  </v-text-field>
+
+                  <v-text-field required outlined dense v-model.trim="form.username" 
+                    color="primary" autocomplete="username" :placeholder="getUser.username"
+                    label="Your Username" >
+                  </v-text-field>
+
+                  <v-text-field required outlined dense v-model.trim="form.phone"
+                    color="primary" autocomplete="tel" :placeholder="getUser.phone || ''" 
+                    label="Your Phone number" hint="e.g +2347099998888">
+                  </v-text-field>
+
+                  <v-textarea
+                    label="About You"
+                    name="about" outlined :placeholder="getUser.about"
+                    rows="9" v-model.trim="form.about"
+                  ></v-textarea>
+                </v-card-text>
                 
-                <v-card tile :flat="$vuetify.breakpoint.xsOnly" style="min-height: 300px;">
-                  <v-hover :class="{profile_card: selected_file}">
-                    <v-container slot-scope="{ hover }">
-                      <v-img :src="blob_url || getUser.photoURL || `https://ui-avatars.com/api/?name=${getUser.displayName}&size=300`"
-                        max-height="250" @click="openFileSelect">
-                        <v-expand-transition>
-                          <div v-if="hover" class=" transition-fast-in-fast-out teal darken-2 v-card--reveal display-5 white--text"
-                            style="height: 100%;">
-                            <v-icon x-large class="pt-5 text-xs-center d-block">mdi-camera</v-icon>
-                            <h3 class="mt-0 text-xs-center d-block">Change profile photo</h3>
-                          </div>
-                        </v-expand-transition>
-                      </v-img>
-                      <v-btn color="success" class="mt-4" small outline @click="openFileSelect">Change Photo</v-btn>
-                    </v-container>
-                  </v-hover>
-                  <v-card-actions class="ml-3">
-                    <v-btn dark :color="uploading ? 'grey' : 'teal'" class="text-capitalize d-block" @click="updatePhoto"
-                      v-if="selected_file" >{{upload_text}}
-                    </v-btn>
-                  </v-card-actions>
-                  <v-container v-if="uploading" class="py-0 px-0">
-                    <v-progress-linear :indeterminate="true" ></v-progress-linear>
-                  </v-container>
-                </v-card>
+              </v-card>
+            </v-col>
+
+            <v-col cols="12">
+              <v-btn depressed 
+                color="orange" 
+                @click.native="updateProfile" 
+                :disabled="disabled_save || loading || uploading" 
+                :loading="loading">
+                Save
+              </v-btn>
+            </v-col>
+
+            <v-col cols="12" sm="10">
+              <v-card outlined>
+                <v-card-title>School</v-card-title>
                 
-                <input type="file" style="visibility:hidden;position: absolute;" id="file" @change="onFileSelect($event)" accept="image/jpeg,image/png"/>
-              </v-flex>
-            </v-layout>
-          </v-container>
-        </v-flex>
+                <v-container v-if="getUser.is_student">
+                  <v-row column>
+                    <template v-if="getUser && getUser.was_once_a_student">
+                      <v-col cols="8">
+                        <v-text-field class="mb-4" disabled small style="text-transform:capitalize"
+                          color="primary" :placeholder="getUser ? getUser.sch : ''" 
+                          label="Your School">
+                        </v-text-field>
+                      </v-col>
+                      <v-col cols="8">
+                        <v-text-field class="mb-4" disabled small style="text-transform:capitalize"
+                          color="primary" :placeholder="getUser ? getUser.fac : ''" 
+                          label="Your Faculty">
+                        </v-text-field>
+                      </v-col>
+                      <v-col cols="8">
+                        <v-text-field class="mb-4" disabled small style="text-transform:capitalize"
+                          color="primary" :placeholder="getUser ? getUser.dept : ''" 
+                          label="Your Department">
+                        </v-text-field>
+                      </v-col>
+                    </template>
+                    
+                    <template v-else>
+                      <v-col cols="8">
+                        <v-select required small 
+                          v-model="form.school" :items="getSchools" item-text="text" color="primary" 
+                          label="School" >
+                        </v-select>
+                      </v-col>
+                      <v-col cols="8">
+                        <v-select required small 
+                          v-model="form.faculty" :items="form.school.faculties" 
+                          color="primary" item-text="text" item-value="value" label="Select faculty" >
+                        </v-select>
+                      </v-col>
+                      <v-col cols="8">
+                        <v-select required small 
+                          v-model="form.department" :items="form.faculty.departments"
+                          item-text="text" item-value="value"
+                          color="primary" label="Select department">
+                        </v-select>
+                      </v-col>
+                    </template>
+                  </v-row>
+                </v-container>
+              </v-card>
+            </v-col>
 
-        <v-flex sm8 xs12>
+            <v-col>
+              <v-card flat>
+                <v-card-title>
+                  Verify Account
+                </v-card-title>
+                <v-card-text>
+                  <v-btn color="success" depressed
+                    to="/verify"
+                    v-if="!is_verified">
+                    Click to Verify
+                  </v-btn>
+                  <v-btn color="success" depressed
+                    v-else>
+                    Your account is verified
+                    <v-icon>mdi-check</v-icon>
+                  </v-btn>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
 
-          <v-container grid-list-md :pa-0="$vuetify.breakpoint.xsOnly">
-            <v-layout row wrap>
-              <v-flex xs12 sm10 offset-sm1>
-                <v-card :flat="$vuetify.breakpoint.xsOnly">
-                  <v-subheader>Basic Info</v-subheader>
-                  <v-card-text>
-                    <v-text-field class="mb-4" required small v-model="form.name" style="text-transform:capitalize"
-                      color="secondary" browser-autocomplete="name" :placeholder="getUser.displayName" 
-                      label="Your Name">
-                    </v-text-field>
+        </v-col>
 
-                    <v-text-field required small v-model="form.email" style="text-transform:capitalize"
-                      color="secondary" browser-autocomplete="email" :placeholder="getUser.email" disabled
-                      label="Your Email">
-                    </v-text-field>
+        <v-col sm="4" cols="12">
+          <v-card tile outlined style="min-height: 300px;">
+            <v-hover :class="{profile_card: selected_file}">
+              <v-container slot-scope="{ hover }">
+                <v-img :src="blob_url || getUser.photoURL || `https://ui-avatars.com/api/?name=${getUser.displayName}&size=300`"
+                  max-height="250" @click="openFileSelect">
+                  <v-expand-transition>
+                    <div v-if="hover" class=" transition-fast-in-fast-out teal darken-2 v-card--reveal display-5 white--text"
+                      style="height: 100%;">
+                      <v-icon x-large class="pt-5 text-center d-block">mdi-camera</v-icon>
+                      <h3 class="mt-0 text-center d-block">Change profile photo</h3>
+                    </div>
+                  </v-expand-transition>
+                </v-img>
+                <v-btn color="success" class="mt-4" small outlined @click="openFileSelect">Change Photo</v-btn>
+              </v-container>
+            </v-hover>
+            <v-card-actions class="ml-3">
+              <v-btn dark :color="uploading ? 'grey' : 'teal'" class="text-capitalize d-block" @click="updatePhoto"
+                v-if="selected_file" >{{upload_text}}
+              </v-btn>
+            </v-card-actions>
+            <v-container v-if="uploading" class="py-0 px-0">
+              <v-progress-linear :indeterminate="true" ></v-progress-linear>
+            </v-container>
+          </v-card>
+        </v-col>
 
-                    <v-text-field required small v-model="form.username" style="text-transform:capitalize"
-                      color="secondary" browser-autocomplete="username" :placeholder="getUser.username"
-                      label="Your Username" >
-                    </v-text-field>
-
-                    <v-text-field required small v-model="form.phone" style="text-transform:capitalize"
-                      color="secondary" browser-autocomplete="tel" :placeholder="getUser.phoneNumber || ''" 
-                      label="Your Phone number" hint="e.g +2347099998888">
-                    </v-text-field>
-                  </v-card-text>
-                  
-                </v-card>
-              </v-flex>
-            </v-layout>
-          </v-container>
-
-          <v-container :pa-0="$vuetify.breakpoint.xsOnly">
-            <v-layout row wrap justify-center>
-              <v-flex xs12 sm10 offset-sm-3>
-                <v-card tile :flat="$vuetify.breakpoint.xsOnly">
-                  <v-card-title>School</v-card-title>
-                  
-                  <v-container v-if="getUserInfo.is_student">
-                    <v-layout column>
-                      <template v-if="getUserInfo && getUserInfo.was_once_a_student">
-                        <v-flex xs8 d-flex>
-                          <v-text-field class="mb-4" disabled small style="text-transform:capitalize"
-                            color="secondary" :placeholder="getUserInfo ? getUserInfo.sch : ''" 
-                            label="Your School">
-                          </v-text-field>
-                        </v-flex>
-                        <v-flex xs8 d-flex>
-                          <v-text-field class="mb-4" disabled small style="text-transform:capitalize"
-                            color="secondary" :placeholder="getUserInfo ? getUserInfo.fac : ''" 
-                            label="Your Faculty">
-                          </v-text-field>
-                        </v-flex>
-                        <v-flex xs8 d-flex>
-                          <v-text-field class="mb-4" disabled small style="text-transform:capitalize"
-                            color="secondary" :placeholder="getUserInfo ? getUserInfo.dept : ''" 
-                            label="Your Department">
-                          </v-text-field>
-                        </v-flex>
-                      </template>
-                      
-                      <template v-else>
-                        <v-flex xs8 d-flex>
-                          <v-select required small 
-                            v-model="form.school" :items="getSchools" item-text="text" color="secondary" 
-                            label="School" >
-                          </v-select>
-                        </v-flex>
-                        <v-flex xs8 d-flex>
-                          <v-select required small 
-                            v-model="form.faculty" :items="form.school.faculties" 
-                            color="secondary" item-text="text" item-value="value" label="Select faculty" >
-                          </v-select>
-                        </v-flex>
-                        <v-flex xs8 d-flex>
-                          <v-select required small 
-                            v-model="form.department" :items="form.faculty.departments"
-                            item-text="text" item-value="value"
-                            color="secondary" label="Select department">
-                          </v-select>
-                        </v-flex>
-                      </template>
-                    </v-layout>
-                  </v-container>
-                </v-card>
-              </v-flex>
-            </v-layout>
-          </v-container>
-
-        </v-flex>
 
         
-      </v-layout>
-    </v-card-text>
-  </v-card>
+      </v-row>
+    </v-container>
+    <input type="file" style="visibility:hidden;position: absolute;" id="file" @change="onFileSelect($event)" accept="image/jpeg,image/png"/>
+  </div>
 </template>
 <script>
 export default {
-  data:()=>({
+  data: ()=>({
     upload_text:'Update photo',
     snackbar:{},
     loading: false, // to show the loading state on the save btn
@@ -183,6 +178,7 @@ export default {
       email:'',
       username: '',
       phone:'',
+      about: '',
       is_student: '',
       school:'',
       faculty:'',
@@ -192,29 +188,23 @@ export default {
     },
     selected_file:null,
     blob_url:null,
-    cloudinary:{
-      cloud_name:'unplugged',
-      upload_preset:'pe4iolek'
-    }
   }),
   computed: {
     ...mapGetters([
       'getUser',
-      'getUserInfo',
-      'getSchools'
-      // ...
     ]),
     ...mapState([
       'isSuperUser',
+      'is_verified'
     ]),
     title(){
       return `Profile Settings | ${this.$appName}`
     },
     disabled_save(){
-      return !this.form.name.trim() || !this.form.phone.trim() || !this.form.username.trim()
+      return !this.form.name || !this.form.phone || !this.form.about
     }
   },
-  methods:{
+  methods: {
     openFileSelect(){
       document.getElementById('file').click()
     },
@@ -303,142 +293,69 @@ export default {
     async updateProfile(){
 
       this.loading = true
+      try{
 
-      firebase.auth().currentUser.getIdToken(true).then(async idToken=>{
-        api().post('updateProfile', {
-          name: this.form.name || this.getUser.displayName,
-          phone: this.form.phone || this.getUser.phoneNumber || false,
-          username: this.form.username || this.getUserInfo.username,
-          idToken: idToken
-        }).then(async ()=> {
-
-          let userRef = db.collection('moreUserInfo').doc(this.getUser.uid)
-          let doc = await userRef.get()
-        
-            firebase.auth().onAuthStateChanged((user) => {
-              if(user){
-                user.phoneNumber = this.form.phone
-                this.$store.dispatch('setUser', user)
-                this.$store.dispatch('setUserInfo', doc.data())
-
-                this.snackbar = {
-                  show: true,
-                  message: 'Profile updated successfully',
-                  color: 'purple'
-                }
-                this.loading = false
-                
-              }
-    
-            })
-        }).catch(err => {
-
-          this.snackbar = {
-            show: true,
-            message: err.response.data.message || 'Profile update failed. Try again',
-            color: 'error'
-          }
-          this.loading = false
-          this.$Nprogress.done()
-        })
-
-      })
-    },
-    otherUpdates(onr){
-      // get reference to all users posts
-      // get reference to all users manifestos
-      // get reference to all users broadcasts
-      // update moreuserinfo
-      return new Promise(( resolve, reject ) => {
-
-        let postIds = []
-        db.collection('posts').where('onr.uid','==',getUser.uid)
-        .get().then(docs => {
-          docs.forEach(doc => {
-            postIds.push(doc.data().docId)
+        this.$gun.get(this.getUser.username)
+          .put({
+            name: this.form.name || this.getUser.name,
+            phone: this.form.phone || this.getUser.phone,
+            about: this.form.about || this.getUser.about,
           })
+
+        this.$eventBus.$emit('Snackbar', {
+          show: true,
+          message: 'Profile updated',
+          color: 'purple'
+        })
+        this.loading = false
+      }
+      catch(err) {
+
+        this.$eventBus.$emit('Snackbar',{
+          show: true,
+          message: 'Profile update failed. Try again',
+          color: 'error'
         })
 
-        let manifestoIds = []
-        db.collection('manifestos').where('onr.uid','==',getUser.uid)
-        .get().then(docs => {
-          docs.forEach(doc => {
-            manifestoIds.push(doc.data().docId)
-          })
-        })
+        console.log(err)
 
-        let broadcastIds = []
-        db.collection('broadcasts').where('onr.uid','==',getUser.uid)
-        .get().then(docs => {
-          docs.forEach(doc => {
-            broadcastIds.push(doc.data().docId)
-          })
-        })
+        this.loading = false
 
-
-        let batch = db.batch();
-
-        postIds.forEach(docId => {
-          let postRef = db.collection('posts').doc(docId)
-          batch.update(postRef, onr)
-        })
-        manifestoIds.forEach(docId => {
-          let manifestoRef = db.collection('posts').doc(docId)
-          batch.update(manifestoRef, onr)
-        })
-        broadcastIds.forEach(docId => {
-          let Ref = db.collection('broadcasts').doc(docId)
-          batch.update(broadcastRef, onr)
-        })
-
-        batch.commit().then(() => {
-          resolve('success')
-        }).catch(err => reject('failed'))
-      })
-
-
-    },
-    async allSchools(){
-      try {
-        let schls = await api2().post('dashboard/getSchools')
-        this.$store.dispatch('setSchools', schls.data)
-      } catch (error) {
-        // console.log(error)
-        this.$Nprogress.done()
       }
     },
     async setUp(data){
       try {
         
         // console.log(this.getUser.photoURL)
-        this.form.name = this.getUser.displayName
-        this.form.phone = this.getUser.phoneNumber || ''
-        this.form.username = this.getUserInfo.username
+        // this.form.name = this.getUser.name
+        // this.form.phone = this.getUser.phone || ''
+        // this.form.username = this.getUser.username
 
-        if(this.getUserInfo && !this.getUserInfo.was_once_a_student){
-          this.form.is_student = this.getUserInfo.is_student
-          await this.allSchools()
+        // if(this.getUser && !this.getUser.was_once_a_student){
+        //   this.form.is_student = this.getUser.is_student
+        //   await this.allSchools()
           
-        }
+        // }
       } catch (error) {
         // console.log(error)
       }
       
     }
   },
-  async created(){
+  async mounted(){
     await this.setUp()
-    
+    // console.log(this.getUser)
     
   },
   components:{
+    Navigation
   }
 }
 
 import api from '@/services/api'
 import api2 from '@/services/api2'
+import Navigation from '@/components/Navigation'
 import { mapGetters, mapState } from 'vuex'
-import {firebase, db, database} from '@/plugins/firebase'
 </script>
 
 <style scss>

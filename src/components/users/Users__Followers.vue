@@ -9,23 +9,23 @@
       <v-card v-else class="" flat height="400" >
         <v-subheader v-if="followers.length == 0">No followers</v-subheader>
         <v-list dense two-line v-for="follower in followers" :key="follower.uid">
-          <v-list-tile avatar @click="$eventBus.$emit('ViewProfile', follower.onr)">
-            <v-list-tile-avatar :color="$helpers.colorMinder(follower.onr.name.charAt(0))" class="white--text">
-              <img :src="follower.onr.photoURL" v-if="follower.onr.photoURL">
-              <span v-else>{{follower.onr.name.charAt(0)}}</span>
-            </v-list-tile-avatar>
-            <v-list-tile-content>
-              <v-list-tile-title class="text-capitalize">{{follower.onr.name}}</v-list-tile-title>
-              <v-list-tile-sub-title :class="$helpers.colorMinder(follower.onr.name.charAt(0)) + '--text'">
-                {{follower.onr.dept}} 
-              </v-list-tile-sub-title>
-            </v-list-tile-content>
+          <v-list-item @click="$eventBus.$emit('ViewProfile', follower)">
+            <v-list-item-avatar :color="$helpers.colorMinder(follower.name.charAt(0))" class="white--text">
+              <img :src="follower.photoURL" v-if="follower.photoURL">
+              <span v-else>{{follower.name.charAt(0)}}</span>
+            </v-list-item-avatar>
+            <v-list-item-content>
+              <v-list-item-title class="text-capitalize">{{follower.name}}</v-list-item-title>
+              <v-list-item-subtitle :class="$helpers.colorMinder(follower.name.charAt(0)) + '--text'">
+                {{follower.dept}} 
+              </v-list-item-subtitle>
+            </v-list-item-content>
             
-          </v-list-tile>
+          </v-list-item>
           <v-divider inset></v-divider>
         </v-list>
         <v-card-actions>
-          <v-btn color="secondary" flat small @click="moreFollowers" v-if="followers.length >= 10 && user.followers > followers.length"
+          <v-btn color="secondary" text small @click="moreFollowers" v-if="followers.length >= 10 && user.followers > followers.length"
             :loading="loading_more_followers" style="text-transform: initial">
             See more
           </v-btn>
@@ -44,10 +44,10 @@ export default {
     followers_offset: 25,
     loading_more_followers: false,
   }),
+  props: ['username'],
   computed: {
     ...mapGetters([
       'getUser',
-      'getUserInfo'
     ]),
     ...mapState([
       'isSuperUser',
@@ -82,23 +82,20 @@ export default {
         // console.log(err)
       })
     },
+    
     async getFollowers(){
-      return db.collection('ufollowers')
-      .where('followee','==',this.user.uid)
-      .limit(10)
-      .get().then(querySnapshot=>{
-        let arr = []
-        querySnapshot.forEach(doc=>{
-          arr.push(doc.data())
+      let followerRef = this.$gun
+        .get(this.username)
+        .get('followers')
+
+        followerRef
+        .map()
+        .once(d => {
+          console.log('followers: => ', d)
+          this.followers.push(d)
         })
-
-        this.followers_offset = querySnapshot.docs[querySnapshot.docs.length-1];
-        this.followers = arr
-
-        this.showUi = true
-        return arr
-      })
-      // .catch(err => console.log)
+      this.showUi = true
+        
     },
   },
   mounted(){

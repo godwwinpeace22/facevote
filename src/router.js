@@ -1,34 +1,41 @@
 import Vue from 'vue'
   import Router from 'vue-router'
   import Watch from '@/components/elections/Watch'
-  import {firebase} from './plugins/firebase'
-  import $helpers from '@/helpers/helpers'
   import $Nprogress from 'nprogress'
   import $store from './store/store'
+
 Vue.use(Router)
 
 const requireAuth = async (to, from, next) => {
-  let unsubscribe = firebase.auth().onAuthStateChanged((user)=>{
+  if($store.state.isAuthenticated){
+    next()
+  }
+  else {
     
-    if(user && user.emailVerified){
-      $helpers.userDetails(user).then(() =>{
-        next() 
-      }).catch(() => {})
-      // next()
-    }
-    else{
-      // firebase.auth().signOut()
-      if(user && !user.emailVerified){
+    let returnTo = `?returnTo=${to.fullPath}`
+    next('/login' + returnTo)
+  }
+  // let unsubscribe = firebase.auth().onAuthStateChanged((user)=>{
+    
+  //   if(user && user.emailVerified){
+  //     $helpers.userDetails(user).then(() =>{
+  //       next() 
+  //     }).catch(() => {})
+  //     // next()
+  //   }
+  //   else{
+  //     // firebase.auth().signOut()
+  //     if(user && !user.emailVerified){
         
-        next('/login?verify_email=true')
-      }
-      else {
-        // console.log(to, from)
-        next(`/login?returnTo=${to.fullPath}`)
-      }
-    }
-    unsubscribe()
-  }, );
+  //       next('/login?verify_email=true')
+  //     }
+  //     else {
+  //       // console.log(to, from)
+  //       next(`/login?returnTo=${to.fullPath}`)
+  //     }
+  //   }
+  //   unsubscribe()
+  // }, );
   
 }
 
@@ -60,55 +67,26 @@ const router = new Router({
           // beforeEnter:requireAuth,
         },
         {
-          path:'/users/:userId',
-          // name: 'user_profile',
-          component: () => import('@/components/users/Users__Profile'),
-          props: true,
-          children: [
-            {
-              path: '',
-              name: 'profile_posts',
-              component: () => import('@/components/users/Users__Posts'),
-              props: true
-            },
-            {
-              path: 'stats',
-              name: 'stats',
-              component: () => import('@/components/users/Users__Stats'),
-              props: true
-            },
-            {
-              path: 'subscription',
-              name: 'subscription',
-              component: () => import('@/components/users/Users__Subscription'),
-              props: true
-            },
-            {
-              path: 'events',
-              name: 'events',
-              component: () => import('@/components/users/Users__Events'),
-              props: true
-            },
-            {
-              path: 'followers',
-              name: 'followers',
-              component: () => import('@/components/users/Users__Followers'),
-              props: true
-            },
-            {
-              path: 'manifestos',
-              name: 'manifestos',
-              component: () => import('@/components/users/Users__Manifestos'),
-              props: true
-            },
-          ]
-          // beforeEnter: requireAuth,
+          path:'/discover',
+          name:'discover',
+          component: () => import('@/components/Discover'),
+          // beforeEnter:requireAuth,
         },
         
         {
-          path:'/forum',
+          path: '/settings',
+          name: 'settings',
+          component: () => import('@/components/users/ProfileSettings')
+        },
+        {
+          path: '/messages',
+          name: 'messages',
+          components: () => import('@/components/Broadcast')
+        },
+        {
+          path:'/forum/:forumId',
           component: () => import('@/components/forum/Forum'),
-          // beforeEnter: requireAuth,
+          props: true,
           children:[
             {
               path:'',
@@ -121,7 +99,7 @@ const router = new Router({
               component: () => import('@/components/forum/ForumUsers')
             },
             {
-              path: 'profile/:userId',
+              path: 'profile/:username',
               name: 'profile',
               component: () => import('@/components/forum/ForumUsersProfile'),
               props: true
@@ -133,20 +111,96 @@ const router = new Router({
           path: '/contest',
           name: 'contest',
           component: () => import('@/components/elections/Contest'),
-          // beforeEnter: requireAuth,
         },
         {
           path: '/elections/create',
           name: 'create_election',
           component: () => import('@/components/elections/CreateElection'),
-          // beforeEnter: requireAuth,
         },
 
         {
-          path: '/elections/vote',
-          component: Watch,
-          // beforeEnter: requireAuth,
+          path: '/elections/:electionId/',
+          component: () => import('@/components/elections/ElectionHome'),
           props: true,
+          children: [
+            {
+              path: '',
+              name: 'about_election',
+              component: () => import('@/components/elections/Watch'),
+            },
+            {
+              path: 'contestants',
+              name: 'contestants',
+              component: () => import('@/components/elections/ElectionContestants'),
+            },
+            {
+              path: 'voters',
+              name: 'voters',
+              component: () => import('@/components/elections/ElectionVoters'),
+            },
+            {
+              path: 'manifestos',
+              name: 'election_manifestos',
+              component: () => import('@/components/elections/ElectionManifestos'),
+            },
+            {
+              path: 'results',
+              name: 'results',
+              component: () => import('@/components/elections/ElectionResults'),
+            },
+          ]
+        },
+        {
+          path: '/manifestos/:manifestoId',
+          name: 'manifestos',
+          component: () => import('@/components/elections/Manifestos')
+        },
+        {
+          path: '/elections/:electionId/manager',
+          name: 'manager',
+          component: () => import('@/components/elections/ManageElection'),
+        },
+        {
+          path: '/users/:username',
+          component: () => import('@/components/user_profiles/index'),
+          props: true,
+          children: [
+            {
+              path: '',
+              name: 'user_home',
+              component: () => import('@/components/user_profiles/User__Home')
+            },
+            {
+              path: 'posts',
+              name: 'user_posts',
+              component: () => import('@/components/user_profiles/User__Posts')
+            },
+            {
+              path: 'events',
+              name: 'user_events',
+              component: () => import('@/components/user_profiles/User__Events')
+            },
+            {
+              path: 'followers',
+              name: 'user_followers',
+              component: () => import('@/components/user_profiles/User__Followers')
+            },
+            {
+              path: 'following',
+              name: 'user_following',
+              component: () => import('@/components/user_profiles/User__Following')
+            },
+            {
+              path: 'about',
+              name: 'user_about',
+              component: () => import('@/components/user_profiles/User__Stats')
+            },
+            {
+              path: 'manifestos',
+              name: 'user_manifestos',
+              component: () => import('@/components/user_profiles/User__Manifestos')
+            },
+          ]
         },
         {
           path: '/events/:eventId',
@@ -206,9 +260,8 @@ router.beforeResolve((to, from, next) => {
 router.beforeEach((to, from, next) => {
 
   if($store.state.session_expired){
-    // console.log({to, from})
-    // console.log($store.state.session_expired)
-    firebase.auth().signOut().then(() => location.reload())
+    // signout
+    
   }
   else if(to.path == '/'){
     next('/home')

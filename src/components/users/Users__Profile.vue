@@ -15,16 +15,19 @@
 
       <div v-else>
         <div>
-          <v-container :grid-list-md="$vuetify.breakpoint.smAndUp" :pa-0="$vuetify.breakpoint.xsOnly">
-            <v-layout row wrap>
+          <v-container class="pt-0">
+            <v-row row wrap>
 
               <!-- PROFILE -->
-              <v-flex xs12 md3>
-                <v-card :class="{round_top: $vuetify.breakpoint.smAndUp}" height="420">
-                  <v-sheet flat width="100%" height="120" :color="$helpers.colorMinder(user.name.charAt(0)) + ' lighten-3'">
+              <v-col sm="12" md="8">
+                <v-card outlined height="">
+                  <v-sheet flat tile width="100%" 
+                    height="200" 
+                    :color="$helpers.colorMinder(user.name.charAt(0)) + ' lighten-3'">
 
                   </v-sheet>
-                  <v-sheet flat width="61%" height="124" style="position: absolute;top: 55px;left: 20%;" color="transparent">
+                  <v-sheet flat width="20%" height="124" 
+                    style="position: absolute;top: 135px;left: 0;" color="transparent">
                     <v-avatar
                       size="124"
                       color="white"
@@ -42,46 +45,42 @@
                     </v-avatar>
                   </v-sheet>
 
-                  <v-card-text class="text-xs-center " style="margin-top: 65px;">
+                  <v-card-text class=" " style="margin-top: 65px;">
                     <span class="title text-capitalize">{{user.name | capitalize}}</span>
                     <v-tooltip right>
-                      <v-icon color="success" style="font-size: 20px" slot="activator" v-if="is_verified">mdi-check-decagram</v-icon>
+                      <template v-slot:activator="{on}">
+                        <v-icon color="success" style="font-size: 20px" v-on="on" v-if="is_verified">mdi-check-decagram</v-icon>
+                      </template>
                       <span>User is verified</span>
                     </v-tooltip> 
                     <!-- <span class="online_badge" :class="user.online ? 'success' : 'orange'"></span> -->
                     <div class="" v-if="user.is_student">Student at <strong>{{user.sch}}</strong>,</div>
                     <div class="" v-if="user.is_student">Department of <strong>{{user.dept}}</strong></div>
-                    <div class="mt-2 font-weight-bold secondary--text">@{{user.username}}</div>
+                    <div class="mt-2 font-weight-bold primary--text">@{{user.username}}</div>
                   </v-card-text>
-                  <div class="text-xs-center">{{followers.toLocaleString() || 0}} Followers</div>
-                  <v-card-actions class="justify-center" >
-                    <template v-if="user.uid != getUser.uid">
-                      <v-btn color="secondary" class="ml-3" @click="follow" :disabled="disabled">
+
+                  <v-card-actions class="mb-5">
+                    <v-btn color="success" outlined small>{{followers_count || 0}} Followers</v-btn>
+                    <v-btn color="success" outlined small>{{followings_count || 0}} Following</v-btn>
+
+                    <template v-if="user.username != getUser.username">
+                      <v-btn color="primary" class="ml-3" 
+                        @click="follow" :disabled="disabled"
+                        depressed small>
                         {{isFollowing ? 'Unfollow' : 'Follow'}}
                       </v-btn>
                     </template>
-                    <v-btn v-else class="round" color="success"
-                      @click="$eventBus.$emit('show_profile_settings')">
-                      Edit Profile
-                    </v-btn>
-                  </v-card-actions>
-                </v-card>
-              </v-flex>
 
-              <!-- MENU ITEMS -->
-              <v-flex xs12 md9 d-flex>
-                <v-card class="grey lighten-5" 
-                :class="{'round_top': $vuetify.breakpoint.smAndUp}" 
-                :flat="$vuetify.breakpoint.xsOnly" style="min-height: 400px;">
-                  
-                  <v-toolbar dense flat card tabs color="grey lighten-3">
+                  </v-card-actions>
+
+                  <v-toolbar dense flat tabs color="grey lighten-3">
                     <v-toolbar-items>
                       
                       <template v-for="item in menuLinks">
-                        <v-btn flat
+                        <v-btn text
                           v-if="item.show"
                           :key="item.text" class="text-capitalize" 
-                          active-class="secondary" exact
+                          active-class="primary--text" exact
                           :to="item.link"
                         >
                           {{item.text}}
@@ -93,45 +92,53 @@
                     
                       <v-spacer></v-spacer>
                       <v-menu offset-y v-if="isSameUser">
-                        <v-btn color="info" dark slot="activator" class="text-capitalize" v-if="isSuperUser && isSameUser">
-                          <v-icon>mdi-plus-box</v-icon>
-                          New
-                        </v-btn>
+                        <template v-slot:activator="{on}">
+                          <v-btn color="info" dark v-on="on" class="text-capitalize" v-if="isSuperUser && isSameUser">
+                            <v-icon>mdi-plus-box</v-icon>
+                            New
+                          </v-btn>
+                        </template>
                         <v-list dense>
-                          <v-list-tile @click="$router.push('/home')">
-                            <v-list-tile-title>Post</v-list-tile-title>
-                          </v-list-tile>
-                          <v-list-tile @click="$eventBus.$emit('OpenNewManifestoDialog')">
-                            <v-list-tile-title>Manifesto</v-list-tile-title>
-                          </v-list-tile>
-                          <v-list-tile @click="$eventBus.$emit('Toggle_New_Broadcast', true)">
-                            <v-list-tile-title>Broadcast</v-list-tile-title>
-                          </v-list-tile>
-                          <v-list-tile @click="$eventBus.$emit('NewInteractive', true)">
-                            <v-list-tile-title>Event</v-list-tile-title>
-                          </v-list-tile>
+                          <v-list-item @click="$router.push('/home')">
+                            <v-list-item-title>Post</v-list-item-title>
+                          </v-list-item>
+                          <v-list-item @click="$eventBus.$emit('OpenNewManifestoDialog')">
+                            <v-list-item-title>Manifesto</v-list-item-title>
+                          </v-list-item>
+                          <v-list-item @click="$eventBus.$emit('Toggle_New_Broadcast', true)">
+                            <v-list-item-title>Broadcast</v-list-item-title>
+                          </v-list-item>
+                          <v-list-item @click="$eventBus.$emit('NewInteractive', true)">
+                            <v-list-item-title>Event</v-list-item-title>
+                          </v-list-item>
                         </v-list>
                       </v-menu>
 
                   </v-toolbar>
-                  
-                  <v-container grid-list-md class="grey lighten-4">
+
+                  <v-card class="grey lighten-5" outlined>
                     
-                    <router-view/>
+                    <v-container class="grey lighten-4">
+                      
+                      <router-view/>
 
-                  </v-container>
+                    </v-container>
 
+                  </v-card>
                 </v-card>
-              </v-flex>
+              </v-col>
 
-            </v-layout>
+              <!-- MENU ITEMS -->
+              
+
+            </v-row>
           </v-container>
 
           <!-- CONTESTANTS INSIGHT -->
-          <contestants-insight id="insyte" v-if="isSameUser && isSuperUser && currentTab == 'stats'"></contestants-insight>
+          <!-- <contestants-insight id="insyte" v-if="isSameUser && isSuperUser && currentTab == 'stats'"></contestants-insight> -->
           
           <!-- PROFILE VIEWERS -->
-          <profile-viewers id="p_views" v-if="isSameUser && isSuperUser && currentTab == 'stats'"></profile-viewers>
+          <!-- <profile-viewers id="p_views" v-if="isSameUser && isSuperUser && currentTab == 'stats'"></profile-viewers> -->
 
         </div>
       </div>
@@ -143,18 +150,17 @@ export default {
   data: ()=>({
     showUi: false,
     user:'', // users profile
-    isFollowing: false,
     disabled: false, // disables the follow btn
     userRef: ''
   }),
-  props:['userId'],
+  props:['username'],
   filters: {
     capitalize: function(v){
       return this.$helpers.capitalize(v)
     }
   },
   watch: {
-    'userId' (to, from) {
+    'username' (to, from) {
       // react to route changes...
       this.setUp()
     },
@@ -187,21 +193,51 @@ export default {
       `Users | ${this.$appName}`
     },
     isSameUser(){
-      return this.getUser.uid == this.userId
+      return this.getUser.username == this.username
     },
     currentTab(){
       
       return this.$route.name
     },
+    followers(){
+      let arr = []
+      this.$gun.get(this.user.username)
+        .get('followers')
+        .map()
+        .on((f,key)=> {
+          
+          f ? arr.push(f) : ''
+          console.log({f,key})
+        })
+      return uniqBy(arr, 'username')
+    },
+    followings(){
+      let arr = []
+      this.$gun.get(this.user.username)
+        .get('following')
+        .map()
+        .on(fw => {
+          arr.push(fw)
+          console.log({fw})
+        })
+      return uniqBy(arr, 'username')
+    },
+    isFollowing(){
+      let is_following = !!this.followers
+      .find(f => f.username == this.getUser.username)
+      console.log(is_following)
+      return is_following
+    },
     menuLinks(){
-      let baseUrl =  `/users/${this.userId}`
+      let baseUrl =  `/users/${this.username}`
       return [
-        {text: 'posts',link: `${baseUrl}/`, show: true},
-        {text: 'events',link: `${baseUrl}/events/`, show: true},
-        {text: 'followers',link: `${baseUrl}/followers/`, show: true},
-        {text: 'manifestos',link: `${baseUrl}/manifestos/`, show: true},
-        {text: 'stats',link: `${baseUrl}/stats/`, show: this.isSameUser},
-        {text: 'Subscription', link: `${baseUrl}/subscription`, show: this.isSameUser}
+        {text: 'posts', link: `${baseUrl}/`, show: true},
+        {text: 'followers', link: `${baseUrl}/followers/`, show: true},
+        // {text: 'following', link: `${baseUrl}/following/`, show: true},
+        {text: 'events', link: `${baseUrl}/events/`, show: true},
+        {text: 'manifestos', link: `${baseUrl}/manifestos/`, show: this.isSameUser},
+        {text: 'stats', link: `${baseUrl}/stats/`, show: this.isSameUser},
+        // {text: 'Subscription', link: `${baseUrl}/subscription`, show: this.isSameUser}
       ]
     },
     options () {
@@ -213,39 +249,30 @@ export default {
     },
     ...mapGetters([
       'getUser',
-      'getUserInfo'
     ]),
     ...mapState([
       'isSuperUser',
       'is_verified',
       'curRoom'
     ]),
-    followers: {
-      get: function(){
-        return this.user.followers || 0
-      },
-      set: function(newVal){
-        return newVal
-      }
-    },
   },
   methods:{
     async follow(){
       this.disabled = true
 
-      this.$helpers.followUser(this.getUserInfo, this.user)
+      this.$helpers.followUser(this.getUser, this.user)
       .then(data =>{
         this.disabled = false
         
-        if(data.following){
-          this.followers = this.followers + 1
-          this.isFollowing = true
+        // if(data.following){
+        //   this.followers = this.followers + 1
+        //   this.isFollowing = true
 
-        }
-        else{
-          this.followers = this.followers - 1
-          this.isFollowing = false
-        }
+        // }
+        // else{
+        //   this.followers = this.followers - 1
+        //   this.isFollowing = false
+        // }
       })
       .catch(err => {
         // console.log(err)
@@ -253,7 +280,7 @@ export default {
     },
     async checkFollowing(){
 
-      let docId = `${this.getUserInfo.uid}-${this.user.uid}-fol`
+      let docId = `${this.getUser.username}-${this.user.username}-fol`
       let followerRef = db.collection('ufollowers').doc(docId)
       let isFollowing = followerRef.get()
         .then(doc =>{
@@ -268,37 +295,36 @@ export default {
 
         this.showUi = false
 
-        let userRef = db.collection('moreUserInfo')
-        .doc(this.userId)
-        .onSnapshot( async doc =>{
+        let username = this.username
 
-          if(doc.exists){
-            
-            this.$store.dispatch('curProfile', doc.data())
-            this.user = doc.data()
-
+        this.$gun.get(username)
+        .on(u => {
+          if(u){
+            // console.log(u)
+            this.user = u
+            this.$store.dispatch('curProfile', u)
             this.showUi = true
-            this.checkFollowing()
-
-
-            if(!this.isSameUser){
-
-              await this.$helpers.profileViewsCounter(this.getUserInfo, this.user)
-            }
           }
           else{
+            console.log('not found')
             this.$router.push('/notFound')
           }
         })
+
+        // this.checkFollowing()
+
+
+        if(!this.isSameUser){
+
+          // await this.$helpers.profileViewsCounter(this.getUserInfo, this.user)
+        }
+        
 
       } catch (error) {
         // console.log(error)
         if(error){}
       }
     }
-  },
-  mounted(){
-    
   },
   async created(){
     try {
@@ -316,7 +342,7 @@ export default {
   },
   beforeDestroy(){
     
-    this.userRef ? this.userRef() : ''
+    // this.userRef ? this.userRef() : ''
   }
 }
   //import api from '@/services/api'
@@ -325,59 +351,10 @@ import {mapGetters, mapState} from 'vuex'
   import NewPost from '@/components/profile/NewPost'
   import ContestantsInsight from '@/components/elections/ContestantsInsight'
   import ProfileViewers from '@/components/elections/ProfileViewers'
-  import {firebase, db, database} from '@/plugins/firebase'
+  import { uniqBy } from "lodash";
 
 </script>
 
 <style lang="scss" >
-@mixin borderRadius($radius) {
-  border-radius: $radius;
-  -webkit-border-radius:$radius;
-  -moz-border-radius:$radius;
-  -o-border-radius:$radius;
-}
-@mixin borderTopRadius($radius) {
-  border-top-right-radius: $radius;
-  -webkit-border-top-right-radius:$radius;
-  -moz-border-top-right-radius:$radius;
-  -o-border--top-right-radius:$radius;
-  border-top-left-radius: $radius;
-  -webkit-border-top-left-radius:$radius;
-  -moz-border-top-left-radius:$radius;
-  -o-border--top-left-radius:$radius;
-}
-.round_top{
-  @include borderTopRadius(10px);
-}
 
-$mainBgColor:#1c1f35;
-
-.wireframe::after{
-  content: '';
-  position: absolute;
-  width: 40%;
-  height: 12px;
-  background: linear-gradient(90deg, rgba(0, 0, 0, 0), rgba(255,255,255, 15%), rgba(0, 0, 0, 0));
-  transform: translateX(-10%);
-  animation: loading 1.5s infinite;
-}
-
-/* --scrollbar --*/
-.scrollbar::-webkit-scrollbar {
-    width: 10px;
-    background-color: #d7d7df ;
-    @include borderRadius(5px)
-  }
-.scrollbar::-webkit-scrollbar-track {
-  // box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-  // -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-  // -moz-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-  // -o-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-  background-color: #d7d7df ;
-  @include borderRadius(5px)
-}
-.scrollbar::-webkit-scrollbar-thumb {
-  background-color:#87899c ;
-  @include borderRadius(5px);
-}
 </style>
