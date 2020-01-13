@@ -33,17 +33,17 @@
                       <v-list two-line dense>
                         <v-subheader v-if="profileViews.length == 0">0 profile views</v-subheader>
                         <template v-for="(item, index) in profileViews">
-                          <v-list-item :key="index" @click="$eventBus.$emit('ViewProfile', item.onr)">
-                            <v-list-item-avatar :color="$helpers.colorMinder(item.onr.name.charAt(0))">
-                              <img :src="item.onr.photoURL" v-if="item.onr.photoURL">
-                              <span v-else class="white--text">{{item.onr.name.charAt(0)}}</span>
+                          <v-list-item :key="index" @click="$eventBus.$emit('ViewProfile', item.author)">
+                            <v-list-item-avatar :color="$helpers.colorMinder(item.author.name.charAt(0))">
+                              <img :src="item.author.photoURL" v-if="item.author.photoURL">
+                              <span v-else class="white--text">{{item.author.name.charAt(0)}}</span>
                             </v-list-item-avatar>
                             <v-list-item-content>
                               <v-list-item-title >
-                                {{$helpers.capitalize(item.onr.name)}}
+                                {{$helpers.capitalize(item.author.name)}}
                               </v-list-item-title>
                               <v-list-item-subtitle>
-                                {{item.onr.dept}}
+                                {{item.author.dept}}
                               </v-list-item-subtitle>
                               
                             </v-list-item-content>
@@ -114,11 +114,9 @@ export default {
   computed: {
     ...mapGetters([
       'getUser',
-      'getUserInfo'
     ]),
     ...mapState([
       'isSuperUser',
-      'curRoom'
     ])
   },
   methods: {
@@ -126,19 +124,25 @@ export default {
 
     },
     async getProfileViewers(){
-      // get profile views by voters in curRoom
-      // this.$gun.get()
-      db.collection('profile_views').where('viewee', '==', this.getUser.uid)
-      .get().then(querySnapshot =>{
-        let views = []
-        querySnapshot.forEach(doc => views.push(
-          doc.data())
-        )
-        this.profileViews = views
+      // get profile views
+      this.$gun.get('users')
+      .get(this.getUser.username)
+      .get('profile_views')
+      .map().once( async (v,k) => {
 
-        this.profileViewsByDept()
-        this.profileViewsByFac()
+        console.log({v,k})
+        let d = Object.assign({}, v)
+
+        d.author = await this.$gun.get('users').get(v.author['#'] || v.author).then()
+        console.log({d})
+        this.profileViews.push(d)
       })
+
+      await this.$helpers.sleep()
+
+      this.profileViewsByDept()
+      this.profileViewsByFac()
+    
     },
     get_random_color() {
       var letters = 'ABCDE'.split('');
@@ -153,9 +157,9 @@ export default {
       let byDept = {}
       this.profileViews.forEach(view =>{
         
-        byDept[view.onr.dept] ? 
-        byDept[view.onr.dept] = byDept[view.onr.dept]++ : 
-        byDept[view.onr.dept] = 1
+        byDept[view.author.dept] ? 
+        byDept[view.author.dept] = byDept[view.author.dept]++ : 
+        byDept[view.author.dept] = 1
       })
 
       this.chartdata = {
@@ -178,9 +182,9 @@ export default {
       let byFac = {}
       this.profileViews.forEach(view =>{
         
-        byFac[view.onr.fac] ? 
-        byFac[view.onr.fac] = byFac[view.onr.fac]++ : 
-        byFac[view.onr.fac] = 1
+        byFac[view.author.fac] ? 
+        byFac[view.author.fac] = byFac[view.author.fac]++ : 
+        byFac[view.author.fac] = 1
       })
 
       this.chartdata2 = {

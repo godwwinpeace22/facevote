@@ -1,48 +1,57 @@
 <template>
-  <div>
-      <v-tabs v-model="active"
-        color="cyan" centered
-        dark show-arrows>
-        <v-tabs-slider color="yellow"></v-tabs-slider>
-
-        <v-tab v-for="category in categories" 
-          :key="category.name" ripple 
-          class="text-capitalize"
-          icons-and-text
-          :href="'#tab-' + category.name">
-          <v-tooltip bottom>
-            <v-icon slot="activator">{{category.icon}}</v-icon>
-            <span>{{category.name}}</span>
-          </v-tooltip>
+  <div >
+    <v-sheet class="mx-auto" tile flat>
+      <v-slide-group show-arrows v-model="slide_group">
+        <v-slide-item
+          v-for="cat in categories"
+          :key="cat.name" 
           
-        </v-tab>
-        <v-tabs-items>
-          <v-tab-item 
-            :value="'tab-' + emoji.name"
-            v-for="(emoji, i) in emojiData"
-            :key="i + 'e'"
+        >
+          <v-btn
+            class="mx-2" icon
+            :input-value="slide_group"
+            active-class="purple white--text"
+            depressed
+            @click="scrollToGroup($event, cat.name)"
           >
-            <v-card flat style="overflow: auto;" height="300" class="navdrawr emoji-picker">
-              <v-card-text class="pa-1">
-                <v-btn icon small 
-                  @click="emitEvent($event, emoji)" 
-                  v-for="(emoji, i) in emojiData[i].emojis" 
-                  :key="i" style="font-size: 20px;" class="ma-0">
+            <v-icon>{{ cat.icon }}</v-icon>
+          </v-btn>
+        </v-slide-item>
+      </v-slide-group>
+    </v-sheet>
+    <v-divider></v-divider>
 
-                  {{emoji}}
-                </v-btn>
-              </v-card-text>
-            </v-card>
-          </v-tab-item>
-        </v-tabs-items>
-      </v-tabs>
+    <v-sheet id="emoji-contents" 
+      class="py-1 mb-2 text-center px-0 navdrawr" 
+      style="overflow: auto;" height="300">
+
+      <template v-for="(item, i) in emojiData">
+        <div :id="item.name" :key="i" 
+          class="text-left pl-2 font-weight-bold py-2">
+          {{item.name}}
+
+        </div>
+        <div :key="i + ': e'" >
+          <v-btn icon small 
+            @click="emitEvent($event, emoji)" 
+            v-for="(emoji, i) in item.emojis" 
+            :key="i" style="font-size: 20px;" class="ma-0">
+
+            {{emoji}}
+          </v-btn>
+        </div>
+      </template>
+    </v-sheet>
+
   </div>
 </template>
 <script>
 export default {
   data: () =>({
     emojiData: emojiData,
-    active: 'tab-People'
+    showUi: false,
+    slide_group: '',
+    options: {},
   }),
   computed: {
     active_tab(){
@@ -62,18 +71,52 @@ export default {
     emitEvent(e, emoji){
       // console.log(e, emoji)
       this.$emit('append-emoji', emoji)
+    },
+    onScroll(e){
+      console.log(e)
+    },
+    scrollToGroup(e, id){
+      let elem = document.getElementById(id)
+      let emoji_contents = document.getElementById('emoji-contents')
+
+      // console.log({elem})
+      elem.scrollIntoView(true)
+
+    },
+    transformEmojis(){
+      return this.emojiData.map((d, i) => {
+        return {
+          name: d.name,
+          emojis: d.emojis.map((e,n) => {
+            return {value: e, id: n+d.name}
+          })
+        }
+        
+      })
     }
   },
   created(){
-    // console.log(emojiData)
+
+    // this.emojiData = this.transformEmojis()
+    // this.showUi = true;
+    // console.log('😃' == '😀')
+    // console.log(this.transformEmojis())
   }
 }
 
 import emojiData from '@/components/emojis/emojiData'
 </script>
 
-<style>
+<style >
   .picker-card {
     overflow: auto;
+  }
+
+  .theme--light.v-btn.v-btn--icon {
+    color: rgba(0,0,0,9)
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 </style>

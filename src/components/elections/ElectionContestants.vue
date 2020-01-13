@@ -7,18 +7,17 @@
 
         <carousel v-if="showCarousel && contestants && contestants.length > 0" :nav='true' :responsive="{0:{items:1,nav:false},600:{items:3,nav:true},800:{items:4,nav:true}}" >
 
-          <v-card class="round_top mr-2 mb-2" 
+          <v-card class="mr-2 mb-2" 
             outlined
             height="320" v-for="contestant in contestants" 
-            :key="contestant.author.email" 
+            :key="contestant.author.username" 
             style="position: relative">
 
-            <v-sheet width="100%" height="80" 
-              :color="$helpers.colorMinder(contestant.author.name.charAt(0)) + ' lighten-3'">
-
+            <v-sheet width="100%" height="200" tile>
+              <img :src="contestant.author.photoURL" alt="" width="100%" height="100%" contain/>
             </v-sheet>
             
-            <div style="width: 41%; height: 100px;" class="mx-auto mt-n12" color="transparent">
+            <!-- <div style="width: 41%; height: 100px;" class="mx-auto mt-n12" color="transparent">
               <v-avatar
                 size="100"
                 :color="$helpers.colorMinder(contestant.author.name.charAt(0))"
@@ -28,11 +27,12 @@
                   {{contestant.author.name.charAt(0)}}
                 </span>
               </v-avatar>
-            </div>
+            </div> -->
 
             <v-card-text class="px-1 text-center" :id="contestant.author.username + 'cont'"
               @click.stop="$helpers.openProfile($event, contestant.author)">
-              <div class="subheading font-weight-bold mb-0 text-capitalize .text-truncate hover">
+              <div class="subheading font-weight-bold mb-0 text-capitalize .text-truncate"
+                style="cursor: pointer;">
                 {{contestant.author.name}}
                 <span class="online_badge success" v-if="contestant.author.online"></span>
               </div>
@@ -40,7 +40,7 @@
                 <i>for</i> {{contestant.role.title}}
               </div>
             </v-card-text>
-            <v-card-actions>
+            <!-- <v-card-actions>
 
               <v-btn color="teal" outlined dark 
                 class="mx-auto text-capitalize" 
@@ -48,7 +48,7 @@
                 {{(contestant.author.followers_count || 0).toLocaleString()}} Follow
               </v-btn>
 
-            </v-card-actions>
+            </v-card-actions> -->
           </v-card>
           
         </carousel>
@@ -65,6 +65,7 @@ export default {
     contestants: [],
     showCarousel: false,
     disabled: [],
+    contRef: '',
   }),
   computed: {
     electionId(){
@@ -86,17 +87,19 @@ export default {
         .on(async (data,key) => {
           // console.log({data,key})
 
-          let role = await this.getRole(key)
-          let author = await this.getPerson(key)
-          data.author = author;
-          data.role = role;
-          data.username = author.username
-          contestants.push(data)
+          let cont = Object.assign({}, data)
+          cont.author = await this.getPerson(key)
+          cont.role = await this.getRole(key)
+          cont.username = key
+          
+          this.contestants.find(c => c.author.username == cont.author.username) ? '' : 
+          this.contestants.push(cont)
+          // console.log(cont)
         })
 
         // console.log({contestants})
       // this.contestants = uniqBy(contestants, 'username')
-      this.contestants = contestants
+      // this.contestants = contestants
       this.showCarousel = true;
 
     },
@@ -113,6 +116,7 @@ export default {
     },
     async getPerson(username){
       return await this.$gun
+        .get('users')
         .get(username)
         .then()
     },
@@ -146,6 +150,9 @@ export default {
     this.getContestants().then(() => {
       this.showUi = true;
     })
+  },
+  destroyed(){
+    // this.contRef.off()
   },
   components: {
     carousel

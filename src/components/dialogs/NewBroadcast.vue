@@ -20,7 +20,7 @@
             <v-textarea placeholder="Type your message" class="mt-5" 
               outlined label="Broadcast message" v-model.trim="message">
             </v-textarea>
-            <v-select
+            <!-- <v-select
               name="audience" class="mb-3"
               label="Target Audience"
               :items="getMyEnrolled"
@@ -28,9 +28,9 @@
               outlined item-text="title"
               item-value="electionId"
               placeholder="Select your target audience"
-            ></v-select>
+            ></v-select> -->
 
-            <!-- <small>Audience: {{curRoom.title}}</small> -->
+            <small>Audience: {{curRoom.title}}</small>
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
@@ -49,7 +49,6 @@ export default {
     return {
       bdialog: true,
       message: '',
-      audience: '',
       loading: false,
     }
   },
@@ -62,6 +61,9 @@ export default {
       'curRoom',
       'isSuperUser'
     ]),
+    audience(){
+      return this.curRoom.electionId
+    },
     disabled(){
       return !this.message.trim()
     },

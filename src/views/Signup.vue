@@ -36,17 +36,17 @@
                 <v-card-text >
                   <v-form ref="form" class="text-center pa-3">
                     <!-- <p class="text-center"></p> -->
-                    <v-text-field outlined dense
+                    <v-text-field outlined
                       label="Full Name" class="mb-0"
                       v-model.lazy="$v.form.name.$model" :error-messages="nameErrors"
-                      color="secondary" required>
+                      color="primary" required>
                       <v-icon slot="prepend-inner" color="teal">mdi-account</v-icon>
                     </v-text-field>
 
                     <v-text-field 
-                      label="Email" class="mb-0"
+                      label="Email" name="email" class="mb-0" outlined
                       v-model.lazy="$v.form.email.$model" 
-                      color="secondary" :error-messages="emailErrors"
+                      color="primary" :error-messages="emailErrors"
                       required type="email">
                       <v-icon slot="prepend-inner" color="teal">mdi-email</v-icon>
                     </v-text-field>
@@ -54,26 +54,37 @@
                     <v-text-field 
                       label="Username" class="mb-0"
                       v-model.lazy="$v.form.username.$model" :error-messages="usernameErrors" 
-                      color="secondary"
+                      color="primary" outlined
                       required>
                       <v-icon slot="prepend-inner" color="teal">mdi-account</v-icon>
                     </v-text-field>
 
+                    <v-text-field
+                      name="phone" outlined
+                      label="Phone Number" type="tel"
+                      prefix="+234" placeholder="7094342323"
+                      v-model.lazy="$v.form.phone.$model" :error-messages="phoneErrors"
+                    ></v-text-field>
+
                     <v-text-field class="mb-0"
                       v-model.lazy="$v.form.password1.$model"
-                      color="secondary" :error-messages="password1Errors"
-                      type="password" label="Password" 
-                      required>
+                      color="primary" :error-messages="password1Errors"
+                      label="Password" outlined
+                      :type="show1 ? 'text' : 'password'"
+                      :append-icon="show1 ? 'mdi-eye' : 'mdi-eye-off'"
+                      hint="At least 6 characters"
+                      @click:append="show1 = !show1"
+                      required counter>
                       <v-icon slot="prepend-inner" color="teal">mdi-lock</v-icon>
                     </v-text-field>
 
-                    <v-text-field required
+                    <!-- <v-text-field required
                       v-model.lazy="$v.form.password2.$model"
-                      type="password" color="secondary"
+                      type="password" color="primary" outlined
                       name="password2" :error-messages="password2Errors"
                       label="Confirm Password">
                       <v-icon slot="prepend-inner" color="teal">mdi-lock</v-icon>
-                    </v-text-field>
+                    </v-text-field> -->
                   </v-form>
                 </v-card-text>
               </v-window-item>
@@ -88,11 +99,11 @@
                     <v-autocomplete
                       v-model.lazy="form2.mySchool" hint="Select your school"
                       :items="schools" return-object item-text="text" hide-no-data  class="mb-0"
-                      label="School" persistent-hint color="secondary">
+                      label="School" persistent-hint color="primary">
                       <v-icon slot="prepend-inner" color="teal">mdi-school</v-icon>
                     </v-autocomplete>
 
-                    <v-autocomplete color="secondary"
+                    <v-autocomplete color="primary"
                       label="Faculty"  v-model.lazy="form2.myFaculty" 
                       :items="form2.mySchool.faculties"
                       return-object item-text="text" class="mb-0" hide-no-data
@@ -101,24 +112,46 @@
                     </v-autocomplete>
                     <v-autocomplete label="Department" class="mb-0" hide-no-data 
                       v-model.lazy="form2.myDepartment" :items="form2.myFaculty.departments" required
-                      return-object item-text="text" color="secondary">
+                      return-object item-text="text" color="primary">
                       <v-icon slot="prepend-inner" color="teal">mdi-map-marker</v-icon>
                     </v-autocomplete>
                   </v-form>
                   <div class="text-center">
-                  <span class="caption grey--text text--darken-1">
-                    * Please note that you need to be a student to paticipate in student elections.
-                  </span><br>
-                  <small class="grey--text text--darken-1">By signing up, you agree with our </small><br>
-                  <small class="grey--text text--darken-1">
-                    <v-btn href="https://voteryte.com/terms" 
-                      color="primary" style="font-size: 12px" 
-                      target="blank" class="text-capitalize" text small>Terms of Use</v-btn> and 
-                    <v-btn href="https://voteryte.com/privacy" 
-                      color="primary" style="font-size: 12px" 
-                      target="blank" class="text-capitalize" text small> Privacy Policy</v-btn></small>
+                    <span class="caption grey--text text--darken-1">
+                      * Please note that you need to be a student to paticipate in student elections.
+                    </span><br>
+                    <small class="grey--text text--darken-1">By signing up, you agree with our </small><br>
+                    <small class="grey--text text--darken-1">
+                      <v-btn href="https://voteryte.com/terms" 
+                        color="primary" style="font-size: 12px" 
+                        target="blank" class="text-capitalize" text small>Terms of Use</v-btn> and 
+                      <v-btn href="https://voteryte.com/privacy" 
+                        color="primary" style="font-size: 12px" 
+                        target="blank" class="text-capitalize" text small> Privacy Policy</v-btn></small>
                   </div>
                 </v-card-text>
+              </v-window-item>
+
+              <v-window-item :value="3">
+                <v-card-text class="b-0">
+                  <p>We sent a 6-digit verification code to your phone. Enter the numbers below.</p>
+                  <v-text-field
+                    name="verification_code"
+                    outlined hide-details
+                    v-model="form3.verification_code_from_user"
+                    label="Verification code"
+                  ></v-text-field>
+
+                  <span>Didn't get the code ?</span>
+                  
+                  <v-btn color="info" text class="d-inline" 
+                    @click="resendCode"
+                    :disabled="disable_resend_btn">
+                    Resend Code
+                  </v-btn>
+                </v-card-text>
+                <v-card-actions>
+                </v-card-actions>
               </v-window-item>
 
             </v-window>
@@ -130,12 +163,12 @@
                 Back
               </v-btn>
               <v-spacer></v-spacer>
-              <v-btn v-if="step !== 3"
+              <v-btn v-if="step !== 4"
                 
                 color="success" :loading="loading" 
                 depressed @click="next"
               >
-                {{step == 2 ? 'Finish' : 'Continue'}}
+                {{step == 3 ? 'Verify' : 'Continue'}}
               </v-btn>
             </v-card-actions>
           </v-card>
@@ -184,9 +217,11 @@ export default {
     disabled: false,
     show_confirm_text: false,
     confirm_text: 'Email verification link has been sent',
+    show1: false,
     form: {
       name: '',
       email: '',
+      phone: '',
       username: '',
       is_student: true, // whether is student or not
       password1: '',
@@ -198,6 +233,8 @@ export default {
       myFaculty: '',
       myDepartment: '',
     },
+    form3: {},
+    disable_resend_btn: false,
     schools: [],
     select: null,
     show3: false,
@@ -210,20 +247,25 @@ export default {
     form: {
       name: {required},
       username: {required},
+      phone: {required, minLength: minLength(10)},
       email: {required, email},
       is_student: {required},
       password1: {required, minLength: minLength(6)},
-      password2: {required, minLength: minLength(6), sameAsPassword: sameAs('password1')}
+      // password2: {required, minLength: minLength(6), sameAsPassword: sameAs('password1')}
     },
     form2: {
       mySchool: {required},
       myFaculty: {required},
       myDepartment: {required}
-    }
+    },
+    form3: {
+      verification_code: '',
+      verification_code_from_user: ''
+    },
   },
   components:{
     // 'toolbar':Nav,
-    footr:Footer
+    footr: Footer
   },
   computed: {
     title(){
@@ -233,6 +275,7 @@ export default {
       switch (this.step) {
         case 1: return 'Sign Up For Free'
         case 2: return 'Almost done...'
+        case 3: return 'Verify Phone'
         default: return 'Account created'
       }
     },
@@ -268,7 +311,15 @@ export default {
       const errors = []
       if (!this.$v.form.username.$dirty) return errors
       !this.$v.form.username.required && errors.push('Username is required')
-      this.usernameIsTaken() && errors.push('Username is taken')
+      // !this.usernameIsTaken() && errors.push('Username is taken')
+      return errors
+    },
+    phoneErrors () {
+      const errors = []
+      if (!this.$v.form.phone.$dirty) return errors
+      !this.$v.form.phone.required && errors.push('Phone number is required')
+      // !this.phoneIsTaken() && errors.push('Phone number already exists')
+      !this.$v.form.phone.minLength && errors.push('Please use a valid phone number.')
       return errors
     },
     disable_step_two(){
@@ -283,19 +334,25 @@ export default {
       this.$v.form.$touch()
 
       if(this.step == 1 && this.$v.form.$anyError){
-        
+        // console.log(this.$v.form)
       }
       else if(this.step == 2 && this.$v.form2.$anyError){
 
       }
+      else if(this.step == 2){
+        this.sendVerificationToPhone()
+      }
+      else if(this.step == 3){
+        this.verifyPhone()
+      }
       else {
         // console.log(this.$v.form2)
-        this.step == 2 ? this.signup() : this.step++
+        // this.step == 2 ? this.signup() : this.step++
+        this.step++
       }
     },
     async getSchools(){
       try {
-        // let schls = await api2().post('dashboard/getSchools')
         
         this.schools = schools
       } catch (error) {
@@ -324,103 +381,85 @@ export default {
         // console.log(err)
       }
     },
-    sendVerificationLInk(alert){
-      this.sending_link = true
-      return new Promise((resolve, reject)=>{
-        if(firebase.auth().currentUser){
+    sendVerificationToEmail(){
 
-          firebase.auth().currentUser.sendEmailVerification().then(done=>{
-            
-            this.sending_link = false
+    },
+    resendCode(){
 
-            if(alert){
-              this.confirm_text = 'Verification link has been resent'
-              
-            }
-            resolve(done)
-          }).catch(err => {
-            this.sending_link  = false
-            reject(err)
-          })
+      this.disable_resend_btn = true
+      this.form3.verification_code = this.$helpers.getRandomNumber()
+      console.log(this.form3)
+
+      this.snackbar = {
+        show: true,
+        message: 'Verification Code resent',
+        color: 'info'
+      }
+    },
+    async sendVerificationToPhone(){
+
+      // check that the phone number doesn't already exist in db
+      let exists = await this.phoneIsTaken()
+
+      if(exists){
+
+        this.snackbar = {
+          show: true,
+          message: 'That phone number already exists in the system',
+          color: 'error'
         }
-      })
-    },
-    async send(){
-      if(this.$v.form2.$anyError){
-        this.snackbar = {status:true,color:'error', message:'Passwords do not match'}
+        
+        this.step = 1
+        
+        return 
       }
-      else{
+      else {
+        // phone doesn't exist, send the code
 
-        let user = this.form
-        let two_weeks = 14 * 24* 60 * 60 * 1000
-
-        user.school = this.form2.mySchool.text
-        user.faculty = this.form2.myFaculty.text
-        user.department = this.form2.myDepartment.text
-        // user.trial_expiry_date = (new Date().getTime()) + two_weeks
         this.loading = true
+        console.log(this.form3)
         
-
-        // console.log(user)
-        // console.log(new Date(user.trial_expiry_date))
-        api().post('createUser', user).then(result => {
-          firebase.auth().signInWithCustomToken(result.data.token).then(() => {
-            // console.log(result.data)
-            // this.snackbar = {
-            //   show: true,
-            //   color: 'purple',
-            //   message: `Welcome to ${this.$appName}`
-            // }
-            // this.$router.push('/home/?welcome=true')
-
-            this.sendVerificationLInk().then(()=> {
-              this.show_confirm_text = true
-            })
-              
-          })
-          .catch(function(error) {
-            // Handle Errors here.
-            var errorCode = error.code;
-            var errorMessage = error.message;
-            // console.log(error.response.data)
-            this.snackbar = {
-              show: true,
-              message: error.response.data.message,
-              color: 'error'
-            }
-            // ...
-          });
-        }).catch(err => {
-          // console.log(err.response.data)
+        setTimeout(() => {
+          this.form3.verification_code = this.$helpers.getRandomNumber()
           this.loading = false
-          this.snackbar = {
-            show: true,
-            color: 'error',
-            message: err.response.data.message
-          }
-        })
-        
+          this.step++
+        }, 2000);
       }
     },
-    usernameIsTaken(){
+    async usernameIsTaken(){
       // check that username does not exist already
       let isTaken = true;
 
       this.$gun.get('users').get(this.form.username).not(function(key){
+        
         isTaken = key ? false : true
+        
       })
 
-      return isTaken
+      let u = await this.$gun.get('users').get(this.form.username).then()
+
+      return !!u
+
+    },
+    async phoneIsTaken(){
+      // check that the phone number doesn't already exist in db
+      
+      let exists = await this.$gun.get('phone_numbers').get('234' + this.form.phone).then()
+      return !!exists
+
     },
     async signup(){
       try {
+
+        this.loading = true;
+
         let data = {
           name: this.form.name,
           email: this.form.email,
           username: this.form.username,
+          phone: '234' + this.form.phone,
           is_student: this.form.is_student,
           was_once_a_student: this.form.is_student,
-          displayName: this.form.name,
           photoURL: '',
           password: this.form.password1,
           sch: this.form2.mySchool.text,
@@ -428,7 +467,7 @@ export default {
           fac: this.form2.myFaculty.text
         }
 
-        if(this.usernameIsTaken()){
+        if(await this.usernameIsTaken()){
           this.loading = false
           this.step = 1
           this.alert = {
@@ -439,7 +478,12 @@ export default {
         }
 
         else {
-          this.loading = true
+          // console.log('Username not taken... About to signup...')
+          
+          // get token for authentication from api server
+          let token = await this.getToken()
+          data.token = token;
+          
           await Auth.signup(data)
           this.loading = false
         }
@@ -447,23 +491,47 @@ export default {
       } catch (error) {
         console.log(error)
       }
+    },
+    async verifyPhone(){
+      
+      // check that saved code matches user input
+      if(this.form3.verification_code == this.form3.verification_code_from_user){
+
+        // code matches, save the number
+        this.$gun.get('phone_numbers').get('234' + this.form.phone)
+        .put(this.form.username)
+
+        this.signup()
+      }
+      else {
+        this.snackbar = {
+          show: true,
+          message: 'Invalid or expired code',
+          color: 'error'
+        }
+      }
+      
+    },
+    async getToken(){
+      let resp = await api().post('/createToken', {username: this.form.username})
+      return resp.data.token
     }
   },
-  mounted(){
+  async mounted(){
     this.getSchools()
     document.getElementById('welcome_logo').style.display = 'none'
-    // this.usernameIsTaken()
+
+    // let e = await this.$gun.get('users').get('bradpi').then()
+    // console.log(!!e)
   }
 }
 
 // import Nav from '@/components/Nav'
-  import api from '@/services/api'
-  import api2 from '@/services/api2'
+  import api from '@/services/api2'
   import Auth from '@/plugins/auth'
-  import {schools} from '@/assets/js/schools'
+  import { schools } from '@/assets/js/schools'
   import Footer from '@/components/Footer'
   import { required, minLength, email, sameAs } from 'vuelidate/lib/validators'
-  import {firebase, db, database} from '@/plugins/firebase'
 </script>
 <style lang="scss" scoped>
   @mixin MainColor(){
@@ -478,6 +546,10 @@ export default {
   
   .form_buttons button{
     text-transform:none;
+  }
+
+  .v-btn {
+    text-transform: capitalize;
   }
   
 </style>

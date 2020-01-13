@@ -8,18 +8,26 @@
       <v-card height="" width="" tile >
         <v-card-text class="">
           <v-row class="pt-2" justify="center">
-            <v-col class="pa-0 pt-1" cols="6">
+            <v-col class="pa-0 pt-1" cols="6" style="position: relative;">
+
               <v-avatar
-                class="profile ro"
-                color="grey"
-                size="130"
-                
+                size="137"
+                color="white"
+                class="elevation-1 pt-1 ml-1 d-inline-block"
               >
-                <v-img 
-                  :src="selectedProfile ? selectedProfile.photoURL || `https://picsum.photos/seed/${1}/130/130?random` : ''" 
-                  height="100%" width="100%">
-                </v-img>
+                <v-avatar
+                  size="130" class=""
+                  color="grey lighten-3"
+                >
+                  <img :src="selectedProfile.photoURL || require('@/assets/profile.jpg')" 
+                    alt="profile_pic" v-if="selectedProfile.photoURL">
+                  <span v-else class="display-2">{{selectedProfile.name ? selectedProfile.name.charAt(0) : ''}}</span>
+                </v-avatar>
               </v-avatar>
+
+              <span :class="{online: selectedProfile.is_online, offline: !selectedProfile.is_online, online_badge: true}" 
+                style="width: 20px;height:20px;position: absolute;bottom:8%;right:7px;">
+              </span>
             </v-col>
             <v-col class="py-0 text-center" cols="12">
               <div>
@@ -27,23 +35,19 @@
                 <v-list>
                   <v-list-item>
                     <v-list-item-content>
-                      <v-list-item-title class="title" style="co: #FF5722">
+                      <v-list-item-title class="title text-capitalize">
                         {{selectedProfile ? selectedProfile.name : ""}}
-                        <span class="online_badge" 
-                          :class="selectedProfile.online ? 'success' : 'orange'">
-                        </span>
+                        
                       </v-list-item-title>
-                      <v-list-item-subtitle>{{selectedProfile ? selectedProfile.dept : ''}}</v-list-item-subtitle>
+                      <v-list-item-subtitle>{{selectedProfile ? selectedProfile.title : ''}}</v-list-item-subtitle>
                     </v-list-item-content>
                   </v-list-item>
                 </v-list>
-                <!-- <v-btn text small 
-                  :color="voted(selectedProfile) ? 'success' : ''">
-                  {{voted(selectedProfile) ? 'Voted' : 'Not Voted'}}
-                </v-btn> | -->
-                <v-btn text small>{{ selectedProfile.followers_count || 0}} Followers</v-btn> | 
-                <v-btn text small>{{ selectedProfile.followings_count || 0}} Following</v-btn>
-                <v-btn text small>@{{selectedProfile.username}}</v-btn>
+                <!-- <v-btn text small>{{ selectedProfile.followings_count || 0}} Following</v-btn> -->
+                <v-btn text small class="mr-2">@{{selectedProfile.username}}</v-btn>
+                <v-btn depressed color="primary" small v-if="selectedProfile.username == getUser.username">
+                  {{ selectedProfile.followers_count || 0}} Followers
+                </v-btn>
 
               </div>
             </v-col>
@@ -51,12 +55,13 @@
           <v-row>
             <v-col class="pl-0">
               <v-card-actions class="pl-0">
-                <v-btn color="info" outlined 
+                <v-btn color="info" depressed
                   v-if="selectedProfile.username != getUser.username"
                   class="mx-auto text-capitalize"
                   :disabled="disabled"
                   @click="follow">
-                  {{isFollowing ? 'Unfollow' : 'Follow'}}
+                  {{is_following ? 'Unfollow' : 'Follow'}}
+                  {{selectedProfile.followers_count || 0}}
                 </v-btn>
               </v-card-actions>
             </v-col>
@@ -72,6 +77,7 @@ export default {
   data: () => ({
     show_profile: false,
     disabled: false,
+    is_following: '',
   }),
   watch: {
     'selectedProfile': function(to, from){
@@ -80,18 +86,19 @@ export default {
     },
     show_profile: function(to,from){
       
-      if(to == false){
-        this.$store.dispatch('openProfile', {})
-      }
+      setTimeout(() => {
+        
+        if(to == false){
+          this.$store.dispatch('openProfile', {})
+        }
+      }, 300);
     }
   },
   computed: {
     ...mapGetters([
       'getUser',
-      'getSchools',
     ]),
     ...mapState([
-      'curRoom',
       'isSuperUser',
       'is_verified',
       'selectedProfile'
@@ -104,7 +111,8 @@ export default {
     },
     followers(){
       let arr = []
-      this.$gun.get(this.selectedProfile.username)
+      this.$gun.get('users')
+        .get(this.selectedProfile.username)
         .get('followers')
         .map()
         .on((f,key)=> {
@@ -123,27 +131,34 @@ export default {
 
   },
   methods: {
-    voted(voter){
-      if(this.currElection){
-        let voted = voter.voted ? voter.voted.find(eId => eId == this.currElection.electionId) : false
-        return voted ? true : false
-      }
-      else{
-        return false
-      }
-    },
     async follow(){
       this.disabled = true
-
-      this.$helpers.followUser(this.getUser, this.selectedProfile)
-      .then(data =>{
-        this.disabled = false
+      try {
         
-      })
-      .catch(err => {
-        console.log(err)
-      })
+        await this.$helpers.followUser(this.getUser, this.selectedProfile)
+        
+        this.disabled = false
+
+      } catch (error) {
+        this.disabled = false
+        console.log(error)
+      }
+      
     },
+
+    initialize(){
+
+      this.$gun.get('users').get(this.selectedProfile.username)
+        .get('followers')
+        .get(this.getUser.username)
+        .on(d => {
+          console.log({d})
+          this.is_following = d ? !!d : false
+        })
+    }
+  },
+  mounted(){
+    this.initialize()
   }
 }
 import { mapState, mapGetters } from 'vuex';

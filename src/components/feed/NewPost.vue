@@ -2,33 +2,28 @@
   
     <v-card>
 
-      <v-toolbar dense flat color="grey lighten-3">
+      <v-toolbar flat color="grey lighten-3">
         <v-btn text icon class="hidden-md-and-up" 
           @click="$eventBus.$emit('HideNewPostDialog',true)">
           <v-icon>mdi-chevron-left</v-icon>
         </v-btn>
         
 
-        <v-subheader class="black--text">New Post</v-subheader>
+        <v-subheader class="black--text">Create a Post</v-subheader>
+         
         <v-toolbar-items>
-          
-          <v-btn :color="form.post_type == 'text' ? 'grey' : ''" 
-            :disabled="loading" depressed 
-            @click.native="form.post_type = 'text'">
-            <v-icon :color="form.post_type == 'text' ? 'white' : 'grey lighten-1'">mdi-pencil</v-icon>
-          </v-btn>
+          <template v-for="item in toolbarItems">
 
-          <v-btn :color="form.post_type == 'image' ? 'grey' : ''"
-            :disabled="loading" depressed
-            @click.native="form.post_type = 'image'">
-            <v-icon :color="form.post_type == 'image' ? 'white' : 'grey lighten-1'">mdi-image</v-icon>
-          </v-btn>
+            <v-btn :color="form.post_type == item.type ? 'white' : 'grey lighten-3'" 
+              :disabled="loading" depressed :key="item.type"
+              @click.native="form.post_type = item.type">
+              <v-icon :color="form.post_type == item.type ? 'info lighten-1' : 'grey'">
+                {{item.icon}}
+              </v-icon>
+            </v-btn>
 
-          <v-btn :color="form.post_type == 'video' ? 'grey lighten-1' : ''" 
-            :disabled="loading" depressed tile 
-            @click.native="form.post_type = 'video'">
-            <v-icon :color="form.post_type == 'video' ? 'white' : 'grey lighten-1'">mdi-video</v-icon>
-          </v-btn>
+          </template>
+
         </v-toolbar-items>
 
 
@@ -40,53 +35,7 @@
         </v-btn>
       </v-toolbar>
 
-      <v-card-text v-if="form.post_type == 'image'">
-        <v-textarea auto-grow color="primary" rows="1"
-          label="Image caption" v-model="form.message"
-          name="broadcast" outlined class="mt-8"
-        ></v-textarea>
-
-        <v-file-input show-size counter
-          outlined append-icon="mdi-image" prepend-icon=""
-          multiple label="Select images" chips
-          v-model="selected_files">
-
-          <template v-slot:selection="{ index, text }">
-            <v-chip
-              v-if="index < 3"
-              color="deep-purple accent-4"
-              dark
-              label
-              small
-            >
-              {{ text }}
-            </v-chip>
-
-            <span
-              v-else-if="index > 3"
-              class="overline grey--text text--darken-3 mx-2"
-            >
-              +{{ selected_files.length - 3 }} File(s)
-            </span>
-          </template>
-        </v-file-input>
-        
-      </v-card-text>
-
-      <v-card-text v-if="form.post_type == 'video'">
-        <v-textarea auto-grow color="primary" rows="1"
-          label="Video caption" v-model="form.message"
-          name="broadcast" outlined class="mt-8"
-        ></v-textarea>
-
-        <v-file-input show-size counter
-          outlined append-icon="mdi-video" prepend-icon=""
-          label="Select video" chips accept="video/mp4"
-          v-model="video_file">
-        </v-file-input>
-      </v-card-text>
-
-      <v-card-text class="" v-if="form.post_type == 'text'">
+      <v-card-text>
         
         <v-card color="" flat tile class="mt-6" min-height="200px">
           <v-textarea auto-grow color="primary"
@@ -94,14 +43,46 @@
             name="broadcast" outlined
           ></v-textarea>
 
-          <v-select
+          <v-file-input show-size counter v-if="form.post_type == 'image'"
+            outlined append-icon="mdi-image" prepend-icon=""
+            multiple label="Select images" chips accept="image/jpeg,image/png,image/gif"
+            v-model="selected_files">
+
+            <template v-slot:selection="{ index, text }">
+              <v-chip
+                v-if="index < 3"
+                color="deep-purple accent-4"
+                dark
+                label
+                small
+              >
+                {{ text }}
+              </v-chip>
+
+              <span
+                v-else-if="index > 3"
+                class="overline grey--text text--darken-3 mx-2"
+              >
+                +{{ selected_files.length - 3 }} File(s)
+              </span>
+            </template>
+          </v-file-input>
+
+          <v-file-input show-size counter
+            v-if="form.post_type == 'video'"
+            outlined append-icon="mdi-video" prepend-icon=""
+            label="Select video" chips accept="video/mp4"
+            v-model="video_file">
+          </v-file-input>
+
+          <!-- <v-select
             :items="getMyEnrolled"
             v-model="audience"
             item-value="electionId"
             item-text="title"
             label="Select your audience"
             outlined dense
-          ></v-select>
+          ></v-select> -->
         </v-card>
             
       </v-card-text>
@@ -125,13 +106,17 @@ export default {
     file_modal: false,
     video_file: null,
     e14: 1,
-    audience: '',
     blob_urls: [],
     selected_files: [],
     form: {
       message: '',
       post_type: 'text'
     },
+    toolbarItems: [
+      {icon: 'mdi-pencil', type: 'text'},
+      {icon: 'mdi-image', type: 'image'},
+      {icon: 'mdi-video', type: 'video'}
+    ],
     loading: false,
   }),
   props: {
@@ -147,13 +132,15 @@ export default {
         return !this.form.message || !this.audience
       }
       if(this.form.post_type == 'image'){
-        return this.selected_files.length == 0 || !this.audience
+        return this.selected_files.length == 0 || !this.audience || !this.form.message
       }
-      // if(this.form.post_type == 'video'){
-      //   return !this.video_file || !this.audience
-      // }
+      if(this.form.post_type == 'video'){
+        return !this.video_file || !this.audience || !this.form.message
+      }
     },
-    
+    audience(){
+      return this.curRoom.electionId
+    },
     ...mapGetters([
       'getUser',
       'getMyEnrolled'
@@ -189,7 +176,7 @@ export default {
       }
 
       let uploaded = []
-
+      
       if(this.form.post_type == 'image' || this.form.post_type == 'video'){
         if(this.selected_files.length > 0){
 
@@ -203,27 +190,31 @@ export default {
           this.createPost()
         }
       }
+      else {
+        this.createPost()
+      }
     },
     async createPost(uploaded){
       
       this.loading = true
-      let postId = uuidv4()
+      let postId = this.$uuidv4()
 
-      let user = this.$gun.get(this.getUser.username)
+      let user = this.$gun.get('users').get(this.getUser.username)
       let postRef = this.$gun.get('elections')
         .get(this.audience)
         .get('posts')
         .get(postId)
 
       let body = this.$sanitize(this.form.message)
-
+      // console.log(user)
+      
       let post_data = {
         docId: postId,
         body: body,
-        elecRef: this.curRoom.electionId,
+        author: this.getUser.username,
+        elecRef: this.audience,
         tstamp: Date.now(),
         type: this.type,
-        img: false,
         videoSrc: false,
         post_type: this.form.post_type,
         dept: this.getUser.dept,
@@ -234,8 +225,8 @@ export default {
 
       let post = postRef
         .put(post_data)
-        .get('author')
-        .put(user)
+        // .get('author')
+        // .put(user)
 
       if(uploaded && uploaded.length > 0){
         
@@ -263,10 +254,15 @@ export default {
     this.$eventBus.$on('Selected_Files', data=>{
 			this.selected_files = data.selected_files,
 			this.blob_urls = data.imgSrc
-		})
+    })
+    
+    // this.$gun.get('users').get(this.getUser.username)
+    // .get('enrolled')
+    // .map()
+    // .get('posts')
+    // .map()
+    // .once(u => console.log(u))
   }
 }
 import {mapGetters, mapState} from 'vuex'
-const uuidv4 = require('uuid/v4');
-// import {firebase, db, database} from '@/plugins/firebase'
 </script>

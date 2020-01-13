@@ -1,26 +1,14 @@
 <template>
-  <div style="background: ;">
+  <div class="bgd">
     <vue-headful :title="title"/>
 
     <navigation>
-      <span slot="title">Feed</span>
-      <v-toolbar slot="extended_nav" color="teal" dark flat
-        style='background-color:#29648a;' dense v-if="breakpoint.smAndDown">
-        <v-tabs v-model="feed_model" color="teal" 
-          v-if="breakpoint.smAndDown" slider-color="yellow">
-          <v-tab
-            v-for="item in ['Feed','Campaigns', 'Events']"
-            :key="item"
-            :href="`#${item}`"
-          >
-            {{ item }}
-          </v-tab>
-        </v-tabs>
-      </v-toolbar>
+      <span slot="title">Home</span>
     </navigation>
 
+    
     <!-- Events -->
-    <v-navigation-drawer width='250' right hide-overlay clipped app style="background:#eceff1;">
+    <v-navigation-drawer width='250' right hide-overlay clipped app class="bgd">
       <v-subheader class="font-weight-bold">Events</v-subheader>
       <v-container grid-list-xs px-2 py-1>
         <v-row row wrap>
@@ -33,7 +21,7 @@
 
     <transition name="fade" mode="out-in">
       <!-- LOADING WIREFRAME -->
-      <v-container grid-list-xl v-if="!ready" fluid>
+      <v-container v-if="!ready" fluid>
         <v-row row wrap justify="space-between">
           <v-col cols="12" sm="12" md="4" order-md2>
             <v-card :height="breakpoint.smAndDown ? 150 : 400" flat class="elevation-0" elevation-0>
@@ -83,129 +71,83 @@
       </v-container>
 
       <!-- MAIN CONTENT -->
-      <v-container :class="['py-0', {'white': feed_model == 'Campaigns'}]" 
-        v-if="ready">
-        <v-row justify="space-between">
-          <v-col cols="12" md="8" class="pt-0">
-            <v-tabs-items v-model="feed_model" class="">
-              <v-tab-item value="Feed" :style="styleForTabs">
+     
+      <v-row justify="space-between" v-if="ready">
+        <v-col cols="12" md="8" class="pt-0">
+          
+          <!-- POSTS AND POSTS ACTIONS -->
+          <v-container>
+            <v-row class="bgd">
+              
+              <!-- POST ACTIONS -->
+              <v-col sm="12" md="12" pb-1 v-if="curRoom">
+                <v-card class="" outlined>
+                  <v-card-actions>
+                  
+                    <v-btn color="primary lighten-2" dark depressed text-color="white" 
+                      @click="isSuperUser ? new_post_dialog = true : $router.push('/upgrade')">      
+                      <v-icon class="pr-2">mdi-plus-circle</v-icon>
+                      New Post
+                    </v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-col>
 
-                <!-- POSTS AND POSTS ACTIONS -->
-                <v-container pa-0 class="grey lighten-4">
-                  <v-row row wrap>
-                    
-                    <!-- POST ACTIONS -->
-                    <v-col sm="12" md="12" pb-1>
-                      <v-card class="round_top" height="" color="" flat>
-                        <v-card-actions>
-                       
-                          <v-btn color="primary lighten-2" dark depressed text-color="white" 
-                            @click="isSuperUser ? new_post_dialog = true : $eventBus.$emit('Show_Upgrade_Dialog')">      
-                            <v-icon class="pr-2">mdi-plus-circle</v-icon>
-                            New Post
-                          </v-btn>
-                        </v-card-actions>
-                      </v-card>
-                    </v-col>
+              <!-- POSTS -->
+              <v-col cols="12" pt-0>
 
-                    <!-- POSTS -->
-                    <v-col cols="12" pt-0>
+                <welcome-post-template
+                  v-if="posts.length == 0 || $route.query.new"
+                />
 
-                      <welcome-post-template
-                        v-if="posts.length == 0 || $route.query.new"
-                      />
+                <post-template 
+                  :posts="posts"
+                  :loading_more_posts="loading_more_posts"
+                  
+                  @loadmore="''"
+                />
+                
+              </v-col>
 
-                      <post-template 
-                        :posts="posts"
-                        :loading_more_posts="loading_more_posts"
-                        :is-last-doc="isLastDoc"
-                        @loadmore="''"
-                      />
-                      
-                    </v-col>
+            </v-row>
+          </v-container>
+        </v-col>
 
-                  </v-row>
-                </v-container>
-              </v-tab-item>
+        <!-- CAMPAIGNS ON LARGE SCREENS -->
+        <v-col cols="12" md="4" order-sm2 v-if="breakpoint.mdAndUp">
+          <campaigns-list :campaigns="campaigns" :sorted="sorted"/>
+        </v-col>
 
-              <v-tab-item value="Campaigns" v-if="breakpoint.smAndDown" :style="styleForTabs">
-                <!-- <v-container grid-list-xs pa-0>
-                  <v-row column fill-height>
-                    <v-col cols="12">
-                      <v-card flat class="elevation-0" elevation-0 :dark="$store.state.theme == 'dark'">
-                        <v-subheader class="font-weight-bold">Campaigns</v-subheader>
-                        <v-list dense>
-                          <v-list-item  @click="newCampaign" v-if="isSuperUser">
-                            <v-list-item-avatar color="grey">
-                              <v-avatar size="40" color="grey">
-                                <v-icon small color="white">mdi-plus</v-icon>
-                              </v-avatar>
-                            </v-list-item-avatar>
-                            <v-list-item-content>
-                              <v-list-item-title class="primary--text">
-                                Add Your Campaign</v-list-item-title>
-                            </v-list-item-content>
-                          </v-list-item>
-                        </v-list>
-
-                        <v-list two-line dense  v-if="getCampaigns.length > 0">
-                          <v-list-item  v-for="(campaign,i) in sorted" :key="i" @click="selectCampaign(campaign)">
-                            <v-list-item-avatar :color="$helpers.colorMinder(campaign.author.name.charAt(0))">
-                              <v-avatar size="45" :color="$helpers.colorMinder(campaign.author.name.charAt(0))">
-                                <img :src="campaign.author.photoURL" v-if="campaign.author.photoURL" alt="alt">
-                                <v-icon v-else small color="white">{{campaign.author.name.charAt(0)}}</v-icon>
-                              </v-avatar>
-                            </v-list-item-avatar>
-                            <v-list-item-content>
-                              <v-list-item-title class="primary--text text-capitalize">
-                                {{campaign.author.name}}</v-list-item-title>
-                              <v-list-item-subtitle>
-                                {{$helpers.parseDate(campaign.latest)}}
-                                <v-icon small color="primary" class="pr-1">mdi-chart-donut</v-icon>{{campaign.count}}
-                              </v-list-item-subtitle>
-                            </v-list-item-content>
-                          </v-list-item>
-                        </v-list>
-
-                        <v-card-actions>
-                          <v-btn text small v-if="getCampaigns.length >= 15"
-                            color="primary" class="text-capitalize"
-                            @click="moreCampaigns" :loading="loading_more_campaigns">See More</v-btn>
-                        </v-card-actions>
-                      </v-card>
-                    </v-col>
-                  </v-row>
-                </v-container> -->
-                <campaigns :campaigns="campaigns" :sorted="sorted"/>
-
-              </v-tab-item>
-
-              <v-tab-item value="Events" :style="styleForTabs">
-                <v-container grid-list-xs px-2 py-1>
-                  <v-row row wrap>
-                    <v-col cols="12">
-                      <!-- <list-events/> -->
-                    </v-col>
-                  </v-row>
-                </v-container>
-              </v-tab-item>
-
-            </v-tabs-items>
-          </v-col>
-
-          <!-- ADS AND CAMPAIGNS ON LARGE SCREENS-->
-          <v-col cols="12" md="4" order-sm2 v-if="breakpoint.mdAndUp">
-            <campaigns :campaigns="campaigns" :sorted="sorted"/>
-          </v-col>
-
-        </v-row>
-      </v-container>
+      </v-row>
     </transition>
+
+    <v-bottom-navigation
+      v-model="bottomNav"
+      color="indigo"
+      shift app
+      hide-on-scroll
+      v-if="$vuetify.breakpoint.smAndDown"
+    >
+      <v-btn>
+        <span>Recents</span>
+        <v-icon>mdi-history</v-icon>
+      </v-btn>
+
+      <v-btn>
+        <span>Favorites</span>
+        <v-icon>mdi-heart</v-icon>
+      </v-btn>
+
+      <v-btn>
+        <span>Nearby</span>
+        <v-icon>mdi-map-marker</v-icon>
+      </v-btn>
+    </v-bottom-navigation>
 
     <!-- New Post Dialog -->
     <v-dialog
       v-model="new_post_dialog"
-      scrollable  
+      scrollable :close-on-content-click="false"
       persistent :fullscreen='breakpoint.smAndDown'
       max-width="650px"
       :transition="switchTransition">
@@ -224,6 +166,7 @@ export default {
     expanded: [],
     offset: '',
     posts_offset: '',
+    bottomNav: 3,
     readmore: [],
     loading: [],
     loading_comments: [],
@@ -251,15 +194,15 @@ export default {
   }),
   watch: {
     'curRoom': function(){
-      this.latestPosts()
-      this.latestCampaigns()
+      // this.latestPosts()
+      // this.latestCampaigns()
     },
   },
   components: {
     Navigation,
     ViewProfile,
     NewPost,
-    Campaigns,
+    CampaignsList,
     ListEvents,
     PostTemplate,
     WelcomePostTemplate
@@ -327,73 +270,135 @@ export default {
     },
     async latestPosts(){
 
-      // if(this.curRoom && this.curRoom.electionId){
+        console.log(this.getMyEnrolled)
 
-        this.$gun.get(this.getUser.username)
-        .get('enrolled')
-        .map()
-        .get('posts')
-        .map().on(async (post,key) => {
+        // for (const elec of this.getMyEnrolled) {
+          
+        // }
 
-          let author = post.author['#']
-          // console.log({post, author})
+        // this.$gun.get('users').get(this.getUser.username)
+        // .get('enrolled')
+        // .map()
 
-          let p = Object.assign({}, post)
-          p.author = await this.$gun
-            .get(author).then()
-          if(p.imgs){
-            let imgs = []
-            this.$gun.get(p.imgs['#']).map().once(img => {
-              imgs.push(img)
+        // if(this.getMyEnrolled[0]){
+
+          this.$gun
+          .get('users')
+          .get(this.getUser.username)
+          .get('enrolled')
+          .map()
+          // .get(this.getMyEnrolled[0].electionId)
+          .get('posts')
+          // .map()
+          .open(async (posts,key) => {
+            
+            // let posts = Object.values(data)
+            // console.log(posts)
+            Promise.all(Object.values(posts)
+            .filter(p => p != null && p.author)
+            .map(async p => {
+              console.log({p})
+              return {
+                ...p,
+                // author: await this.$gun.get('users').get(p.author).then(),
+                imgs: p.imgs ? Object.values(p.imgs) : []
+              }
+            })).then(all => {
+              console.log({all})
+              this.posts = all
             })
-            // console.log({imgs})
-            p.imgs = imgs
-          }
-          else {
-            p.imgs = []
-          }
-          this.posts.find(p => p.docId == post.docId) ? '' : this.posts.push(p)
-        })
+
+            // this.posts = posts.map(post => {
   
+              // if(post){
+      
+              //   let p = Object.assign({}, post)
+  
+              //   p.author = typeof post.author == 'object' ? post.author : await this.$gun.get('users')
+              //   .get(post.author).then()
+                
+              //   // p.imgs = post.imgs ? post.imgs : []
+              //   if(post.imgs){
+              //     let imgs = []
+              //     this.$gun.get(post.imgs['#'])
+              //     .once(i => {
+              //       console.log({i})
+              //       delete i['_']
+              //       imgs.push(Object.values(i))
+              //     })
+              //     p.imgs = imgs
+              //   }
+  
+              //   // p.reactions = await this.$gun.get(pos)
+    
+    
+              //   // p.liked = this.hasLiked(p)
+              //   // console.log(p)
+              //   // this.posts.find(p => p.docId == post.docId) ? '' : 
+              //   // this.posts.push(p)
+              //   // return p
+              // }
+            // }).filter(i => i != undefined)
+          })
+
+        // }
+        
         this.ready = true;
-        this.nodata = false
+        
+  
       // }
 
     },
     async latestCampaigns(){
       
-      if(this.curRoom && this.curRoom.electionId){
+      let now = Date.now()
+      let twenty4hrs = 24 * 60 * 60 * 1000
+      let date_key = (new Date()).toISOString().substr(0,10)
+      
+      let myArr = []
+      // get an election's campaigns
+      this.$gun.get('users').get(this.getUser.username)
+        .get('enrolled')
+        .map()
+        .get('campaigns')
+        .get(date_key) // get only today campaigns
+        .map()
+        .on((d,k) => {
+          // console.log({d,k})
 
-        let now = Date.now()
-        let twenty4hrs = 24 * 60 * 60 * 1000
-        let date_key = (new Date()).toISOString().substr(0,10)
-        
-        let myArr = []
-        // get an election's campaigns
-        this.$gun.get('campaigns')
-          .get(this.curRoom.electionId)
-          .get(date_key) // get only today campaigns
-          .map()
-          .on((d,k) => {
-            console.log({d,k})
-            this.$gun.get(d.author).once(a => {
-              d.author = a
+          let c = Object.assign({}, d)
+          if(d.author){
+
+            this.$gun.get('users').get(d.author).once(a => {
+              c.author = a
             })
-            myArr.push(d)
-            
-          }, {change: true})
+            myArr.push(c)
+          }
           
-        // console.log(myArr)
+        }, {change: true})
+        
+      // console.log(myArr)
 
-        this.campaigns = myArr
-        // .filter(campaign => 
-          
-        //   now - campaign.date_created < twenty4hrs
-            
-        // )
-      }
+      this.campaigns = myArr
 
     
+    },
+    hasLiked(post){
+      let liked = false
+      let postRef = this.$gun.get('elections')
+        .get(post.elecRef)
+        .get('posts')
+        .get(post.docId)
+
+        postRef
+        .get('reactions')
+        .get(this.getUser.username)
+        .once(d => {
+          // rxns.push(d)
+          // console.log({d})
+          liked = d == true ? true : false
+        })
+      return liked
     },
     
   },
@@ -414,6 +419,12 @@ export default {
 
     this.latestPosts()
     this.latestCampaigns()
+
+    if(this.$route.query.new){
+      if(this.isSuperUser){
+        this.new_post_dialog = true
+      }
+    }
     
   },
   destroyed(){
@@ -424,8 +435,8 @@ import Navigation from '@/components/Navigation'
 import PostTemplate from '@/components/feed/PostTemplate'
 import WelcomePostTemplate from '@/components/feed/WelcomePostTemplate'
 import ViewProfile from '@/components/dialogs/ViewProfile'
-import NewPost from '@/components/profile/NewPost'
-import Campaigns from '@/components/feed/Campaigns'
+import NewPost from '@/components/feed/NewPost'
+import CampaignsList from '@/components/feed/CampaignsList'
 
 import {uniq} from 'lodash'
 import ListEvents from '@/components/events/ListEvents'

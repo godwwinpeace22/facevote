@@ -35,7 +35,8 @@
 export default {
   data: () => ({
     showUi: false,
-    regVoters: []
+    regVoters: [],
+    votersRef: ''
   }),
   computed: {
     electionId(){
@@ -68,6 +69,9 @@ export default {
   async mounted(){
     await this.getVoters()
     this.showUi = true
+  },
+  destroyed(){
+    // this.votersRef.off()
   }
 }
 

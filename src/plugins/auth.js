@@ -1,6 +1,5 @@
 import {gun} from './gun'
 import $store from '../store/store'
-import $router from '../router'
 
 const user = gun.user()
 
@@ -14,23 +13,25 @@ export default {
       
 
       let { name, username, password, 
-        is_student, was_once_a_student, email, sch, dept, fac, photoURL, displayName } = payload
-      // console.log(username, password)
+        is_student=false, was_once_a_student=false, 
+        email=false, phone=false, sch=false, 
+        dept=false, 
+        fac=false, photoURL=false, token=false} = payload
+
       return user.create(username, password, async (ack) => {
-        let this_user = gun.get('users').get(username).put({
+        gun.get('users').get(username).put({
           name,
           username,
           email,
+          phone,
           photoURL,
           is_student,
           was_once_a_student,
           sch,
           fac,
           dept,
-          displayName
+          token
         })
-
-        // gun.get('users').set(this_user)
 
         // login the user automatically
         await this.login(payload)
@@ -56,19 +57,19 @@ export default {
             reject(at.err)
           }
           else {
-            // console.log(at)
-            // user.recall({sessionStorage: true})
-            
-            gun.get('users').get(username).once((data, key)=>{
+
+            let user = gun.get('users').get(username)
+            user.put({
+              name: payload.name,
+              username: payload.username,
+              photoURL: payload.photoURL,
+              email: payload.email,
+              is_online: true
+            })
+
+            user.once((data, key)=>{
               
-              console.log({data})
-              
-              $store.dispatch('setUser', data).then(() => {
-                
-                payload.returnTo ?
-                $router.push(payload.returnTo) : 
-                $router.push('/home')
-              })
+              $store.dispatch('setUser', data)
 
               resolve(data)
             })
@@ -78,10 +79,24 @@ export default {
         })
 
       })
-      // console.log(d)
+      
     } catch (error) {
       throw error
     }
+  },
+  async aliasIsTaken (alias){
+    // check that alias does not exist already
+
+    let u = await gun.get('users').get(alias).then()
+
+    return !!u
+
+  },
+  updateUser(payload){
+    gun.get('users').get(payload.username)
+      .put(payload)
+
+    this.login(payload)
   }
 }
 

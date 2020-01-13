@@ -23,30 +23,28 @@
     
     <!-- <v-btn color="warning" to="/campaign-pages/3">Campaign page</v-btn> -->
 
-    <v-btn color="success" class="mt-2"
+    <v-btn color="success" class="mt-1 mr-2"
       v-if="$vuetify.breakpoint.smAndUp && !isSuperUser" 
-      @click="$eventBus.$emit('Open_Upgrade_Dialog')">
+      @click="$router.push('/upgrade')">
       Upgrade
     </v-btn>
 
     <v-btn depressed color="teal lighten-2" 
-      :icon="$vuetify.breakpoint.xsOnly" class="text-capitalize mt-2"
+      :icon="$vuetify.breakpoint.xsOnly" class="text-capitalize mt-1"
       :to="curRoom ? `/elections/${curRoom.electionId}` : ''" 
       dark exact>
       <v-icon color="" class="mr-sm-2">mdi-vote-outline</v-icon>
       <span class="hidden-xs-only">Vote</span>
     </v-btn>
 
-    <!-- <v-divider inset vertical class="mr-2"></v-divider> -->
-
     <v-menu transition="slide-y-transition" offset-y v-if="getUser">
       <template v-slot:activator="{on}">
-        <v-btn text v-on="on" class="mt-2">
+        <v-btn text v-on="on" class="mt-1">
           <template v-if="$vuetify.breakpoint.smAndUp">
-            <v-avatar size="36" :color="$helpers.colorMinder(getUser.displayName.charAt(0))">
+            <v-avatar size="36" :color="$helpers.colorMinder(getUser.name.charAt(0))">
               <img v-if="getUser && getUser.photoURL" :src="getUser.photoURL" alt="avatar">
               <img v-else-if="getUser.photoURL"  :src="getUser.photoURL" alt="avatar">
-              <span v-else class="white--text headline text-capitalize">{{getUser.displayName.charAt(0)}}</span>
+              <span v-else class="white--text headline text-capitalize">{{getUser.name.charAt(0)}}</span>
             </v-avatar>
             <v-icon dark>mdi-menu-down</v-icon>
           </template>

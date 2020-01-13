@@ -1,20 +1,20 @@
 import axios from 'axios'
-import $Nprogress from 'nprogress'
+// import $Nprogress from 'nprogress'
 
 const instance = axios.create({
-    // baseURL: 'http://localhost:5080',
-    baseURL: "https://securepoll.herokuapp.com"
+    baseURL: 'http://localhost:5000/api',
+    // baseURL: "https://securepoll.herokuapp.com"
 })
 
 // Start nprogress before request is made
 instance.interceptors.request.use(config => {
-    $Nprogress.start()
+    // $Nprogress.start()
     return config
 })
 
     // Stop nprogress before response is returned
 instance.interceptors.response.use(response => {
-    $Nprogress.done()
+    // $Nprogress.done()
     return response
 })
 export default ()=>{

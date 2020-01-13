@@ -21,7 +21,7 @@
             <v-divider></v-divider>
             <v-stepper-step :complete="step > 2" step="2">Add a Schedule</v-stepper-step>
             <v-divider></v-divider>
-            <v-stepper-step :complete="step > 3" step="3">Contestats and Roles</v-stepper-step>
+            <v-stepper-step :complete="step > 3" step="3">Contestants and Roles</v-stepper-step>
             <v-divider></v-divider>
             <v-stepper-step :complete="step > 4" step="4">Voting and results</v-stepper-step>
             <v-stepper-step :complete="step > 5" step="5">Payment</v-stepper-step>
@@ -80,6 +80,8 @@
                         item-disabled="disabled"
                         color="primary"
                         label="Select type"
+                        persistent-hint
+                        hint="Only students can create school elections"
                       ></v-select>
                     </v-col>
 
@@ -98,15 +100,7 @@
                   </v-row>
                 </v-col>
 
-                      
               </v-row>
-              
-              <template v-if="!is_verified">
-                <v-btn color="error" to="/verify">
-                  Verify your Account <v-icon>mdi-chevron-right</v-icon>
-                </v-btn>
-                <small class="d-block ml-2">Verify your account before you can create elections</small>
-              </template>
 
               <v-btn color="success" @click="step = 2" v-if="!disabled_step_one">
                 Next step <v-icon>mdi-chevron-right</v-icon>
@@ -135,7 +129,7 @@
                           </template>
 
                           <v-date-picker v-model="form.date" 
-                            scrollable :allowed-dates="allowedDates" 
+                            :allowed-dates="allowedDates" 
                             header-color="primary">
                             <v-spacer></v-spacer>
                              <v-btn text   @click="modal = false">Cancel</v-btn>
@@ -159,7 +153,9 @@
                               <v-icon color="primary" slot="prepend-inner">mdi-clock</v-icon>
                             </v-text-field>
                           </template>
-                          <v-time-picker v-if="modal2" format="ampm" v-model="form.time" header-color='primary'>
+                          <v-time-picker v-if="modal2" format="ampm" 
+                            v-model="form.time" header-color='primary'
+                            :allowed-hours="allowedHours">
                             <v-spacer></v-spacer>
                              <v-btn text  @click="modal2 = false">Cancel</v-btn>
                              <v-btn text color="success" outlined @click="$refs.dialog2.save(form.time)">OK</v-btn>
@@ -181,7 +177,7 @@
 												</template>
 
 												<v-date-picker v-model="form.enddate" 
-													scrollable :allowed-dates="allowedDates" 
+													scrollable :allowed-dates="allowedDates2" 
 													header-color="primary">
 													<v-spacer></v-spacer>
 														<v-btn text   @click="modal5 = false">Cancel</v-btn>
@@ -205,31 +201,21 @@
 														<v-icon color="primary" slot="prepend-inner">mdi-clock</v-icon>
 													</v-text-field>
 												</template>
-												<v-time-picker v-if="modal3" format="ampm" v-model="form.endtime" header-color='primary'>
+
+												<v-time-picker v-if="modal3" format="ampm" 
+                          :allowed-hours="allowedHours2" 
+                          v-model="form.endtime" 
+                          header-color='primary'>
 													<v-spacer></v-spacer>
+
 														<v-btn text  @click="modal3 = false">Cancel</v-btn>
-														<v-btn text color="success" outlined @click="$refs.dialog3.save(form.endtime)">OK</v-btn>
+														<v-btn text color="success" outlined 
+                              @click="$refs.dialog3.save(form.endtime)">
+                              OK</v-btn>
 												</v-time-picker>
+
 											</v-dialog>
 										</v-col>
-
-                      <!-- <v-col sm="6">
-                        <v-subheader class='font-weight-bold mb-0 pl-0'>Duration
-                          <v-tooltip right max-width="300" dark class="d-inline-block mt-3">
-                            <template v-slot:activator="{on}">
-                              <v-icon v-on="on" small class="ml-2">mdi-help-circle</v-icon>
-                            </template>
-                            <span>How long the election should run</span>
-                          </v-tooltip>
-                        </v-subheader>
-                        <v-slider 
-                          v-model="form.electionDuration" 
-                          thumb-color="primary"
-                          :thumb-size="24" ticks thumb-label 
-                          :label="form.electionDuration + ' hrs'" 
-                          :min="1" :max='24'>
-                        </v-slider>
-                      </v-col> -->
 
                       <v-col sm="12" style="padding-bottom:0px;">
                         <v-subheader class="font-weight-bold pl-0 mb-0">Auto start </v-subheader>
@@ -286,10 +272,15 @@
                           name="name" color="primary" hint="e.g what this role can do"
                         ></v-textarea>
                       </v-card-text>
+                      
                       <v-card-actions>
                         <v-spacer></v-spacer>
                          <v-btn text @click.native="dialog = false">Cancel</v-btn>
-                         <v-btn text color="success" @click.native="addrole" :disabled="!role_input.trim()">Add role</v-btn>
+
+                         <v-btn text color="success" 
+                          @click.native="addrole" 
+                          :disabled="!role_input.trim()">
+                          Add role</v-btn>
                       </v-card-actions>
                     </v-card>
                   </v-dialog>
@@ -302,7 +293,18 @@
                     chips label="Roles"
                     multiple outlined
                   ></v-select>
-                  <v-checkbox light label="Automatically enroll me into this election" v-model="form.auto_enroll_admin" value></v-checkbox>
+
+                  <v-subheader class="font-weight-bold mb-2 pl-0">Who can contest for this election?</v-subheader>
+                  <v-radio-group class="" v-model="form.who_can_contest" mandatory>
+                    <v-radio label="Everyone" value="everyone"></v-radio>
+                    <v-radio label="Everyone with access token" value="everyone_with_access"></v-radio>
+                    <v-radio label="Manual selection" value="manual"></v-radio>
+                  </v-radio-group>
+
+                  <v-checkbox light 
+                    label="Automatically enroll me into this election" 
+                    v-model="form.auto_enroll_admin" value>
+                  </v-checkbox>
                   
                 </v-container>
                 
@@ -312,7 +314,7 @@
                   <v-icon small>mdi-chevron-left</v-icon>
                   Previous
                 </v-btn>
-                <v-btn color="success" @click="step = 4" v-if="!disabled_step_three">
+                <v-btn color="success" depressed @click="step = 4" v-if="!disabled_step_three">
                   Next step <v-icon>mdi-chevron-right</v-icon>
                 </v-btn>
               </v-card-actions>
@@ -323,51 +325,47 @@
               <v-card color="" flat class="mb-5" light>
                 <v-card-text>
 
-                  <v-subheader class="font-weight-bold mb-2">Voter registration</v-subheader>
-                  <p class="ml-4">How would you register voters?</p>
-                  <v-radio-group class="ml-4" v-model="form.self_registration" mandatory>
+                  <v-subheader class="font-weight-bold mb-2">Who Can Vote</v-subheader>
+                  
+                  <v-radio-group class="ml-4" v-model="form.who_can_vote" mandatory>
                     
-                    <v-radio label="Voters register by themselves" :value="true"></v-radio>
-                    <v-radio label="Add voters manually" :value="false"></v-radio>
+                    <v-radio 
+                      label="Anyone can vote ananymouosly" 
+                      value="anyone"></v-radio>
+                    <!-- <v-radio 
+                      label="Only those with access token can vote" 
+                      value="anyone_with_access"></v-radio> -->
+                    <v-radio 
+                      label="Only those added manually can vote" 
+                      value="manual"></v-radio>
                   </v-radio-group>
 
-                  <v-card flat v-if="form.self_registration" max-width="900">
-                    <v-card-text>
-                      
-                      <p class="">Estimated number of voters</p>
-                      <v-slider 
-                        :label="no_of_voters.toString()"
-                        color="primary" 
-                        :min="100" :max="50000" 
-                        v-model="no_of_voters">
-                      </v-slider>
-
-                    </v-card-text>
-                  </v-card>
-
-                  <v-card v-else flat width="500" class="grey lighten-4">
-                    <v-card-text>
-                      <span class="v-card--title">
-                        List of voters
-                      </span>
-                      <v-textarea rows="10" 
-                        label="Enter comma seperated list of phone numbers"
-                        outlined>
-                      </v-textarea>
-                      
-                    </v-card-text>
-                  </v-card>
+                  <v-subheader class="font-weight-bold mb-2">Voter Verification Method</v-subheader>
+                  
+                  <v-radio-group class="ml-4" v-model="form.verification_method" mandatory>
+                    
+                    <v-radio 
+                      label="Default - the default level of verification" 
+                      value="default"></v-radio>
+                    <v-radio 
+                      label="BVN Verification (Nigeria Only)" 
+                      value="bvn"></v-radio>
+                    <v-radio 
+                      label="Face recognition (Soon)" 
+                      value="face_rec" disabled></v-radio>
+                    <v-radio
+                      label="Finger print (Soon)" 
+                      value="face_rec" disabled></v-radio>
+                  </v-radio-group>
 
                   <v-divider class="m"></v-divider>
 
-                  
-
                   <v-list three-line subheader>
                     <v-subheader class="font-weight-bold mb-0">Voting</v-subheader>
-                    <v-list-item>
+                    <v-list-item :disabled="form.type != 'Others'">
                       <v-list-item-action>
                         <v-checkbox 
-                          :readonly="form.type == 'School'"
+                          :disabled="form.type != 'Others'"
                           v-model="form.allow_multiple_voting"
                           class="mt-0"
                           color="success">
@@ -376,26 +374,14 @@
                       </v-list-item-action>
                       <v-list-item-content>
                         <v-list-item-title>Allow multiple voting</v-list-item-title>
-                        <v-list-item-subtitle>This is useful for peagentries, tv shows, e.t.c</v-list-item-subtitle>
-                        <v-list-item-subtitle class="warning--text">Note: This option is not available for school elections.</v-list-item-subtitle>
+                        <v-list-item-subtitle>Voters vote more than once</v-list-item-subtitle>
+                        <!-- <v-list-item-subtitle 
+                          class="warning--text">
+                          Note: This option is not available for school and government elections.
+                        </v-list-item-subtitle> -->
                       </v-list-item-content>
                     </v-list-item>
-                    <v-list-item>
-                      <v-list-item-action>
-                        <v-checkbox 
-                          :readonly="form.type == 'School'"
-                          class="mt-0"
-                          v-model="form.secret_ballot"
-                          color="success">
-                        </v-checkbox>
-                        
-                      </v-list-item-action>
-                      <v-list-item-content>
-                        <v-list-item-title>Secret ballot</v-list-item-title>
-                        <v-list-item-subtitle>Votes are anonymous - votes can't be linked with voters.</v-list-item-subtitle>
-                        <v-list-item-subtitle class="warning--text">Note: This option is mandatory for school elections</v-list-item-subtitle>
-                      </v-list-item-content>
-                    </v-list-item>
+                    
                   </v-list>
 
                   <v-divider></v-divider>
@@ -428,7 +414,7 @@
                 <v-icon small>mdi-chevron-left</v-icon>
                 Previous
               </v-btn>
-               <v-btn text @click="step = 5" depressed color="primary">
+               <v-btn depressed @click="step = 5" color="primary">
                 Next
                 <v-icon small>mdi-chevron-right</v-icon>
               </v-btn>
@@ -436,72 +422,99 @@
             </v-stepper-content>
 
             <v-stepper-content step="5">
-              <v-card flat max-width="800">
-                <v-subheader>Complete your setup</v-subheader>
+              <v-card flat outlined>
+                <div class="v-card__title">Complete your setup</div>
                 <v-card-text>
                   <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. 
                     Fugit laboriosam a cum, accusantium labore quidem dolorem fuga 
                     quia temporibus ad perferendis? Dignissimos
                   </p>
 
-                  <v-select
-                    class="mt-5"
-                    :items="verification_methods"
-                    v-model="form.verification_method"
-                    label="Select voter verification method"
-                  ></v-select>
+                  <v-row justify="center">
+                    <v-col cols="12" sm="4" md="3" v-for="plan in plans" :key="plan.amount + '-a'">
+                      <v-card outlined>
+                        <v-card-title primary-title :class="[plan.color, 'white--text']">
+                          {{plan.title}}
+                        </v-card-title>
+                        <div class="v-card__title">
+                          <span>$ {{plan.amount}}</span> 
+                          <!-- <small class="ml-3">per election</small> -->
+                        </div>
+                        <v-divider></v-divider>
+                          <v-list three-line>
+                            <v-list-item >
+                              <!-- <v-list-item-action>
+                                <v-icon>mdi-home</v-icon>
+                              </v-list-item-action> -->
+                              <v-list-item-content>
+                                <v-list-item-title>
+                                  <v-icon color="success" small>mdi-check</v-icon>
+                                  # of contests
+                                </v-list-item-title>
+                                <v-list-item-subtitle>
+                                  {{plan.feature1.text}}
+                                </v-list-item-subtitle>
 
-                  <div class="font-weight-bold text-center title">
-                    <div>Amount due:</div>
-                    NGN {{(no_of_voters * price_per_voter).toLocaleString()}}
-                  </div>
+                              </v-list-item-content>
+                            </v-list-item>
+                            <v-list-item >
+                              <!-- <v-list-item-action>
+                                <v-icon>mdi-home</v-icon>
+                              </v-list-item-action> -->
+                              <v-list-item-content>
+                                <v-list-item-title>
+                                  <v-icon color="success" small>mdi-check</v-icon>
+                                  # of voters
+                                </v-list-item-title>
+                                <v-list-item-subtitle>
+                                  {{plan.feature2.text}}
+                                </v-list-item-subtitle>
+
+                              </v-list-item-content>
+                            </v-list-item>
+                            <v-list-item >
+                              <v-list-item-content>
+                                <v-list-item-title>
+                                  <v-icon color="success" small>mdi-check</v-icon>
+                                  Duration of contest
+                                </v-list-item-title>
+                                <v-list-item-subtitle>
+                                  {{plan.feature3.text}}
+                                </v-list-item-subtitle>
+
+                              </v-list-item-content>
+                            </v-list-item>
+                          </v-list>
+                        <v-divider></v-divider>
+                        <v-card-actions>
+                          <v-btn v-if="plan.amount == 'Custom'"
+                            color="info" block depressed target="_blank"
+                            href="https://voteryte.com/contact">
+                            Let's talk
+                          </v-btn>
+                          <v-btn v-else
+                            color="info" block depressed 
+                            @click="selected_plan = plan; plan_dialog = true;">
+                            Select
+                          </v-btn>
+                        </v-card-actions>
+                      </v-card>
+                    </v-col>
+                  </v-row>
                   
+                  <v-btn text href="https://voteryte.com/pricing" 
+                    color="primary" target="_blank">
+                    See detailed pricing
+                    <v-icon small class="ml-1">mdi-open-in-new</v-icon>
+                  </v-btn>
                 </v-card-text>
-                <v-card-actions>
-                  <v-spacer></v-spacer>
-                    <!-- <paystack
-                      :amount="no_of_voters * price_per_voter * 100"
-                      :email="getUser.email"
-                      :metadata="metadata"
-                      :paystackkey="$paystackKey"
-                      :reference="reference"
-                      :callback="callback"
-                      :close="close"
-                      :embed="false"
-                  >
-                    <v-btn class="ml-0 mt-3" color="success">Make Payment</v-btn>
-                  </paystack> -->
-                  <v-btn color="success" @click="create">Create Election</v-btn>
-                </v-card-actions>
               </v-card>
+              
 
               <v-btn text @click="step = 4" color="grey">
                 <v-icon small>mdi-chevron-left</v-icon>
                 Previous
               </v-btn>
-            </v-stepper-content>
-
-            <v-stepper-content step="6">
-              <v-card light>
-                <v-card-text>
-                  <p>Election Created successfully!</p>
-                  
-                </v-card-text>
-                <v-card-actions :class="[{'d-block': $vuetify.breakpoint.xsOnly}]">
-                  
-                  <v-btn color="success" to="/elections/manager" 
-                    :block="$vuetify.breakpoint.xsOnly" 
-                    :class="[{'mb-2 ml-0': $vuetify.breakpoint.xsOnly}]">
-                    Election Manager
-                  </v-btn>
-                  <v-btn color="success" to="/elections/vote" 
-                    :block="$vuetify.breakpoint.xsOnly" 
-                    :class="[{'mb-2 ml-0': $vuetify.breakpoint.xsOnly}]">
-                    Election page
-                  </v-btn>
-                  
-                </v-card-actions>
-              </v-card>
             </v-stepper-content>
 
           </v-stepper-items>
@@ -510,8 +523,43 @@
     </v-container>
     <!--stepper -->
 
+    <v-dialog v-model="plan_dialog" max-width="500">
+      <v-card>
+        <v-card-title primary-title>
+          Selected Plan
+        </v-card-title>
+        <v-card-text>
+          oriosam a cum, accusantium labore quidem dolorem fuga 
+          quia temporibus ad perferendis? Dignissimos
+          {{selected_plan}}
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <paystack 
+            v-if="selected_plan.amount > 0"
+            :amount="selected_plan.amount * 100"
+            :email="getUser.email"
+            :metadata="metadata"
+            :paystackkey="$paystackKey"
+            :reference="$helpers.getRandomString()"
+            :callback="verifyTxn"
+            :close="onClose"
+            :embed="false"
+          >
+            <v-btn class="ml-0 mt-3" depressed block color="primary">Make Payment</v-btn>
+          </paystack>
+            <v-btn class="ml-0 mt-3" 
+              depressed block 
+              v-else @click="createNewElection"
+              color="primary">
+              Create
+            </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- < Creating Election Progress Dialog> -->
-    <v-dialog v-model="creating_election_dialog"
+    <v-dialog v-model="progress_dialog"
       persistent width="300"  >
       <v-card color="primary" dark class="justify-center">
         <v-card-text>
@@ -538,12 +586,8 @@
 </template>
 <script>
 import api from '@/services/api'
-  import api2 from '@/services/api2'
   import { mapGetters, mapState } from 'vuex'
-  import Navigation from '@/components/Navigation'
   import paystack from 'vue-paystack'
-  import randomWords from 'random-words'
-  // import {firebase, db, database} from '@/plugins/firebase'
 
 export default {
   data: ()=>({
@@ -551,6 +595,7 @@ export default {
     description: '',
     snackbar: {},
     plan_dialog: false,
+    selected_plan: 'a',
     price_per_voter: 8,
     no_of_voters: 500,
     newElec: {}, // the newly created election
@@ -560,7 +605,7 @@ export default {
     dialog2: false,
     modal5: false,
     p_text: 'Verifying...',
-    creating_election_dialog: false,
+    progress_dialog: false,
     role_input: '',
     role_input_desc: '',
     modal: false,
@@ -583,7 +628,6 @@ export default {
       time: '',
       electionDuration: 5,
       auto_enroll_admin: true,
-      // public: true,
       roles: [
         {title:'president', value:'president', description:''},
         {title:'secretary', value:'secretary', description:''},
@@ -594,24 +638,14 @@ export default {
         {title:'vice president', value:'vice president',description:''},
         {title:'director of socials', value:'director or socials', description:''}
       ],
-      self_registration: false,
+      who_can_vote: 'manual',
       voter_list: [],
+      who_can_contest: 'everyone_with_access',
       allow_multiple_voting: false,
-      secret_ballot: true,
       realtime_results: true,
       results_visible_to_all: true,
-      verification_method: 'phone',
+      verification_method: 'default',
     },
-    verification_methods: [
-      {text: 'Bvn verification (high security)', value: 'bvn'},
-      {text: 'Phone number verification (moderate security)', value: 'phone'}
-    ],
-    electionTypes: [
-      {text:'School', disabled: false},
-      // {text:'Organizations', disabled: false},
-      {text:'Governement - comming soon',disabled: true},
-      {text:'Others', disabled: false},
-    ],
     levels: [
       [
         {text: 'Students Council Election', value: 'General'},
@@ -624,67 +658,94 @@ export default {
     rules: {
       counter: value => value.length <= 100 || 'Max 100 characters',
     },
-    reference: reference(), //Date.now() + btoa(Math.random()).substring(0,12)
 
   }),
+  watch: {
+    'form.date': function(e){
+     
+      this.form.enddate = ''
+      this.form.endtime = ''
+    },
+    'form.enddate': function(e){
+     
+      this.form.endtime = ''
+    },
+    'form.time': function(e){
+     
+      this.form.enddate = ''
+      this.form.endtime = ''
+    }
+  },
   computed: {
     breakpoint(){
       return this.$vuetify.breakpoint
     },
-    style1(){
-      if(this.$vuetify.breakpoint.xsOnly){
-        return {
-          "min-height": 'calc(100vh - 128px) !important'
-        }
-      }
-    },
     plans(){
       return [
-        {range:'up to 100',max_voters: 100, amount:'0 (Free)', title: 'Lean', color: 'orange'},
-        {range:'up to 1000', max_voters: 1500, amount: 10000, title: 'Jam', color: 'primary'},
-        {range:'up to 10,000', max_voters: 10000, amount: 45000, title: 'Legion', color: 'success'},
-        {range:'up to 50,000', max_voters: 50000, amount: 150000, title: 'Swarm', color: 'cyan'},
+        {amount: 0, title: 'Free', color: 'orange', max_voters: 200,
+          feature1: {title: 'Number of contests', text: 'One contest'},
+          feature2: {title: 'Voters', text: 'Up to 200 voters'},
+          feature3: 'Unlimited contest duration'
+        },
+        {amount: 15000, title: 'Jam', color: 'primary', max_voters: 5000,
+          feature1: {title: 'Number of contests', text: 'One contest'},
+          feature2: {title: 'Voters', text: 'Up to 5,000 voters'},
+          feature3: {title: 'Contest duration', text: 'Unlimited contest duration'}
+        },
+        {amount: 65000, title: 'Legion', color: 'success', max_voters: 30000,
+          feature1: {title: 'Number of contests', text: 'One contest'},
+          feature2: {title: 'Voters', text: 'Up to 30,000 voters'},
+          feature3: {title: 'Contest duration', text: 'Unlimited contest duration'},
+        },
+        {amount: 'Custom', title: 'Swarm', color: 'cyan',
+          feature1: {title: 'Number of contests', text: 'One contest'},
+          feature2: {title: 'Voters', text: 'Up to 1000 voters'},
+          feature3: {title: 'Contest duration', text: 'Unlimited contest duration'}
+        },
       ]
     },
     metadata(){
       return {
-        orderid: this.reference,
+        orderid: this.$helpers.getRandomString(),
         custom_fields: [
-          {
-            display_name: "No of voters",
-            variable_name: "no_of_voters",
-            value: this.no_of_voters
-          },
           {
             display_name: "Amount Paid",
             variable_name: "amount_paid",
-            value: this.no_of_voters * this.price_per_voter
+            value: this.selected_plan.amount
           },
           {
             display_name: "Customer Name",
             variable_name: "customer_name",
-            value: this.getUser.displayName
+            value: this.getUser.name
           },
           {
             display_name: "CustomerId",
             variable_name: "customer_id",
-            value: this.getUser.uid
+            value: this.getUser.username
           }
         ]
       }
     },
+    electionTypes(){
+      return [
+
+        {text:'School', disabled: !this.getUser.is_student},
+        // {text:'Organizations', disabled: false},
+        {text:'Governement - comming soon',disabled: true},
+        {text:'Others', disabled: false},
+      ]
+    },
     disabled_step_one(){
       return !this.form.title.trim() || this.form.title.trim().length > 100 || !this.form.type || 
-      (this.form.type == 'School' && !this.form.level) || (this.form.type == 'Governement' && !this.form.level) || 
-      // (this.form.type == 'School' && !this.form.school) ||
-      // (this.form.level == 'Faculty' && !this.form.faculty) ||
-      // (this.form.level == 'Department' && !this.form.department) || 
-      !this.is_verified
+      (this.form.type == 'School' && !this.form.level) || (this.form.type == 'Governement' && !this.form.level)
+       
     },
     disabled_step_two(){
       return this.form.timed && 
       (!this.form.date || 
       !this.form.time || 
+      !this.form.enddate || 
+      !this.form.endtime || 
       this.form.electionDuration == 0)
       
     },
@@ -715,11 +776,38 @@ export default {
 	
 			return today - toAllow - 24 * 60 * 60 * 1000 <= 0
     },
+    allowedDates2(val){
+			// only allow dates greater than or equal to today
+			let startdate = new Date(this.form.date).getTime()
+      
+			let enddate = new Date(val).getTime()
+	
+			return startdate <= enddate
+    },
     allowedHours(val){
       // only allow hours that are not yet past
       let curHour = new Date().getHours()
-      // console.log(curHour, val)
-      return curHour < val
+			let today = (new Date()).toISOString().substring(0,10)
+      if(this.form.date == today){
+
+				return curHour < val
+			}
+			else {
+				return true
+			}
+    },
+    allowedHours2(val){
+    
+      let starttime = this.form.time.split(':')[0]
+      // console.log(starttime, val)
+
+      if(this.form.date == this.form.enddate){
+        return starttime < val
+      }
+      else {
+        return true
+      }
+      
     },
     addrole(){
       if(this.role_input.length == 0){
@@ -737,78 +825,13 @@ export default {
         }
       
     },
-    async createElection(event){
-
-      this.creating_election_dialog = true
-      this.p_text = 'Creating Election...'
-
-      firebase.auth().currentUser.getIdToken().then((token)=>{
-        // set the full start date in utc
-        this.form.fullStartDate = (new Date(this.form.date + ' ' + this.form.time)).toISOString()
-        this.form.title = this.$sanitize(this.form.title)
-        
-        api().post('create_election',{
-          form: this.form,
-          userInfo: this.getUserInfo,
-          selected_plan: {
-            range: `0 to ${this.no_of_voters}`,
-            max_voters: this.no_of_voters,
-            amount: this.no_of_voters * this.price_per_voter,
-            title: 'payment'
-          },
-          idToken: token
-        }).then(async result =>{
-
-          let electionRef = db.collection('elections').doc(result.data.electionId)
-          let newElec = await electionRef.get()
-          this.newElec = newElec.data()
-          this.$store.dispatch('setMyEnrolled', {
-            election: this.newElec,
-            merge: true
-          })
-
-          this.$store.dispatch('curRoom', this.newElec)
-          
-
-          this.creating_election_dialog = false;
-          this.plan_dialog = false;
-
-          //this.loading = !this.loading
-          this.snackbar = {
-            show: true,
-            message: 'Election created successfully',
-            color: 'success'
-          }
-          this.step = 6
-        })
-        .catch(err => {
-          // console.log(err)
-          this.creating_election_dialog = false
-          this.plan_dialog = false
-          $Nprogress.done()
-
-          this.snackbar = {
-            show: true,
-            message: 'Something went wrong, try again',
-            color: 'error'
-          }
-        })
-      }).catch(err => {
-        this.snackbar = {
-          show: true,
-          message: 'Something went wrong, try again',
-          color: 'error'
-        }
-      })
-      
-    },
     createNewElection(){
       // create an election
 
-      this.creating_election_dialog = true
+      this.progress_dialog = true
       this.p_text = 'Creating Election...'
 
-      let electionId = randomWords({exactly: 2, join: '-'})
+      let electionId = this.$uuidv4()
 
       this.form.fullStartDate = (new Date(this.form.date + ' ' + this.form.time)).toISOString()
       this.form.title = this.$sanitize(this.form.title)
@@ -819,7 +842,6 @@ export default {
         level: this.form.level,
         timed: this.form.timed,
         electionId: electionId,
-        contestants_count: 0,
         sch: this.getUser.sch,
         fac: this.getUser.fac,
         dept: this.getUser.dept,
@@ -828,21 +850,24 @@ export default {
         fullStartDate: this.form.fullStartDate,
         startTime: this.form.time,
         endTime: this.form.endtime,
-        duration: this.form.electionDuration,
-        voterSize: this.no_of_voters,
+        contestants_count: 0,
         voters_count: this.form.auto_enroll_admin ? 1 : 0,
+        voterSize: this.selected_plan.max_voters,
         votersByDept: {},
-        self_registration: false,
-        // voter_list: [],
-        allow_multiple_voting: this.form.type == 'School' ? false : this.form.allow_multiple_voting,
-        secret_ballot: this.form.type == 'School' ? false : this.form.secret_ballot,
+        who_can_vote: this.form.who_can_vote,
+        allow_multiple_voting: this.form.type != 'Others' ? false : this.form.allow_multiple_voting,
         realtime_results: this.form.realtime_results,
         results_visible_to_all: this.form.results_visible_to_all,
         verification_method: this.form.verification_method,
-        dateCreated: Date.now(), // ** TO DO **
-        status: 'inRegistration',
-        // public: this.form.public,
-        official: false
+        who_can_contest: this.form.who_can_contest,
+        cont_access_token: this.$helpers.getRandomString(),
+        voter_access_token: this.$helpers.getRandomString(),
+        enable_forum: true,
+        allow_manifestos: true,
+        dateCreated: this.$Gun.state(),
+        status: 'not_started',
+        official: false,
+        plan: this.selected_plan.title
       }
 
       // create the election
@@ -852,14 +877,14 @@ export default {
 
 
       // set the admin for the election
-      let user = this.$gun.get(this.getUser.username)
-      election.get('admin').put(user)
+      let user = this.$gun.get('users').get(this.getUser.username)
+      election.get('admin').put(this.getUser.username)
       election.get('admins').set(user)
 
       // add the roles
       let temp_role = []
       this.form.roles.forEach(role=>{
-        let new_token = randomWords({exactly:2, join: '-'})
+        let new_token = this.$uuidv4()
         
         election.get('roles')
         .get(this.$uuidv4())
@@ -867,7 +892,6 @@ export default {
           title: role.title,
           description: role.description,
           value: new_token,
-          token: new_token
         })
       })
 
@@ -880,7 +904,7 @@ export default {
       //   })
 
       // save the election for the creator
-      let u = this.$gun.get(this.getUser.username)
+      let u = this.$gun.get('users').get(this.getUser.username)
       let el = this.$gun.get('elections').get(electionId)
 
       user.get('created')
@@ -910,7 +934,7 @@ export default {
           
           
     
-          this.creating_election_dialog = false;
+          this.progress_dialog = false;
           this.plan_dialog = false;
     
           //this.loading = !this.loading
@@ -919,7 +943,9 @@ export default {
             message: 'Election created successfully',
             color: 'success'
           }
-          this.step = 5
+
+          this.$router.push(`/elections/${electionId}/manager`)
+          // this.step = 5
       })
 
     },
@@ -957,85 +983,45 @@ export default {
         }
       });   
     },
-    callback(res){
-      this.verifyTxn(res)
-      // this.create(res)
+    onClose(res){
+      
     },
-    close(res){
-      // this.reference = Date.now() + btoa(Math.random()).substring(0,12)
-    },
-    createPaymentRef(data){
-      return new Promise((resolve,reject)=>{
-        this.p_text = 'Initializing...'
-        db.collection('paymentRefs').add({
-          ...data,
-          by: this.getUser.uid,
-          no_of_voters: this.no_of_voters,
-          price: this.no_of_voters * this.price_per_voter,
-          trxn_date: Date.now()
-        }).then(doc=>resolve(doc))
-        .catch(err=> reject(err))
-      })
-    },
-    verifyTxn(data){
+    verifyTxn(res){
       // verfy on the server that the transaction is ok
-      this.creating_election_dialog = true
+      this.progress_dialog = true
       this.p_text = 'Verifying...'
-
-      firebase.auth().currentUser.getIdToken()
-      .then((token)=>{
-        api().post('/verifyTxn', {
-          token,
-          reference: data.reference,
-          amount: this.no_of_voters * this.price_per_voter * 100
-        }).then(res=>{
-          // transaction is ok, create election
-          this.create(data)
-          
-        }).catch(error=>{
-          // resets the reference to prevent duplicate trxn reference
-          this.reference = Date.now() + btoa(Math.random()).substring(0,12)
-          this.$Nprogress.done()
-
-          this.snackbar = {
-            show:true,
-            message:error.response ? error.response.data.message : 'Transaction failed',
-            color:'error'
-          }
-          this.creating_election_dialog = false;
-        })
-        
+      
+      this.$helpers.verifyTxn({
+        amount: this.selected_plan.amount,
+        ref: res.reference,
+        token: this.getUser.token
       })
-    },
-    create(data){
-      this.creating_election_dialog = true
+      .then(d => {
+        this.createNewElection()
+      })
+      .catch(err => {
 
-      // this.createPaymentRef(data).then(doc=>{
-        // this.reference = Date.now() + btoa(Math.random()).substring(0,12)
-        // this.createElection()
-      // })
-      this.createNewElection()
-    }
+        console.log(err)
+
+        this.snackbar = {
+          show: true,
+          message: 'Transaction not completed',
+          color: 'error'
+        }
+      })
+      
+    },
   },
   components: {
-    Navigation,
+    
     paystack,
   },
   created(){
 
-    // this.setThingsUp()
   }
 }
 
-function reference(){
-  let text = "";
-  let possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-  for( let i=0; i < 10; i++ )
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-
-  return text;
-}
 </script>
 <style lang='scss' scoped>
   @mixin borderRadius($radius) {

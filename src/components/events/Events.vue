@@ -10,12 +10,6 @@
         <span>{{eventData.title}}</span>
       </template>
 
-      <template v-slot:img="{ props }">
-        <v-img
-          :src="eventData.imgSrc || require('@/assets/webinar.jpg')"
-        ></v-img>
-      </template>
-
       <template v-slot:extension>
 
         <v-tabs
@@ -29,80 +23,104 @@
           <v-tab href="#tab-3" class="text-capitalize" v-if="eventData.author && eventData.author.username == getUser.username">
             Settings
           </v-tab>
-          <v-tab href="#tab-4" v-if="$vuetify.breakpoint.smAndDown">
-            Organizer
-          </v-tab>
         </v-tabs>
       </template>
     </navigation>
 
-    <loading-bar v-if="!showUi"></loading-bar>
+    <transition name='fade'>
 
-    <v-container v-else class="px-sm-2">
-      <v-row>
-        <v-col sm="12" md="9">
+    <v-container v-if="showUi" class="px-sm-2">
+      <v-row justify="center">
+        <v-col sm="12" md="10">
           <v-card flat>
 
               <v-tabs-items v-model="tabsValue">
 
                 <v-tab-item value="tab-1">
                   <v-card outlined>
-                    <v-img 
-                      :src="eventData.imgSrc || require('@/assets/webinar.jpg')" 
+                    <v-img
+                      :src="eventData.imgSrc ? eventData.imgSrc : ''" 
                       height="300px" width="100%"
-                      class="d-block mx-auto">
+                      class="d-block mx-auto grey lighten-2"
+                      style="cursor: zoom-in;"
+                      @click="eventData.imgSrc ? $eventBus.$emit('Open_Image_Gallery', {images: [eventData.imgSrc], index: 0}) : ''">
                     </v-img>
-
-                    <v-card-title primary-title>
-                      <div>
-                        <div class="subheader">Date and Time</div>
-                        <v-list >
-                          <v-list-item>
-                            <v-list-item-action>
-                              <v-icon>mdi-clock</v-icon>
-                            </v-list-item-action>
-                            <v-list-item-title>
-                              {{(new Date(eventData.date + ' ' + eventData.time))
-                              .toLocaleString('en-US',options)}}
-                            </v-list-item-title>
-                          </v-list-item>
-                          <v-list-item>
-                            <v-list-item-action>
-                              <v-icon>mdi-map-marker</v-icon>
-                            </v-list-item-action>
-                            <v-list-item-title>
-                              {{eventData.online ?  'Online' : eventData.venue}}
-                            </v-list-item-title>
-                          </v-list-item>
-                        </v-list>
-                        <span class="grey--text">
-                          
-                          <span class="pl-4 red--text" v-if="eventData.live || eventData.ended">
-                            {{ eventData.live ? 'Live Now' : 'Ended'}}</span>
-                        </span>
-                        
-                      </div>
-                    </v-card-title>
+                    
+                    <div class="v-card__title">
+                      {{eventData.title}}
+                      <span class="pl-4 red--text" v-if="eventData.live || eventData.ended">
+                        <v-icon color="red">mdi-access-point</v-icon>
+                        {{ eventData.live ? 'Live Now' : 'Ended'}}
+                      </span>
+                    </div>
+                    <v-list dense>
+                      <v-list-item>
+                        <v-list-item-action>
+                          <v-icon color="primary">mdi-clock-outline</v-icon>
+                        </v-list-item-action>
+                        <v-list-item-title>
+                          {{(new Date(eventData.date + ' ' + eventData.time))
+                          .toLocaleString('en-US',options)}}
+                        </v-list-item-title>
+                      </v-list-item>
+                      <v-list-item>
+                        <v-list-item-action>
+                          <v-icon color="primary">mdi-map-marker-outline</v-icon>
+                        </v-list-item-action>
+                        <v-list-item-title>
+                          {{eventData.online ?  'Online' : eventData.venue}}
+                        </v-list-item-title>
+                      </v-list-item>
+                    </v-list>
 
                     <v-card-actions>
-                      <v-btn text class="text-capitalize">{{eventData.interested}} Interested</v-btn>
-                      <v-btn depressed color="purple" 
-                         class="white--text text-capitalize" :class="{success: isInterested}"
-                        :loading="showing_interest" :disabled="eventData.ended"
-                        @click="showInterest"> 
-                        {{ isInterested ? "Interested" : "Show Interest"}}
+                      <v-btn color="info" depressed small>
+                        <v-icon small >mdi-star</v-icon>
+                        <span class="ml-1 mr-2">Interested</span>
+                        <span>{{eventData.interested}}</span>
                       </v-btn>
-                      <v-spacer></v-spacer>
-                      <v-btn text @click="show = !show" class="text-capitalize">
-                        See Details
-                        <v-icon>{{ show ? 'mdi-chevron-down' : 'mdi-chevron-up' }}</v-icon>
+                      <v-btn color="purple" 
+                        depressed small dark
+                        @click="eventData.started ? tabsValue = 'tab-2' : ''">
+                        <v-icon small>mdi-forum</v-icon>
+                        <span class="ml-2">Join chat</span>
                       </v-btn>
+                      <div>
+                        
+                      </div>
                     </v-card-actions>
+
+                    
+                    <v-divider v-show="show"></v-divider>
 
                     <v-slide-y-transition>
                       <v-card-text v-show="show">
-                        <v-subheader class="pl-0">About</v-subheader>
-                        <pre style="font-family: 'Roboto', sans-serif; white-space: pre-wrap">{{eventData.desc}}</pre>
+                        <v-subheader class="pl-0 font-weight-bold">About Event</v-subheader>
+                        <div v-html="eventData.desc">
+                          
+                        </div>
+
+                        <v-subheader class="pl-0 mt-5 font-weight-bold">About Organizer</v-subheader>
+                        <div>
+                          <v-list two-line>
+                            <v-list-item 
+                              class="pl-0" 
+                              @click="$router.push('/users/' + organizer.username)">
+                              <v-list-item-avatar size="60">
+                                <v-img v-if="organizer.photoURL" :src="organizer.photoURL"></v-img>
+                              </v-list-item-avatar>
+                              <v-list-item-content>
+                                <v-list-item-title class="text-capitalize">
+                                  {{organizer.name}}
+                                </v-list-item-title>
+                                <v-list-item-subtitle>
+                                  {{organizer.username}}
+                                </v-list-item-subtitle>
+                              </v-list-item-content>
+                            </v-list-item>
+                          </v-list>
+                        </div>
+
                       </v-card-text>
                     </v-slide-y-transition>
                   </v-card>
@@ -287,22 +305,61 @@
                         </v-row>
                     </v-card-text>
                   </v-card>
-                </v-tab-item>
 
-                <v-tab-item value="tab-4" v-if="$vuetify.breakpoint.smAndDown">
-                  <event-organizer :organizer="organizer"/>
+                  <v-card outlined class="mt-5">
+                    <v-card-title>
+                      Danger zone
+                    </v-card-title>
+                    <v-card-actions>
+                      
+                      <v-dialog
+                        v-model="delete_dialog"
+                        persistent :overlay="false"
+                        max-width="500px"
+                        transition="dialog-transition"
+                      >
+                        <template v-slot:activator="{on}">
+                          <v-btn 
+                            color="error" v-on="on"
+                            depressed>
+                            Delete event
+                          </v-btn>
+                        </template>
+                        <v-card>
+                          <v-card-title >
+                            Delete this event
+                          </v-card-title>
+                          <v-card-text>
+                            Are your sure?
+                          </v-card-text>
+                          <v-card-actions>
+                            <v-spacer></v-spacer>
+
+                            <v-btn
+                              depressed
+                              @click="delete_dialog = false">
+                              Cancel</v-btn>
+
+                            <v-btn color="error"
+                              depressed
+                              @click="deleteEvent">
+                              Delete</v-btn>
+                          </v-card-actions>
+                        </v-card>
+                      </v-dialog>
+
+                    </v-card-actions>
+                  </v-card>
                 </v-tab-item>
+                
               </v-tabs-items>
           </v-card>
         </v-col>
-        <v-col sm="12" md="3" v-if="$vuetify.breakpoint.mdAndUp">
-          <v-card outlined>
-            <!-- ORGANIZER -->
-            <event-organizer :organizer="organizer"/>
-          </v-card>
-        </v-col>
+
       </v-row>
     </v-container>
+
+    </transition>
 
     <!-- FILE DIALOG -->
     <v-dialog v-model="file_dialog" style="background:#fff;" :persistent="progress_dialog"
@@ -367,8 +424,9 @@ export default {
     tabsValue: 'tab-1',
     eventData: {},
     organizer: {},
-    show: false,
+    show: true,
     message: '',
+    delete_dialog: false,
     file_dialog: false,
     file_message: '',
     files: [],
@@ -505,33 +563,22 @@ export default {
       this.event_update.title = this.$sanitize(this.event_update.title)
       this.event_update.desc = this.$sanitize(this.event_update.desc)
 
+      // console.log(this.event_update)
       let eventRef = this.$gun.get('events')
-          .get(this.eventId)
-
-        eventRef.get('title')
-          .put(this.event_update.title)
-        eventRef.get('desc')
-          .put(this.event_update.desc)
-        eventRef.get('date')
-          .put(this.event_update.date)
-        eventRef.get('time')
-          .put(this.event_update.time)
-
-        this.saving_changes = false
-        this.$eventBus.$emit('Snackbar', {
-          show: true,
-          message: 'Event Updated',
-          color: 'success'
+        .get(this.eventId)
+        .put({
+          title: this.event_update.title,
+          desc: this.event_update.desc,
+          date: this.event_update.date,
+          time: this.event_update.time
         })
 
-
-      // }).catch(err => {
-      //   this.$eventBus.$emit('Snackbar', {
-      //     show: true,
-      //     message: 'Something went wrong. Try again',
-      //     color: 'error'
-      //   })
-      // })
+      this.saving_changes = false
+      this.$eventBus.$emit('Snackbar', {
+        show: true,
+        message: 'Event Updated',
+        color: 'success'
+      })
 
     },
     sendMessage () {
@@ -606,26 +653,26 @@ export default {
     },
     getCurrentEvent(){
       // get the current event
-
-      this.$gun.get('events')
+      this.$gun
+        .get('events')
         .get(this.eventId)
         .on(async e => {
-          let a = e.author['#']
-          console.log(a)
+          
+          // console.log({e})
+          let event = Object.assign({}, e)
 
-          if(a){
-
-            let ab = await this.$gun.get(a).then()
-            this.eventData = e;
-            this.eventData.author = ab
+          if(e){
+            
+            event.author =  e.author
+              
+            this.eventData = event
   
-            this.organizer = ab
+            this.organizer = e.author
             this.showUi = true
-            console.log(this.eventData)
+            // console.log(this.eventData)
             Object.assign(this.event_update, this.eventData)
           }
 
-          console.log(this.eventData)
         })
 
     },
@@ -672,31 +719,28 @@ export default {
       // update the event banner
       // first upload it
       this.uploading = true
-      this.$helpers.uploadImage([this.files[0]], this.cloudinary)
+      this.$helpers.uploadMedia({
+        files: [this.files[0]],
+        options: {
+          height: 300,
+          width: 800
+        }
+      })
       .then(uploaded => {
 
         // update the event banner
-        db.collection('events').doc(this.eventId)
-        .update({
-          imgSrc: uploaded[0]
-        }).then(() => {
+        this.$gun.get('events').get(this.eventId)
+        .get('imgSrc').put(uploaded[0])
 
-          this.uploading = false
-          this.$eventBus.$emit('Snackbar', {
-            show: true,
-            message: 'Event Banner updated',
-            color: 'success'
-          })
-          
-          document.getElementById('file_img').value = null
-        }).catch(err => {
-          this.uploading = false
-          this.$eventBus.$emit('Snackbar', {
-            show: true,
-            message: 'Upload failed',
-            color: 'error'
-          })
+        this.$eventBus.$emit('Snackbar', {
+          show: true,
+          message: 'Event banner updated',
+          color: 'success'
         })
+
+        this.uploading = false
+        this.files = []
+
       }).catch(err => {
         this.uploading = false
         this.$eventBus.$emit('Snackbar', {
@@ -714,6 +758,18 @@ export default {
         behavior: 'smooth'
       }) : ''
     },
+    deleteEvent(){
+      this.$gun.get('events')
+        .get(this.eventId)
+        .put(null)
+        
+      this.$gun.get('users')
+        .get(this.getUser.username)
+        .get('events')
+        .unset(this.eventData['_']['#'])
+
+      this.$router.push('/')
+    }
     
   },
   mounted(){
@@ -729,20 +785,13 @@ export default {
 		})
   },
   components: {
-    Navigation,
-    LoadingBar,
     InteractiveWindow,
     EmojiPicker,
-    EventOrganizer
   }
   
 }
-import Navigation from '@/components/Navigation'
-import LoadingBar from '@/spinners/LoadingBar'
 import InteractiveWindow from '@/components/events/InteractiveWindow'
-import EventOrganizer from '@/components/events/EventOrganizer'
 import EmojiPicker from '@/components/emojis/EmojiPicker'
-import {firebase, db, database} from '@/plugins/firebase'
 import { mapGetters, mapState } from 'vuex';
 </script>
 

@@ -31,8 +31,7 @@
           <span class="title text-capitalize primary--text" >{{organizer.name}}</span>
         </router-link>
         <!-- <span class="online_badge" :class="organizer.online ? 'success' : 'orange'"></span> -->
-        <div class="mt-4" v-if="organizer.is_student">Student at <strong>{{organizer.sch}}</strong>,</div>
-        <div class="" v-if="organizer.is_student">Department of <strong>{{organizer.dept}}</strong></div>
+        <div class="mt-2" >@<strong>{{organizer.username}}</strong></div>
       </v-card-text>
       <v-card-actions class="justify-center" >
         

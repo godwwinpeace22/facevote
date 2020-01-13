@@ -1,9 +1,8 @@
 <template>
   <div>
-    <vue-headful :title="`${user.name} | ${$appName}`"/>
-    <navigation 
+    <!-- <navigation 
       :extension_img=" $vuetify.breakpoint.mdAndUp ? 'https://picsum.photos/1920/1080?random' : require('@/assets/profile.jpg')"
-      :prominent="true"
+      :prominent="false"
       extension_height="50"
       :color="$helpers.colorMinder(user.name ? user.name.charAt(0) : '')"
     >
@@ -49,18 +48,10 @@
         </v-fab-transition>
       </template>
 
-    </navigation>
+    </navigation> -->
 
+    <user-home/>
     
-    <v-container class="px-0 pt-0" v-if="showUi">
-      <v-divider></v-divider>
-
-      <v-row no-gutters>
-        <v-col>
-          <router-view></router-view>
-        </v-col>
-      </v-row>
-    </v-container>
   </div>
 </template>
 
@@ -93,8 +84,9 @@ export default {
     },
     activeFab () {
       switch (this.currentRoute) {
-        case 'user_events': return { color: 'primary', icon: 'mdi-calendar-plus', action: this.newEvent }
-        default: return { color: 'success', icon: 'mdi-square-edit-outline', action: this.newPost }
+        case 'user_events': return { color: 'purple', icon: 'mdi-calendar-plus', action: this.newEvent }
+        case 'user_posts' : return { color: 'success', icon: 'mdi-square-edit-outline', action: this.newPost }
+        default: return { color: 'primary', icon: 'mdi-settings', action: this.editProfile }
       }
     },
     isSameUser(){
@@ -111,7 +103,7 @@ export default {
         {text: 'Posts', link: `${baseUrl}/posts`},
         {text: 'Events', link: `${baseUrl}/events`},
         {text: 'Followers', link: `${baseUrl}/followers`},
-        {text: 'Following', link: `${baseUrl}/following`},
+        // {text: 'Following', link: `${baseUrl}/following`},
         {text: 'Manifestos', link: `${baseUrl}/manifestos`},
         {text: 'Stats', link: `${baseUrl}/about`, show: this.isSameUser}
       ]
@@ -121,13 +113,27 @@ export default {
 
     initialize(){
       
-      this.$gun.get(this.username)
+      this.$gun.get('users').get(this.username)
       .on(u => {
         if(u){
           // console.log(u)
           this.user = u
           // this.$store.dispatch('curProfile', u)
           this.showUi = true
+
+          // view profile
+          if(this.getUser.username != this.username){
+
+            let ref = this.$gun.get('users').get(this.username)
+            .get('profile_views')
+            .get(this.getUser.username)
+            .put({
+              author: this.getUser.username,
+              date_created: this.$Gun.state()
+            })
+          }
+
+          // ref.get('author').put()
         }
         else{
           
@@ -141,6 +147,9 @@ export default {
     },
     newPost(){
       this.$router.push('/home?new=true')
+    },
+    editProfile(){
+      this.$router.push('/settings')
     }
   },
   mounted(){
@@ -148,10 +157,12 @@ export default {
     this.initialize()
   },
   components: {
-    Navigation
+    Navigation,
+    UserHome
   }
 }
 
 import { mapState, mapGetters } from "vuex";
 import Navigation from "@/components/Navigation";
+import UserHome from '@/components/user_profiles/User__Home'
 </script>

@@ -1,206 +1,209 @@
 <template>
   <div>
-    <v-boilerplate
-      class="mb-6"
-      type="table-heading, list-item-two-line, image, table-tfoot"
-    ></v-boilerplate>
     
-    <v-card color="" outlined 
-      tile elevation="1"
-      v-for="(post,i) in uniqPosts" :key="i + '_posts'" 
-      class="mb-3 pb-2">
-      
-      <v-list two-line dense>
-        <v-list-item >
-          <v-list-item-avatar :color="$helpers.colorMinder(post.author.name.charAt(0))">
-            <img :src="post.author.photoURL" v-if="post.author.photoURL">
-            <span class="white--text text-capitalize" v-else>{{post.author.name.charAt(0)}}</span>
-          </v-list-item-avatar>
-          <v-list-item-content>
-            <v-list-item-title class="primary--text text-capitalize font-weight-bold linkify" style="width:fit-content" 
-              @click="$helpers.openProfile($event, post.author)">
-              {{post.author.name}}
-            </v-list-item-title>
-            <v-list-item-subtitle>{{$helpers.parseDate(post.tstamp)}}</v-list-item-subtitle>
-          </v-list-item-content>
-          <v-list-item-action>
-            <v-menu offset-y>
-              <template v-slot:activator="{on}">
-                <v-btn icon dark v-on="on">
-                  <v-icon color="grey">mdi-dots-horizontal</v-icon>
-                </v-btn>
-              </template>
-
-              <v-list dense>
-                <template v-for="item in postMenu" >
-                  <v-list-item @click="postAction(item.action, post)" :key="item.text">
-                    <v-list-item-action style="min-width: 32px;">
-                      <v-icon >{{item.icon}}</v-icon>
-                    </v-list-item-action>
-                    <v-list-item-content>
-                      <v-list-item-title v-text="item.text"></v-list-item-title>
-                      <v-list-item-subtitle v-show="item.sub">{{item.sub}}</v-list-item-subtitle>
-                    </v-list-item-content>
-                  </v-list-item>
+    <template v-for="(post,i) in uniqPosts">
+      <v-divider :key="i + '_key'" v-if="!outlined"></v-divider>
+      <v-card color=""  
+        tile elevation="0"
+         :key="i + '_posts'" 
+        class="mb-3 pb-2 ">
+        
+        <v-list two-line dense class="bgd lighten-1">
+          <v-list-item >
+            <v-list-item-avatar color="primary">
+              <img :src="post.author.photoURL" v-if="post.author.photoURL">
+              <span class="white--text text-capitalize" v-else>{{post.author.name.charAt(0)}}</span>
+            </v-list-item-avatar>
+            <v-list-item-content>
+              <v-list-item-title 
+                class="primary--text text-capitalize font-weight-bold"
+                style="width:fit-content; cursor: pointer;" 
+                @click="$helpers.openProfile($event, post.author)">
+                {{post.author.name}}
+              </v-list-item-title>
+              <v-list-item-subtitle>{{$helpers.parseDate(post.tstamp, true)}}</v-list-item-subtitle>
+            </v-list-item-content>
+            <v-list-item-action>
+              <v-menu offset-y>
+                <template v-slot:activator="{on}">
+                  <v-btn icon dark v-on="on">
+                    <v-icon color="grey">mdi-dots-horizontal</v-icon>
+                  </v-btn>
                 </template>
-              </v-list>
-            </v-menu>
-            <span></span>
-          </v-list-item-action>
-        </v-list-item>
-      </v-list>
 
-      <v-card-text class="px-0 pt-2">
-        <div style="white-space: pre-wrap;" class="px-3"
-          v-if="readmore.find(id=>id == post.docId)" 
-          v-html="$sanitize(post.body)"
-          v-linkified:options="linkify_options">
-        </div>
+                <v-list dense>
+                  <template v-for="item in postMenu" >
+                    <v-list-item @click="postAction(item.action, post)" :key="item.text">
+                      <v-list-item-action style="min-width: 32px;">
+                        <v-icon >{{item.icon}}</v-icon>
+                      </v-list-item-action>
+                      <v-list-item-content>
+                        <v-list-item-title v-text="item.text"></v-list-item-title>
+                        <v-list-item-subtitle v-show="item.sub">{{item.sub}}</v-list-item-subtitle>
+                      </v-list-item-content>
+                    </v-list-item>
+                  </template>
+                </v-list>
+              </v-menu>
+              <span></span>
+            </v-list-item-action>
+          </v-list-item>
+        </v-list>
 
-        <div v-else style="white-space: pre-wrap;" class="px-3"
-          v-html="$helpers.truncateText($sanitize(post.body), 350)"
-          v-linkified:options="linkify_options">
-        </div>
+        <v-card-text class="px-0 pt-2">
+          <div style="white-space: pre-wrap;" class="px-3"
+            v-if="readmore.find(id=>id == post.docId)" 
+            v-html="$sanitize(post.body)"
+            v-linkified:options="linkify_options">
+          </div>
 
-        <span @click="readmore.push(post.docId)" 
-          class="primary--text linkify pl-3" 
-          style="text-decoration:none;" 
-          v-show="post.body.length > 350 && !readmore.find(id=>id == post.docId)">
-          Read more
-        </span>
+          <div v-else style="white-space: pre-wrap;" class="px-3"
+            v-html="$helpers.truncateText($sanitize(post.body), 350)"
+            v-linkified:options="linkify_options">
+          </div>
 
-        <!-- POST IMAGES -->
-        <image-grid v-if="post.post_type == 'image'" :imgs="post.imgs"/>
-
-        <video-player v-if="post.post_type == 'video'" :video-src="post.videoSrc"/>
-
-      </v-card-text>
-
-      <v-divider class="mx-3"></v-divider>
-      <v-card-actions>
-        <div style="width:fit-content;" class="text-center">
-          
-          <v-btn depressed icon 
-            class="ml-1" small 
-            :disabled="!!disabled_btns.find(id => id == post.docId)" 
-            @click.native="add_reaction(post)">
-            <v-icon :color="hasLiked(post) ? 'primary' : ''" small>mdi-thumb-up</v-icon>
-          </v-btn>
-          <span class="">{{post.likes || 0}} Likes</span>
-          
-          <v-btn icon dark class="ml-3" depressed small
-            @click.native="expand(post, i)">
-            <v-icon color="primary" small>mdi-comment</v-icon>
-          </v-btn>
-          <span class="linkify" 
-            @click="view_type == 'single_post' ? '' : expand(post, i);">
-            {{post.comments_count}} Comments
+          <span @click="readmore.push(post.docId)" 
+            class="primary--text linkify pl-3" 
+            style="text-decoration:none;" 
+            v-show="post.body.length > 350 && !readmore.find(id=>id == post.docId)">
+            Read more
           </span>
 
-        </div>
-      </v-card-actions>
-
-      <!-- COMMENTS -->
-      <v-expand-transition>
-        <div v-if="expanded.indexOf(i) != -1">
-          <v-container class="px-1">
-            <v-card flat>
-              <v-card-text class="px-2">
-                <v-textarea auto-grow color="primary" rows="1" v-model="body[post.docId]"
-                  name="comment" outlined @keyup.enter="createComment(post)"
-                  label="Add a comment" :ref="post.docId"
-                >
-                <v-btn icon slot="append-outer" :disabled="!!loading.find(id => id == post.docId)"
-                  @click.native="createComment(post)" v-if="body[post.docId] && body[post.docId].trim()">
-                  <v-icon color="primary" >mdi-send</v-icon>
-                </v-btn>
-                <!-- EMOJIS DIALOG-->
-                <v-menu max-width="330" :close-on-content-click='false'
-                  slot="prepend-inner" max-height="" top offset-y>
-                    <template v-slot:activator="{on}">
-                      <v-btn v-on="on" icon v-show="body[post.docId]">
-                        <v-icon color="success">mdi-emoticon-outline</v-icon>
-                      </v-btn>
-                    </template>
-                  <v-card class="">
-                    <emoji-picker @append-emoji="appendEmoji($event, post)"/>
-                  </v-card>
-                </v-menu>
-                </v-textarea>
-              </v-card-text>
-
-              <v-divider></v-divider>
-
-              <v-subheader class="font-weight-bold px-2">Comments</v-subheader>
-              <v-progress-circular indeterminate color="grey lighten-1" 
-                size="20" class="d-block mx-auto" v-if="loading_comments.find(id => id == post.docId)">
-              </v-progress-circular>
-
-              <v-subheader v-if="!loading_comments.find(id => id == post.docId) && comments[post.docId] && comments[post.docId].length == 0">No comments</v-subheader>
-
-              <v-card-text class="" v-else>
-                <v-container >
-                  <v-row>
-                    <v-col cols="12" v-for="(comment,i) in comments[post.docId]" :key="'comment' + i">
-                      <v-card flat class="grey lighten-3 round">
-                        <v-list dense two-line class="grey lighten-3">
-                          <v-list-item  
-                            @click="$helpers.openProfile($event, comment.author)">
-
-                            <v-list-item-avatar 
-                              :color="$helpers.colorMinder(comment.author.name.charAt(0))" 
-                              class="white--text">
-                              <img :src="comment.author.photoURL" v-if="comment.author.photoURL" alt="alt">
-                              <span v-else>{{comment.author.name.charAt(0)}}</span>
-                            </v-list-item-avatar>
-
-                            <v-list-item-content>
-                              <v-list-item-title class="primary--text text-capitalize">
-                                {{comment.author.name}}
-                              </v-list-item-title>
-                              <v-list-item-subtitle>
-                                {{$helpers.parseDate(comment.tstamp, true)}}
-                              </v-list-item-subtitle>
-                            </v-list-item-content>
-                          </v-list-item>
-                        </v-list>
-
-                        <v-card-text
-                          v-html="comment.body"
-                          v-linkified:options="linkify_options">
-                        </v-card-text>
-                      </v-card>
-                    </v-col>
-                  </v-row>
-                </v-container>
-                
-              </v-card-text>
-
-              <template v-if="comments[post.docId] && comments[post.docId].length >= 4 && comments[post.docId].length < post.comments">
-                <v-btn 
-                  color="primary" class="d-block mx-auto" 
-                  style="text-transform: initial" 
-                  :loading="!!loading_more_comments.find(id => id == post.docId)" 
-                  text small @click="moreComments(post)">
-                  See more comments
-                </v-btn>
-              </template>
-              <v-divider></v-divider>
-            </v-card>
-          </v-container>
           
-        </div>
-      </v-expand-transition>
-    </v-card>
+          <image-grid v-if="post.post_type == 'image'" :imgs="post.imgs"/>
 
-    <v-btn 
+          <video-player v-if="post.post_type == 'video'" :video-src="post.videoSrc"/>
+
+        </v-card-text>
+
+        <v-divider class="mx-3"></v-divider>
+        <v-card-actions>
+          <div style="width:fit-content;" class="text-center">
+            
+            <v-btn depressed icon 
+              class="ml-1" small 
+              :disabled="!!disabled_btns.find(id => id == post.docId)" 
+              @click.native="add_reaction(post)">
+              <v-icon :color="post.liked ? 'primary' : ''" small>mdi-thumb-up</v-icon>
+              
+            </v-btn>
+            <span class="">{{post.likes_count}} Likes</span>
+            
+            <v-btn icon dark class="ml-3" depressed small
+              @click.native="expand(post, i)">
+              <v-icon color="primary" small>mdi-comment</v-icon>
+            </v-btn>
+            <span class="linkify" 
+              @click="view_type == 'single_post' ? '' : expand(post, i);">
+              {{post.comments_count}} Comments
+            </span>
+
+          </div>
+        </v-card-actions>
+
+        <!-- COMMENTS -->
+        <v-expand-transition>
+          <div v-if="expanded.indexOf(i) != -1">
+            <v-container class="px-1">
+              <v-card flat>
+                <v-card-text class="px-2">
+                  <v-textarea auto-grow color="primary" rows="1" v-model="body[post.docId]"
+                    name="comment" outlined @keyup.enter="createComment(post)"
+                    label="Add a comment" :ref="post.docId"
+                  >
+                  <v-btn icon slot="append-outer" :disabled="!!loading.find(id => id == post.docId)"
+                    @click.native="createComment(post)" v-if="body[post.docId] && body[post.docId].trim()">
+                    <v-icon color="primary" >mdi-send</v-icon>
+                  </v-btn>
+                  <!-- EMOJIS DIALOG-->
+                  <v-menu max-width="330" :close-on-content-click='false'
+                    slot="prepend-inner" max-height="" top offset-y>
+                      <template v-slot:activator="{on}">
+                        <v-btn v-on="on" icon v-show="body[post.docId]">
+                          <v-icon color="success">mdi-emoticon-outline</v-icon>
+                        </v-btn>
+                      </template>
+                    <v-card class="">
+                      <emoji-picker @append-emoji="appendEmoji($event, post)"/>
+                    </v-card>
+                  </v-menu>
+                  </v-textarea>
+                </v-card-text>
+
+                <v-divider></v-divider>
+
+                <v-subheader class="font-weight-bold px-2">Comments</v-subheader>
+                <v-progress-circular indeterminate color="grey lighten-1" 
+                  size="20" class="d-block mx-auto" v-if="loading_comments.find(id => id == post.docId)">
+                </v-progress-circular>
+
+                <v-subheader v-if="!loading_comments.find(id => id == post.docId) && comments[post.docId] && comments[post.docId].length == 0">No comments</v-subheader>
+
+                <v-card-text class="" v-else>
+                  <v-container >
+                    <v-row>
+                      <v-col cols="12" v-for="(comment,i) in comments[post.docId]" :key="'comment' + i">
+                        <v-card flat class="grey lighten-3 round">
+                          <v-list dense two-line class="grey lighten-3">
+                            <v-list-item  
+                              @click="$helpers.openProfile($event, comment.author)">
+
+                              <v-list-item-avatar 
+                                :color="$helpers.colorMinder(comment.author.name.charAt(0))" 
+                                class="white--text">
+                                <img :src="comment.author.photoURL" v-if="comment.author.photoURL" alt="alt">
+                                <span v-else>{{comment.author.name.charAt(0)}}</span>
+                              </v-list-item-avatar>
+
+                              <v-list-item-content>
+                                <v-list-item-title class="primary--text text-capitalize">
+                                  {{comment.author.name}}
+                                </v-list-item-title>
+                                <v-list-item-subtitle>
+                                  {{$helpers.parseDate(comment.tstamp, true)}}
+                                </v-list-item-subtitle>
+                              </v-list-item-content>
+                            </v-list-item>
+                          </v-list>
+
+                          <v-card-text
+                            v-html="comment.body"
+                            v-linkified:options="linkify_options">
+                          </v-card-text>
+                        </v-card>
+                      </v-col>
+                    </v-row>
+                  </v-container>
+                  
+                </v-card-text>
+
+                <template v-if="comments[post.docId] && comments[post.docId].length >= 4 && comments[post.docId].length < post.comments">
+                  <v-btn 
+                    color="primary" class="d-block mx-auto" 
+                    style="text-transform: initial" 
+                    :loading="!!loading_more_comments.find(id => id == post.docId)" 
+                    text small @click="moreComments(post)">
+                    See more comments
+                  </v-btn>
+                </template>
+                <v-divider></v-divider>
+              </v-card>
+            </v-container>
+            
+          </div>
+        </v-expand-transition>
+      </v-card>
+      
+    </template>
+
+    <!-- <v-btn 
       v-if="uniqPosts.length >= 15 && !isLastDoc" 
       color="primary" style="text-transform: initial;" 
       :loading="loading_more_posts"
       @click="$emit('loadmore')"
       class="d-block mx-auto" text small >
       See More
-    </v-btn>
+    </v-btn> -->
 
     <v-row row justify-center>
       <v-dialog v-model="flag_post_dialog" persistent max-width="600">
@@ -266,11 +269,15 @@ export default {
     },
     view_type: {
       type: String,
+    },
+    outlined: {
+      type: Boolean,
+      default: true
     }
   },
   watch: {
     'posts': function(to, from){
-      // console.log(to, this.view_type)
+      // console.log({to})
       
     }
   },
@@ -280,18 +287,23 @@ export default {
     ]),
     ...mapState([
       'isSuperUser',
-      'curRoom',
     ]),
     uniqPosts(){
-      
+      let posts = uniqBy(this.posts, 'docId').map(p => {
+        p.liked = this.hasLiked(p)
+        p.likes_count = p.reactions ? Object.keys(p.reactions).length : 0;
+
+        return p
+      })
+
       // latest posts and posts with highest comments on top
-      return orderBy(uniqBy(this.posts, 'docId'), ['tstamp', 'comments_count'], ['desc', 'desc'])
+      return orderBy(posts, ['tstamp', 'comments_count'], ['desc', 'desc'])
     },
     postMenu(){
       return [
         {text: 'Copy post link', action: 'copyLink', icon: 'mdi-link'},
-        // {text: 'Share in a post', action: 'sharePost', icon: 'mdi-share'},
-        {text: 'Hide this post', action: 'hidePost', icon: 'mdi-flag'}
+        {text: 'Hide this post', action: 'hidePost', icon: 'mdi-flag'},
+        {text: 'Delete post', action: 'deletePost', icon: 'mdi-delete'},
       ]
     },
     linkify_options(){
@@ -348,8 +360,8 @@ export default {
           let text = `${location.origin}/#/posts/${post.docId}`
           this.copyToClipboard(text)
           break;
-        case 'sharePost':
-          this.sharePost(post)
+        case 'deletePost':
+          this.deletePost(post)
           break;
         case 'hidePost':
           // this.flag_post_dialog = true;
@@ -360,32 +372,14 @@ export default {
           break;
       }
     },
-    copyToClipboard(text) {
-      if (window.clipboardData && window.clipboardData.setData) {
-          // IE specific code path to prevent textarea being shown while dialog is visible.
-          return clipboardData.setData("Text", text); 
-
-      } else if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
-
-        var textarea = document.createElement("textarea");
-        textarea.textContent = text;
-        textarea.style.position = "fixed";  // Prevent scrolling to bottom of page in MS Edge.
-        document.body.appendChild(textarea);
-        textarea.select();
-        try {
-            return document.execCommand("copy");  // Security exception may be thrown by some browsers.
-        } catch (ex) {
-            // console.warn("Copy to clipboard failed.", ex);
-            return false;
-        } finally {
-            document.body.removeChild(textarea);
-            this.$eventBus.$emit('Snackbar', {
-              show: true,
-              message: 'Post Link copied to clipboard',
-              color: 'success'
-            })
-        }
-      }
+    async copyToClipboard(text) {
+      
+      await this.$helpers.copyToClipboard(text)
+      this.$eventBus.$emit('Snackbar', {
+        show: true,
+        message: 'Post Link copied to clipboard',
+        color: 'success'
+      })
     },
     hidePost(){
       // save flag report
@@ -405,6 +399,26 @@ export default {
 
         this.flag_post_dialog = false
       
+    },
+    deletePost(post){
+      if(post.author.username == this.getUser.username){
+        console.log({post})
+        
+        let yes_delete = confirm('Are you sure to delete post?')
+
+        if(yes_delete){
+
+          let postRef = this.$gun.get('elections')
+            .get(post.elecRef)
+            .get('posts')
+            .get(post.docId)
+            .put(null)
+          let postIndex = this.uniqPosts.indexOf(post)
+          console.log(this.uniqPosts, {postIndex})
+          
+          this.posts.splice(postIndex, 1)
+        }
+      }
     },
     appendEmoji(emoji, post){
       let curMsg = this.body[post.docId]
@@ -522,21 +536,11 @@ export default {
       
     },
     hasLiked(post){
-      let liked = false
-      let postRef = this.$gun.get('elections')
-        .get(post.elecRef)
-        .get('posts')
-        .get(post.docId)
-
-        postRef
-        .get('reactions')
-        .get(this.getUser.username)
-        .once(d => {
-          // rxns.push(d)
-          // console.log({d})
-          liked = d == true ? true : false
-        })
+      // console.log(post.reactions)
+      let liked = post.reactions ? !!Object.values(post.reactions).includes(this.getUser.username) : false
+      // console.log(liked)
       return liked
+
     },
     async add_reaction(post){
 
@@ -551,23 +555,25 @@ export default {
 
       if(liked){
         // unlike the post
-        let newLikes = (post.likes || 0) - 1
+        let rxnRef = Object.keys(post.reactions)
+          .find(key => post.reactions[key] === this.getUser.username)
 
+        let newLikes = (post.likes || 0)*1 - 1
         postRef.get('reactions')
-          .get(this.getUser.username)
-          .put(null);
+          .unset(rxnRef)
 
         postRef.get('likes')
           .put(newLikes)
       }
       else {
 
-        let newLikes = (post.likes || 0) + 1
+        let newLikes = (post.likes || 0)*1 + 1
 
 
         postRef.get('reactions')
-          .get(this.getUser.username)
-          .put(true);
+          .set(this.getUser.username)
+          // .get(this.getUser.username)
+          // .put(true);
 
         postRef.get('likes')
           .put(newLikes)
@@ -582,7 +588,7 @@ export default {
   async mounted(){
     
     this.view_type == 'single_post' ? this.getComments(this.posts[0]) : ''
-    console.log(this.posts)
+    // console.log(this.posts)
   },
   components: {
     ImageGrid,

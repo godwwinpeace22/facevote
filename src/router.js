@@ -1,41 +1,63 @@
 import Vue from 'vue'
   import Router from 'vue-router'
-  import Watch from '@/components/elections/Watch'
-  import $Nprogress from 'nprogress'
-  import $store from './store/store'
+  import {userSession} from '@/plugins/userSession'
+  import Auth from '@/plugins/auth'
 
 Vue.use(Router)
 
 const requireAuth = async (to, from, next) => {
-  if($store.state.isAuthenticated){
-    next()
+
+  let returnTo = `?returnTo=${to.fullPath}`
+
+  let checkUserIn = async function(userData){
+    console.log(userData)
+    let username = userData.username.split('.')[0]
+    // console.log(userData, userData.email)
+    let isTaken = await Auth.aliasIsTaken(username)
+
+    let payload = {
+      name: userData.profile.name || 'No name',
+      username: username,
+      password: username,
+      email: userData.email,
+      photoURL: userData.profile.image ? userData.profile.image[0].contentUrl : false,
+      returnTo: returnTo
+    }
+
+
+    if(isTaken){
+      // account already created, sign user in
+      console.log(isTaken)
+      await Auth.login(payload)
+
+      next()
+    }
+    else {
+      
+      // user not created yet, create it
+      await Auth.signup(payload)
+
+      next()
+    }
+  }
+
+  if(userSession.isUserSignedIn()){
+
+    let userData = userSession.loadUserData()
+
+    checkUserIn(userData)
+    
+  }
+  else if(userSession.isSignInPending()){
+    userSession.handlePendingSignIn().then(userData => {
+
+      checkUserIn(userData)
+    })
   }
   else {
     
-    let returnTo = `?returnTo=${to.fullPath}`
     next('/login' + returnTo)
   }
-  // let unsubscribe = firebase.auth().onAuthStateChanged((user)=>{
-    
-  //   if(user && user.emailVerified){
-  //     $helpers.userDetails(user).then(() =>{
-  //       next() 
-  //     }).catch(() => {})
-  //     // next()
-  //   }
-  //   else{
-  //     // firebase.auth().signOut()
-  //     if(user && !user.emailVerified){
-        
-  //       next('/login?verify_email=true')
-  //     }
-  //     else {
-  //       // console.log(to, from)
-  //       next(`/login?returnTo=${to.fullPath}`)
-  //     }
-  //   }
-  //   unsubscribe()
-  // }, );
   
 }
 
@@ -61,23 +83,28 @@ const router = new Router({
           props: true
         },
         {
-          path:'/verify',
-          name:'verify_acc',
-          component: () => import('@/views/Verify'),
-          // beforeEnter:requireAuth,
-        },
-        {
           path:'/discover',
           name:'discover',
           component: () => import('@/components/Discover'),
           // beforeEnter:requireAuth,
         },
-        
         {
-          path: '/settings',
-          name: 'settings',
-          component: () => import('@/components/users/ProfileSettings')
+          path:'/upgrade',
+          name:'upgrade',
+          component: () => import('@/components/Upgrade'),
+          // beforeEnter:requireAuth,
         },
+        {
+          path: '/campaigns',
+          name: 'campaigns',
+          component: () => import('@/components/campaigns/Campaign.vue')
+        },
+        
+        // {
+        //   path: '/settings',
+        //   name: 'settings',
+        //   component: () => import('@/components/user_profiles/ProfileSettings')
+        // },
         {
           path: '/messages',
           name: 'messages',
@@ -106,6 +133,11 @@ const router = new Router({
             },
             
           ]
+        },
+        {
+          path: '/settings',
+          component: () => import('@/components/profile_settings/AccountSettings'),
+          name: 'profile_settings',
         },
         {
           path: '/contest',
@@ -148,10 +180,15 @@ const router = new Router({
               name: 'results',
               component: () => import('@/components/elections/ElectionResults'),
             },
+            {
+              path: 'terms',
+              name: 'terms',
+              component: () => import('@/components/elections/ElectionTerms'),
+            },
           ]
         },
         {
-          path: '/manifestos/:manifestoId',
+          path: '/manifestos/:electionId/:manifestoId',
           name: 'manifestos',
           component: () => import('@/components/elections/Manifestos')
         },
@@ -162,19 +199,19 @@ const router = new Router({
         },
         {
           path: '/users/:username',
-          component: () => import('@/components/user_profiles/index'),
+          component: () => import('@/components/user_profiles/User__Home'),
           props: true,
           children: [
             {
               path: '',
-              name: 'user_home',
-              component: () => import('@/components/user_profiles/User__Home')
-            },
-            {
-              path: 'posts',
               name: 'user_posts',
               component: () => import('@/components/user_profiles/User__Posts')
             },
+            // {
+            //   path: 'posts',
+            //   name: 'user_posts',
+            //   component: () => import('@/components/user_profiles/User__Posts')
+            // },
             {
               path: 'events',
               name: 'user_events',
@@ -185,23 +222,24 @@ const router = new Router({
               name: 'user_followers',
               component: () => import('@/components/user_profiles/User__Followers')
             },
-            {
-              path: 'following',
-              name: 'user_following',
-              component: () => import('@/components/user_profiles/User__Following')
-            },
-            {
-              path: 'about',
-              name: 'user_about',
-              component: () => import('@/components/user_profiles/User__Stats')
-            },
-            {
-              path: 'manifestos',
-              name: 'user_manifestos',
-              component: () => import('@/components/user_profiles/User__Manifestos')
-            },
+            // {
+            //   path: 'following',
+            //   name: 'user_following',
+            //   component: () => import('@/components/user_profiles/User__Following')
+            // },
+            
+            // {
+            //   path: 'manifestos',
+            //   name: 'user_manifestos',
+            //   component: () => import('@/components/user_profiles/User__Manifestos')
+            // },
           ]
         },
+        // {
+        //   path: '/my-stats',
+        //   name: 'user_stats',
+        //   component: () => import('@/components/user_profiles/User__Stats')
+        // },
         {
           path: '/events/:eventId',
           component: () => import('@/components/events/Events'),
@@ -223,24 +261,6 @@ const router = new Router({
       // beforeEnter:requireLogout
     },
     {
-      path: '/signup',
-      name: 'signup',
-      component: () => import('@/views/Signup'),
-      //beforeEnter:requireLogout
-    },
-    {
-      path: '/confirm',
-      name: 'confirm',
-      component: () => import('@/views/Confirm'),
-      //beforeEnter:requireLogout
-    },
-    {
-      path:'/reset-password',
-      name:'reset-password',
-      component: () => import('@/views/ResetPassword'),
-      //beforeEnter:requireLogout
-    },
-    {
       path:'/notFound',
       name:'notfound2',
       component: () => import('@/views/404')
@@ -252,30 +272,34 @@ router.beforeResolve((to, from, next) => {
   // If this isn't an initial page load.
   if (to.name) {
       // Start the route progress bar.
-      $Nprogress.start()
+      // $Nprogress.start()
   }
   next()
 })
 
 router.beforeEach((to, from, next) => {
 
-  if($store.state.session_expired){
-    // signout
-    
-  }
-  else if(to.path == '/'){
-    next('/home')
+  // preserve query strings
+  let queryObj = to.query
+  let queryStr = Object.keys(queryObj)
+    .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(queryObj[k]))
+    .join('&')
+
+  if(to.path == '/'){
+
+    next('/home?' + queryStr)
   }
   else if (!to.matched.length) {
     next('/notFound');
   } else {
+
     next();
   }
 });
 
 router.afterEach(() => {
   // Complete the animation of the route progress bar.
-  $Nprogress.done()
+  // $Nprogress.done()
 })
 
 export default router

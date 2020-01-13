@@ -1,17 +1,20 @@
 <template>
   <div>
-    <v-container >
+    <v-container v-if="showUi">
       <v-row justify="center">
-        <v-col sm="12" md="8">
+        <v-col cols="12" >
 
           <div class="text-center" v-if="followers.length == 0">No followers yet</div>
           <v-card outlined v-else min-height="300">
 
             <v-list>
               <template v-for="(follower,i) in followers">
-                <v-list-item :key="follower.username">
+                <v-list-item 
+                  :key="follower.username"
+                  @click="$store.dispatch('openProfile', follower)">
                   <v-list-item-avatar :color="$helpers.colorMinder(follower.name.charAt(0))">
-                    <span>{{follower.name.charAt(0)}}</span>
+                    <v-img :src="follower.photoURL" v-if="follower.photoURL"></v-img>
+                    <span v-else>{{follower.name ? follower.name.charAt(0) : ''}}</span>
                   </v-list-item-avatar>
                   <v-list-item-content>
                     <v-list-item-title>
@@ -21,9 +24,9 @@
                       @{{follower.username}}
                     </v-list-item-subtitle>
                   </v-list-item-content>
-                  <v-list-item-action>
+                  <!-- <v-list-item-action>
                     <v-btn color="accent" rounded depressed small outlined>Follow</v-btn>
-                  </v-list-item-action>
+                  </v-list-item-action> -->
                 </v-list-item>
                 <v-divider :key="follower.username + 'c'" v-if="i < 4"></v-divider>
               </template>
@@ -38,6 +41,7 @@
 <script>
 export default {
   data: () => ({
+    showUi: false,
     followers: [],
   }),
   computed: {
@@ -48,7 +52,7 @@ export default {
 
     ]),
     async user(){
-      return await this.$gun.get(this.username)
+      return await this.$gun.get('users').get(this.username)
         .then()
     },
     username(){
@@ -60,18 +64,29 @@ export default {
       this.getFollowers()
     },
     async getFollowers(){
-      let followerRef = this.$gun
+      let followerRef = this.$gun.get('users')
         .get(this.username)
         .get('followers')
 
         followerRef
-        .map()
         .once(d => {
-          console.log('followers: => ', d)
-          this.followers.find(f => f.username == d.username) ? '' : 
-          this.followers.push(d)
+
+          // console.log('followers: => ', d)
+          let followers = Object.keys(d).filter(f => d[f] == true)
+          
+
+          let fol = followers.map(async f => {
+            let u = await this.$gun.get('users').get(f).then()
+            return u
+          })
+
+          Promise.all(fol).then(all => {
+            this.followers = all
+            this.showUi = true
+          })
+
+
         })
-      this.showUi = true
         
     },
   },

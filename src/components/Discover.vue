@@ -3,7 +3,7 @@
     <navigation :show_extension="true" color="primary"
       extension_height="90"
       :prominent="true"
-      extension_img="https://picsum.photos/1920/1080?random">
+      :extension_img="require('@/assets/discover-background.jpg')">
       <template v-slot:title>
         <span></span>
       </template>
@@ -18,7 +18,7 @@
               @keyup.enter="search"
               append-icon="mdi-magnify"
               append-icon-cb="search"
-              label="Enter election Id, username, or event"
+              label="Search election, users, or event"
               v-model.trim="query" hide-details
             >
               <!-- <template v-slot:append-outer>
@@ -34,223 +34,227 @@
       </template>
     </navigation>
 
-    <v-container>
+    <transition name='fade'>
+      <v-container v-if="showUi">
 
-      <v-card outlined :loading="searching">
-        <v-tabs 
-          v-model="tab"
-          background-color="white"
-          color="deep-purple accent-4"
-          right
-        >
-          <v-tab href="#elections">Elections</v-tab>
-          <v-tab href="#people">People</v-tab>
-          <v-tab href="#events">Events</v-tab>
-        </v-tabs>
+        <v-card outlined :loading="searching">
+          <v-tabs 
+            v-model="tab"
+            background-color="white"
+            color="deep-purple accent-4"
+            right
+          >
+            <v-tab href="#elections">Elections</v-tab>
+            <v-tab href="#people">People</v-tab>
+            <v-tab href="#events">Events</v-tab>
+          </v-tabs>
 
-        <v-tabs-items v-model="tab">
-          <v-tab-item value="elections">
-            <v-container>
-              <v-card flat min-height="300">
-                <v-row>
-                  <v-col cols="12" v-if="elections.length > 0">
-                    <v-subheader>Search results</v-subheader>
-                  </v-col>
-                  <v-col v-for="(election, i) in elections" :key="election.electionId + i" cols="6" sm="4">
-                    <v-card max-width="344" outlined>
-                      <v-list-item three-line :to="`elections/${election.electionId}`">
-                        <v-list-item-content>
-                          <v-list-item-title class="title mb-0">{{election.title}}</v-list-item-title>
-                          <v-list-item-subtitle>{{election.electionId}}</v-list-item-subtitle>
-                        </v-list-item-content>
-
-                        <v-list-item-avatar
-                          size="35" tile
-                          color="grey lighten-3"
-                        >
-                          <img :src="election.logo" v-if="election.logo" alt="election_logo"/>
-                          <span v-else>{{election.title ? election.title.charAt(0) : ''}}</span>
-                        </v-list-item-avatar>
-                      </v-list-item>
-
-                      <v-card-actions>
-                        <v-btn text small>
-                          <v-icon class="pr-1" small>mdi-account-group-outline</v-icon>
-                          {{election.contestants_count.toLocaleString()}}
-                        </v-btn>
-
-                        <v-btn text small>
-                          <v-icon class="pr-1" small>mdi-vote-outline</v-icon>
-                          {{election.voters_count.toLocaleString()}}
-                        </v-btn>
-
-                        <v-spacer></v-spacer>
-
-                        <v-btn text small class="text-capitalize">
-                          <span class="online_badge mr-1"
-                          :class="election.status == 'ended' ? 'orange' :
-                            election.status == 'inprogress' ? 'success' : 'primary'">
-                          </span>
-                          {{election.status == 'ended' ? 'Closed' : election.status == 'inprogress' ? 'in progress' : 'Not started'}}
-                        </v-btn>
-
-                      </v-card-actions>
-                    </v-card>
-                  </v-col>
-
-                  <v-col cols="12" md="10">
-                    <v-subheader class="font-weight-bold">Elections your enrolled in</v-subheader>
-                    <v-row>
-                      
-                      <v-col v-for="(election,i) in getMyEnrolled" :key="election.title + i" cols="6" sm="4">
-                        <v-card max-width="344" outlined>
-                          <v-list-item three-line :to="`elections/${election.electionId}`">
-                            <v-list-item-content>
-                              <v-list-item-title class="title mb-0">{{election.title}}</v-list-item-title>
-                              <v-list-item-subtitle>{{election.electionId}}</v-list-item-subtitle>
-                            </v-list-item-content>
-
-                            <v-list-item-avatar
-                              size="35" tile
-                              color="grey lighten-3">
-
-                              <img :src="election.logo" v-if="election.logo" alt="logo"/>
-                              <span v-else>{{election.title.charAt(0)}}</span>
-                            </v-list-item-avatar>
-                          </v-list-item>
-
-                          <v-card-actions>
-                            <v-btn text small>
-                              <v-icon class="pr-1" small>mdi-account-group-outline</v-icon>
-                              {{election.contestants_count.toLocaleString()}}
-                            </v-btn>
-
-                            <v-btn text small>
-                              <v-icon class="pr-1" small>mdi-vote-outline</v-icon>
-                              {{election.voters_count.toLocaleString()}}
-                            </v-btn>
-
-                            <v-spacer></v-spacer>
-
-                            <v-btn text small class="text-capitalize">
-                              <span class="online_badge mr-1"
-                              :class="election.status == 'ended' ? 'orange' :
-                               election.status == 'inprogress' ? 'success' : 'primary'">
-                              </span>
-                              {{election.status == 'ended' ? 'Closed' : election.status == 'inprogress' ? 'in progress' : 'Not started'}}
-                            </v-btn>
-
-                          </v-card-actions>
-                        </v-card>
-                      </v-col>
-
-                    </v-row>
-                  </v-col>
-                </v-row>
-                
-              </v-card>
-            </v-container>
-          </v-tab-item>
-
-          <v-tab-item value="people">
-            <v-container>
-              <transition name="fade" appear>
-                <v-card min-height="300" flat v-if="!searching">
-                  <v-subheader class="font-weight-bold">People</v-subheader>
-                  <v-subheader v-show="people.length == 0">No results for your search</v-subheader>
+          <v-tabs-items v-model="tab">
+            <v-tab-item value="elections">
+              <v-container>
+                <v-card flat min-height="300">
                   <v-row>
-                    <v-col v-for="(person, i) in people" :key="person.username + i" cols="6" sm="3">
-                      <!-- <v-card max-width="344" outlined>
-                        <v-list-item three-line :to="`users/${person.username}`">
+                    <v-col cols="12" v-if="elections.length > 0">
+                      <v-subheader>Search results</v-subheader>
+                    </v-col>
+                    <v-col v-for="(election, i) in elections" :key="election.electionId + i" cols="6" sm="4">
+                      <v-card max-width="344" outlined>
+                        <v-list-item three-line :to="`elections/${election.electionId}`">
                           <v-list-item-content>
-                            <div class="overline mb-4">People</div>
-                            <v-list-item-title class="title mb-0">{{person.name}}</v-list-item-title>
-                            <v-list-item-subtitle>@{{person.username}}</v-list-item-subtitle>
+                            <v-list-item-title class="title mb-0">{{election.title}}</v-list-item-title>
+                            <!-- <v-list-item-subtitle>{{election.electionId}}</v-list-item-subtitle> -->
                           </v-list-item-content>
 
                           <v-list-item-avatar
-                            size="35" 
-                            color="grey"
+                            size="35" tile
+                            color="grey lighten-3"
                           >
-                            <img :src="election.logo" v-if="person.photoUrl" alt="election_logo"/>
-                            <span v-else class="white--text text-capitalize">{{person.name ? person.name.charAt(0) : ''}}</span>
+                            <img :src="election.logo" v-if="election.logo" alt="election_logo"/>
+                            <span v-else>{{election.title ? election.title.charAt(0) : ''}}</span>
                           </v-list-item-avatar>
                         </v-list-item>
 
                         <v-card-actions>
                           <v-btn text small>
                             <v-icon class="pr-1" small>mdi-account-group-outline</v-icon>
-                            23K
+                            {{election.contestants_count.toLocaleString()}}
                           </v-btn>
 
                           <v-btn text small>
-                            <v-icon class="pr-1" small>mdi-group</v-icon>
-                            23K
+                            <v-icon class="pr-1" small>mdi-vote-outline</v-icon>
+                            {{election.voters_count.toLocaleString()}}
+                          </v-btn>
+
+                          <v-spacer></v-spacer>
+
+                          <v-btn text small class="text-capitalize" v-if="!election.timed">
+                            <span class="online_badge mr-1"
+                            :class="election.status == 'ended' ? 'orange' :
+                              election.status == 'inprogress' ? 'success' : 'primary'">
+                            </span>
+                            {{election.status == 'ended' ? 'Closed' : election.status == 'inprogress' ? 'in progress' : 'Not started'}}
                           </v-btn>
 
                         </v-card-actions>
-                      </v-card> -->
+                      </v-card>
+                    </v-col>
 
-                      <v-card class="round_top mr-2 mb-2" 
-                        outlined
-                        height="320" 
-                        style="position: relative">
-
-                        <v-sheet width="100%" height="80" 
-                          
-                          :color="$helpers.colorMinder(person.name.charAt(0)) + ' lighten-3'">
-                          <img :src="`https://picsum.photos/seed/${person.username}/234/82?random`" width="100%" height="80" alt="altText"/>
-
-                        </v-sheet>
+                    <v-col cols="12" md="10">
+                      <v-subheader class="font-weight-bold">Elections your enrolled in</v-subheader>
+                      <v-row>
                         
-                        <div style="width: 41%; height: 100px;" class="mx-auto mt-n12" color="transparent">
-                          <v-avatar
-                            size="90"
-                            :color="$helpers.colorMinder(person.name.charAt(0))"
-                          >
-                            <img :src="person.photoURL || `https://picsum.photos/seed/${i}/100/90?random`">
-                            <!-- <span v-else class="white--text display-1 text-capitalize">
-                              {{person.name.charAt(0)}}
-                            </span> -->
-                          </v-avatar>
-                        </div>
+                        <v-col v-for="(election,i) in getMyEnrolled" :key="election.title + i" cols="6" sm="4">
+                          <v-card max-width="344" outlined>
+                            <v-list-item three-line :to="`elections/${election.electionId}`">
+                              <v-list-item-content>
+                                <v-list-item-title class="title mb-0">{{election.title}}</v-list-item-title>
+                              </v-list-item-content>
 
-                        <v-card-text class="px-1 text-center" :id="person.username + 'cont'"
-                        >
-                          <div class="subheading font-weight-bold mb-0 text-capitalize .text-truncate hover">
-                            {{person.name}}
-                            <span class="online_badge success" v-if="person.online"></span>
-                          </div>
+                              <v-list-item-avatar
+                                size="35" tile
+                                color="grey lighten-3">
+
+                                <img :src="election.logo" v-if="election.logo" alt="logo"/>
+                                <span v-else>{{election.title.charAt(0)}}</span>
+                              </v-list-item-avatar>
+                            </v-list-item>
+
+                            <v-card-actions>
+                              <v-btn text small>
+                                <v-icon class="pr-1" small>mdi-account-group-outline</v-icon>
+                                {{election.contestants_count.toLocaleString()}}
+                              </v-btn>
+
+                              <v-btn text small>
+                                <v-icon class="pr-1" small>mdi-vote-outline</v-icon>
+                                {{election.voters_count.toLocaleString()}}
+                              </v-btn>
+
+                              <v-spacer></v-spacer>
+
+                              <v-btn text small class="text-capitalize" v-if="!election.timed">
+                                <span class="online_badge mr-1"
+                                :class="election.status == 'ended' ? 'orange' :
+                                election.status == 'inprogress' ? 'success' : 'primary'">
+                                </span>
+                                {{election.status == 'ended' ? 'Closed' : election.status == 'inprogress' ? 'in progress' : 'Not started'}}
+                              </v-btn>
+
+                            </v-card-actions>
+                          </v-card>
+                        </v-col>
+
+                      </v-row>
+                    </v-col>
+                  </v-row>
+                  
+                </v-card>
+              </v-container>
+            </v-tab-item>
+
+            <v-tab-item value="people">
+              <v-container>
+                <transition name="fade" appear>
+                  <v-card min-height="300" flat v-if="!searching">
+                    <v-subheader class="font-weight-bold">People</v-subheader>
+                    <v-subheader v-show="people.length == 0">No results for your search</v-subheader>
+                    <v-row>
+                      <v-col v-for="(person, i) in people" :key="person.username + i" cols="6" sm="3">
+                        
+                        <v-card class="round_top mr-2 mb-2" 
+                          outlined
+                          height="320" 
+                          style="position: relative">
+
+                          <v-sheet width="100%" height="80" 
+                            
+                            :color="$helpers.colorMinder(person.name.charAt(0)) + ' lighten-3'">
+                            <img :src="require('@/assets/profile-background.jpg')" width="100%" height="80" alt="altText"/>
+
+                          </v-sheet>
                           
-                        </v-card-text>
-                        <v-card-actions>
-
-                          <v-btn color="primary lighten-3" dark small outlined
-                            class="mx-auto text-capitalize" 
+                          <div style="width: 41%; height: 100px;" class="mx-auto mt-n12" color="transparent">
+                            <v-avatar
+                              size="90"
+                              :color="$helpers.colorMinder(person.name.charAt(0))"
                             >
-                            {{(person.followers_count || 0).toLocaleString()}} Follow
-                          </v-btn>
+                              <img :src="person.photoURL" v-if="person.photoURL">
+                              <span v-else class="white--text display-1 text-capitalize">
+                                {{person.name.charAt(0)}}
+                              </span>
+                            </v-avatar>
+                          </div>
+
+                          <v-card-text class="px-1 text-center" :id="person.username + 'cont'"
+                          >
+                            <div class="subheading font-weight-bold mb-0 text-capitalize .text-truncate"
+                              style="cursor: pointer;" @click="$router.push(`/users/${person.username}`)">
+                              {{person.name}}
+                              <span class="online_badge success" v-if="person.online"></span>
+                            </div>
+                            <div>
+                              @{{person.username}}
+                            </div>
+                            
+                          </v-card-text>
+                          <v-card-actions>
+
+                            <v-btn color="primary lighten-3" dark small outlined
+                              class="mx-auto text-capitalize" 
+                              >
+                              {{(person.followers_count || 0).toLocaleString()}} Follow
+                            </v-btn>
+                          </v-card-actions>
+                        </v-card>
+                      </v-col>
+                    </v-row>
+                  </v-card>
+                </transition>
+              </v-container>
+            </v-tab-item>
+
+            <v-tab-item value="events">
+              <v-container>
+                <v-card min-height="300" flat>
+                  <v-subheader>Events</v-subheader>
+                  <v-subheader v-if="events.length == 0">No events found for your search</v-subheader>
+
+                  <v-row>
+                    <v-col cols="12" sm="4" md="4" v-for="(event, i) in events" :key="event.eventId + i">
+                      <v-card
+                        class="mx-auto"
+                        max-width="344"
+                        outlined
+                      >
+                        <v-list-item three-line @click="$router.push(`/events/${event.soul}`)">
+                          <v-list-item-content>
+                            <v-list-item-subtitle>{{event.title}}</v-list-item-subtitle>
+                          </v-list-item-content>
+
+                          <v-list-item-avatar
+                            tile
+                            size="80"
+                            color="grey"
+                          ></v-list-item-avatar>
+                        </v-list-item>
+
+                        <v-card-actions>
+                          <v-spacer></v-spacer>
+                          <!-- <v-btn text small class="text-capitalize">by {{event.author.name}}</v-btn>
+                          <span>.</span> -->
+                          <v-btn text small class="text-capitalize">55 Going</v-btn>
                         </v-card-actions>
                       </v-card>
                     </v-col>
                   </v-row>
                 </v-card>
-              </transition>
-            </v-container>
-          </v-tab-item>
+              </v-container>
+            </v-tab-item>
+          </v-tabs-items>
+        </v-card>
 
-          <v-tab-item value="events">
-            <v-container>
-              <v-card min-height="300" flat>
-                <v-subheader>Events</v-subheader>
-                <v-subheader>No events found for your search</v-subheader>
-              </v-card>
-            </v-container>
-          </v-tab-item>
-        </v-tabs-items>
-      </v-card>
-
-    </v-container>
+      </v-container>
+    </transition>
   </div>
 </template>
 
@@ -274,8 +278,9 @@ export default {
     ])
   },
   methods: {
-    initialize(){
-
+    async initialize(){
+      await this.sleep(500)
+      this.showUi = true;
     },
     sleep (limit=100) {
       return (new Promise((res, rej)=>{
@@ -359,28 +364,51 @@ export default {
         }
 
         let data_list = (await people())
+        let options = ['name', 'username']
   
-        this.people = this.fuseSearch(data_list, ['name', 'sch','dept','fac','username'])
+        this.people = this.fuseSearch(data_list, options)
 
     },
     async searchEvents(){
-      // this.$gun.get('events')
-      //   .get(this.query)
-      //   .once(person => {
-      //     // console.log({elec})
-      //     if(person){
-      //       this.people.find(p => p.username == person.username) ? '' : 
-      //       this.people.push(person)
-      //     }
-          
-      //   })
+
+      let events = async () => {
+        let arr = []
+        this.$gun.get('events')
+          .map()
+          .once(async d => {
+            console.log(d)
+
+            if(d){
+
+              if(!d.author.username){
+                d.author = await this.$gun.get('users').get(d.author['#']).then()
+              }
+
+              d.soul = d['_']['#']
+
+              arr.find(p => p.eventId == d.eventId) ? '' : 
+              arr.push(new Promise((res,rej) => {
+                res(d)
+              }))
+            }
+          })
+
+          await this.sleep()
+          return Promise.all(arr)
+      }
+
+      let data_list = (await events())
+      let options = ['title', 'eventId']
+
+      this.events = this.fuseSearch(data_list, options)
+
     },
     fuseSearch(data_list, keys=['name','title']){
 
       let fuseOptions = {
 				shouldSort: true,
 				tokenize: true,
-				threshold: 0.6,
+				threshold: 0.4,
 				location: 0,
         distance: 100,
         keys

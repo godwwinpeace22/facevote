@@ -5,7 +5,7 @@
 
   
   <v-container fluid v-else style="background:#fff;" class="pa-0 px-1">
-    <div class="text-center" v-show="forumId == 'd'">Select a forum to join</div>
+    <div class="text-center" v-show="forumId == 'd'">Select a forum to start a conversation</div>
     <!-- NO DATA -->
     <!-- <v-subheader class="text-center" 
       v-if="!getChatMessages || getChatMessages.length == 0">
@@ -27,17 +27,70 @@
 
         <!-- <v-row> -->
           <v-col cols="12" v-for="(msg,i) in getChatMessages" :key="i" class="py-0">
-            <div>
-              <!-- DATE DIVIDER -->
-              <div v-if="divide(msg.date_created, getChatMessages[i-1])" class="divide">
-                {{divide(msg.date_created, getChatMessages[i-1])}}
+            
+            <!-- DATE DIVIDER -->
+            <div v-if="divide(msg.date_created, getChatMessages[i-1])" class="divide">
+              {{divide(msg.date_created, getChatMessages[i-1])}}
+            </div>
+
+            <v-divider class="my-5 mx-4" v-else></v-divider>
+            <v-card flat class="msg-block px-3">
+
+              <div class="d-inline-block msg-avatar mr-5">
+                <v-avatar
+                  size="40" 
+                  :color="$helpers.colorMinder(msg.author.name.charAt(0))">
+                  <img v-if="msg.author.photoURL" :src="msg.author.photoURL" alt="alt">
+                  <span v-else class="white--text">{{msg.author.name.charAt(0)}}</span>
+                </v-avatar>
               </div>
 
+              <div class="d-inline-block msg-text">
+                <div class="msg-meta">
+                  <span class="pr-3 font-weight-bold">{{msg.author.name}}</span>
+                  <!-- <span>@{{msg.author.username}}</span> -->
+                  <small class="grey--text">{{$helpers.parseDate(msg.date_created)}}</small>
+                </div>
+                <div class="msg-body">
 
-            </div>
-            <v-card flat>
+                  <div class="msg-floating-action">
+                    <v-btn icon @click="selectEmoji($event, msg)" :id="msg.docId">
+                      <v-icon color="success">mdi-emoticon-outline</v-icon>
+                    </v-btn>
 
-              <v-card-title class="pl-0 pt-0">
+                    
+                  </div>
+
+                  <div v-html="msg.body" v-linkified:options="linkify_options"></div>
+
+                  <!-- UPLOADED IMAGES -->
+                  <v-row v-if="msg.imgs">
+                    <v-col cols="12" sm="8">
+                      <image-grid :imgs="msg.imgs"/>
+                    </v-col>
+                  </v-row>
+
+                  <template v-for="(k,v, i) in msg.reactions">
+                    <v-tooltip :key="i + '-emoji'" top left>
+                      <template v-slot:activator="{on}">
+                        <v-chip small outlined label 
+                          class="mr-2 mb-2 linkify" v-on="on"
+                          @click="reactFromBtn(msg,v)">
+                          <span class="mr-1">{{v}}</span>
+                          <span>{{k.length}}</span>
+                        </v-chip>
+                      </template>
+
+                      <span>{{getReactors(k)}}</span>
+                      
+                    </v-tooltip>
+
+                  </template>
+
+                  
+                </div>
+              </div>
+              <!-- <v-card-title class="pl-0 pt-0">
                 <v-list dense class="py-0">
                   <v-list-item @click.prevent="$helpers.openProfile($event, msg.author)">
 
@@ -64,18 +117,7 @@
               
               <v-card-text class="ml-12 pb-0">
                 
-
-                <div v-html="msg.body" v-linkified:options="linkify_options"></div>
-
-                <!-- UPLOADED IMAGES -->
-                <v-row v-if="msg.imgs">
-                  <v-col cols="12" sm="8">
-                    <image-grid :imgs="msg.imgs"/>
-                  </v-col>
-                </v-row>
-
-                
-              </v-card-text>
+              </v-card-text> -->
             </v-card>
 
           </v-col>
@@ -137,6 +179,22 @@
         </template>
       </div> -->
 
+      <v-menu max-width="300"
+        max-height="500" top offset-y 
+        v-model="emoji_dialog" :close-on-content-click="false"
+        absolute :position-x="selectedMsg.x"
+        :position-y="selectedMsg.y"
+      >
+        <!-- <template v-slot:activator="{on}">
+          <v-btn icon v-on="on">
+            <v-icon color="success">mdi-emoticon-outline</v-icon>
+          </v-btn>
+        </template> -->
+        
+          <emoji-picker @append-emoji="react"/>
+        
+      </v-menu>
+
     </v-row>
 
   </v-container>
@@ -151,12 +209,16 @@ export default {
     snackbar: {},
     drawer: null,
     message: 'Type a message',
+    emoji_dialog: false,
     chat_messages: [],
     isLastDoc: false,
     loading_more_msgs: false,
+    chatRef: '',
+    selectedMsg: '',
+    allReactions: [],
     // loading_messages: true,
   }),
-  props:['members', 'thisGroup', 'loading_messages',],
+  props:['members', 'loading_messages',],
   watch:{
     $route: function(e){
       
@@ -165,9 +227,33 @@ export default {
       }
       
     },
+    '$route.hash': function(e){
+      let member = this.members.find(m => m.username == e.slice(1))
+      if(member){
+        this.$store.dispatch('openProfile', member)
+      }
+    },
+    'selectedProfile': function(e){
+      if(!e.name && this.$route.hash){
+        
+        this.$router.push(`/forum/${this.forumId}`)
+      }
+    },
     'forumId': function(to,from){
       if(to != 'd'){
-        console.log({to})
+        // console.log({to})
+        this.chatRef.off ? this.chatRef.off() : ''
+        
+        this.$eventBus.$emit('Overlay', {
+          show: true,
+          opacity: .5
+        })
+
+        setTimeout(() => this.$eventBus.$emit('Overlay', {
+          show: false,
+          opacity: .3
+        }), 1000)
+
         this.getMessages()
       }
     }
@@ -178,8 +264,8 @@ export default {
       // 'getChatMessages'
     ]),
     ...mapState([
-      'curRoom',
-      'isSuperUser'
+      'isSuperUser',
+      'selectedProfile'
     ]),
     forumId(){
       return this.$route.params.forumId
@@ -203,6 +289,7 @@ export default {
         className: 'linkified',
         events: {
           click: function (e) {
+           
           },
           mouseover: function (e) {
            return e
@@ -227,10 +314,10 @@ export default {
             let member = this.members.find(member => member.username == href.substring(1))
             if(member){
 
-              return location.origin + '/forum/profile/'+ member.username;
+              return `${location.origin}/forum/${this.forumId}#${member.username}`;
             }
             else {
-              return location.origin + '/forum/#'+ href.substring(1);
+              return `${location.origin}/forum/${this.forumId}#${href.substring(1)}`;
             }
           },
           hashtag: (href) => {
@@ -296,29 +383,156 @@ export default {
     },
     getMessages(){
       // get recent chats
-      
-      this.$gun.get('chat_messages')
+      this.chat_messages = []
+      this.chatRef = this.$gun.get('chat_messages')
         .get(this.forumId)
-        .map()
-        .on(data => {
-          // console.log({data})
-          this.$gun.get(data.author)
-          .once(author => {
-            console.log({author})
-            data.author = author
-            this.chat_messages.push(data)
-          })
-          
-        })
+        // .map()
+        .open( async msgs => {
+          // console.log({msgs})
 
-        console.log(this.forumId, this.chat_messages)
+          let arr = []
+          for (const msg of Object.values(msgs)) {
+            // get author
+            let c = Object.assign({}, msg)
+            c.author = await this.$gun.get('users').get(msg.author).then()
+            let groupd = groupBy(Object.values(msg.reactions), 'a')
+            // console.log(groupd)
+            c.reactions = groupd
+            c.imgs = msg.imgs ? Object.values(msg.imgs) : []
+
+            // msg.reactors = []
+            // let reactors = []
+            // for (const r in groupd.entries) {
+            //   console.log({r})
+            //   // msg.reactors.push(r)
+            // }
+
+            // console.log(reactors)
+
+            arr.push(c)
+
+            // group reactions
+          }
+
+          this.chat_messages = arr
+          // get reactions
+          // let msg_rxns = data.reactions['#']
+
+          
+          // get author
+          // let author = await this.$gun.get('users').get(data.author).then()
+          
+          // if(author.name){
+
+          //   let msg = Object.assign({}, data)
+
+          //   msg.author = author
+          //   // msg.reactions = 
+          //   // data.author = author
+
+          //   this.chat_messages.find(m => m.docId == data.docId) ? '' :
+          //   this.chat_messages.push(msg)
+          // }
+          
+          
+        }, {change: true})
+
+        // console.log(this.forumId, this.chat_messages)
       
     },
+    getReactors(k){
+      let o = Object.values(k).map(p => p.u)
+      // console.log(uniq(o).join(', '))
+      let uniqs = uniq(o)
+
+      if(uniqs.length <= 5){
+        return uniqs.join(', ')
+      }
+      else {
+        return `${uniqs.slice(0,5)} and ${uniqs.length - 5} others`
+      }
+      // return uniqs.join(', ')
+    },
+    selectEmoji(e, msg){
+      let msg2 = Object.assign({}, msg)
+
+      // console.log(e)
+      e.preventDefault()
+      
+      msg2.x = e.clientX
+      msg2.y = e.clientY
+      this.$nextTick(() => {
+        
+        this.selectedMsg = msg2;
+        this.emoji_dialog = true;
+      })
+    },
+    reactFromBtn(msg,rxn){
+      // add a reaction when you click the reaction chips/buttons
+      this.selectedMsg = msg
+      this.react(rxn, 'from')
+
+    },
+    async react(e, from){
+      
+      let addRxn  = ()=>{
+
+        this.$gun.get('chat_messages')
+          .get(this.forumId)
+          .get(this.selectedMsg.docId)
+          .get('reactions')
+          .set({
+            u: this.getUser.username,
+            a: e,
+          })
+
+          this.emoji_dialog = false
+      }
+      
+      if(!from){
+        // check if msg has too many reactions
+        if (Object.values(this.selectedMsg.reactions).length > 24){
+          this.$eventBus.$emit('Snackbar', {
+            show: true,
+            message: 'Sorry, this message already has too many reactions.',
+            color: 'info',
+          })
+          // console.log('too much')
+
+          return 
+        }
+        
+      }
+
+      // first check if user has reacted
+      let the_reaction = this.selectedMsg.reactions[e]
+
+      if(the_reaction){
+        // the reaction has been made by at least one person
+
+        let found = the_reaction.find(r => r.u == this.getUser.username)
+        console.log({found})
+        if(found){
+          // user has already made this reaction - do nothing
+        }
+        else {
+          // user has not made this reaction
+          addRxn()
+        }
+      }
+      else {
+        // the reaction has not been made by anyone
+        addRxn()
+      }
+
+      
+    }
   },
   mounted() {
 
     if(this.forumId != 'd'){
       this.getMessages()
+      
     }
   },
   destroyed(){
@@ -326,16 +540,19 @@ export default {
   },
   components:{
     LoadingBar,
-    ImageGrid
+    ImageGrid,
+    EmojiPicker,
   }
 }
 import {mapGetters, mapState} from 'vuex'
   import LoadingBar from '@/spinners/LoadingBar'
   import ImageGrid from '@/components/ImageGrid'
+  import EmojiPicker from '@/components/emojis/EmojiPicker'
   import * as linkify from 'linkifyjs';;
   import hashtag from 'linkifyjs/plugins/hashtag';
   import mention from 'linkifyjs/plugins/mention';
   import chat_background_img from '@/assets/chat-background.jpg'
+  import { groupBy, mapValues, uniq } from 'lodash'
   hashtag(linkify)
   mention(linkify)
 </script>
@@ -362,19 +579,34 @@ a{
   background: #f3f2f1;
   //background-color: #00aabb;
 }
-.chat_avartar{
-  width: 40px;
-  height: 40px;
-  border-radius: 5px;
+.msg-avatar{
+  // width: 40px;
+  // height: 40px;
+  // border-radius: 5px;
   //float:left;
   //display:inline-block;
-  margin-right: 1%;
+  // margin-right: 1%;
   float: left;
-  img{
-    width: 100%;
-    height: 100%;
-    border-radius: 5px;
-  }
+  
+}
+.msg-text {
+  float: left;
+  width: 80%;
+}
+.msg-block {
+  clear: both;
+  overflow: auto;
+  min-height: 60px;
+}
+
+.msg-floating-action {
+  position: absolute;
+  right: 15px;
+  visibility: hidden;
+}
+
+.msg-block:hover .msg-floating-action {
+  visibility: visible;
 }
 
 .me, .thm {
@@ -480,14 +712,42 @@ a{
 }
 
 .divide {
-  display: table;
-  padding: 5px;
-  margin: auto;
+  display: flex;
+  padding-bottom: 15px;
+  padding-top: 15px;
+  // margin: auto;
   @include borderRadius(8px);
-  background: oldlace;
+  // background: oldlace;
   font-weight: bold;
   text-align: center;
+  align-items: center;
+  line-height: 22px;
+  box-align: center;
+  -ms-flex-align: center;
 }
+.divide:before {
+  content: "";
+  margin: 0 15px;
+  background-color: #ccc;
+  height: 1px;
+  -webkit-box-flex: 1;
+  -ms-flex: 1 1 auto;
+  flex: 1 1 auto;
+  right: 100%;
+  margin-right: 8px;
+}
+.divide:after {
+  content: "";
+  margin: 0 15px;
+  background-color: #ccc;
+  height: 1px;
+  -webkit-box-flex: 1;
+  -ms-flex: 1 1 auto;
+  flex: 1 1 auto;
+  left: 100%;
+  margin-left: 8px;
+}
+
 #moderator_actions{
   float:right;
   margin-top: -30px;

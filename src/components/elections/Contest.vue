@@ -60,24 +60,29 @@
               <v-stepper-content step="2">
                 <v-card class="mb-5" light color="grey lighten-5"  style="min-height:250px;" flat tile>
                   <v-card-text >
-                    <span class="title">Contest in {{selectedElection.title}}</span>
+                    <span class="title mb-3">Contest in {{selectedElection.title}}</span>
                     
-                    <v-row>
-                      <v-col cols="12" sm="6">
+                    <v-row >
+                      <v-col cols="12" sm="6" v-if="selectedElection.who_can_contest != 'manual'">
                         <v-select :items="selectedElectionRoles" 
                           outlined label="Select role" 
                           color="primary" 
                           v-model="selectedRole"
                           item-text="title" return-object>
                         </v-select>
-                        <span class="d-block my-4">
-                          If you are authorized to contest, you will be given a 
-                          token by the election admin. Provide the token below
-                        </span>
-                        <v-text-field label="token" 
-                          v-model.trim="token" 
-                          outlined color="primary">
-                        </v-text-field>
+
+                        <div v-if="selectedElection.who_can_contest == 'everyone_with_access'">
+                          <span class="d-block my-4">
+                            This election requires an access token to contest. Provide the token below.
+                          </span>
+                          <v-text-field label="Access token" 
+                            v-model.trim="token" 
+                            outlined color="primary">
+                          </v-text-field>
+                        </div>
+                      </v-col>
+                      <v-col v-else>
+                        <v-subheader>Sorry you are not allowed to contest in this election</v-subheader>
                       </v-col>
                     </v-row>
                   </v-card-text>
@@ -88,7 +93,7 @@
                   <v-icon small>mdi-chevron-left</v-icon>
                   Previous
                 </v-btn>
-                <v-btn color="primary" dark depressed @click="step = 3" v-if="!disabled">
+                <v-btn color="primary" depressed @click="step = 3" v-if="!disabled">
                   Next
                   <v-icon small>mdi-chevron-right</v-icon>
                 </v-btn>
@@ -128,8 +133,8 @@
                   <v-card-actions :class="{'d-block': $vuetify.breakpoint.xsOnly}">
 
                     <template>
-                      <v-btn color="success" to="/forum" :block="$vuetify.breakpoint.xsOnly" :class="[{'mb-2 ml-0': $vuetify.breakpoint.xsOnly}]">Join the conversation</v-btn>
-                      <v-btn color="success" to="/elections/vote" :block="$vuetify.breakpoint.xsOnly" :class="[{'mb-2 ml-0': $vuetify.breakpoint.xsOnly}]">Vote</v-btn>
+                      <v-btn color="success" :to="`/forum/${selectedElection.electionId}`" :block="$vuetify.breakpoint.xsOnly" :class="[{'mb-2 ml-0': $vuetify.breakpoint.xsOnly}]">Join the conversation</v-btn>
+                      <v-btn color="success" :to="`/elections/${selectedElection.electionId}`" :block="$vuetify.breakpoint.xsOnly" :class="[{'mb-2 ml-0': $vuetify.breakpoint.xsOnly}]">Vote</v-btn>
                     </template>
 
                   </v-card-actions>
@@ -191,8 +196,22 @@ export default {
       'loading_rooms'
     ]),
     disabled(){
-      return !this.token  ||
-       !this.selectedRole || !this.selectedElection
+      console.log()
+      if(this.step == 1){
+        return false
+      }
+      else if(this.step == 2){
+        
+        if(this.selectedElection.who_can_contest == 'everyone'){
+          return !this.selectedRole.value
+        }
+        else if(this.selectedElection.who_can_contest == 'everyone_with_access'){
+          return !this.selectedRole.value || !this.token
+        }
+        else return true
+      }
+      else {return false}
+
     },
     selectedElectionRoles(){
       return uniqBy(this.roles, 'token')
@@ -210,7 +229,7 @@ export default {
           .get('roles')
           .map()
           .once((r,k) => {
-            console.log({r})
+            // console.log({r,k})
             r.key = k
            this.roles.push(r)
           }).then()
@@ -229,10 +248,19 @@ export default {
       console.log({has_contested})
 
       // check if user is in same sch, fac,dept; if election not started; if has enrolled
-      let not_started = this.selectedElection.status == 'inRegistration'
+      let not_started = this.selectedElection.status == 'not_started'
+
+      if(this.selectedElection.who_can_contest == 'manual'){
+        this.$eventBus.$emit('Snackbar', {
+          show: true,
+          message: 'You cannot contest in this election',
+          color: 'error'
+        })
+      }
 
       // check if the token is valid
-      if(this.token != this.selectedRole.value){
+      else if(this.token != this.selectedElection.cont_access_token && 
+        this.selectedElection.who_can_contest == 'everyone_with_access'){
         
         this.step = 2
         this.$eventBus.$emit('Snackbar', {
@@ -283,13 +311,15 @@ export default {
         contestant.get('role').put(role_node)
         
         elecRef.get('contestants_count')
-          .put(selectedElection.contestants_count + 1)
+          .put(this.selectedElection.contestants_count + 1)
 
         this.$gun.get('users')
           .get(this.getUser.username)
           .get('contests')
           .get(this.selectedElection.electionId)
           .put(contestant)
+          .get('contestants_count')
+          .put(this.selectedElection.contestants_count * 1 + 1)
 
         this.loading = false
         this.$store.dispatch('curRoom', this.selectedElection)
@@ -297,7 +327,7 @@ export default {
 
         this.$eventBus.$emit('Snackbar', {
           show: true,
-          message: 'Successfull',
+          message: 'You are now a contestant!',
           color: 'success'
         })
 
@@ -306,6 +336,7 @@ export default {
     },
     async hasContested(){
       let contest = await this.$gun
+        .get('users')
         .get(this.getUser.username)
         .get('contests')
         .get(this.selectedElection.electionId)
@@ -318,13 +349,19 @@ export default {
     if (this.getUser) {
       this.elections = this.getMyEnrolled
       this.ready = true
-      // console.log(this.curRoom)
-      this.$gun.get('elections')
-      .get(this.curRoom.electionId).get('contestants')
-      .map().get('role').on(d => {
-        console.log(d)
-      })
+      
+      let query = this.$route.query.eId;
 
+      if(query){
+        
+        let is_valid_elec = this.getMyEnrolled.find(e => e.electionId == query)
+        if(is_valid_elec){
+          this.selectedElection = is_valid_elec
+          this.step = 2
+          // console.log(this.selectedElection, this.step)
+          // console.log(await this.hasContested())
+        }
+      }
     } else {
       
     }

@@ -68,7 +68,7 @@
             <v-img :src="blob_url" v-if="selected_file" width="200" height="200"/>
           </v-card-text>
           <v-card-actions>
-            <v-btn color="success" v-if="!selected_file" 
+            <v-btn color="success" v-if="!selected_file"  outlined small
               @click.native="$helpers.trigFileSelector" class="mb-2">
               Select event banner</v-btn>
 
@@ -114,7 +114,7 @@
                   <template v-slot:activator="{ on }">
                     <v-text-field
                       v-model="new_event.date"
-                      label="Start date" dense
+                      label="Start date"
                       prepend-inner-icon="mdi-calendar"
                       readonly color="primary" outlined
                       v-on="on"
@@ -138,7 +138,7 @@
                   <template v-slot:activator="{ on }">
                     <v-text-field
                       v-model="new_event.time"
-                      label="Start time" dense
+                      label="Start time"
                       prepend-inner-icon="mdi-calendar"
                       readonly color="primary" outlined
                       v-on="on"
@@ -162,9 +162,20 @@
 
             <v-text-field outlined color="primary"
               name="venue" v-if="!new_event.online"
-              label="Enter address" dense
+              label="Enter address"
               v-model.trim="new_event.venue"
             ></v-text-field>
+
+            <v-select
+              :items="getMyEnrolled"
+              v-model="new_event.audience"
+              item-value="electionId"
+              item-text="title"
+              outlined
+              label="Select Audience"
+              persistent-hint
+              hint="You need to select a target audience for your event to be discoverable"
+            ></v-select>
 
           </v-card-text>
         </v-card>
@@ -173,7 +184,7 @@
           <v-btn color="primary" :loading="loading" 
             @click="createEvent" depressed 
             class="text-capitalize"
-            :disabled="!new_event.date || !new_event.time || (!new_event.online && !new_event.venue)">
+            :disabled="!new_event.date || !new_event.time || !new_event.audience || (!new_event.online && !new_event.venue)">
             Create event
           </v-btn>
         </template>
@@ -200,6 +211,7 @@ export default {
       desc: '',
       online: false,
       venue: '',
+      audience: ''
     },
     rules: {
       counter: value => value.length <= 100 || 'Max 100 characters',
@@ -211,17 +223,13 @@ export default {
     blob_url: [],
     uploading: false,
     uploaded: false,
-    cloudinary:{
-      cloud_name:'unplugged',
-      upload_preset:'pe4iolek'
-    }
   }),
   computed: {
     ...mapGetters([
       'getUser',
+      'getMyEnrolled'
     ]),
     ...mapState([
-      'curRoom',
       'isSuperUser',
       'is_verified'
     ])
@@ -231,7 +239,13 @@ export default {
       return new Promise((resolve, reject) =>{
         this.uploading = true
 
-        this.$helpers.uploadImage([this.selected_file], this.cloudinary)
+        this.$helpers.uploadMedia({
+          files: [this.selected_file],
+          options: {
+            height: 300,
+            width: 800
+          }
+        })
         .then(uploaded => {
           this.uploading = false
           this.uploaded = uploaded[0]
@@ -259,16 +273,12 @@ export default {
       try {
         this.loading = true
         this.$emit('persist-drawer')
-
-        function getRandomNumber(min, max) {
-          return Math.floor(Math.random() * (max - min) + min)
-        }
         
-        let eventId = `${randomWords({exactly: 2, maxLength: 5, join: '-'})}-${getRandomNumber(10000, 99999)}`
+        let eventId = this.$uuidv4()
         this.eventId = eventId
         // console.log(eventId)
 
-        let userRef = this.$gun.get(this.getUser.username)
+        let userRef = this.$gun.get('users').get(this.getUser.username)
         this.new_event.title = this.$sanitize(this.new_event.title)
         this.new_event.desc = this.$sanitize(this.new_event.desc)
         this.new_event.venue = this.$sanitize(this.new_event.venue)
@@ -278,7 +288,7 @@ export default {
           dateCreated: Date.now(),
           ...this.new_event,
           imgSrc: this.uploaded,
-          elecRef: this.curRoom.electionId,
+          elecRef: this.new_event.audience,
           interested: 0,
           started: false,
           live: false,
@@ -291,10 +301,11 @@ export default {
           .get(eventId)
           .put(eventData)
 
+        // console.log(event)
         event.get('author').put(userRef)
+        // console.log(event)
         userRef.get('events')
           .set(event)
-
 
         
         this.loading = false
@@ -325,6 +336,4 @@ export default {
   }
 }
 import {mapGetters, mapState} from 'vuex'
-  import {firebase, db, database} from '@/plugins/firebase'
-  import randomWords from 'random-words'
 </script>

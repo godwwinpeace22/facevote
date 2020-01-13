@@ -61,7 +61,7 @@ export default {
             is_student: false,
             photoURL: 'https://res.cloudinary.com/unplugged/image/upload/v1556894107/contestr/profile_avatars/imgSrcsmhPFNdktRNXLSe858h2YrW5Mqt2.jpg',
           },
-          body: `Hi ${this.getUser.displayName}. I want to personally welcome you onboard. You’re joining thousands of users who use Voteryte to select their next set of leaders. Thank you for chosing us.
+          body: `Hi ${this.getUser.name}. I want to personally welcome you onboard. You’re joining thousands of users who use Voteryte to select their next set of leaders. Thank you for chosing us.
 
 You can create posts, campaigns, manifestos, or interact with other voters in the forum. 
 We are here to help if you need any help. Feel free to chat with us.`

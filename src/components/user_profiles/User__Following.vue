@@ -58,6 +58,7 @@ export default {
     },
     async getFollowing(){
       let followingRef = this.$gun
+        .get('users')
         .get(this.username)
         .get('following')
 

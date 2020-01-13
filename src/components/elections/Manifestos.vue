@@ -1,16 +1,16 @@
 <template>
   <div>
-    <navigation/>
+    <vue-headful :title="_title"/>
 
     <transition name="fade" appear>
-      <v-overlay v-if="!showUi"
+      <!-- <v-overlay v-if="!showUi"
         absolute opacity=".3"
         :value="!showUi"
       >
         <v-progress-circular indeterminate size="64"></v-progress-circular>
-      </v-overlay>
+      </v-overlay> -->
 
-      <v-container class="white" v-if="showUi">
+      <v-container class="white">
         <v-card flat min-height="500">
           <v-fab-transition>
             <v-btn
@@ -52,12 +52,12 @@
                         <span class="mr-2">{{formatDate(manifesto.date_created)}}</span>
                         <!-- <span class="mr-1">·</span> -->
                         <!-- <span class="mr-2">8 min read</span> -->
-                        <span class="mr-1">·</span>
+                        <!-- <span class="mr-1">·</span>
                         <v-icon class="mr-1" small>mdi-heart</v-icon>
                         <small class="subheading mr-2">256</small>
                         <span class="mr-1">·</span>
                         <v-icon class="mr-1" small>mdi-share</v-icon>
-                        <small class="subheading">45</small>
+                        <small class="subheading">45</small> -->
                       </v-list-item-subtitle>
 
                     </v-list-item-content>
@@ -72,12 +72,12 @@
                 <div style="min-height: 300px;">
                   <div class="editable" ref="editable"></div>
                   
-                  <!-- <v-divider></v-divider>
-                  <div v-html="manifesto_body"></div> -->
+                  <!-- <v-divider></v-divider> -->
+                  <!-- <div v-html="manifesto_body"></div> -->
 
                 </div>
 
-                <v-card-actions v-if="manifestoId != 'new'">
+                <!-- <v-card-actions v-if="manifestoId != 'new'">
 
                   <v-btn color="info" text>
                     <v-icon color="red">mdi-heart</v-icon>
@@ -96,8 +96,7 @@
                   <v-icon class="mr-1">mdi-share</v-icon>
                   <span class="subheading">45</span>
 
-                </v-card-actions>
-                <!-- <v-divider class="mx-4"></v-divider> -->
+                </v-card-actions> -->
               </v-card>
             </v-col>
           </v-row>
@@ -116,16 +115,23 @@ export default {
     manifesto_body: '',
     title: 'Click to edit title',
     loading: false,
+    created: false,
     editor: '',
-    electionId: 'including-electricity',
   }),
+  props: ['electionId', 'manifestoId', 'currElection'],
   computed: {
     ...mapGetters([
       'getUser',
     ]),
-    manifestoId(){
-      return this.$route.params.manifestoId
+    _title(){
+      return `${this.manifestoId == 'new' ? 'Create ' : 'Edit '} Manifesto | ${this.$appName}`
     },
+    // manifestoId(){
+    //   return this.$route.params.manifestoId
+    // },
+    // electionId(){
+    //   return this.$route.params.electionId
+    // },
     activeFab () {
       switch (this.readonly) {
         case false: return { color: 'primary', icon: 'mdi-content-save', action: this.save }
@@ -133,7 +139,10 @@ export default {
       }
     },
     isOwner(){
-      if(this.manifesto.author){
+      if(this.manifestoId == 'new'){
+        return true
+      }
+      else if(this.manifesto.author){
         return this.manifesto.author.username == this.getUser.username
       }
       else {return false}
@@ -147,14 +156,17 @@ export default {
       
       if(this.manifestoId == 'new'){
         this.readonly = false
-        this.initializeEditor()
+        // this.edit()
         this.showUi = true;
+        this.initializeEditor()
       }
       else {
         this.readonly = true
         this.getManifesto()
         this.showUi = true
+        // console.log(this.manifesto)
       }
+      // console.log(this.manifestoId)
 
     },
     getManifesto(){
@@ -179,6 +191,7 @@ export default {
         })
     },
     initializeEditor(){
+
       this.editor = new MediumEditor('.editable', {
         delay: 1000,
         targetBlank: true,
@@ -209,6 +222,7 @@ export default {
       })
 
       let _this = this
+      // console.log(this.editor)
       this.editor.subscribe('editableInput', function (event, editable) {
         // console.log(editable)
         _this.manifesto_body = editable.innerHTML
@@ -240,7 +254,7 @@ export default {
         .get(this.electionId)
 
       let manifesto = userRef.get('manifestos')
-        .get(manifestoId)
+        .get(this.electionId) // can't have two manifestos for same election
         .put(manifesto_data)
 
       manifesto.get('author')
@@ -255,6 +269,7 @@ export default {
       setTimeout(() => {
         this.readonly = true
         this.loading = false
+        this.$emit('close-dialog')
 
         this.$eventBus.$emit('Snackbar', {
           show: true,
@@ -315,7 +330,10 @@ export default {
   },
   mounted(){
     this.initialize()
-
+    
+  },
+  beforeDestroy(){
+    this.editor ? this.editor.destroy() : ''
   }
 }
 
@@ -326,3 +344,9 @@ import 'medium-editor/dist/css/medium-editor.css'
 import 'medium-editor/dist/css/themes/beagle.min.css'
 import { mapGetters } from 'vuex'
 </script>
+<style >
+  .editable {
+    min-height: 300px;
+    padding: 15px;
+  }
+</style>

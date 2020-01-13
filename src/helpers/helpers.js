@@ -1,7 +1,6 @@
 import $store from '../store/store'
-import gun from '@/plugins/gun'
-import api from '@/services/api'
-import Nprogress from 'nprogress'
+import {gun} from '@/plugins/gun'
+import api from '@/services/api2'
 import ImageKit from 'imagekit-javascript'
 
 export default {
@@ -36,6 +35,63 @@ export default {
   trigFileSelector(){
     document.getElementById('file_img').click()
   },
+  copyToClipboard(text) {
+    if (window.clipboardData && window.clipboardData.setData) {
+        // IE specific code path to prevent textarea being shown while dialog is visible.
+        return clipboardData.setData("Text", text); 
+
+    } else if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
+
+      var textarea = document.createElement("textarea");
+      textarea.textContent = text;
+      textarea.style.position = "fixed";  // Prevent scrolling to bottom of page in MS Edge.
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+          return document.execCommand("copy");  // Security exception may be thrown by some browsers.
+      } catch (ex) {
+          // console.warn("Copy to clipboard failed.", ex);
+          return false;
+      } finally {
+          document.body.removeChild(textarea);
+          return true
+      }
+    }
+  },
+  getRandomString(len=8){
+    let text = "";
+    let possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+    for( let i=0; i < len; i++ )
+      text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+    return text;
+  },
+  getRandomNumber(len=6){
+    let num = "";
+    let possible = "0123456789";
+
+    for( let i=0; i < len; i++ )
+      num += possible.charAt(Math.floor(Math.random() * possible.length));
+
+    return num;
+  },
+  generateUUID() { // Public Domain/MIT -- StackOverflow
+    var d = new Date().getTime();//Timestamp
+    var d2 = (performance && performance.now && (performance.now()*1000)) || 0;//Time in microseconds since page-load or 0 if unsupported
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16;//random number between 0 and 16
+        if(d > 0){//Use timestamp until depleted
+            r = (d + r)%16 | 0;
+            d = Math.floor(d/16);
+        } else {//Use microseconds since page-load if supported
+            r = (d2 + r)%16 | 0;
+            d2 = Math.floor(d2/16);
+        }
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    })
+  },
+
 
   /**
    * Upload files to storage
@@ -136,6 +192,14 @@ export default {
     }
     return d.toLocaleString("en-US", show_date ? options2 : options)
   },
+
+  sleep (limit=100) {
+    return (new Promise((res, rej)=>{
+      setTimeout(function(){
+        res(limit)
+      }, limit);
+    }))
+  },
   async uploadImage(files,preset){
     // console.log(files, preset)
     try {
@@ -164,10 +228,30 @@ export default {
       // eslint-disable-next-line
       // console.log(error.response.data)
       // alert('Image upload failed')
-      Nprogress.done()
       throw new Error(error || error.response.data.message)
       
     }
+  },
+  async verifyTxn(data){
+
+    if(!data) return;
+
+    return new Promise((resolve,reject) => {
+
+      api().post('/verifyTxn', {
+        ref: data.ref,
+        amount: data.amount
+      })
+      .then(resp => {
+        resolve(resp.data)
+      })
+      .catch(err => {
+        reject(err.response.data.message)
+      })
+  
+    })
+
+
   },
   setCurRoom(rooms){
     // SETS THE DEFAULT OR CURRENT ROOM/ELECTION
@@ -192,94 +276,6 @@ export default {
     
   },
 
-  userDetails(user){
-    
-    return new Promise((resolve,reject)=>{
-      if($store.state.userInfo){
-        // eslint-disable-next-line
-        resolve($store.state.userInfo)
-      }
-      else {
-        
-        db.collection('moreUserInfo').doc(user.uid).onSnapshot(doc =>{
-          // console.log(doc.data())
-          $store.dispatch('setUserInfo',doc.data())
-          resolve(doc.data())
-        }, err => reject(err))
-      }
-    })
-    
-  },
-
-  myEnrolled(user,refresh){
-    return new Promise((resolve, reject)=>{
-      
-      if(refresh){
-        this.userDetails(user).then( async userInfo=>{
-
-          let arr = []
-          if(userInfo.enrolled){
-    
-            userInfo.enrolled.forEach(async electionId =>{
-              // eslint-disable-next-line
-              let doc = await db.collection('elections').doc(electionId).get()
-              doc.exists ? arr.push(doc.data()) : ''
-            })
-          }
-          $store.dispatch('setMyEnrolled', arr.sort((a,b)=> b.dateCreated - a.dateCreated))
-
-          // set current room if there is none (and if there are rooms to set)
-          if(arr && arr.length > 0){
-            this.setCurRoom(arr).then(() => resolve(true))
-          }
-          else{ resolve(false) }
-          
-        }).catch(err => {
-          /* eslint-disable-next-line */
-          // console.log(err); 
-          reject(err)
-        })
-      }
-
-      else if($store.state.curRoom){
-        // if curRoom exists already, do nothing
-        resolve(true)
-      }
-      else{
-        
-        this.userDetails(user).then( async userInfo=>{
-
-          let arr = []
-          if(userInfo.enrolled){
-
-            for(const electionId of userInfo.enrolled){
-              // eslint-disable-next-line
-              let doc = await db.collection('elections').doc(electionId).get()
-              // if the election actually exists
-              doc.exists ? arr.push(doc.data()) : ''
-            }
-          }
-
-          $store.dispatch('setMyEnrolled', arr.sort((a,b)=> b.dateCreated - a.dateCreated))
-
-          // set current room if there is none (and if there are rooms to set)
-          if(arr && arr.length > 0){
-            this.setCurRoom(arr).then(() => resolve(true))
-          }
-          else{ resolve(false) }
-          
-        }).catch(err => {
-          /* eslint-disable-next-line */
-          // console.log(err); 
-          reject(err)
-        })
-      }
-      
-      
-    })
-      
-  },
-
   followUser(follower, followee){
     return new Promise(async (resolve, reject)=>{
       // helper function to follow a user
@@ -287,64 +283,44 @@ export default {
       
       try {
         
-        let followeeRef = gun.get(followee.username)
-        let followerRef = gun.get(follower.username)
-        let followings_count = followee.followings_count || 0
-        let followers_count = follower.followers_count || 0
-  
+        let followeeRef = gun.get('users').get(followee.username)
+        let followerRef = gun.get('users').get(follower.username)
+        let followees_count = followee.followers_count || 0
         
         
-        let arr = []
-        followeeRef.get('followers')
-          .get(follower.username)
-          .once((p,k) => {
-            p ?
-            arr.push(p) : ''
-            
-          })
-        
-        console.log(arr)
-        let is_following = arr.find(u => u.username == follower.username)
+        let is_following = await followeeRef.get('followers')
+        .get(follower.username).then()
         console.log({is_following})
-  
+        
+        // await this.sleep()
         if(is_following){
           // unfollow
           let ref = followeeRef
             .get('followers')
-            .unset(followerRef)
-            
-            
-            followerRef.get('following')
-            .unset(followeeRef)
-            
-            followerRef.get('followings_count')
-              .put(followings_count ? followings_count - 1 : 0)
+            .get(follower.username)
+            .put(null)
   
             followeeRef.get('followers_count')
-              .put(followers_count ? followers_count - 1 : 0)
+              .put(followees_count - 1)
 
             resolve({following: false})
   
         }
   
         else{
-  
+          
           // follow a user
   
           followeeRef
             .get('followers')
-            .set(followerRef) // so that unfollowing can work
-            // .put(followerRef)
-          
-          followerRef
-            .get('following')
-            .set(followeeRef)
+            .get(follower.username)
+            .put(true)
             
-          followeeRef.get('followings_count')
-            .put(followings_count + 1)
+          followeeRef.get('followers_count')
+            .put(followees_count + 1)
           
-          followerRef.get('followers_count')
-            .put(followers_count + 1)
+          // followerRef.get('followers_count')
+          //   .put(followers_count + 1)
           
             resolve({following: true})
         }
@@ -507,7 +483,7 @@ export default {
     profile.y = event.y
     $store.dispatch('openProfile', profile)
   },
-  async uploadMedia({files,path}){
+  async uploadMedia({files, options={height:400,width:700}}){
 
     return new Promise((resolve, reject) => {
 
@@ -540,8 +516,10 @@ export default {
             console.log(arguments);
             let imgUrl =imagekit.url({
               src: result.url,
-              transformation : [{ HEIGHT: 400, WIDTH: 700}]
+              // transformation : [{ HEIGHT: options.height, WIDTH: options.width}]
             })
+
+            console.log(imgUrl)
             
             uploaded.push(imgUrl)
 
@@ -560,7 +538,6 @@ export default {
         console.log(error)
         reject(error)
         alert('Image upload failed')
-        Nprogress.done()
         throw new Error(error)
         
       }

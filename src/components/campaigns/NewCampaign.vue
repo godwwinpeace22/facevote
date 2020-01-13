@@ -15,7 +15,7 @@
 					></v-radio>
 					<v-radio class="mr-0"
 						label="Photo"
-						color="secondary"
+						color="primary"
 						value="photo"
 					></v-radio>
 				</v-radio-group>
@@ -80,17 +80,21 @@
 						name="caption" v-model="img_caption"
 					></v-text-field>
 				</template>
-				<!-- <v-select class="mt-3" outline color="secondary"
-					label="Choose your audience" v-model="group"
-					:items="mycontests" item-value="electionId"
+
+				<v-select
+					:items="getMyEnrolled"
+					v-model="audience"
+					label="Select audience"
 					item-text="title"
-				></v-select> -->
+					item-value="electionId"
+				></v-select>
+
 			</v-card-text>
 			<v-card-actions>
 				<v-spacer></v-spacer>
 				<v-btn color="grey" depressed dark @click="$helpers.trigFileSelector" v-if="imgSrc" :disabled="loading">
 					Change photo</v-btn>
-				<v-btn color="secondary" @click="submit" :disabled="disabled" :loading="loading" depressed>Submit</v-btn>
+				<v-btn color="primary" @click="submit" :loading="loading" depressed>Submit</v-btn>
 			</v-card-actions>
 		</v-card>
 		
@@ -108,6 +112,7 @@ export default {
 			imgSrc: null,
 			selected_file: null,
 			group: '',
+			audience: '',
 			cloudinary:{
 				cloud_name:'unplugged',
 				upload_preset:'pe4iolek'
@@ -122,6 +127,9 @@ export default {
 			
 			if(this.campaign_type == 'photo'){
 				return !this.imgSrc
+			}
+			else if(this.campaign_type == 'text'){
+				return false
 			}
 		},
 		...mapGetters([
@@ -146,7 +154,7 @@ export default {
 		postCampaign(image){
 
 			let docId = this.$uuidv4()
-			let userRef = this.$gun.get(this.getUser.username)
+			let userRef = this.$gun.get('users').get(this.getUser.username)
 			let doc = document.getElementById('campaign_text')
 
 			let campaign_text = doc ? doc.innerText : false
@@ -165,19 +173,22 @@ export default {
 				author: this.getUser.username,
 				type: this.campaign_type,
 				color: this.color,
-				elecRef: this.curRoom.electionId,
+				elecRef: this.audience,
 				date_created: Date.now(),
 				expires_in: Date.now() + twenty4hrs
 			}
 
-			let campaign = userRef.get('campaigns')
-				.get(docId).put(data)
+			// let campaign = userRef.get('campaigns')
+			// 	.get(docId).put(data)
 
-			this.$gun.get('campaigns')
-				.get(this.curRoom.electionId)
+			let campaign = this.$gun.get('elections')
+			.get(this.curRoom.electionId)
+			.get('campaigns')
 				.get(date_key)
 				.get(docId) // add a key to enable deletion
-				.put(campaign)
+				.put(data)
+
+				// campaign.get('author').put(userRef)
 	
 
 			
@@ -200,7 +211,6 @@ export default {
 }
 import api from '@/services/api'
 import {mapGetters, mapState} from 'vuex'
-import {firebase, db, database} from '@/plugins/firebase'
 </script>
 <style>
 	#campaign_text div{

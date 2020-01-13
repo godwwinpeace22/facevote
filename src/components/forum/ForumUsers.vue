@@ -38,21 +38,26 @@ export default {
     profile_menu: false,
     selected_profile: {},
   }),
-  props:['members', 'thisGroup', 'suspended'],
+  props:['members', 'suspended'],
   computed: {
     filteredList() {
-      // console.log(this.members)
+      
       if(this.members && this.members.length > 0){
+
+        // >>>=== inefficient code ===<<<
+
         //console.log(this.members)
         // let those online appear first, at the top
-        let online = []
-        let offline = []
-        this.members.forEach(m=>{
-          m.online ? online.push(m) : offline.push(m)
-        })
+        // let online = []
+        // let offline = []
+        // this.members.forEach(m=>{
+        //   m.online ? online.push(m) : offline.push(m)
+        // })
 
-        let sortedByOnline = [...online, ...offline]
-        return sortedByOnline.filter(member => {
+        // let sortedByOnline = [...online, ...offline]
+
+
+        return this.members.filter(member => {
           return member.name.toLowerCase().includes(this.search.toLowerCase())
         })
       }
@@ -67,46 +72,9 @@ export default {
     }
   },
   methods:{
-    nextDocs(lastUser){
-      
-      this.loading_more_members = true
-      db.collection('moreUserInfo').doc(lastUser.uid).get().then(documentSnapshot => {
-        let lastVisible = documentSnapshot;
-        
-        db.collection("moreUserInfo")
-          .where('enrolled','array-contains', this.thisGroup.electionId)
-          .startAfter(lastVisible)
-          .limit(10).get().then(docs=>{
-            docs.forEach(doc=>{
-              
-              let isSuspended = this.suspended.voters && !!this.suspended.voters.find(uid => doc.data().uid == uid)
-              if(!isSuspended){
-
-                this.members.push(doc.data())
-              }
-            })
-
-            this.loading_more_members = false
-            
-            if(docs.empty){
-              this.isLastDoc = true
-            }
-          }).catch(err=>{
-            // console.log(err)
-          })
-      })
-    },
+    
     checkProfile(){
       this.$eventBus.$emit('show_right_sidebar','profile');
-    },
-    getRole(member){ // return the role a user is contesting for
-      if(member.contestsRef){
-        let found = member.contestsRef.find(contest=>contest.electionRef == this.thisGroup.electionId)
-        //console.log(res)
-        return found ? this.thisGroup.roles.find(role => role.value == found.role).title : false
-      }else{
-        return false
-      }
     },
   },
   async mounted(){
@@ -121,7 +89,6 @@ export default {
 }
 //import api from '@/services/api'
 import {mapGetters} from 'vuex'
-import {firebase, db, database} from '@/plugins/firebase'
 </script>
 
 <style lang="scss" scoped>
@@ -133,14 +100,14 @@ import {firebase, db, database} from '@/plugins/firebase'
   }
   $mainBgColor:#1c1f35;
 
-  .menu_tabs{
-    .v-tabs__div{
-      text-transform:capitalize
-    }
-    .v-list__tile{
-      font-size: 14px;
-    }
-  }
+  // .menu_tabs{
+  //   .v-tabs__div{
+  //     text-transform:capitalize
+  //   }
+  //   .v-list__tile{
+  //     font-size: 14px;
+  //   }
+  // }
   .online_badge{
     display: inline-block;
     width: 10px;

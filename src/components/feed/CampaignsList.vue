@@ -3,11 +3,11 @@
     <v-container pa-0>
       <v-row column>
         <v-col cols="12">
-          <v-card flat class="elevation-0 round_top" elevation-0>
+          <v-card flat class="bgd lighten-1">
             <div style="overflow-y:auto;">
               <v-subheader class="font-weight-bold">Campaigns</v-subheader>
               
-              <v-list dense >
+              <v-list dense class="bgd lighten-1">
                 <v-list-item  @click="newCampaign" v-if="isSuperUser">
                   <v-list-item-avatar color="grey">
                     <v-avatar size="45" color="grey">
@@ -21,7 +21,7 @@
                 </v-list-item>
               </v-list>
 
-              <v-list two-line dense >
+              <v-list two-line dense class="bgd lighten-1">
                 <v-list-item  v-for="(campaign,i) in sortCampaigns" :key="i" @click="selectCampaign(campaign)">
                   <v-list-item-avatar size="45" :color="$helpers.colorMinder(campaign.author.name.charAt(0))">
                     <img :src="campaign.author.photoURL" v-if="campaign.author.photoURL" alt="alt">
@@ -149,9 +149,11 @@ export default {
       let index = this.getCampaigns.findIndex(camp => {
         return camp.author.username == campaign.author.username
       })
-      // console.log({campaign, index})
+      // // console.log({campaign, index})
       this.selected_campaign = index
-      this.view_campaign = true;
+      // this.view_campaign = true;
+
+      this.$router.push(`/campaigns?n=${index}`)
     },
     newCampaign(){
       this.isSuperUser ?
@@ -168,6 +170,6 @@ export default {
   }
 }
 import { mapState, mapGetters } from 'vuex'
-import NewCampaign from '@/components/profile/NewCampaign'
-import ViewCampaign from '@/components/dialogs/ViewCampaign'
+import NewCampaign from '@/components/campaigns/NewCampaign'
+import ViewCampaign from '@/components/campaigns/ViewCampaign'
 </script>

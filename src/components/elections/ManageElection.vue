@@ -1,5 +1,8 @@
 <template>
   <div>
+
+		<vue-headful :title="title"/>
+
     <navigation :show_extension="true" color="purple"
       extension_height="50"
       :prominent="true"
@@ -235,26 +238,29 @@
 											class="mb-5"
 											name="title" hide-details color="primary"
 											label="Edit Title" outlined
-											:value="currElection.title" v-model="form.title"
+											:value="currElection.title" v-model.trim="form.title"
 										></v-text-field>
 
 										<v-textarea
 											class="mb-5"
 											name="desc" hide-details color="primary"
 											label="About election" outlined
-											:value="currElection.about" v-model="form.about"
+											:value="currElection.about" v-model.trim="form.about"
 										></v-textarea>
 										
 										<v-subheader class="pl-0 font-weight-bold">Election logo</v-subheader>
 										<v-file-input 
 											show-size outlined 
-											v-model="logo" 
+											v-model="logo"
+											prepend-icon=""
+											hide-details class="mb-3"
+											append-icon="mdi-paperclip"
 											:disabled="uploading_logo" 
 											label="Select logo">
 										</v-file-input>
 
-										<v-btn outlined small color="primary" 
-											v-if="logo" class="text-normal ml-0"
+										<v-btn depressed small color="primary" 
+											v-if="logo" class="text-normal ml-0 mb-5"
 											:loading="uploading_logo"
 											@click="uploadLogo">
 											Upload logo
@@ -265,6 +271,43 @@
 											label="Terms and conditions"
 											v-model="form.terms"
 										></v-textarea>
+
+										<v-list subheader three-line>
+											<v-subheader class="font-weight-bold mb-0">Election interaction</v-subheader>
+											<v-list-item >
+												<v-list-item-action>
+													<v-checkbox
+														v-model="form.enable_forum"
+														class="mt-0"
+														color="success">
+													</v-checkbox>
+													
+												</v-list-item-action>
+												<v-list-item-content>
+													<v-list-item-title>Enable chat forum</v-list-item-title>
+													<v-list-item-subtitle>Check this to enable forum</v-list-item-subtitle>
+													
+												</v-list-item-content>
+											</v-list-item>
+
+											<v-subheader class="font-weight-bold mb-0">Manifestos</v-subheader>
+											<v-list-item >
+												<v-list-item-action>
+													<v-checkbox
+														v-model="form.allow_manifestos"
+														class="mt-0"
+														color="success">
+													</v-checkbox>
+													
+												</v-list-item-action>
+												<v-list-item-content>
+													<v-list-item-title>Allow manifestos</v-list-item-title>
+													<v-list-item-subtitle>Contestants can submit their manifestos</v-list-item-subtitle>
+													
+												</v-list-item-content>
+											</v-list-item>
+											
+										</v-list>
 
 									</v-card-text>
 									<v-card-actions>
@@ -288,49 +331,41 @@
 							<v-col cols="12" sm="10">
 								<v-card outlined class="my-5" style="min-height:200px;">
 									<v-card-text>
-										<v-list three-line subheader>
-											<!-- <v-subheader class="font-weight-bold mb-0">Voting</v-subheader> -->
-											<v-list-item>
-												<v-list-item-action>
-													<v-checkbox 
-														:disabled="form.manually_add_contestants"
-														v-model="form.unrestricted_contesting"
-														class="mt-0"
-														color="success">
-													</v-checkbox>
-													
-												</v-list-item-action>
-												<v-list-item-content>
-													<v-list-item-title>Contestants enrollment</v-list-item-title>
-													<v-list-item-subtitle>Allow users to contest without access token</v-list-item-subtitle>
-													<!-- <v-list-item-subtitle class="warning--text">Note: This option is not available for school elections.</v-list-item-subtitle> -->
-												</v-list-item-content>
-											</v-list-item>
+										<v-subheader class="font-weight-bold mb-2">Adding Contestants</v-subheader>
+										<p class="ml-4">Who can contest for this election?</p>
+										<v-radio-group class="ml-4" v-model="form.who_can_contest" mandatory>
+											
+											<v-radio label="Everyone" value="everyone"></v-radio>
+											<v-radio label="Everyone with access token" value="everyone_with_access"></v-radio>
+											<v-radio label="Manual selection" value="manual"></v-radio>
+										</v-radio-group>
 
-											<v-list-item>
-												<v-list-item-action>
-													<v-checkbox 
-														v-model="form.manually_add_contestants"
-														class="mt-0"
-														color="success">
-													</v-checkbox>
-													
-												</v-list-item-action>
-												<v-list-item-content>
-													<v-list-item-title>Manually add contestants</v-list-item-title>
-													<v-list-item-subtitle>Uncheck this to let contestants register apply by themselves</v-list-item-subtitle>
-													<!-- <v-list-item-subtitle class="warning--text">Note: This option is not available for school elections.</v-list-item-subtitle> -->
-												</v-list-item-content>
-											</v-list-item>
-										</v-list>
+										<v-card outlined class="mb-3" v-if="form.who_can_contest == 'everyone_with_access'">
+											<v-card-text>
+												Lorem ipsum dolor sit amet consectetur adipisicing elit. 
+												Nemo saepe, odio reiciendis laboriosam culpa sint
+											</v-card-text>
+											<v-card-actions>
+												<input type="text" 
+													v-if="access_token" 
+													v-model="access_token" 
+													@focus="copyAccessToken(access_token)">
+												<v-btn color="info" dark small 
+													@click="copyAccessToken(access_token)" depressed
+													:disabled="!access_token">
+													Copy
+												</v-btn>
+												<v-btn color="grey" dark small depressed @click="generateToken()">Generate</v-btn>
+											</v-card-actions>
+										</v-card>
 
-										<v-divider></v-divider>
+										<v-divider v-else></v-divider>
 										<v-toolbar light flat height="50px">
-											<v-toolbar-title class="">Set Roles</v-toolbar-title>
+											<v-toolbar-title class="">Roles</v-toolbar-title>
 											<v-spacer></v-spacer>
 											<v-btn 
 												color="primary" class="text-capitalize"
-												depressed left 
+												depressed left text
 												@click.native.stop="dialog = !dialog">
 												<v-icon>mdi-plus</v-icon>
 												New Role
@@ -343,14 +378,14 @@
 											<v-card>
 												<v-card-title primary-title class="title mb-0 pb-0">Create A New Role</v-card-title>
 												<v-card-text>
-													<v-text-field label="Role title" v-model="role_input" color="primary" 
+													<v-text-field label="Role title" v-model.trim="role_input" color="primary" 
 														hint="e.g president, secretary, vice-chancellor"></v-text-field>
 													<small class="grey--text"></small>
 													<p>
 														<small class="grey--text">* try not to use abbreviations</small>
 													</p>
 													<v-divider></v-divider>
-													<v-textarea v-model="role_input_desc"
+													<v-textarea v-model.trim="role_input_desc"
 														label="Role description (optional)" outlined
 														name="name" color="primary" hint="e.g what this role can do"
 													></v-textarea>
@@ -358,13 +393,13 @@
 												<v-card-actions>
 													<v-spacer></v-spacer>
 														<v-btn text @click.native="dialog = false">Cancel</v-btn>
-														<v-btn text color="success" @click.native="addrole" :disabled="!role_input.trim()">Add role</v-btn>
+														<v-btn text color="success" @click.native="addrole" :disabled="!role_input">Add role</v-btn>
 												</v-card-actions>
 											</v-card>
 										</v-dialog>
 
 										<v-select class="mt-4" deletable-chips
-											v-model="form.roles" dense
+											v-model="form.roles"
 											:items="form.roles" return-object
 											item-text="title" cache-items
 											item-disabled="disabled"
@@ -375,7 +410,7 @@
 									</v-card-text>
 									<v-card-actions>
 										<v-spacer></v-spacer>
-										<v-btn color="success" class="ml-3" depressed
+										<v-btn color="success" class="ml-3 text-capitalize" depressed
 											@click="updateRoles">
 											Save Changes
 										</v-btn>
@@ -412,7 +447,11 @@
 											transition="dialog-transition">
 
 											<template v-slot:activator="{on}">
-												<v-btn color="info" v-on="on" depressed class="ml-3 text-capitalize">Add contestant</v-btn>
+												<v-btn color="info" v-on="on" 
+													text class="ml-3 text-capitalize">
+													<v-icon>mdi-plus</v-icon>
+													Add contestant
+												</v-btn>
 											</template>
 
 											<v-card flat>
@@ -438,7 +477,7 @@
 												<v-card-actions>
 													<v-spacer></v-spacer>
 													<v-btn @click="add_contestant_dialog = false" depressed>Close</v-btn>
-													<v-btn color="info" 
+													<v-btn color="info" :disabled="!form2.username || !form2.role"
 														depressed :loading="loading"
 														@click="addContestant">
 														Add
@@ -459,11 +498,12 @@
 										<template v-slot:item.actions="{item}" >
 											
 											<td class="justify-center">
+												
 												<v-tooltip top>
 													<template v-slot:activator="{on}">
 														<v-icon v-on="on"
 															class="mt-3" color="error" 
-															small @click="culprit = item; 
+															small @click="culprit = item.author; 
 															suspend_dialog = true"
 															:disabled="item.suspended">
 															mdi-cancel
@@ -477,7 +517,7 @@
 								</v-card>
 							</v-col>
 							
-							<v-col cols="12" sm="10">
+							<!-- <v-col cols="12" sm="10">
 								<v-card class="round" outlined>
 									<v-list dense class="grey lighten-4">
 										<v-list-item >
@@ -510,7 +550,7 @@
 										</v-expansion-panels>
 									</div>
 								</v-card>
-							</v-col>
+							</v-col> -->
 							
 						</v-row>
 					</v-container>
@@ -524,51 +564,85 @@
 								<v-card color="" outlined class="mb-5">
 									<v-card-text>
 
-										<v-subheader class="font-weight-bold mb-2">Voter registration</v-subheader>
-										<p class="ml-4">How would you register voters?</p>
-										<v-radio-group class="ml-4" readonly v-model="form.self_registration" mandatory>
-											
-											<v-radio label="Voters register by themselves" :value="true"></v-radio>
-											<v-radio label="Add voters manually" :value="false"></v-radio>
+										<v-subheader class="font-weight-bold mb-2">Who Can Vote</v-subheader>
+										
+										<v-radio-group class="ml-4" v-model="form.who_can_vote" mandatory>
+											<v-radio 
+												label="Anyone can vote ananymouosly" 
+												value="anyone"></v-radio>
+											<!-- <v-radio 
+												label="Only those with access token can vote" 
+												value="anyone_with_access"></v-radio> -->
+											<v-radio 
+												label="Only those added manually" 
+												value="manual"></v-radio>
 										</v-radio-group>
 
-										<v-card flat v-if="form.self_registration" max-width="900">
+										<v-card outlined class="mb-3" v-if="form.who_can_vote == 'anyone_with_access'">
 											<v-card-text>
-												
-												<p class="">Estimated number of voters</p>
-												<v-slider 
-													:label="no_of_voters.toString()"
-													color="primary" 
-													:min="100" :max="50000" 
-													v-model="no_of_voters">
-												</v-slider>
-
+												Lorem ipsum dolor sit amet consectetur adipisicing elit. 
+												Nemo saepe, odio reiciendis laboriosam culpa sint
 											</v-card-text>
+											<v-card-actions>
+												<input type="text" 
+													@focus="copyAccessToken(voter_access_token)"
+													v-model="voter_access_token" >
+												<v-btn color="info" dark small 
+													@click="copyAccessToken(voter_access_token)" depressed
+													>
+													Copy
+												</v-btn>
+											</v-card-actions>
 										</v-card>
 
-										<v-card v-else flat width="500" class="grey lighten-4">
+										<v-card v-if="form.who_can_vote == 'manual'" flat width="500" class="grey lighten-4">
 											<v-card-text>
-												<span class="v-card--title">
-													List of voters
-												</span>
-												<v-textarea rows="10" 
-													label="Enter comma seperated list of phone numbers"
-													outlined>
-												</v-textarea>
 												
+												<v-file-input
+													v-model="file"
+													placeholder="Upload csv"
+													label="Voters list"
+													outlined 
+													:disabled="loading"
+													prepend-icon=""
+													append-icon="mdi-paperclip"
+													accept=".csv"
+												>
+													<template v-slot:selection="{ text }">
+														<v-chip
+															small
+															label
+															color="primary"
+														>
+															{{ text }}
+														</v-chip>
+													</template>
+												</v-file-input>
+												<v-btn color="info" depressed small
+													@click="uploadVoterList"
+													:disabled="!file"
+													:loading="loading">
+													Upload New list
+												</v-btn>
+
+												<v-btn color="grey" depressed small
+													class="ml-2" dark
+													@click="view_list_dialog = true;"
+												>
+													View list
+												</v-btn>
 											</v-card-text>
 										</v-card>
 
 										<v-divider class="m"></v-divider>
 
-										
-
 										<v-list three-line subheader>
 											<v-subheader class="font-weight-bold mb-0">Voting</v-subheader>
-											<v-list-item>
+											<v-list-item 
+												:disabled="currElection.type != 'Others'">
 												<v-list-item-action>
 													<v-checkbox 
-														:readonly="currElection.type == 'School'"
+														:disabled="currElection.type != 'Others'"
 														v-model="form.allow_multiple_voting"
 														class="mt-0"
 														color="success">
@@ -577,26 +651,10 @@
 												</v-list-item-action>
 												<v-list-item-content>
 													<v-list-item-title>Allow multiple voting</v-list-item-title>
-													<v-list-item-subtitle>This is useful for peagentries, tv shows, e.t.c</v-list-item-subtitle>
-													<v-list-item-subtitle class="warning--text">Note: This option is not available for school elections.</v-list-item-subtitle>
+													<v-list-item-subtitle>This is useful for peagentries, tv shows, and the likes</v-list-item-subtitle>
 												</v-list-item-content>
 											</v-list-item>
-											<v-list-item>
-												<v-list-item-action>
-													<v-checkbox 
-														:readonly="currElection.type == 'Scool'"
-														class="mt-0"
-														v-model="form.secret_ballot"
-														color="success">
-													</v-checkbox>
-													
-												</v-list-item-action>
-												<v-list-item-content>
-													<v-list-item-title>Secret ballot</v-list-item-title>
-													<v-list-item-subtitle>Votes are anonymous - votes can't be linked with voters.</v-list-item-subtitle>
-													<v-list-item-subtitle class="warning--text">Note: This option is mandatory for school elections</v-list-item-subtitle>
-												</v-list-item-content>
-											</v-list-item>
+											
 										</v-list>
 
 										<v-divider></v-divider>
@@ -686,10 +744,15 @@
 														<v-icon color="primary" slot="prepend-inner">mdi-clock</v-icon>
 													</v-text-field>
 												</template>
-												<v-time-picker v-if="modal2" format="ampm" v-model="form.time" header-color='primary'>
+												<v-time-picker v-if="modal2" format="ampm" 
+													:allowed-hours="allowedHours" 
+													v-model="form.time" header-color='primary'>
 													<v-spacer></v-spacer>
 														<v-btn text  @click="modal2 = false">Cancel</v-btn>
-														<v-btn text color="success" outlined @click="$refs.dialog2.save(form.time)">OK</v-btn>
+														<v-btn text color="success" 
+															outlined 
+															@click="$refs.dialog2.save(form.time)">
+															OK</v-btn>
 												</v-time-picker>
 											</v-dialog>
 										</v-col>
@@ -708,7 +771,7 @@
 												</template>
 
 												<v-date-picker v-model="form.enddate" 
-													scrollable :allowed-dates="allowedDates" 
+													scrollable :allowed-dates="allowedDates2" 
 													header-color="primary">
 													<v-spacer></v-spacer>
 														<v-btn text   @click="modal3 = false">Cancel</v-btn>
@@ -732,32 +795,15 @@
 														<v-icon color="primary" slot="prepend-inner">mdi-clock</v-icon>
 													</v-text-field>
 												</template>
-												<v-time-picker v-if="modal4" format="ampm" v-model="form.endtime" header-color='primary'>
+												<v-time-picker v-if="modal4" format="ampm" 
+													:allowed-hours="allowedHours2"
+													v-model="form.endtime" header-color='primary'>
 													<v-spacer></v-spacer>
 														<v-btn text  @click="modal4 = false">Cancel</v-btn>
 														<v-btn text color="success" outlined @click="$refs.dialog3.save(form.endtime)">OK</v-btn>
 												</v-time-picker>
 											</v-dialog>
 										</v-col>
-
-										<!-- <v-col cols="12" sm="6">
-											<v-subheader class='font-weight-bold mb-0 pl-0'>Duration
-												<v-tooltip right max-width="300" dark class="d-inline-block mt-3">
-													<template v-slot:activator="{on}">
-														<v-icon v-on="on" small class="ml-2">mdi-help-circle</v-icon>
-													</template>
-													<span>How long the election should run</span>
-												</v-tooltip>
-											</v-subheader>
-											
-											<v-slider 
-												v-model="form.electionDuration" 
-												thumb-color="primary"
-												:thumb-size="24" ticks thumb-label 
-												:label="form.electionDuration + ' hrs'" 
-												:min="1" :max='24'>
-											</v-slider>
-										</v-col> -->
 
 										<v-col sm="12" style="padding-bottom:0px;">
 											<v-subheader class="font-weight-bold pl-0 mb-0">Auto start </v-subheader>
@@ -794,7 +840,7 @@
     <v-dialog v-model="suspend_dialog" max-width="500px" persistent hide-overlay>
       <v-card min-height='200' flat>
         <v-card-title>
-          <span class='headline text-capitalize'>Suspend {{culprit.name | capitalize}}</span>
+          <span class='headline text-capitalize'>Suspend {{culprit.electionId}}</span>
         </v-card-title>
         <v-card-text>
          Suspend this contestant to prevent him/her from contesting in this election. Suspended contestants
@@ -808,6 +854,27 @@
       </v-card>
     </v-dialog>
 
+		<v-dialog
+			v-model="view_list_dialog"
+			scrollable 
+			:overlay="false"
+			max-width="500px"
+			transition="dialog-transition">
+			<v-card min-height="400">
+				<div class="v-card__title">
+					Approved List
+				</div>
+
+				<v-card-text>
+					<ol>
+						<li v-for="(user,i) in approved_list" :key="i">
+							{{user.name}}
+						</li>
+					</ol>
+				</v-card-text>
+			</v-card>
+		</v-dialog>
+
   </div>
 </template>
 <script>
@@ -818,11 +885,15 @@ export default {
 		flagged_user: {},
 		tabs: 'tab-1',
 		edit_dialog: false,
+		view_list_dialog: false,
 		role_input: '',
 		role_input_desc: '',
 		dialog: false,
 		suspended: [],
 		add_contestant_dialog: false,
+		access_token: '',
+		voter_access_token: '',
+		file: null,
 		form: {
       title: '',
       type: '',
@@ -838,19 +909,23 @@ export default {
       time: '',
       electionDuration: 5,
       auto_enroll_admin: true,
-      // public: true,
+			// public: true,
+			access_token: '',
       roles: [],
-      self_registration: false,
+      who_can_vote: 'anyone_with_access',
       voter_list: [],
       allow_multiple_voting: false,
-      secret_ballot: true,
       realtime_results: true,
       results_visible_to_all: true,
 			verification_method: 'phone',
 			terms: '',
+			who_can_contest: 'everyone',
 			unrestricted_contesting: false,
 			manually_add_contestants: false,
-    },
+			enable_forum: true,
+			allow_manifestos: true,
+		},
+		approved_list: [],
 		blob_url: '',
 		logo: null,
 		uploading_logo: false,
@@ -907,8 +982,6 @@ export default {
 				value: 'author.name'
       },
       {text:'Role', value: 'role.title'},
-      // {text:'Department', value:'department'},
-      // {text:'Faculty', value:'faculty'},
       {text:'Actions', value: 'actions'},
     ],
 		loading: false,
@@ -916,6 +989,7 @@ export default {
     suspend_dialog: false,
 		culprit: {},
 		roles: [],
+		elecRef: '',
   }),
   props:['election', 'acts', 'voters', 'conts'],
 	watch: {
@@ -933,7 +1007,28 @@ export default {
         this.contestants = this.all_contestants.filter(item => !suspended.includes(item.uid))
       }
 			this.setTableData(this.contestants)
-		}
+		},
+		'form.date': function(to,from){
+			if(from){
+				console.log({to,from})
+
+				this.form.enddate = ''
+				this.form.endtime = ''
+			}
+    },
+    'form.enddate': function(to,from){
+			if(from){
+
+				this.form.endtime = ''
+			}
+    },
+    'form.time': function(to,from){
+			if(from){
+
+				this.form.enddate = ''
+				this.form.endtime = ''
+			}
+    }
 	},
   filters: {
     capitalize: function (value) {
@@ -954,6 +1049,9 @@ export default {
       'isSuperUser',
       'curRoom'
 		]),
+		title(){
+			return `Election Manager | ${this.$appName}`
+		},
 		disabled_save(){
 			return !this.form.title.trim() || !this.form.date.trim() || !this.form.time.trim()
 		},
@@ -982,16 +1080,6 @@ export default {
 				default:
 					return len
 			}
-    },
-    overviewItems(){
-      return [
-        ['Election title',this.currElection.title],
-        ['Creation Date', this.currElection.dateCreated.toDateString('en-Us',{day:'numeric'})],
-        ['School',this.currElection.sch],
-        ['Faculty',this.currElection.fac],
-        ['Department',this.currElection.dept],
-        ['Start Date',new Date(this.currElection.fullStartDate).toDateString('en-Us',this.date_options)],
-      ]
     },
 		all_voters(){
 			if(this.regVoters){
@@ -1070,6 +1158,10 @@ export default {
 					disabled: true
 				}
 			})
+
+			// bcs putting access_token in the form is not very reactive
+			this.access_token = this.currElection.cont_access_token
+			this.voter_access_token = this.currElection.voter_access_token
 		},
 		addrole(){
       if(this.role_input.length == 0){
@@ -1092,6 +1184,100 @@ export default {
         }
       
 		},
+		async enrollFromPhoneList(phone_numbers){
+
+			console.log(phone_numbers)
+			let added = []
+			let i = 1;
+			
+			let election = this.$gun.get('elections')
+				.get(this.electionId)
+			
+			for (const num of phone_numbers) {
+				
+				let u = await this.$gun.get('phone_numbers').get(num).then()
+				console.log({u})
+				if(u){
+					
+					let user = this.$gun.get('users').get(u)
+					// console.log({user})
+	
+					election.get('voters')
+						.set(user)
+							
+					user.get('enrolled')
+						.set(election)
+
+					added.push(u)
+				}
+
+				if(i+1 == phone_numbers.length){
+					this.$eventBus.$emit('Snackbar', {
+						show: true,
+						message: added.length + ' voters were enrolled',
+						color: 'info'
+					})
+
+					this.loading = false
+				}
+
+				i++
+
+
+
+			}
+      
+		},
+		async saveApprovedList(phone_numbers){
+			
+			let election = this.$gun.get('elections')
+				.get(this.electionId)
+				election.get('approved_list').once(d => console.log({d}))
+
+			let i = 0
+			let added = []
+
+			for (const num of phone_numbers) {
+				
+				let u = await this.$gun.get('phone_numbers').get(num).then()
+
+				if(u){
+					console.log(u)
+					let user = this.$gun.get('users').get(u)
+					
+					election.get('approved_list')
+						.set(user)
+					
+					added.push(u)
+				}
+
+				if(i+1 == phone_numbers.length){
+
+					this.$eventBus.$emit('Snackbar', {
+						show: true,
+						message: added.length + ' voters were added',
+						color: 'info'
+					})
+
+					this.loading = false
+				}
+
+				i++
+			}
+		},
+		uploadVoterList(){
+			
+			this.loading = true
+
+			let formData = new FormData()
+			formData.append( 'file', this.file)
+			api().post('/convertCSV', formData).then(r => {
+				// console.log({r})
+				let phone_numbers = r.data.map(item => item.phone)
+				// this.enrollFromPhoneList(phone_numbers)
+				this.saveApprovedList(phone_numbers)
+			})
+		},
 		changeElectionStatus(new_status='inprogress'){
 			if(!this.currElection.timed){
 
@@ -1112,8 +1298,8 @@ export default {
 				.get(this.electionId)
 
 			elecRef.put({
-				allow_multiple_voting: this.currElection.type == 'School' ? false : this.form.allow_multiple_voting,
-        secret_ballot: this.currElection.type == 'School' ? true : this.form.secret_ballot,
+				who_can_vote: this.form.who_can_vote,
+				allow_multiple_voting: this.currElection.type != 'Others' ? false : this.form.allow_multiple_voting,
         realtime_results: this.form.realtime_results,
         results_visible_to_all: this.form.results_visible_to_all,
 			})
@@ -1151,7 +1337,9 @@ export default {
 			elecRef.put({
 				title: this.$sanitize(this.form.title),
 				about: this.$sanitize(this.form.about),
-				terms: this.$sanitize(this.form.terms)
+				terms: this.$sanitize(this.form.terms),
+				enable_forum: this.form.enable_forum,
+				allow_manifestos: this.form.allow_manifestos
 			})
 
 			this.$eventBus.$emit('Snackbar', {
@@ -1168,7 +1356,7 @@ export default {
 
 			new_roles.forEach(role => {
 
-				let new_token = randomWords({exactly:2, join: '-'})
+				let new_token = this.$uuidv4()
 
 				elecRef.get('roles')
 					.get(this.$uuidv4())
@@ -1180,10 +1368,16 @@ export default {
 					})
 			})
 
-			elecRef.get('unrestricted_contesting')
-				.put(this.form.unrestricted_contesting)
-			elecRef.get('manually_add_contestants')
-				.put(this.form.manually_add_contestants)
+			let new_access_token = this.access_token
+
+			elecRef.get('who_can_contest')
+				.put(this.form.who_can_contest)
+
+			if(this.form.who_can_contest == 'everyone_with_access'){
+				
+				elecRef.get('cont_access_token')
+					.put(new_access_token)
+			}
 
 			this.$eventBus.$emit('Snackbar', {
 				show: 'true',
@@ -1232,7 +1426,8 @@ export default {
 
       // create a contestant
       else{
-        this.loading = true
+				this.loading = true
+				elecRef.get('roles').map().once((m,k) => console.log(m,k))
 
         let data = {
           electionId: this.electionId,
@@ -1249,6 +1444,7 @@ export default {
 				let role_node = elecRef
 					.get('roles')
 					.get(this.form2.role.key)
+				// console.log({role_node})
 
         contestant.get('role').put(role_node)
 
@@ -1308,17 +1504,65 @@ export default {
 	
 			return today - toAllow - 24 * 60 * 60 * 1000 <= 0
     },
+    allowedDates2(val){
+			// only allow dates greater than or equal to today
+			let startdate = new Date(this.form.date).getTime()
+      
+			let enddate = new Date(val).getTime()
+	
+			return startdate <= enddate
+    },
     allowedHours(val){
       // only allow hours that are not yet past
-      let curHour = new Date().getHours()
-      // console.log(curHour, val)
-      return curHour < val
+			let curHour = new Date().getHours()
+			let today = (new Date()).toISOString().substring(0,10)
+      if(this.form.date == today){
+
+				return curHour < val
+			}
+			else {
+				return true
+			}
+    },
+    allowedHours2(val){
+    
+      let starttime = this.form.time.split(':')[0]
+      // console.log(starttime, val)
+
+      if(this.form.date == this.form.enddate){
+        return starttime < val
+      }
+      else {
+        return true
+      }
+      
     },
     getRole(contestant){
       let ref = contestant.contestsRef
       .find(item=>item.electionRef == this.currElection.electionId)
       let role = this.currElection.roles.find(role=>role.value == ref.role).title
       return role
+		},
+		generateToken(){
+			let text = "";
+			let possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+			for( let i=0; i < 16; i++ ){
+
+				text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+				i == 15 ? this.access_token = text : ''
+			}
+			
+		},
+		copyAccessToken(access_token){
+			this.$helpers.copyToClipboard(access_token)
+
+			this.$eventBus.$emit('Snackbar', {
+				show: true,
+				message: 'Copied to clipboard',
+				color: 'success'
+			})
 		},
 		async uploadLogo(){
 			
@@ -1347,42 +1591,6 @@ export default {
 			.catch(err => console.log(err))
 			
 		},
-		async getVoters(){
-			return db.collection('moreUserInfo')
-			.where('enrolled','array-contains',this.currElection.electionId)
-			.limit(15).get()
-			.then(querySnapshot=>{
-				let myArr = []
-				querySnapshot.forEach(doc=>{
-					myArr.push(doc.data())
-				})
-				this.regVoters = myArr
-				
-				return myArr
-			})
-		},
-		moreVoters(){
-			let lastVoter = this.regVoters[this.regVoters.length - 1]
-			this.loading_more_voters = true
-
-			db.collection('moreUserInfo').doc(lastVoter.uid).get()
-			.then(documentSnapshot => {
-
-				db.collection('moreUserInfo')
-				.where('enrolled','array-contains',this.currElection.electionId)
-				.startAfter(documentSnapshot)
-				.limit(15).get()
-				.then(querySnapshot=>{
-					let myArr = []
-					querySnapshot.forEach(doc=>{
-						this.regVoters.push(doc.data())
-					})
-					this.loading_more_voters = false
-					this.isLastVoter = querySnapshot.empty
-					
-				})
-			})
-		},
 		async getContestants(){
 
 			let elecRef = this.$gun.get('elections')
@@ -1394,16 +1602,17 @@ export default {
 						.get(c.author).then()
 
 					let contestant = Object.assign({}, c)
-					console.log(contestant)
+					// console.log(contestant)
 					contestant.author = author
 
 					let role = this.roles.find(r => r.soul == c.role['#'])
 					contestant.role = role
-					// console.log(role, this.roles)
+					// console.log(role.title, contestant.author.username)
 
 
-					this.contestants.find(ct => ct.username == c.username) ? '' : 
+					this.contestants.find(ct => ct.author.username == c.username) ? '' : 
 					this.contestants.push(contestant)
+					
 				})
 			
 		},
@@ -1416,17 +1625,19 @@ export default {
         .on( async election => {
           
           if(election){
-						if(election.admin['#'] == this.getUser.username){
+						if(election.admin == this.getUser.username){
 							this.currElection = election
 
 							// get election roles
 							this.$gun.get('elections').get(this.electionId)
 								.get('roles').map().on((r,key) => {
-									r.key = key
-									r.soul = r['_']['#']
-									// console.log(r)
-									this.roles.find(rl => rl.value == r.value) ? '' : 
-									this.roles.push(r)
+
+									let rn = Object.assign({}, r)
+									rn.key = key
+									rn.soul = r['_']['#']
+									// console.log(r, key)
+									this.roles.find(rl => rl.value == rn.value) ? '' : 
+									this.roles.push(rn)
 								})
 
 							setTimeout(() => {
@@ -1435,6 +1646,7 @@ export default {
 							}, 1000)
 						}
 						else {
+							console.log('admin', election.admin)
 							this.$router.push('/notFound')
 						}
 					}
@@ -1452,6 +1664,14 @@ export default {
 				}).catch(err=>{
 					// console.log(err)
 				})
+
+				// get approved list
+				this.$gun.get('elections').get(this.electionId)
+					.get('approved_list').map().on(l => {
+						
+						this.approved_list.find(i => i.username == l.username) ? '' :
+						this.approved_list.push(l)
+					})
 				
 
       } catch (error) {
@@ -1475,99 +1695,6 @@ export default {
         }
         this.tabledata.push(myObj)
       })
-		},
-		setChart(){
-			let votersObj = this.currElection.votersByDept
-			if(votersObj){
-
-				// console.log(votersObj)
-				this.chartData = {
-					labels: Object.keys(votersObj).map(item => this.$helpers.truncateText(item, 10)),
-					datasets: [{
-						label: 'Voter Registrations',
-						backgroundColor: 'orange',
-						data: Object.values(votersObj)
-					}]
-				}
-			}
-		},
-    getActivities(){
-      // Get activities
-      if(this.acts){
-        this.activities = this.acts
-      }
-      else {
-
-        db.collection('activities')
-        .where('elecRef','==',this.currElection.electionId)
-        .orderBy('tstamp', 'desc').limit(15)
-        .get().then(querySnapshot=>{
-          let acts = []
-          querySnapshot.forEach(doc=>{
-            acts.push(doc.data())
-          })
-          this.activities = acts
-          // console.log('activities: ', acts)
-        })
-      }
-		},
-		moreActivities(){
-
-			let lastActivity = this.activities[this.activities.length - 1]
-			this.loading_more_activities = true
-
-			db.collection('activities')
-			.where('elecRef', '==', this.currElection.electionId)
-			.orderBy('tstamp', 'desc')
-			.startAfter(lastActivity.tstamp)
-			.limit(20).get().then(querySnapshot => {
-				
-				querySnapshot.forEach(doc => {
-					this.activities.push(doc.data())
-				})
-
-				this.isLastActivity = querySnapshot.empty
-				this.loading_more_activities = false
-			})
-		},
-		recentRegActivities(){
-			// get registrations within a week ago
-			let one_week_ago = 7 * 24 * 60 * 60 * 1000
-			db.collection('activities')
-			// .where('tstamp', '<', one_week_ago)
-			.where('type', '==', 'voter_registered')
-			.orderBy('tstamp','desc').limit(100)
-			.get().then(querySnapshot =>{
-				
-				let acts = []
-				querySnapshot.forEach(doc =>{
-					acts.push(doc.data())
-				})
-
-				// console.log(acts)
-				this.regActivities = acts
-			})
-		},
-		async getSuspended(){
-			// get suspended voters and contestants
-			db.collection('suspended').doc(this.currElection.electionId)
-			.onSnapshot(doc => {
-				
-				this.suspended = doc.data()
-			})
-		},
-		getAdmins(){
-			// retrieve the election admins
-			let adminList = []
-			this.currElection.admins.forEach(uid => {
-
-				db.collection('moreUserInfo').doc(uid)
-				.get().then(doc => {
-					adminList.push(doc.data())
-				})
-			})
-
-			this.adminList = adminList
 		},
     isContestant(id){
       //console.log(id)
@@ -1636,20 +1763,16 @@ export default {
     async suspendContestant(){
       this.loading = true
      
-			let index = this.tabledata.indexOf(this.culprit)
+			let elecRef = this.$gun.get('elections').get(this.currElection.electionId)
 
-			db.collection('suspended').doc(this.currElection.electionId)
-			.update({
-				contestants: firebase.firestore.FieldValue.arrayUnion(this.culprit.contId)
-			})
-			.then(() => {
-
-				this.loading = false
-				this.suspend_dialog = false
-			}).catch(err => {
-				this.loading = false
+			elecRef.get('contestants').get(this.culprit.username)
+			.get('suspended')
+			.put(true)
 			
-			})
+
+			this.loading = false
+			this.suspend_dialog = false
+			
     },
     async restoreContestant(contestant){
       try {
@@ -1671,65 +1794,6 @@ export default {
       }
       
     },
-    suspendVoter(voter){
-      // Suspend a voter from voting
-			this.loading = true
-			
-      db.collection('suspended').doc(this.currElection.electionId)
-      .update({
-        voters: firebase.firestore.FieldValue.arrayUnion(voter.uid)
-      }).then(()=>{
-				this.loading = false
-
-        this.suspend_dialog = false
-      })
-    },
-    restoreVoter(voter){
-      // Restore a voter to allow them vote
-      this.loading = true
-      db.collection('suspended').doc(this.currElection.electionId)
-      .update({
-        voters: firebase.firestore.FieldValue.arrayRemove(voter.uid)
-      }).then(()=>{
-				this.loading = false
-      })
-		},
-		makeAdmin(voter, action){
-			// give a voter admin privilages
-			this.making_admin = true
-			
-			firebase.auth().currentUser.getIdToken().then((idToken)=>{
-				api().post(action, {
-					idToken,
-					voter,
-					electionId: this.currElection.electionId
-				}).then(res => {
-
-					this.making_admin = false
-					if(action == 'makeAdmin'){
-
-						this.adminList.push(voter)
-					}
-					if(action == 'removeAdmin'){
-						this.adminList = this.adminList.filter(v => v.uid != voter.uid)
-					}
-				}).catch(err => {
-					
-					this.making_admin = false
-					this.$eventBus.$emit('Snackbar', {
-						show: true,
-						message: err.response ? err.response.data.message : 'Something went wrong'
-					})
-				})
-			})
-			.catch(err => {
-				this.making_admin = false
-				this.$eventBus.$emit('Snackbar', {
-					show: true,
-					message: 'Something went wrong'
-				})
-			})
-		},
     
 	},
 	components:{
@@ -1740,10 +1804,14 @@ export default {
   async mounted(){
     try {
       await this.setUp()
+			let election = this.$gun.get('elections')
+				.get(this.electionId)
+				election.get('approved_list').once(d => console.log(d))
 			
-			await this.getActivities()
-			await this.recentRegActivities()
-			
+			// await this.recentRegActivities()
+			// this.$gun.get('phone_numbers').map().once((p,k) => {
+			// 	console.log(p,k)
+			// })
       
     } catch (error) {
       // console.log(error)
@@ -1760,14 +1828,16 @@ export default {
 			}
 		})
     
-  }
+	},
+	beforeDestroy(){
+		// this.elecRef.off()
+	}
 }
 import Navigation from '@/components/Navigation'
-import api from '@/services/api'
+import api from '@/services/api2'
 import {mapGetters, mapState} from 'vuex'
 import LoadingBar from '@/spinners/LoadingBar'
 import BarChart from '@/charts/barchart'
-import randomWords from 'random-words'
 </script>
 <style scoped>
   .linkify{

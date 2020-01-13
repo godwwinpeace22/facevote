@@ -9,34 +9,33 @@ import { uniq } from "lodash";
 Vue.use(Vuex)
 
 // include states to be persisted in local storage
-const vuexLocalStorage = new VuexPersist({
-  key:'vuex',
-  storage:window.localStorage,
-  reducer: state =>({
-    //user:state.user,
-    theme: state.theme,
-    last_read_time: state.last_read_time,
-    no_of_unread_msgs: state.no_of_unread_msgs,
-    //isAuthenticated:state.isAuthenticated,
-    curRoomId: state.curRoomId,
-    schools: state.schools,
-    //chat_messages:state.chat_messages,
-    //those_online:state.those_online,
-    curr_right_sidebar: state.curr_right_sidebar,
-    show_right_bar: state.show_right_bar,
-    // private_chat_window: state.private_chat_window,
-  })
-})
+// const vuexLocalStorage = new VuexPersist({
+//   key:'vuex',
+//   storage:window.localStorage,
+//   reducer: state =>({
+//     //user:state.user,
+//     theme: state.theme,
+//     last_read_time: state.last_read_time,
+//     no_of_unread_msgs: state.no_of_unread_msgs,
+//     //isAuthenticated:state.isAuthenticated,
+//     curRoomId: state.curRoomId,
+//     schools: state.schools,
+//     //chat_messages:state.chat_messages,
+//     //those_online:state.those_online,
+//     curr_right_sidebar: state.curr_right_sidebar,
+//     show_right_bar: state.show_right_bar,
+//     // private_chat_window: state.private_chat_window,
+//   })
+// })
 export default new Vuex.Store({
   plugins:[
-    vuexLocalStorage.plugin,
+    // vuexLocalStorage.plugin,
     createMutationsSharer({ predicate: 
       ['logout', 'setUser', 
       'switchTheme','saveFeedFilter', 
       'session_expired', 'setUserInfo', 
-      'curRoom', 'curProfile',
-      'saveChatMessages','updateFromDb',
-      'updateThoseOnline'] 
+      'curRoom',
+      'saveChatMessages'] 
     })
   ],
   state: {
@@ -73,7 +72,6 @@ export default new Vuex.Store({
     },
     setUser(state,data){
       // console.log({data})
-      // data['displayName'] = data.name
       // data.user_id ? data['uid'] = data.user_id : ''
 
       state.isAuthenticated = data
@@ -83,7 +81,10 @@ export default new Vuex.Store({
     async logout(state){
       // eslint-disable-next-line
         vm.$router.push('/login')
+        gun.get('users').get(state.isAuthenticated.username)
+          .get('is_online').put(false)
         gun.user().leave()
+        vm.$userSession.signUserOut()
         
         // Sign-out successful.
         state.userInfo = null
@@ -247,7 +248,7 @@ export default new Vuex.Store({
       let read_msgs = []
 
       // get user list of read
-      gun.get(state.isAuthenticated.username)
+      gun.get('users').get(state.isAuthenticated.username)
         .get('read_broadcasts')
         .map()
         .once((read,key)=> {
@@ -270,7 +271,7 @@ export default new Vuex.Store({
       let u = ''
       if(state.isAuthenticated){
 
-        gun.get(state.isAuthenticated.username).once(user => {
+        gun.get('users').get(state.isAuthenticated.username).once(user => {
           u = user
           // console.log(u, user)
         })

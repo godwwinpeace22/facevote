@@ -1,9 +1,10 @@
 <template>
   <div>
-    <v-container class="mt-10"> 
+    <v-container class="px-0"> 
       <v-row justify="center">
-        <v-col sm="12" md="6">
-          <post-template :posts="posts"></post-template>
+        <v-col cols="12">
+          <v-subheader v-if="posts.length == 0">No recent post</v-subheader>
+          <post-template :posts="posts" :outlined="false"></post-template>
           
         </v-col>
         <!-- <v-col>
@@ -32,7 +33,7 @@ export default {
       return this.all_posts.sort((a,b) => a.tstamp - b.tstamp)
     },
     async user(){
-      return await this.$gun.get(this.username)
+      return await this.$gun.get('users').get(this.username)
         .then()
     },
     username(){
@@ -47,16 +48,28 @@ export default {
     
     async getUserPosts(){
       
-      this.$gun.get(this.username)
+      this.$gun.get('users').get(this.username)
         .get('posts')
         .map()
         .once(async (p, key) => {
-          // console.log('posts: => ', p)
-          p.key = key
-          p.author = await this.user
-          // p.author = await this.postAuthor(p.author['#'])
-          this.all_posts.find(item => item.key == p.key) ? '' : 
-          this.all_posts.push(p)
+          
+          let post = Object.assign({}, p)
+          post.key = key
+          post.author = await this.user
+
+          if(post.imgs){
+            let imgs = []
+            this.$gun.get(post.imgs['#']).map().once(img => {
+              imgs.push(img)
+            })
+            // console.log({imgs})
+            post.imgs = imgs
+          }
+          else {
+            post.imgs = []
+          }
+          this.all_posts.find(item => item.key == post.key) ? '' : 
+          this.all_posts.push(post)
         })
       
     },

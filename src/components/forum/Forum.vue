@@ -4,14 +4,9 @@
       :title="title"
     />
     <navigation>
-      <span slot="title">{{this_group.title}}</span><br>
-      <span>ElectionId: {{this_group.electionId}}</span>
+      <span slot="title">{{'Forum'}}</span>
 
       <v-spacer></v-spacer>
-      <v-btn icon slot="nav_item" @click="media_dialog = true"
-        v-if="breakpoint.mdAndUp">
-        <v-icon color="">mdi-image-multiple</v-icon>
-      </v-btn>
 
       <v-toolbar slot="extended_nav" color="teal" flat
         v-if="breakpoint.smAndDown" style='' dense>
@@ -36,7 +31,7 @@
       
     </v-navigation-drawer> -->
 
-    <loading-bar v-if="!ready">
+    <loading-bar v-if="!showUi">
       <div class='mx-auto' style="display: table" slot="loading_info">Loading...</div>
     </loading-bar>
 
@@ -50,9 +45,8 @@
         <v-row>
           <v-col cols="12" class="pb-0" id="style-2">
             <div :style="styleChat">
-              <chatwindow :members='members' 
-                :room='this_group.electionId' 
-                :thisGroup='this_group' 
+              <chatwindow 
+                :members='members' 
                 :loading_messages="loading_messages">
               </chatwindow>
               <!-- Textarea -->
@@ -61,7 +55,7 @@
 
           </v-col>
           <v-col cols="12" class="py-0">
-            <div v-if="ready" >
+            <div v-if="showUi" >
               <div class="white--text" v-show="forumId != 'd'"
                 style='width:100%;background:#fff;z-index:0;'>
             
@@ -74,15 +68,73 @@
                     rows="1" auto-grow hide-details
                   >
 
-                  <!-- <v-btn icon 
-                    @click='$helpers.trigFileSelector' 
-                    v-show="!message">
+                  <v-btn icon @click="imageDialog = true"
+                    v-show="!message" slot="prepend-inner">
                     <v-icon color="success">mdi-camera</v-icon>
-                  </v-btn> -->
+                  </v-btn>
+
+                    <v-dialog
+                      v-model="imageDialog"
+                      persistent :overlay="false"
+                      max-width="500px" slot="prepend-inner"
+                      transition="dialog-transition"
+                    >
+
+                      <v-card flat>
+                        <v-card-title >
+                          Upload image
+                        </v-card-title>
+                        <v-card-text>
+                          <v-file-input
+                            v-model="files"
+                            color="deep-purple accent-4"
+                            counter accept="image/png,image/jpeg,image/jpg,image/gif"
+                            label="File input" multiple
+                            placeholder="Select your files"
+                            prepend-icon="" :disabled="uploading"
+                            append-icon="mdi-paperclip"
+                            outlined :show-size="1000"
+                          >
+                            <template v-slot:selection="{ index, text }">
+                              <v-chip
+                                v-if="index < 2"
+                                color="deep-purple accent-4"
+                                dark label small
+                              >
+                                {{ text }}
+                              </v-chip>
+
+                              <span
+                                v-else-if="index === 2"
+                                class="overline grey--text text--darken-3 mx-2"
+                              >
+                                +{{ files.length - 2 }} File(s)
+                              </span>
+                            </template>
+                          </v-file-input>
+                          <v-text-field
+                            name="images_caption"
+                            label="Write a caption"
+                            v-model="images_caption"
+                          ></v-text-field>
+                        </v-card-text>
+                        <v-card-actions>
+                          <v-spacer></v-spacer>
+                          <v-btn color="" :disabled="uploading" 
+                            depressed @click="imageDialog = false">
+                            Cancel</v-btn>
+                          <v-btn color="primary" depressed 
+                            @click="uploadImages" :loading="uploading"
+                            :disabled="!files">
+                            Upload</v-btn>
+                        </v-card-actions>
+                      </v-card>
+                    </v-dialog>
+                  
                 
                   <!-- EMOJIS DIALOG-->
                   <v-menu max-width="300" :close-on-content-click='false'
-                    slot="prepend-inner" max-height="" top offset-y>
+                    slot="prepend-inner" max-height="500" top offset-y v-model="emoji_dialog">
                     <template v-slot:activator="{on}">
                       <v-btn icon v-on="on">
                         <v-icon color="success">mdi-emoticon-outline</v-icon>
@@ -100,7 +152,7 @@
 
                     <template v-slot:activator="{on}">
                       <v-btn icon v-on="on">
-                        <span color="success" 
+                        <span color="success" tooltip
                           style="color:green;margin-top:-3px;font-size:18px;">
                           @
                         </span>
@@ -153,104 +205,17 @@
 
           </v-col>
         </v-row>
-
-
-        <!-- <v-tabs-items v-model="model" class="" style="background:#fff;" v-if="ready">
-          <v-tab-item value="Chat" :style="styleForTabs">
-            
-          </v-tab-item>
-          <v-tab-item value="Members" v-if="breakpoint.smAndDown" :style="styleForTabs">
-            <router-view :members='members'  :thisGroup='this_group'></router-view>
-          </v-tab-item>
-          <v-tab-item value="Media" v-if="breakpoint.smAndDown" class="" :style="styleForTabs2">
-            <chat-media></chat-media>
-          </v-tab-item>
-        </v-tabs-items> -->
       </v-col>
 
       <v-col md="3"
         v-if="$vuetify.breakpoint.mdAndUp">
         <router-view 
           :members='members' 
-          v-if="ready" 
-          :thisGroup='this_group' 
-          :suspended="suspended">
+          v-if="showUi" 
+        >
         </router-view>
       </v-col>
     </v-row>
- 
-
-    <!-- CHAT MEDIA DIALOG -->
-    <v-dialog v-model="media_dialog" scrollable fullscreen
-      transition="dialog-transition" style="background:#fff;">
-      <v-card>
-        <v-toolbar card color="teal" flat dense dark>
-          Chat Media
-          <v-spacer></v-spacer>
-          <v-btn color="" outline @click="media_dialog = false">close</v-btn>
-        </v-toolbar>
-        <v-card-text> 
-          <chat-media></chat-media>
-        </v-card-text>
-      </v-card>
-    </v-dialog>
-
-
-    <!-- FILE DIALOG -->
-    <v-dialog v-model="file_dialog" style="background:#fff;" :persistent="progress_dialog"
-      max-width="600" hide-overlay :fullscreen="breakpoint.xsOnly">
-      <v-toolbar dense flat>
-        <v-toolbar-title>Upload images</v-toolbar-title>
-        <v-spacer></v-spacer>
-        <v-btn flat icon @click="file_dialog = false" :disabled="progress_dialog">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
-      </v-toolbar>
-      <v-container class="white">
-        <v-card flat>
-          <!-- Selected images preview -->
-          <v-container grid-list-sm px-0>
-            <v-row row wrap>
-              <v-col cols="3" v-for="(blob_url,i) in blob_urls" :key="i">
-                <v-card height="100" class="mb-1">
-                  <v-img :src='blob_url' height="100"></v-img>
-                </v-card>
-              </v-col>
-            </v-row>
-          </v-container>
-
-          <div class="mt-4">
-            <v-textarea v-model="file_message" box color="deep-purple"
-              label="Add a caption" outline
-              rows="4" auto-grow
-            ></v-textarea>
-          </div>
-          <v-card-actions>
-            <v-btn depressed small color="secondary" @click="uploadImages">Upload Images</v-btn>
-          </v-card-actions>
-          {{uploadProgress}}%
-        </v-card>
-      </v-container>
-      
-    </v-dialog>
-
-    
-    <!-- File uplaod progres dialog -->
-    <v-dialog v-model="progress_dialog" max-width="300" persistent>
-      <v-card>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn flat icon>
-            <v-icon @click="progress_dialog = false" :disabled="progress_dialog">mdi-close</v-icon>
-          </v-btn>
-        </v-card-actions>
-        <v-container class="mt-0">
-          <v-subheader >Uploading images</v-subheader>
-          <v-progress-linear indeterminate ></v-progress-linear>
-        </v-container>
-        {{uploadProgress.no_uploaded || 0}}/{{uploadProgress.no_of_files}} &nbsp; {{uploadProgress.progress || 0}}%
-      </v-card>
-    </v-dialog>
 
   </div>
 </template>
@@ -262,29 +227,25 @@ export default {
     model: 'Chat',
     text_label: 'You cannot send messages in this forum',
     left: null,
-    ready: false,
+    showUi: false,
     loading_messages: true,
     message: "",
-    file_message: '',
-    files: [],
+    imageDialog: false,
+    images_caption: '',
+    files: null,
+    uploading: false,
     mention_dialog: false,
+    emoji_dialog: false,
     file_dialog: false,
     carousel_dialog: false,
-    media_dialog: false,
-    progress_dialog: false,
     snackbar: {},
     blob_urls: [],
     menu: false,
     members: [],
     members2: [],
     suspended: [], // suspended voters and contestants
-    this_group: [], // the current group
     updateRef: '', // stop listening for updates
     membersRfef: '', // stop listening for updates
-    cloudinary: {
-      cloud_name: 'unplugged',
-      upload_preset: 'pe4iolek'
-    },
   }),
   watch: {
     
@@ -298,7 +259,6 @@ export default {
       'getUser',
     ]),
     ...mapState([
-      'curRoom',
       'isSuperUser',
       'uploadProgress'
     ]),
@@ -314,13 +274,6 @@ export default {
     canSendMessages(){
       // check if current user can send messages to current group
 
-      // let enrolled = this.getUser.enrolled ? 
-      //   this.getUser.enrolled.find(electionId => electionId == this.this_group.electionId) : false
-
-      // let banned = this.suspended.voters && !!this.suspended.voters.find(memberId => memberId == this.getUser.uid)
-
-      // !enrolled ? this.text_label = 'Enroll to join the conversation' : ''
-      // return enrolled && !banned ? true : false
        return true
     },
     styleChat(){
@@ -350,7 +303,6 @@ export default {
       
       if(this.forumId){
 
-        this.this_group = this.curRoom
         this.loading_messages = false
 
         setTimeout(() => {
@@ -360,7 +312,7 @@ export default {
         await this.retrieveMembers()
 
         // this.getSuspended()
-        this.ready = true;
+        this.showUi = true;
         
 
       }
@@ -375,8 +327,15 @@ export default {
         .get(this.forumId)
         .get('voters')
         .map()
-        .on((data) => {
+        .on(async (data, k) => {
+          
+          console.log({data, k})
+
+          let m = await this.$gun.get('users').get(k).then()
+          // console.log({m})
           members.push(data)
+          
+          // members.push(data)
         })
 
       // console.log({members})
@@ -385,20 +344,19 @@ export default {
     async uploadImages(){
       try {
 
-        this.progress_dialog = true
+        this.uploading = true
         // let uploaded = await this.$helpers.uploadImage(this.files, this.cloudinary)
-        let uploaded = await this.$helpers.upload({
-          files: this.files,
-          path: `forums/${this.curRoom.electionId}`
+        let uploaded = await this.$helpers.uploadMedia({
+          files: this.files
         })
 
-        this.progress_dialog = false
-        this.file_dialog = false
-        this.submit(this.file_message, uploaded)
+        this.uploading = false
+        this.imageDialog = false
+        this.submit(this.$sanitize(this.images_caption), uploaded)
         
       } catch (error) {
-        this.progress_dialog = false
-        this.file_dialog = false
+        this.imageDialog = false
+        this.uploading = false
         //this.loading = false
         this.$eventBus.$emit('Snackbar', {
           show: true,
@@ -417,37 +375,41 @@ export default {
     },
     clearMessage () {
       this.message = ''
-      this.file_message = ''
+      this.images_caption = ''
       this.file = null
       this.imgSrc = ''
     },
     async submit(message,images){
       try{
-        
-        let body = this.$sanitize(message.trim())
+
+        console.log('forumId: ', this.forumId)
+
+        let body = down(message)
         let docId = this.$uuidv4()
 
         let chat_data = {
           author: this.getUser.username,
           date_created: Date.now(),
           body: body,
-          imgs: images, // this is for the uploaded image
           docId: docId,
           elecRef: this.forumId,
-          reactions:{
-            like: 0,
-            love: 0,
-            wow: 0,
-            excited: 0,
-            haha: 0,
-            angry: 0,
-          }
+          reactions:{}
         }
 
         let chat_message = this.$gun.get('chat_messages')
           .get(this.forumId)
           .get(docId)
           .put(chat_data)
+
+        if(images && images.length > 0){
+          
+          // add images
+          images.forEach(u => {
+            
+            chat_message.get('imgs').set(u)
+            
+          })
+        }
         
         this.scrollChat()
         this.clearMessage()
@@ -458,6 +420,7 @@ export default {
       }
     },
     appendUser(member){
+      // console.log(member)
       this.message += ' @' + member.username + ' '
     },
     appendEmoji(emoji){
@@ -472,13 +435,8 @@ export default {
     },
     
     async getSuspended(){
-      // get suspended voters and contestants
+      // get suspended members
       
-			db.collection('suspended').doc(this.this_group.electionId)
-			.onSnapshot(doc => {
-				
-				this.suspended = doc.data()
-			})
     },
     
     
@@ -513,26 +471,21 @@ export default {
     'chatwindow': Chatwindow,
     'users': ForumUsers,
     Navigation,
-    ChatMedia,
     LoadingBar,
     EmojiPicker,
     Conversations
     // Picker,
   }
 }
-//import io from 'socket.io-client';
-// import api from '@/services/api'
-  import {mapGetters, mapState} from 'vuex'
-  // import uuid from 'uuid/v4'
+
+import {mapGetters, mapState} from 'vuex'
   import ForumUsers from '@/components/forum/ForumUsers'
   import Chatwindow from '@/components/forum/Chatwindow'
-  // import ChatwindowVue from '@/components/Chatwindow.vue'
   import Navigation from '@/components/Navigation'
-  import ChatMedia from '@/components/forum/ChatMedia'
   import LoadingBar from '@/spinners/LoadingBar'
   import EmojiPicker from '@/components/emojis/EmojiPicker'
   import Conversations from "@/components/forum/Conversations";
-  // import { Picker } from 'emoji-mart-vue'
+  import down from 'msgdown'
 </script>
 <style lang="scss" scoped>
 .v-content{

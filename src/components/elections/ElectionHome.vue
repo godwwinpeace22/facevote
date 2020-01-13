@@ -16,7 +16,8 @@
             :key="item.text"
             v-slot:default="{ active, toggle }"
           >
-            <v-btn
+            <v-btn 
+              v-if="!item.hidden"
               class="mr-1 text-capitalize" tile
               :input-value="active" color="#ffffff99"
               active-class="primary lighten-1 white--text"
@@ -32,7 +33,7 @@
         <v-spacer></v-spacer>
 
         <v-fab-transition>
-          <v-btn
+          <v-btn v-if="isAdmin"
             key="activefab"
             color="success"
             fab large dark
@@ -60,6 +61,7 @@ export default {
   data: () => ({
     currElection: {},
     showUi: false,
+    elecRef: '',
   }),
   props:['electionId'],
   computed: {
@@ -73,11 +75,20 @@ export default {
       return [
         {text: 'About', link: `${baseUrl}`,},
         {text: 'Contestants', link: `${baseUrl}/contestants`,},
-        {text: 'Voters', link: `${baseUrl}/voters`, class: ['hidden-xs-only']},
-        {text: 'Manifestos', link: `${baseUrl}/manifestos`, class: ['hidden-xs-only']},
-        {text: 'Results', link: `${baseUrl}/results`, class: ['hidden-xs-only']}
+        {text: 'Voters', link: `${baseUrl}/voters`, class: ['hidden-xs-only'], hidden: this.currElection.type == 'Others'},
+        {text: 'Manifestos', link: `${baseUrl}/manifestos`, class: ['hidden-xs-only'], hidden: !this.currElection.allow_manifestos},
+        {text: 'Results', link: `${baseUrl}/results`, class: ['hidden-xs-only'], hidden: !this.isAdmin && !this.currElection.results_visible_to_all},
+        {text: 'Terms', link: `${baseUrl}/terms`}
       ]
     },
+    isAdmin(){
+      // console.log(this.k)
+      return this.currElection.admin &&
+      this.currElection.admin == this.getUser.username
+    },
+    ...mapGetters([
+      'getUser'
+    ])
   },
   methods: {
     setup(){
@@ -104,10 +115,14 @@ export default {
     this.setup()
 
   },
+  destroyed(){
+    // this.elecRef.off()
+  },
   components: {
     Navigation
   }
 }
 
 import Navigation from '@/components/Navigation'
+import { mapGetters } from 'vuex'
 </script>

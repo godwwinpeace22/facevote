@@ -1,5 +1,8 @@
 <template>
   <div>
+
+    <navigation/>
+    
     <v-container>
 
       <v-row>
@@ -25,9 +28,13 @@
       </v-row>
 
       <v-row>
-        <v-col>
+        <v-col cols="12">
           <profile-viewers></profile-viewers>
 
+        </v-col>
+
+        <v-col cols="12">
+          <!-- <contestants-insight></contestants-insight> -->
         </v-col>
       </v-row>
     </v-container>
@@ -51,7 +58,7 @@ export default {
       return this.$route.params.username
     },
     async user(){
-      return await this.$gun.get(this.username)
+      return await this.$gun.get('users').get(this.username)
         .then()
     },
     isSameUser(){
@@ -74,10 +81,12 @@ export default {
 
   },
   components: {
-    ProfileViewers
+    ProfileViewers,
+    ContestantsInsight,
   }
 }
 
 import { mapState, mapGetters } from "vuex"
 import ProfileViewers from '@/components/elections/ProfileViewers'
+import ContestantsInsight from '@/components/elections/ContestantsInsight.vue';
 </script>
